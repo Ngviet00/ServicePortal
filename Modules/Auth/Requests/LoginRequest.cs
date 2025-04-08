@@ -5,7 +5,7 @@ namespace ServicePortal.Application.DTOs.Auth.Requests
     public class LoginRequest
     {
         [Required]
-        public string? EmployeeCode {  get; set; }
+        public string? UserCode {  get; set; }
         [Required]
         public string? Password {  get; set; }
     }

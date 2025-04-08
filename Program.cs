@@ -5,11 +5,13 @@ using Microsoft.IdentityModel.Tokens;
 using ServicePortal.Application.Services;
 using ServicePortal.Infrastructure.Data;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Localization;
 using Microsoft.AspNetCore.Localization;
 using System.Globalization;
 using ServicePortal.Middleware;
-using ServicePortal.Common;
+using ServicePortal.Modules.User.Services;
+using ServicePortal.Modules.Auth.Services;
+using ServicePortal.Common.Helpers;
+using ServicePortal.Domain.Enums;
 
 namespace ServicePortal
 {
@@ -24,7 +26,6 @@ namespace ServicePortal
                 .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking));
 
             builder.Services.AddScoped<UserService>();
-            builder.Services.AddScoped<TicketService>();
             builder.Services.AddScoped<AuthService>();
             builder.Services.AddScoped<JwtService>();
 
@@ -78,16 +79,16 @@ namespace ServicePortal
                     ValidateAudience = false,
                     ValidateLifetime = true,
                     ValidateIssuerSigningKey = true,
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key)),
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key ?? "")),
                     ClockSkew = TimeSpan.Zero
                 };
 
-                // Nếu muốn debug lỗi JWT dễ hơn
                 options.Events = new JwtBearerEvents
                 {
                     OnAuthenticationFailed = context =>
                     {
                         Console.WriteLine("JWT lỗi: " + context.Exception.Message);
+                        FileHelper.WriteLog(TypeErrorEnum.ERROR,$"JWT lỗi: {context.Exception.Message}");
                         return Task.CompletedTask;
                     }
                 };
@@ -99,11 +100,11 @@ namespace ServicePortal
                 options.InvalidModelStateResponseFactory = actionContext =>
                 {
                     var errors = actionContext.ModelState
-                        .Where(e => e.Value.Errors.Count > 0)
+                        .Where(e => e.Value?.Errors.Count > 0)
                         .Select(e => new
                         {
                             Field = e.Key,
-                            Errors = e.Value.Errors.Select(e => e.ErrorMessage)
+                            Errors = e.Value!.Errors.Select(e => e.ErrorMessage)
                         });
 
                     return new UnprocessableEntityObjectResult(new
@@ -153,7 +154,7 @@ namespace ServicePortal
             {
                 if (e.ExceptionObject is Exception ex)
                 {
-                    Global.WriteLog(TYPE_ERROR.ERROR, $"[UnhandledException] {ex.Message}\n{ex.StackTrace}");
+                    FileHelper.WriteLog(TypeErrorEnum.ERROR, $"[UnhandledException] {ex.Message}\n{ex.StackTrace}");
                 }
             };
         }

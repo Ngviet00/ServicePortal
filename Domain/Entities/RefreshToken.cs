@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
 
-namespace ServicePortal.Domain.Models
+namespace ServicePortal.Domain.Entities
 {
     [Table("refresh_tokens")]
     public class RefreshToken

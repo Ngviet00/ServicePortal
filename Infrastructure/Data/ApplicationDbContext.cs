@@ -1,6 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using ServicePortal.Domain.Models;
-using ServicePortal.Domains.Models;
+using ServicePortal.Domain.Entities;
 
 namespace ServicePortal.Infrastructure.Data
 {

@@ -1,4 +1,4 @@
-﻿namespace ServicePortal.Application.DTOs.User.Responses
+﻿namespace ServicePortal.Modules.User.Responses
 {
     public class UserResponse
     {

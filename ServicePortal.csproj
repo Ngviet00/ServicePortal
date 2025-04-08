@@ -8,9 +8,17 @@
 
   <ItemGroup>
     <Compile Remove="Controllers\**" />
+    <Compile Remove="Modules\Auth\DTO\**" />
+    <Compile Remove="Modules\User - Copy - Copy %283%29\**" />
     <Content Remove="Controllers\**" />
+    <Content Remove="Modules\Auth\DTO\**" />
+    <Content Remove="Modules\User - Copy - Copy %283%29\**" />
     <EmbeddedResource Remove="Controllers\**" />
+    <EmbeddedResource Remove="Modules\Auth\DTO\**" />
+    <EmbeddedResource Remove="Modules\User - Copy - Copy %283%29\**" />
     <None Remove="Controllers\**" />
+    <None Remove="Modules\Auth\DTO\**" />
+    <None Remove="Modules\User - Copy - Copy %283%29\**" />
     <None Remove="Properties\PublishProfiles\FolderProfile.pubxml" />
     <None Remove="Properties\PublishProfiles\FolderProfile1.pubxml" />
   </ItemGroup>
@@ -35,19 +43,12 @@
     <Folder Include="Modules\LeaveRequest\Resources\" />
     <Folder Include="Modules\LeaveRequest\Responses\" />
     <Folder Include="Modules\LeaveRequest\Services\" />
-    <Folder Include="Modules\Auth\DTO\" />
     <Folder Include="Modules\Position\Controllers\" />
     <Folder Include="Modules\Position\DTO\" />
     <Folder Include="Modules\Position\Requests\" />
     <Folder Include="Modules\Position\Resources\" />
     <Folder Include="Modules\Position\Responses\" />
     <Folder Include="Modules\Position\Services\" />
-    <Folder Include="Modules\User - Copy - Copy %283%29\Controllers\" />
-    <Folder Include="Modules\User - Copy - Copy %283%29\DTO\" />
-    <Folder Include="Modules\User - Copy - Copy %283%29\Requests\" />
-    <Folder Include="Modules\User - Copy - Copy %283%29\Resources\" />
-    <Folder Include="Modules\User - Copy - Copy %283%29\Responses\" />
-    <Folder Include="Modules\User - Copy - Copy %283%29\Services\" />
     <Folder Include="Modules\__Temp\Controllers\" />
     <Folder Include="Modules\__Temp\DTO\" />
     <Folder Include="Modules\__Temp\Requests\" />
@@ -66,7 +67,6 @@
     <Folder Include="Modules\Role\Resources\" />
     <Folder Include="Modules\Role\Responses\" />
     <Folder Include="Modules\Role\Services\" />
-    <Folder Include="Modules\User\DTO\" />
     <Folder Include="Properties\PublishProfiles\" />
   </ItemGroup>
 

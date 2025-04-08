@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
 
-namespace ServicePortal.Domains.Models
+namespace ServicePortal.Domain.Entities
 {
     [Table("leave_requests")]
     public class LeaveRequest
@@ -30,7 +30,7 @@ namespace ServicePortal.Domains.Models
         public DateTime? ToDate { get; set; }
 
         [Column("state")]
-        public string? Status { get; set; } //statut total of request //pending, complete, reject
+        public string? Status { get; set; } //status total of request //pending, complete, reject
 
         [Column("display_hr")]
         public bool? DisplayHr { get; set; }

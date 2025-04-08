@@ -1,6 +1,6 @@
 ﻿using AutoMapper;
-using ServicePortal.Application.DTOs.User.Responses;
-using ServicePortal.Domains.Models;
+using ServicePortal.Domain.Entities;
+using ServicePortal.Modules.User.Responses;
 
 namespace ServicePortal.Common
 {
@@ -8,7 +8,7 @@ namespace ServicePortal.Common
     {
         public MappingProfile()
         {
-            //CreateMap<User, UserResponse>();
+            CreateMap<User, UserResponse>();
         }
     }
 }

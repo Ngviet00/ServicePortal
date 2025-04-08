@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace ServicePortal.Domains.Models
+namespace ServicePortal.Domain.Entities
 {
     [Table("deparments")]
     public class Deparment

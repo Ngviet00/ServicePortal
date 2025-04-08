@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
 
-namespace ServicePortal.Domains.Models
+namespace ServicePortal.Domain.Entities
 {
     [Table("positions")]
     public class Position

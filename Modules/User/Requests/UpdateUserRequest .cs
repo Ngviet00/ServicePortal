@@ -1,4 +1,4 @@
-﻿namespace ServicePortal.Application.DTOs.User.Requests
+﻿namespace ServicePortal.Moduless.User.Requests
 {
     public class UpdateUserRequest
     {
