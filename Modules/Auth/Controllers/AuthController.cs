@@ -2,10 +2,10 @@
 using LoginRequest = ServicePortal.Application.DTOs.Auth.Requests.LoginRequest;
 using ServicePortal.Application.DTOs.Auth.Requests;
 using System.Security.Claims;
-using ServicePortal.Modules.Auth.Services;
-using ServicePortal.Modules.User.Responses;
 using ServicePortal.Common;
-using ServicePortal.Domain.Entities;
+using ServicePortal.Modules.Auth.Requests;
+using ServicePortal.Modules.User.DTO;
+using ServicePortal.Modules.Auth.Interfaces;
 
 namespace ServicePortal.Modules.Auth.Controllers
 {
@@ -13,8 +13,8 @@ namespace ServicePortal.Modules.Auth.Controllers
     [Route("[controller]")]
     public class AuthController : ControllerBase
     {
-        private readonly AuthService _authService;
-        public AuthController(AuthService authService)
+        private readonly IAuthService _authService;
+        public AuthController(IAuthService authService)
         {
             _authService = authService;
         }
@@ -35,17 +35,19 @@ namespace ServicePortal.Modules.Auth.Controllers
         }
 
         [HttpPost("/register")]
-        public async Task<IActionResult> Register(ServicePortal.Domain.Entities.User entity)
+        public async Task<IActionResult> Register(CreateUserRequest request)
         {
-            UserResponse? userResponse = await _authService.Register(entity);
+            UserDTO? userDTO = await _authService.Register(request);
 
-            return Ok(new BaseResponse<UserResponse>(200, "Register user successfully", userResponse));
+            return Ok(new BaseResponse<UserDTO>(200, "Register user successfully", userDTO));
         }
 
         [HttpPost("/logout")]
         public async Task<IActionResult> Logout()
         {
-            if (!Request.Cookies.TryGetValue("refreshToken", out var refreshToken))
+            var refreshToken = Request.Cookies["refreshToken"];
+
+            if (string.IsNullOrWhiteSpace(refreshToken))
             {
                 return Ok(new BaseResponse<string>(200, "Logout successfully", null));
             }
@@ -60,7 +62,7 @@ namespace ServicePortal.Modules.Auth.Controllers
         [HttpPost("/change-password")]
         public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
         {
-            var employeeCode = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "";
+            var employeeCode = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0";
 
             if (string.IsNullOrWhiteSpace(employeeCode))
             {
@@ -75,7 +77,7 @@ namespace ServicePortal.Modules.Auth.Controllers
         [HttpGet("/refresh-token")]
         public async Task<IActionResult> RefreshAccessToken()
         {
-            Request.Cookies.TryGetValue("refreshToken", out var refreshToken);
+            var refreshToken = Request.Cookies["refreshToken"] ?? "";
 
             if (string.IsNullOrWhiteSpace(refreshToken))
             {

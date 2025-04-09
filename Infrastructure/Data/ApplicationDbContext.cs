@@ -24,28 +24,20 @@ namespace ServicePortal.Infrastructure.Data
                 new Deparment
                 {
                     Id = 1,
-                    Name = "Business Development",
-                    Note = "Phát triền kinh doanh",
-                    ParentId = null
-                },
-                new Deparment
-                {
-                    Id = 2,
-                    Name = "Commercial",
-                    Note = "Thương mại",
+                    Name = "IT/MIS",
+                    Note = "IT",
                     ParentId = null
                 }
             );
 
             modelBuilder.Entity<Role>().HasData(
                 new Role { Id = 1, Name = "SuperAdmin"},
-                new Role { Id = 2, Name = "HR"},
-                new Role { Id = 3, Name = "IT"},
-                new Role { Id = 4, Name = "Office"},
-                new Role { Id = 5, Name = "Production"}
+                new Role { Id = 2, Name = "IT" },
+                new Role { Id = 3, Name = "HR"}
             );
 
             modelBuilder.Entity<Position>().HasData(
+                new Position { Id = -1, Name = "SuperAdmin", Level = 0 },
                 new Position { Id = 1, Name = "General Director", Level = 1 },
                 new Position { Id = 2, Name = "Assistant General Director", Level = 2 },
                 new Position { Id = 3, Name = "General Manager", Level = 3 },
@@ -53,8 +45,7 @@ namespace ServicePortal.Infrastructure.Data
                 new Position { Id = 5, Name = "Assistant Manager", Level = 5 },
                 new Position { Id = 6, Name = "Supervisor", Level = 6 },
                 new Position { Id = 7, Name = "Chief Accountant", Level = 6 },
-                new Position { Id = 8, Name = "Staff", Level = 7 },
-                new Position { Id = 9, Name = "Operator", Level = 15 }
+                new Position { Id = 8, Name = "Staff", Level = 7 }
             );
         }
     }

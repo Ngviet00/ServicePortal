@@ -1,7 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using ServicePortal.Common;
+using ServicePortal.Modules.User.DTO;
+using ServicePortal.Modules.User.Interfaces;
 using ServicePortal.Modules.User.Responses;
-using ServicePortal.Modules.User.Services;
 
 namespace ServicePortal.Modules.User.Controllers
 {
@@ -9,9 +10,9 @@ namespace ServicePortal.Modules.User.Controllers
     [Route("[controller]")]
     public class UserController : ControllerBase
     {
-        private readonly UserService _userService;
+        private readonly IUserService _userService;
 
-        public UserController(UserService userService)
+        public UserController(IUserService userService)
         {
             _userService = userService;
         }
@@ -19,26 +20,34 @@ namespace ServicePortal.Modules.User.Controllers
         [HttpGet("/get-all")]
         public async Task<IActionResult> GetAll()
         {
-            List<UserResponse> users = await _userService.GetAll();
+            List<UserDTO> users = await _userService.GetAll();
 
-            return Ok(new BaseResponse<List<UserResponse>>(200, "Success", users));
+            return Ok(new BaseResponse<List<UserDTO>>(200, "Success", users));
         }
 
-        [HttpGet("/{id}")]
+        [HttpGet("/get-by-id/{id}")]
         public async Task<IActionResult> GetById(Guid id)
         {
-            UserResponse? user = await _userService.GetById(id);
+            UserDTO? userDTO = await _userService.GetById(id);
 
-            return Ok(new BaseResponse<UserResponse>(200, "success", user));
+            return Ok(new BaseResponse<UserDTO>(200, "success", userDTO));
         }
 
-        [HttpPut("/update")]
-        public async Task<IActionResult> Update(UserResponse user)
+        [HttpGet("/get-by-code/{code}")]
+        public async Task<IActionResult> GetByCode(string code)
         {
-            UserResponse? userResponse = await _userService.Update(user);
+            UserDTO? userDTO = await _userService.GetByCode(code);
 
-            return Ok(new BaseResponse<UserResponse>(200, "Update user successfully", userResponse));
+            return Ok(new BaseResponse<UserDTO>(200, "success", userDTO));
         }
+
+        //[HttpPut("/update")]
+        //public async Task<IActionResult> Update(UserResponse user)
+        //{
+        //    UserResponse? userResponse = await _userService.Update(user);
+
+        //    return Ok(new BaseResponse<UserResponse>(200, "Update user successfully", userResponse));
+        //}
 
         [HttpDelete("/delete/{id}")]
         public async Task<IActionResult> Delete(Guid id)
@@ -57,5 +66,3 @@ namespace ServicePortal.Modules.User.Controllers
         }
     }
 }
-
-//34f81e1e-eff0-443a-9704-2a4819961c52

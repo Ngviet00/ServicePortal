@@ -2,11 +2,12 @@
 using Microsoft.EntityFrameworkCore;
 using ServicePortal.Common;
 using ServicePortal.Infrastructure.Data;
-using ServicePortal.Modules.User.Responses;
+using ServicePortal.Modules.User.DTO;
+using ServicePortal.Modules.User.Interfaces;
 
 namespace ServicePortal.Modules.User.Services
 {
-    public class UserService
+    public class UserService : IUserService
     {
         private readonly ApplicationDbContext _context;
         private readonly IMapper _mapper;
@@ -17,56 +18,78 @@ namespace ServicePortal.Modules.User.Services
             _mapper = mapper;
         }
 
-        public async Task<List<UserResponse>> GetAll()
+        public async Task<List<UserDTO>> GetAll()
         {
             var users = await _context.Users.ToListAsync();
 
-            var userResponse = _mapper.Map<List<UserResponse>>(users);
+            List<UserDTO> userDTO = _mapper.Map<List<UserDTO>>(users);
 
-            return userResponse;
+            return userDTO;
         }
 
-        public async Task<UserResponse?> GetById(Guid id)
+        public async Task<UserDTO> GetByCode(string code)
         {
-            var user = await _context.Users.FindAsync(id);
-
-            if (user != null)
+            if (string.IsNullOrWhiteSpace(code))
             {
-                return _mapper.Map<UserResponse>(user);
+                throw new ValidationException("Code không được để trống");
             }
 
-            return null;
+            var user = await _context.Users.FirstOrDefaultAsync(e => e.Code == code) ?? throw new NotFoundException("User not found!");
+
+            return _mapper.Map<UserDTO>(user);
         }
 
-        public async Task<UserResponse> Update(UserResponse userResponse)
+        public async Task<UserDTO> GetById(Guid id)
         {
-            var user = _context.Users.Find(userResponse.Id) ?? throw new NotFoundException("User not found!");
+            if (string.IsNullOrWhiteSpace(id.ToString()))
+            {
+                throw new ValidationException("Id không được để trống");
+            }
+
+            var user = await _context.Users.FirstOrDefaultAsync(e => e.Id == id) ?? throw new NotFoundException("User not found!");
+
+            return _mapper.Map<UserDTO>(user);
+        }
+
+        //public async Task<UserDTO> Update(Guid id, UpdateUserRequest request)
+        //{
+        //    var user = await _context.Users.FirstOrDefaultAsync(e => e.Id == id) ?? throw new NotFoundException("User not found!");
+
+        //    throw new NotImplementedException();
+        //}
+
+        public async Task<UserDTO> Delete(Guid id)
+        {
+            if (string.IsNullOrWhiteSpace(id.ToString()))
+            {
+                throw new ValidationException("Id không được để trống");
+            }
+
+            var user = await _context.Users.FirstOrDefaultAsync(e => e.Id == id) ?? throw new NotFoundException("User not found!");
+
+            user.DeletedAt = DateTime.Now;
 
             _context.Users.Update(user);
 
             await _context.SaveChangesAsync();
 
-            return userResponse;
+            return _mapper.Map<UserDTO>(user);
         }
 
-        public async Task Delete(Guid id)
+        public async Task<UserDTO> ForceDelete(Guid id)
         {
-            var user = _context.Users.Find(id) ?? throw new NotFoundException("User not found!");
+            if (string.IsNullOrWhiteSpace(id.ToString()))
+            {
+                throw new ValidationException("Id không được để trống");
+            }
 
-            user.DeletedAt = DateTime.UtcNow;
-
-            _context.Users.Update(user);
-
-            await _context.SaveChangesAsync();
-        }
-
-        public async Task ForceDelete(Guid id)
-        {
-            var user = _context.Users.Find(id) ?? throw new NotFoundException("User not found!");
+            var user = await _context.Users.FirstOrDefaultAsync(e => e.Id == id) ?? throw new NotFoundException("User not found!");
 
             _context.Users.Remove(user);
 
             await _context.SaveChangesAsync();
+
+            return _mapper.Map<UserDTO>(user);
         }
     }
 }

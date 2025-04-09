@@ -12,6 +12,14 @@ using ServicePortal.Modules.User.Services;
 using ServicePortal.Modules.Auth.Services;
 using ServicePortal.Common.Helpers;
 using ServicePortal.Domain.Enums;
+using ServicePortal.Modules.Auth.Interfaces;
+using ServicePortal.Modules.User.Interfaces;
+using ServicePortal.Modules.Role.Interfaces;
+using ServicePortal.Modules.Role.Services;
+using ServicePortal.Modules.Position.Interfaces;
+using ServicePortal.Modules.Position.Services;
+using ServicePortal.Modules.Deparment.Interfaces;
+using ServicePortal.Modules.Deparment.Services;
 
 namespace ServicePortal
 {
@@ -25,8 +33,11 @@ namespace ServicePortal
                 options.UseSqlServer(builder.Configuration.GetConnectionString("StringConnectionDb"))
                 .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking));
 
-            builder.Services.AddScoped<UserService>();
-            builder.Services.AddScoped<AuthService>();
+            builder.Services.AddScoped<IAuthService, AuthService>();
+            builder.Services.AddScoped<IUserService, UserService>();
+            builder.Services.AddScoped<IRoleService, RoleService>();
+            builder.Services.AddScoped<IPositionService, PositionService>();
+            builder.Services.AddScoped<IDeparmentService, DeparmentService>();
             builder.Services.AddScoped<JwtService>();
 
             // Add services to the container.
@@ -109,9 +120,9 @@ namespace ServicePortal
 
                     return new UnprocessableEntityObjectResult(new
                     {
-                        Status = 422,
-                        Message = "Validation failed",
-                        Errors = errors
+                        status = 422,
+                        message = "Validation failed",
+                        errors = errors
                     });
                 };
             });

@@ -39,8 +39,8 @@ namespace ServicePortal.Middleware
 
             var response = new
             {
-                StatusCode = statusCode,
-                Message = message
+                status = statusCode,
+                message = message
             };
 
             context.Response.ContentType = "application/json";

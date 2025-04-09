@@ -6,47 +6,68 @@ using ServicePortal.Common.Helpers;
 using ServicePortal.Common;
 using ServicePortal.Domain.Entities;
 using ServicePortal.Infrastructure.Data;
-using ServicePortal.Modules.User.Responses;
-using ServicePortal.Modules.User.Services;
 using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
+using ServicePortal.Modules.Auth.Requests;
+using ServicePortal.Modules.User.DTO;
+using ServicePortal.Modules.Auth.Interfaces;
 
 namespace ServicePortal.Modules.Auth.Services
 {
-    public class AuthService
+    public class AuthService : IAuthService
     {
         private readonly ApplicationDbContext _context;
         private readonly JwtService _jwtService;
-        private readonly UserService _userService;
         private readonly IMapper _mapper;
         private readonly IConfiguration _config;
 
-        public AuthService(JwtService jwtService, UserService userService, ApplicationDbContext context, IMapper mapper, IConfiguration config)
+        public AuthService(JwtService jwtService, ApplicationDbContext context, IMapper mapper, IConfiguration config)
         {
             _jwtService = jwtService;
-            _userService = userService;
             _context = context;
             _mapper = mapper;
             _config = config;
         }
 
-        public async Task<UserResponse> Register(ServicePortal.Domain.Entities.User user)
+        public async Task<UserDTO> Register(CreateUserRequest request)
         {
-            if (await _context.Users.AnyAsync(u => u.Email == user.Email || u.Name == user.Name || u.Code == user.Code))
+
+            if (await _context.Users.AnyAsync(u => u.Code == request.Code))
+            {
+                throw new ValidationException("User is exists!");
+            }
+
+            if (!string.IsNullOrWhiteSpace(request.Email) && await _context.Users.AnyAsync(u => u.Email == request.Email))
             {
                 throw new ValidationException("Email already in use!");
             }
 
-            user.Password = Helper.HashString(user.Password);
-            user.CreatedAt = DateTime.UtcNow;
+            var newUser = new ServicePortal.Domain.Entities.User
+            {
+                Code = request.Code,
+                Name = request.Name,
+                Password = Helper.HashString(request.Password),
+                Email = request.Email ?? null,
+                RoleId = request.RoleId,
+                IsActive = true,
+                DateJoinCompany = request.DateJoinCompany ?? null,
+                CreatedAt = DateTime.Now
+            };
 
-            _context.Users.Add(user);
-
+            _context.Users.Add(newUser);
             await _context.SaveChangesAsync();
 
-            user.Password = null;
+            var userAssignment = new UserAssignment
+            {
+                UserCode = request.Code,
+                DeparmentId = request.DeparmentId,
+                PositionId = request.PositionId,
+            };
 
-            return _mapper.Map<UserResponse>(user);
+            _context.UserAssignments.Add(userAssignment);
+            await _context.SaveChangesAsync();
+
+            return _mapper.Map<UserDTO>(newUser);
         }
 
         public async Task<LoginResponse> Login(LoginRequest request)
@@ -55,7 +76,7 @@ namespace ServicePortal.Modules.Auth.Services
 
             if (!Helper.VerifyString(user?.Password ?? "", request?.Password ?? ""))
             {
-                throw new ValidationException("Password is incorrect!");
+                throw new UnauthorizedException("Password is incorrect!");
             }
 
             var claims = new List<Claim> {
@@ -70,7 +91,9 @@ namespace ServicePortal.Modules.Auth.Services
             {
                 Token = refreshToken,
                 UserCode = user?.Code ?? "",
-                ExpiresAt = DateTime.UtcNow.AddDays(_config.GetValue<int>("Jwt:RefreshTokenExpirationDays"))
+                ExpiresAt = DateTime.Now.AddDays(_config.GetValue<int>("Jwt:RefreshTokenExpirationDays")),
+                IsRevoked = false,
+                CreatedAt = DateTime.Now
             };
 
             await _context.RefreshTokens.AddAsync(refreshTokenEntity);
@@ -91,7 +114,7 @@ namespace ServicePortal.Modules.Auth.Services
 
         public async Task<string> RefreshAccessToken(string refreshToken)
         {
-            var token = await _context.RefreshTokens.FirstOrDefaultAsync(x => x.Token == refreshToken && x.IsRevoked == true && x.ExpiresAt > DateTime.UtcNow);
+            var token = await _context.RefreshTokens.FirstOrDefaultAsync(x => x.Token == refreshToken && x.IsRevoked == false && x.ExpiresAt > DateTime.UtcNow);
 
             if (token == null)
             {
@@ -128,6 +151,8 @@ namespace ServicePortal.Modules.Auth.Services
             }
 
             token.IsRevoked = true;
+
+            _context.RefreshTokens.Update(token);
 
             await _context.SaveChangesAsync();
         }

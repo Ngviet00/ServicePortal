@@ -1,8 +1,9 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
 
 namespace ServicePortal.Domain.Entities
 {
-    [Table("users")]
+    [Table("users"), Index(nameof(Code), nameof(Email), nameof(Id))]
     public class User
     {
         [Column("id")]
@@ -37,6 +38,5 @@ namespace ServicePortal.Domain.Entities
 
         [Column("deleted_at")]
         public DateTime? DeletedAt { get; set; }
-
     }
 }
