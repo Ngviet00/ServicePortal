@@ -1,8 +1,9 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
 
 namespace ServicePortal.Domain.Entities
 {
-    [Table("user_assignments")]
+    [Table("user_assignments"), Index(nameof(UserCode), nameof(PositionDeparmentId))]
     public class UserAssignment
     {
         [Column("id")]
@@ -11,11 +12,8 @@ namespace ServicePortal.Domain.Entities
         [Column("user_code")]
         public string? UserCode { get; set; }
 
-        [Column("deparment_id")]
-        public int? DeparmentId { get; set; }
-
-        [Column("position_id")]
-        public int? PositionId { get; set; }
+        [Column("position_department_id")]
+        public int? PositionDeparmentId { get; set; }
 
         [Column("is_head_of_deparment")]
         public bool? IsHeadOfDeparment { get; set; }

@@ -9,6 +9,5 @@ namespace ServicePortal.Modules.Deparment.Interfaces
         Task<Domain.Entities.Deparment> Create(DeparmentDTO dto);
         Task<Domain.Entities.Deparment> Update(int id, DeparmentDTO dto);
         Task<Domain.Entities.Deparment> Delete(int id);
-        Task<Domain.Entities.Deparment> ForceDelete(int id);
     }
 }

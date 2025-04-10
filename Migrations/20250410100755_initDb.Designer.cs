@@ -12,8 +12,8 @@ using ServicePortal.Infrastructure.Data;
 namespace ServicePortal.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250409030741_InitDb")]
-    partial class InitDb
+    [Migration("20250410100755_initDb")]
+    partial class initDb
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -36,10 +36,6 @@ namespace ServicePortal.Migrations
                         .HasColumnType("datetime2")
                         .HasColumnName("approved_at");
 
-                    b.Property<string>("Deparment")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("deparment");
-
                     b.Property<Guid?>("LeaveRequestId")
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("leave_request_id");
@@ -52,10 +48,6 @@ namespace ServicePortal.Migrations
                     b.Property<int?>("Order")
                         .HasColumnType("int")
                         .HasColumnName("order");
-
-                    b.Property<string>("Position")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("position");
 
                     b.Property<string>("Status")
                         .HasColumnType("nvarchar(max)")
@@ -79,10 +71,6 @@ namespace ServicePortal.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("deleted_at");
-
                     b.Property<string>("Name")
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)")
@@ -98,6 +86,8 @@ namespace ServicePortal.Migrations
                         .HasColumnName("parent_id");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Id", "ParentId");
 
                     b.ToTable("deparments");
 
@@ -124,6 +114,10 @@ namespace ServicePortal.Migrations
                     b.Property<DateTime?>("DeletedAt")
                         .HasColumnType("datetime2")
                         .HasColumnName("deleted_at");
+
+                    b.Property<int?>("DeparmentId")
+                        .HasColumnType("int")
+                        .HasColumnName("deparment_id");
 
                     b.Property<bool?>("DisplayHr")
                         .HasColumnType("bit")
@@ -152,6 +146,10 @@ namespace ServicePortal.Migrations
                     b.Property<string>("NameRegister")
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("name_register");
+
+                    b.Property<int?>("PositionId")
+                        .HasColumnType("int")
+                        .HasColumnName("position_id");
 
                     b.Property<string>("Reason")
                         .HasColumnType("nvarchar(max)")
@@ -203,17 +201,13 @@ namespace ServicePortal.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("deleted_at");
-
-                    b.Property<int?>("Level")
-                        .HasColumnType("int")
-                        .HasColumnName("level");
-
                     b.Property<string>("Name")
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("name");
+
+                    b.Property<int?>("PositionLevel")
+                        .HasColumnType("int")
+                        .HasColumnName("position_level");
 
                     b.HasKey("Id");
 
@@ -223,56 +217,96 @@ namespace ServicePortal.Migrations
                         new
                         {
                             Id = -1,
-                            Level = 0,
-                            Name = "SuperAdmin"
+                            Name = "SuperAdmin",
+                            PositionLevel = 0
                         },
                         new
                         {
                             Id = 1,
-                            Level = 1,
-                            Name = "General Director"
+                            Name = "General Director",
+                            PositionLevel = 1
                         },
                         new
                         {
                             Id = 2,
-                            Level = 2,
-                            Name = "Assistant General Director"
+                            Name = "Assistant General Director",
+                            PositionLevel = 2
                         },
                         new
                         {
                             Id = 3,
-                            Level = 3,
-                            Name = "General Manager"
+                            Name = "General Manager",
+                            PositionLevel = 3
                         },
                         new
                         {
                             Id = 4,
-                            Level = 4,
-                            Name = "Manager"
+                            Name = "Manager",
+                            PositionLevel = 4
                         },
                         new
                         {
                             Id = 5,
-                            Level = 5,
-                            Name = "Assistant Manager"
+                            Name = "Assistant Manager",
+                            PositionLevel = 5
                         },
                         new
                         {
                             Id = 6,
-                            Level = 6,
-                            Name = "Supervisor"
+                            Name = "Supervisor",
+                            PositionLevel = 6
                         },
                         new
                         {
                             Id = 7,
-                            Level = 6,
-                            Name = "Chief Accountant"
+                            Name = "Chief Accountant",
+                            PositionLevel = 6
                         },
                         new
                         {
                             Id = 8,
-                            Level = 7,
-                            Name = "Staff"
+                            Name = "Staff",
+                            PositionLevel = 7
+                        });
+                });
+
+            modelBuilder.Entity("ServicePortal.Domain.Entities.PositionDeparment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("CustomTitle")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("custom_title");
+
+                    b.Property<int?>("DeparmentId")
+                        .HasColumnType("int")
+                        .HasColumnName("deparment_id");
+
+                    b.Property<int?>("PositionDeparmentLevel")
+                        .HasColumnType("int")
+                        .HasColumnName("position_deparment_level");
+
+                    b.Property<int?>("PositionId")
+                        .HasColumnType("int")
+                        .HasColumnName("position_id");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("position_deparments");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            CustomTitle = "Manager IT/MIS",
+                            DeparmentId = 1,
+                            PositionDeparmentLevel = 1,
+                            PositionId = 4
                         });
                 });
 
@@ -341,6 +375,11 @@ namespace ServicePortal.Migrations
                         {
                             Id = 3,
                             Name = "HR"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Name = "User"
                         });
                 });
 
@@ -352,7 +391,7 @@ namespace ServicePortal.Migrations
                         .HasColumnName("id");
 
                     b.Property<string>("Code")
-                        .HasColumnType("nvarchar(max)")
+                        .HasColumnType("nvarchar(450)")
                         .HasColumnName("code");
 
                     b.Property<DateTime?>("CreatedAt")
@@ -368,7 +407,7 @@ namespace ServicePortal.Migrations
                         .HasColumnName("deleted_at");
 
                     b.Property<string>("Email")
-                        .HasColumnType("nvarchar(max)")
+                        .HasColumnType("nvarchar(450)")
                         .HasColumnName("email");
 
                     b.Property<bool?>("IsActive")
@@ -393,6 +432,8 @@ namespace ServicePortal.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Code", "Email", "Id");
+
                     b.ToTable("users");
                 });
 
@@ -403,23 +444,21 @@ namespace ServicePortal.Migrations
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("id");
 
-                    b.Property<int?>("DeparmentId")
-                        .HasColumnType("int")
-                        .HasColumnName("deparment_id");
-
                     b.Property<bool?>("IsHeadOfDeparment")
                         .HasColumnType("bit")
                         .HasColumnName("is_head_of_deparment");
 
-                    b.Property<int?>("PositionId")
+                    b.Property<int?>("PositionDeparmentId")
                         .HasColumnType("int")
-                        .HasColumnName("position_id");
+                        .HasColumnName("position_department_id");
 
                     b.Property<string>("UserCode")
-                        .HasColumnType("nvarchar(max)")
+                        .HasColumnType("nvarchar(450)")
                         .HasColumnName("user_code");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("UserCode", "PositionDeparmentId");
 
                     b.ToTable("user_assignments");
                 });

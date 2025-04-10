@@ -1,6 +1,6 @@
-﻿using AutoMapper;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using ServicePortal.Common;
+using ServicePortal.Common.Mappers;
 using ServicePortal.Infrastructure.Data;
 using ServicePortal.Modules.User.DTO;
 using ServicePortal.Modules.User.Interfaces;
@@ -10,19 +10,17 @@ namespace ServicePortal.Modules.User.Services
     public class UserService : IUserService
     {
         private readonly ApplicationDbContext _context;
-        private readonly IMapper _mapper;
 
-        public UserService(ApplicationDbContext context, IMapper mapper)
+        public UserService(ApplicationDbContext context)
         {
             _context = context;
-            _mapper = mapper;
         }
 
         public async Task<List<UserDTO>> GetAll()
         {
             var users = await _context.Users.ToListAsync();
 
-            List<UserDTO> userDTO = _mapper.Map<List<UserDTO>>(users);
+            List<UserDTO> userDTO = UserMapper.ToDtoList(users);
 
             return userDTO;
         }
@@ -31,24 +29,24 @@ namespace ServicePortal.Modules.User.Services
         {
             if (string.IsNullOrWhiteSpace(code))
             {
-                throw new ValidationException("Code không được để trống");
+                throw new ValidationException("Code can not empty");
             }
 
             var user = await _context.Users.FirstOrDefaultAsync(e => e.Code == code) ?? throw new NotFoundException("User not found!");
 
-            return _mapper.Map<UserDTO>(user);
+            return UserMapper.ToDto(user);
         }
 
         public async Task<UserDTO> GetById(Guid id)
         {
             if (string.IsNullOrWhiteSpace(id.ToString()))
             {
-                throw new ValidationException("Id không được để trống");
+                throw new ValidationException("Id can not empty");
             }
 
             var user = await _context.Users.FirstOrDefaultAsync(e => e.Id == id) ?? throw new NotFoundException("User not found!");
 
-            return _mapper.Map<UserDTO>(user);
+            return UserMapper.ToDto(user);
         }
 
         //public async Task<UserDTO> Update(Guid id, UpdateUserRequest request)
@@ -62,7 +60,7 @@ namespace ServicePortal.Modules.User.Services
         {
             if (string.IsNullOrWhiteSpace(id.ToString()))
             {
-                throw new ValidationException("Id không được để trống");
+                throw new ValidationException("Id can not empty");
             }
 
             var user = await _context.Users.FirstOrDefaultAsync(e => e.Id == id) ?? throw new NotFoundException("User not found!");
@@ -73,14 +71,14 @@ namespace ServicePortal.Modules.User.Services
 
             await _context.SaveChangesAsync();
 
-            return _mapper.Map<UserDTO>(user);
+            return UserMapper.ToDto(user);
         }
 
         public async Task<UserDTO> ForceDelete(Guid id)
         {
             if (string.IsNullOrWhiteSpace(id.ToString()))
             {
-                throw new ValidationException("Id không được để trống");
+                throw new ValidationException("Id can not empty");
             }
 
             var user = await _context.Users.FirstOrDefaultAsync(e => e.Id == id) ?? throw new NotFoundException("User not found!");
@@ -89,7 +87,7 @@ namespace ServicePortal.Modules.User.Services
 
             await _context.SaveChangesAsync();
 
-            return _mapper.Map<UserDTO>(user);
+            return UserMapper.ToDto(user);
         }
     }
 }

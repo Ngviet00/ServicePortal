@@ -24,7 +24,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="12.0.0" />
     <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
     <PackageReference Include="EFCore.BulkExtensions" Version="9.0.1" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.14" />
@@ -33,6 +32,10 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="Serilog" Version="4.2.0" />
+    <PackageReference Include="Serilog.AspNetCore" Version="9.0.0" />
+    <PackageReference Include="Serilog.Sinks.File" Version="6.0.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
   </ItemGroup>
 
@@ -43,30 +46,7 @@
     <Folder Include="Modules\LeaveRequest\Resources\" />
     <Folder Include="Modules\LeaveRequest\Responses\" />
     <Folder Include="Modules\LeaveRequest\Services\" />
-    <Folder Include="Modules\Position\Controllers\" />
-    <Folder Include="Modules\Position\DTO\" />
-    <Folder Include="Modules\Position\Requests\" />
-    <Folder Include="Modules\Position\Resources\" />
-    <Folder Include="Modules\Position\Responses\" />
-    <Folder Include="Modules\Position\Services\" />
-    <Folder Include="Modules\__Temp\Controllers\" />
-    <Folder Include="Modules\__Temp\DTO\" />
-    <Folder Include="Modules\__Temp\Requests\" />
-    <Folder Include="Modules\__Temp\Resources\" />
-    <Folder Include="Modules\__Temp\Responses\" />
-    <Folder Include="Modules\__Temp\Services\" />
-    <Folder Include="Modules\Deparment\Controllers\" />
-    <Folder Include="Modules\Deparment\DTO\" />
-    <Folder Include="Modules\Deparment\Requests\" />
-    <Folder Include="Modules\Deparment\Resources\" />
-    <Folder Include="Modules\Deparment\Responses\" />
-    <Folder Include="Modules\Deparment\Services\" />
-    <Folder Include="Modules\Role\Controllers\" />
-    <Folder Include="Modules\Role\DTO\" />
-    <Folder Include="Modules\Role\Requests\" />
-    <Folder Include="Modules\Role\Resources\" />
-    <Folder Include="Modules\Role\Responses\" />
-    <Folder Include="Modules\Role\Services\" />
+    <Folder Include="Modules\User\Responses\" />
     <Folder Include="Properties\PublishProfiles\" />
   </ItemGroup>
 

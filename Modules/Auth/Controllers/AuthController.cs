@@ -9,8 +9,7 @@ using ServicePortal.Modules.Auth.Interfaces;
 
 namespace ServicePortal.Modules.Auth.Controllers
 {
-    [ApiController]
-    [Route("[controller]")]
+    [ApiController, Route("auth")]
     public class AuthController : ControllerBase
     {
         private readonly IAuthService _authService;
@@ -19,7 +18,7 @@ namespace ServicePortal.Modules.Auth.Controllers
             _authService = authService;
         }
 
-        [HttpPost("/login")]
+        [HttpPost("login")]
         public async Task<IActionResult> Login(LoginRequest request)
         {
             var result = await _authService.Login(request);
@@ -34,7 +33,7 @@ namespace ServicePortal.Modules.Auth.Controllers
             return Ok(new { accessToken = result?.AccessToken, user = result?.UserInfo });
         }
 
-        [HttpPost("/register")]
+        [HttpPost("register")]
         public async Task<IActionResult> Register(CreateUserRequest request)
         {
             UserDTO? userDTO = await _authService.Register(request);
@@ -42,7 +41,7 @@ namespace ServicePortal.Modules.Auth.Controllers
             return Ok(new BaseResponse<UserDTO>(200, "Register user successfully", userDTO));
         }
 
-        [HttpPost("/logout")]
+        [HttpPost("logout")]
         public async Task<IActionResult> Logout()
         {
             var refreshToken = Request.Cookies["refreshToken"];
@@ -59,7 +58,7 @@ namespace ServicePortal.Modules.Auth.Controllers
             return Ok(new BaseResponse<string>(200, "Logout successfully", null));
         }
 
-        [HttpPost("/change-password")]
+        [HttpPost("change-password")]
         public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
         {
             var employeeCode = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0";
@@ -74,7 +73,7 @@ namespace ServicePortal.Modules.Auth.Controllers
             return Ok(new BaseResponse<string>(200, "Change password successfully", null));
         }
 
-        [HttpGet("/refresh-token")]
+        [HttpGet("refresh-token")]
         public async Task<IActionResult> RefreshAccessToken()
         {
             var refreshToken = Request.Cookies["refreshToken"] ?? "";

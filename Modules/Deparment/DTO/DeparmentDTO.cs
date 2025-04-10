@@ -5,6 +5,9 @@ namespace ServicePortal.Modules.Deparment.DTO
 {
     public class DeparmentDTO
     {
+        [JsonIgnore]
+        public int Id { get; set; }
+
         [Required, JsonPropertyName("name")]
         public string? Name { get; set; }
 

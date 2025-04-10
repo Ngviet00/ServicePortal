@@ -2,12 +2,11 @@
 using ServicePortal.Common;
 using ServicePortal.Modules.User.DTO;
 using ServicePortal.Modules.User.Interfaces;
-using ServicePortal.Modules.User.Responses;
 
 namespace ServicePortal.Modules.User.Controllers
 {
-    [ApiController]
-    [Route("[controller]")]
+    //[Authorize]
+    [ApiController, Route("user")]
     public class UserController : ControllerBase
     {
         private readonly IUserService _userService;
@@ -17,7 +16,7 @@ namespace ServicePortal.Modules.User.Controllers
             _userService = userService;
         }
 
-        [HttpGet("/get-all")]
+        [HttpGet("get-all")]
         public async Task<IActionResult> GetAll()
         {
             List<UserDTO> users = await _userService.GetAll();
@@ -25,7 +24,7 @@ namespace ServicePortal.Modules.User.Controllers
             return Ok(new BaseResponse<List<UserDTO>>(200, "Success", users));
         }
 
-        [HttpGet("/get-by-id/{id}")]
+        [HttpGet("get-by-id/{id}")]
         public async Task<IActionResult> GetById(Guid id)
         {
             UserDTO? userDTO = await _userService.GetById(id);
@@ -33,7 +32,7 @@ namespace ServicePortal.Modules.User.Controllers
             return Ok(new BaseResponse<UserDTO>(200, "success", userDTO));
         }
 
-        [HttpGet("/get-by-code/{code}")]
+        [HttpGet("get-by-code/{code}")]
         public async Task<IActionResult> GetByCode(string code)
         {
             UserDTO? userDTO = await _userService.GetByCode(code);
@@ -49,20 +48,20 @@ namespace ServicePortal.Modules.User.Controllers
         //    return Ok(new BaseResponse<UserResponse>(200, "Update user successfully", userResponse));
         //}
 
-        [HttpDelete("/delete/{id}")]
+        [HttpDelete("delete/{id}")]
         public async Task<IActionResult> Delete(Guid id)
         {
             await _userService.Delete(id);
 
-            return Ok(new BaseResponse<UserResponse>(200, "Delete user successfully", null));
+            return Ok(new BaseResponse<UserDTO>(200, "Delete user successfully", null));
         }
 
-        [HttpDelete("/force-delete/{id}")]
+        [HttpDelete("force-delete/{id}")]
         public async Task<IActionResult> ForceDelete(Guid id)
         {
             await _userService.ForceDelete(id);
 
-            return Ok(new BaseResponse<UserResponse>(200, "Delete user permanently successfully", null));
+            return Ok(new BaseResponse<UserDTO>(200, "Delete user permanently successfully", null));
         }
     }
 }

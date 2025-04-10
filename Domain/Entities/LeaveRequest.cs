@@ -9,10 +9,16 @@ namespace ServicePortal.Domain.Entities
         public Guid Id { get; set; }
 
         [Column("user_code")]
-        public string? UserCode { get; set; }
+        public string? UserCode { get; set; } //code of user
 
         [Column("name_register")]
-        public string? NameRegister { get; set; }
+        public string? NameRegister { get; set; } //name of register
+
+        [Column("position_id")]
+        public int? PositionId { get; set; }
+
+        [Column("deparment_id")]
+        public int? DeparmentId { get; set; }
 
         [Column("reason")]
         public string? Reason { get; set; }
@@ -36,16 +42,16 @@ namespace ServicePortal.Domain.Entities
         public bool? DisplayHr { get; set; }
 
         [Column("type_leave")]
-        public int? TypeLeave { get; set; }
+        public int? TypeLeave { get; set; } //accident leave, annual leave,...
 
         [Column("reason_type_leave_other")]
-        public string? ReasonTypeLeaveOther { get; set; }
+        public string? ReasonTypeLeaveOther { get; set; } //if choose other leave, input reason of other leave
 
         [Column("time_leave")]
-        public int? TimeLeave { get; set; }
+        public int? TimeLeave { get; set; } //morning leave, afternoon leave, allday leave
 
         [Column("have_salary")]
-        public bool? HaveSalary { get; set; }
+        public bool? HaveSalary { get; set; } //paid leave or unpaid leave
 
         [Column("image")]
         public string? Image { get; set; }

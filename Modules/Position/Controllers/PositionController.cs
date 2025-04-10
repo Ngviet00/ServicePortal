@@ -4,18 +4,17 @@ using ServicePortal.Modules.Position.Interfaces;
 
 namespace ServicePortal.Modules.Position.Controllers
 {
-    [ApiController]
-    [Route("[controller]")]
+    [ApiController, Route("position")]
     public class PositionController : ControllerBase
     {
         private readonly IPositionService _positionService;
 
-        public PositionController (IPositionService positionService)
+        public PositionController(IPositionService positionService)
         {
             _positionService = positionService;
         }
 
-        [HttpGet("/get-all")]
+        [HttpGet("get-all")]
         public async Task<IActionResult> GetAll()
         {
             var positions = await _positionService.GetAll();
@@ -23,7 +22,7 @@ namespace ServicePortal.Modules.Position.Controllers
             return Ok(new BaseResponse<List<Domain.Entities.Position>>(200, "success", positions));
         }
 
-        [HttpGet("/get-by-id/{id}")]
+        [HttpGet("get-by-id/{id}")]
         public async Task<IActionResult> GetById(int id)
         {
             var position = await _positionService.GetById(id);
@@ -31,7 +30,7 @@ namespace ServicePortal.Modules.Position.Controllers
             return Ok(new BaseResponse<Domain.Entities.Position>(200, "success", position));
         }
 
-        [HttpPost("/create")]
+        [HttpPost("create")]
         public async Task<IActionResult> Create(string name, int level)
         {
             var position = await _positionService.Create(name, level);
@@ -39,7 +38,7 @@ namespace ServicePortal.Modules.Position.Controllers
             return Ok(new BaseResponse<Domain.Entities.Position>(200, "success", position));
         }
 
-        [HttpPut("/update/{id}")]
+        [HttpPut("update/{id}")]
         public async Task<IActionResult> Update(int id, string name, int level)
         {
             var position = await _positionService.Update(id, name, level);
@@ -47,7 +46,7 @@ namespace ServicePortal.Modules.Position.Controllers
             return Ok(new BaseResponse<Domain.Entities.Position>(200, "success", position));
         }
 
-        [HttpDelete("/delete/{id}")]
+        [HttpDelete("delete/{id}")]
         public async Task<IActionResult> Delete(int id)
         {
             var position = await _positionService.Delete(id);
@@ -55,7 +54,7 @@ namespace ServicePortal.Modules.Position.Controllers
             return Ok(new BaseResponse<Domain.Entities.Position>(200, "success", position));
         }
 
-        [HttpDelete("/force-delete/{id}")]
+        [HttpDelete("force-delete/{id}")]
         public async Task<IActionResult> ForceDelete(int id)
         {
             var position = await _positionService.ForceDelete(id);

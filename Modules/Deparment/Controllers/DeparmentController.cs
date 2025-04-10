@@ -1,64 +1,60 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using ServicePortal.Common;
+using ServicePortal.Modules.Deparment.DTO;
 using ServicePortal.Modules.Deparment.Interfaces;
 
 namespace ServicePortal.Modules.Deparment.Controllers
 {
+    //[Authorize]
+    [ApiController, Route("deparment")]
     public class DeparmentController : ControllerBase
     {
         private readonly IDeparmentService _deparmentService;
 
-        public DeparmentController (IDeparmentService deparmentService)
+        public DeparmentController(IDeparmentService deparmentService)
         {
             _deparmentService = deparmentService;
         }
 
-        [HttpGet("/get-all")]
+        [HttpGet("get-all")]
         public async Task<IActionResult> GetAll()
         {
-            var roles = await _deparmentService.GetAll();
+            var deparments = await _deparmentService.GetAll();
 
-            return Ok(new BaseResponse<List<Domain.Entities.Deparment>>(200, "success", roles));
+            return Ok(new BaseResponse<List<Domain.Entities.Deparment>>(200, "success", deparments));
         }
 
-        [HttpGet("/get-by-id/{id}")]
+        [HttpGet("get-by-id/{id}")]
         public async Task<IActionResult> GetById(int id)
         {
-            var role = await _deparmentService.GetById(id);
+            var deparment = await _deparmentService.GetById(id);
 
-            return Ok(new BaseResponse<Domain.Entities.Role>(200, "success", role));
+            return Ok(new BaseResponse<Domain.Entities.Deparment>(200, "success", deparment));
         }
 
-        [HttpPost("/create")]
-        public async Task<IActionResult> Create(string name)
+        [HttpPost("create")]
+        public async Task<IActionResult> Create(DeparmentDTO dto)
         {
-            var role = await _deparmentService.Create(name);
+            var deparment = await _deparmentService.Create(dto);
 
-            return Ok(new BaseResponse<Domain.Entities.Role>(200, "success", role));
+            return Ok(new BaseResponse<Domain.Entities.Deparment>(200, "success", deparment));
         }
 
-        [HttpPut("/update/{id}")]
-        public async Task<IActionResult> Update(int id, string name)
+        [HttpPut("update/{id}")]
+        public async Task<IActionResult> Update(int id, DeparmentDTO dto)
         {
-            var role = await _deparmentService.Update(id, name);
+            var deparment = await _deparmentService.Update(id, dto);
 
-            return Ok(new BaseResponse<Domain.Entities.Role>(200, "success", role));
+            return Ok(new BaseResponse<Domain.Entities.Deparment>(200, "success", deparment));
         }
 
-        [HttpDelete("/delete/{id}")]
+        //[RoleAuthorize(RoleEnum.SuperAdmin)]
+        [HttpDelete("delete/{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            var role = await _deparmentService.Delete(id);
+            var deparment = await _deparmentService.Delete(id);
 
-            return Ok(new BaseResponse<Domain.Entities.Role>(200, "success", role));
-        }
-
-        [HttpDelete("/force-delete/{id}")]
-        public async Task<IActionResult> ForceDelete(int id)
-        {
-            var role = await _deparmentService.Delete(id);
-
-            return Ok(new BaseResponse<Domain.Entities.Role>(200, "success", role));
+            return Ok(new BaseResponse<Domain.Entities.Deparment>(200, "success", deparment));
         }
     }
 }

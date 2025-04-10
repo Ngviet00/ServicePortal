@@ -21,12 +21,6 @@ namespace ServicePortal.Domain.Entities
         [Column("status")]
         public string? Status { get; set; }
 
-        [Column("position")]
-        public string? Position { get; set; }
-
-        [Column("deparment")]
-        public string? Deparment { get; set; }
-
         [Column("note"), MaxLength(255)]
         public string? Note { get; set; }
 

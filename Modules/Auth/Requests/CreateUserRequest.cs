@@ -26,6 +26,9 @@ namespace ServicePortal.Modules.Auth.Requests
         [Required, JsonPropertyName("deparment_id")]
         public int? DeparmentId { get; set; }
 
+        [Required, JsonPropertyName("position_deparment_level")]
+        public int? PositionDeparmentLevel { get; set; }
+
         [JsonPropertyName("date_join_company")]
         public DateTime? DateJoinCompany { get; set; }
     }

@@ -15,6 +15,7 @@ namespace ServicePortal.Infrastructure.Data
         public DbSet<UserAssignment> UserAssignments { get; set; }
         public DbSet<LeaveRequest> LeaveRequests { get; set; }
         public DbSet<ApprovalLeaveRequestStep> ApprovalLeaveRequestSteps { get; set; }
+        public DbSet<PositionDeparment> PositionDeparments{ get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -31,21 +32,34 @@ namespace ServicePortal.Infrastructure.Data
             );
 
             modelBuilder.Entity<Role>().HasData(
-                new Role { Id = 1, Name = "SuperAdmin"},
+                new Role { Id = 1, Name = "SuperAdmin" },
                 new Role { Id = 2, Name = "IT" },
-                new Role { Id = 3, Name = "HR"}
+                new Role { Id = 3, Name = "HR" },
+                new Role { Id = 4, Name = "User" }
             );
 
             modelBuilder.Entity<Position>().HasData(
-                new Position { Id = -1, Name = "SuperAdmin", Level = 0 },
-                new Position { Id = 1, Name = "General Director", Level = 1 },
-                new Position { Id = 2, Name = "Assistant General Director", Level = 2 },
-                new Position { Id = 3, Name = "General Manager", Level = 3 },
-                new Position { Id = 4, Name = "Manager", Level = 4 },
-                new Position { Id = 5, Name = "Assistant Manager", Level = 5 },
-                new Position { Id = 6, Name = "Supervisor", Level = 6 },
-                new Position { Id = 7, Name = "Chief Accountant", Level = 6 },
-                new Position { Id = 8, Name = "Staff", Level = 7 }
+                new Position { Id = -1, Name = "SuperAdmin", PositionLevel = 0 },
+                new Position { Id = 1, Name = "General Director", PositionLevel = 1 },
+                new Position { Id = 2, Name = "Assistant General Director", PositionLevel = 2 },
+                new Position { Id = 3, Name = "General Manager", PositionLevel = 3 },
+                new Position { Id = 4, Name = "Manager", PositionLevel = 4 },
+                new Position { Id = 5, Name = "Assistant Manager", PositionLevel = 5 },
+                new Position { Id = 6, Name = "Supervisor", PositionLevel = 6 },
+                new Position { Id = 7, Name = "Chief Accountant", PositionLevel = 6 },
+                new Position { Id = 8, Name = "Staff", PositionLevel = 7 }
+            );
+
+            //init position in IT deparment, include Manager
+            modelBuilder.Entity<PositionDeparment>().HasData(
+                new PositionDeparment
+                {
+                    Id = 1,
+                    DeparmentId = 1, //IT-MIS
+                    PositionId = 4,  //Manager
+                    PositionDeparmentLevel = 1,
+                    CustomTitle = "Manager IT/MIS"
+                }
             );
         }
     }

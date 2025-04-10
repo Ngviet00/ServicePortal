@@ -11,10 +11,7 @@ namespace ServicePortal.Domain.Entities
         [Column("name")]
         public string? Name { get; set; }
 
-        [Column("level")]
-        public int? Level { get; set; }
-
-        [Column("deleted_at")]
-        public DateTime? DeletedAt { get; set; }
+        [Column("position_level")]
+        public int? PositionLevel { get; set; }
     }
 }

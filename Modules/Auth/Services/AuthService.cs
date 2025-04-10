@@ -1,5 +1,4 @@
-﻿using AutoMapper;
-using ServicePortal.Application.DTOs.Auth.Requests;
+﻿using ServicePortal.Application.DTOs.Auth.Requests;
 using ServicePortal.Application.DTOs.Auth.Responses;
 using ServicePortal.Application.Services;
 using ServicePortal.Common.Helpers;
@@ -11,6 +10,8 @@ using Microsoft.EntityFrameworkCore;
 using ServicePortal.Modules.Auth.Requests;
 using ServicePortal.Modules.User.DTO;
 using ServicePortal.Modules.Auth.Interfaces;
+using ServicePortal.Domain.Enums;
+using ServicePortal.Common.Mappers;
 
 namespace ServicePortal.Modules.Auth.Services
 {
@@ -18,20 +19,17 @@ namespace ServicePortal.Modules.Auth.Services
     {
         private readonly ApplicationDbContext _context;
         private readonly JwtService _jwtService;
-        private readonly IMapper _mapper;
         private readonly IConfiguration _config;
 
-        public AuthService(JwtService jwtService, ApplicationDbContext context, IMapper mapper, IConfiguration config)
+        public AuthService(JwtService jwtService, ApplicationDbContext context, IConfiguration config)
         {
             _jwtService = jwtService;
             _context = context;
-            _mapper = mapper;
             _config = config;
         }
 
         public async Task<UserDTO> Register(CreateUserRequest request)
         {
-
             if (await _context.Users.AnyAsync(u => u.Code == request.Code))
             {
                 throw new ValidationException("User is exists!");
@@ -57,21 +55,30 @@ namespace ServicePortal.Modules.Auth.Services
             _context.Users.Add(newUser);
             await _context.SaveChangesAsync();
 
+            var positionDeparment = new PositionDeparment
+            {
+                DeparmentId = request.DeparmentId,
+                PositionId = request.PositionId,
+                PositionDeparmentLevel = request.PositionDeparmentLevel,
+            };
+            _context.PositionDeparments.Add(positionDeparment);
+            await _context.SaveChangesAsync();
+
             var userAssignment = new UserAssignment
             {
                 UserCode = request.Code,
-                DeparmentId = request.DeparmentId,
-                PositionId = request.PositionId,
+                PositionDeparmentId = request.PositionId,
             };
 
             _context.UserAssignments.Add(userAssignment);
             await _context.SaveChangesAsync();
 
-            return _mapper.Map<UserDTO>(newUser);
+            return UserMapper.ToDto(newUser);
         }
 
         public async Task<LoginResponse> Login(LoginRequest request)
         {
+            //get info user include role
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Code == request.UserCode) ?? throw new NotFoundException("User not found!");
 
             if (!Helper.VerifyString(user?.Password ?? "", request?.Password ?? ""))
@@ -80,7 +87,8 @@ namespace ServicePortal.Modules.Auth.Services
             }
 
             var claims = new List<Claim> {
-                new(ClaimTypes.NameIdentifier, user?.Code ?? "")
+                new(ClaimTypes.Name, user?.Code ?? ""),
+                new("role", RoleEnum.SuperAdmin.ToString()), //fake
             };
 
             var accessToken = _jwtService.GenerateAccessToken(claims);

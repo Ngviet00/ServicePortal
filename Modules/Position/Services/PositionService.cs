@@ -19,7 +19,7 @@ namespace ServicePortal.Modules.Position.Services
             var position = new Domain.Entities.Position
             {
                 Name = name,
-                Level = level
+                PositionLevel = level
             };
 
             _context.Positions.Add(position);
@@ -49,7 +49,7 @@ namespace ServicePortal.Modules.Position.Services
 
             position.Name = name;
 
-            position.Level = level;
+            position.PositionLevel = level;
 
             _context.Positions.Update(position);
 
@@ -61,8 +61,6 @@ namespace ServicePortal.Modules.Position.Services
         public async Task<Domain.Entities.Position> Delete(int id)
         {
             var position = await _context.Positions.FirstOrDefaultAsync(e => e.Id == id) ?? throw new NotFoundException("Position not found!");
-
-            position.DeletedAt = DateTime.Now;
 
             _context.Positions.Update(position);
 

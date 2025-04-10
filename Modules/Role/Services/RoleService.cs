@@ -1,6 +1,5 @@
 ﻿using ServicePortal.Modules.Role.Interfaces;
 using ServicePortal.Infrastructure.Data;
-using AutoMapper;
 using ServicePortal.Common;
 using Microsoft.EntityFrameworkCore;
 

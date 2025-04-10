@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
 
 namespace ServicePortal.Domain.Entities
 {
@@ -17,8 +18,5 @@ namespace ServicePortal.Domain.Entities
 
         [Column("parent_id")]
         public int? ParentId { get; set; }
-
-        [Column("deleted_at")]
-        public DateTime? DeletedAt { get; set; }
     }
 }

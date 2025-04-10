@@ -7,7 +7,6 @@ using ServicePortal.Infrastructure.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Localization;
 using System.Globalization;
-using ServicePortal.Middleware;
 using ServicePortal.Modules.User.Services;
 using ServicePortal.Modules.Auth.Services;
 using ServicePortal.Common.Helpers;
@@ -20,6 +19,8 @@ using ServicePortal.Modules.Position.Interfaces;
 using ServicePortal.Modules.Position.Services;
 using ServicePortal.Modules.Deparment.Interfaces;
 using ServicePortal.Modules.Deparment.Services;
+using ServicePortal.Common.Middleware;
+using Serilog;
 
 namespace ServicePortal
 {
@@ -27,23 +28,68 @@ namespace ServicePortal
     {
         public static void Main(string[] args)
         {
+            #region Config Serilog
+
+            var logDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Logs", DateTime.Now.ToString("yyyy"), DateTime.Now.ToString("MM"));
+
+            if (!Directory.Exists(logDir))
+            {
+                Directory.CreateDirectory(logDir);
+            }
+
+            var logFile = Path.Combine(logDir, "log-.txt");
+
+            Log.Logger = new LoggerConfiguration()
+                .MinimumLevel.Information()
+                //.MinimumLevel.Override("Microsoft", LogEventLevel.Warning)  
+                //.MinimumLevel.Override("System", LogEventLevel.Warning)
+                .Enrich.FromLogContext()
+                .WriteTo.File(
+                    path: logFile,
+                    outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] ===========> {Message:lj}{NewLine}{Exception}",
+                    rollingInterval: RollingInterval.Day,
+                    retainedFileCountLimit: 90,
+                    shared: true
+                )
+                .CreateLogger();
+
+            #endregion
+
             var builder = WebApplication.CreateBuilder(args);
+
+            builder.Host.UseSerilog();
+
+            #region Config SqlServer
+
 
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("StringConnectionDb"))
                 .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking));
 
+            #endregion
+
+            #region DI
+
             builder.Services.AddScoped<IAuthService, AuthService>();
+
             builder.Services.AddScoped<IUserService, UserService>();
+
             builder.Services.AddScoped<IRoleService, RoleService>();
+
             builder.Services.AddScoped<IPositionService, PositionService>();
+
             builder.Services.AddScoped<IDeparmentService, DeparmentService>();
+
             builder.Services.AddScoped<JwtService>();
+
+            #endregion
+
 
             // Add services to the container.
             builder.Services.AddControllers();
 
-            // Add localization
+            #region Multiple language
+
             builder.Services.AddLocalization(options => options.ResourcesPath = "Application/Resources");
 
             builder.Services.Configure<RequestLocalizationOptions>(options =>
@@ -59,9 +105,12 @@ namespace ServicePortal
                 options.SupportedUICultures = supportedCultures;
             });
 
-            // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+            #endregion
+
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
+
+            #region Cors
 
             builder.Services.AddCors(options =>
             {
@@ -74,7 +123,9 @@ namespace ServicePortal
                     });
             });
 
-            builder.Services.AddAutoMapper(typeof(Program));
+            #endregion
+
+            #region JWT
 
             builder.Services.AddAuthentication(options =>
             {
@@ -105,7 +156,10 @@ namespace ServicePortal
                 };
             });
 
-            // Configure validation
+            #endregion
+
+            #region Configure validation
+
             builder.Services.Configure<ApiBehaviorOptions>(options =>
             {
                 options.InvalidModelStateResponseFactory = actionContext =>
@@ -126,6 +180,8 @@ namespace ServicePortal
                     });
                 };
             });
+
+            #endregion
 
             var app = builder.Build();
 

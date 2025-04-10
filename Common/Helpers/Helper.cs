@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel;
 using System.Reflection;
-using ServicePortal.Domain.Enums;
+using Newtonsoft.Json;
 
 namespace ServicePortal.Common.Helpers
 {
@@ -47,5 +47,9 @@ namespace ServicePortal.Common.Helpers
 
         #endregion
 
+        public static string ConvertObjToString(object obj)
+        {
+            return JsonConvert.SerializeObject(obj, Newtonsoft.Json.Formatting.Indented);
+        }
     }
 }

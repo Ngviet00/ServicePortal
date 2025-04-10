@@ -1,6 +1,6 @@
-﻿using AutoMapper;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using ServicePortal.Common;
+using ServicePortal.Common.Mappers;
 using ServicePortal.Infrastructure.Data;
 using ServicePortal.Modules.Deparment.DTO;
 using ServicePortal.Modules.Deparment.Interfaces;
@@ -10,28 +10,10 @@ namespace ServicePortal.Modules.Deparment.Services
     public class DeparmentService : IDeparmentService
     {
         private readonly ApplicationDbContext _context;
-        private readonly IMapper _mapper;
 
-        public DeparmentService(ApplicationDbContext context, IMapper mapper)
+        public DeparmentService(ApplicationDbContext context)
         {
             _context = context;
-            _mapper = mapper;
-        }
-
-        public async Task<Domain.Entities.Deparment> Create(DeparmentDTO dto)
-        {
-            
-            throw new NotImplementedException();
-        }
-
-        public Task<Domain.Entities.Deparment> Delete(int id)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<Domain.Entities.Deparment> ForceDelete(int id)
-        {
-            throw new NotImplementedException();
         }
 
         public async Task<List<Domain.Entities.Deparment>> GetAll()
@@ -48,11 +30,35 @@ namespace ServicePortal.Modules.Deparment.Services
             return deparment;
         }
 
+        public async Task<Domain.Entities.Deparment> Create(DeparmentDTO dto)
+        {
+            var deparment = DeparmentMapper.toEntity(dto);
+
+            _context.Deparments.Add(deparment);
+
+            await _context.SaveChangesAsync();
+
+            return deparment;
+        }
+
         public async Task<Domain.Entities.Deparment> Update(int id, DeparmentDTO dto)
         {
             var deparment = await _context.Deparments.FirstOrDefaultAsync(e => e.Id == id) ?? throw new NotFoundException("Deparment not found!");
 
-            _context.Deparments.Add(_mapper.Map<Domain.Entities.Deparment>(dto));
+            deparment = DeparmentMapper.toEntity(dto);
+
+            _context.Deparments.Update(deparment);
+
+            await _context.SaveChangesAsync();
+
+            return deparment;
+        }
+
+        public async Task<Domain.Entities.Deparment> Delete(int id)
+        {
+            var deparment = await _context.Deparments.FirstOrDefaultAsync(e => e.Id == id) ?? throw new NotFoundException("Deparment not found!");
+
+            _context.Deparments.Remove(deparment);
 
             await _context.SaveChangesAsync();
 

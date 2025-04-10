@@ -16,11 +16,8 @@ namespace ServicePortal.Modules.User.DTO
         [JsonPropertyName("role_id")]
         public int? RoleId { get; set; }
 
-        //[JsonPropertyName("position_id")]
-        //public int? PositionId { get; set; }
-
-        //[JsonPropertyName("deparment_id")]
-        //public int? DeparmentId { get; set; }
+        [JsonPropertyName("is_active")]
+        public bool? IsActive { get; set; }
 
         [JsonPropertyName("date_join_company")]
         public DateTime? DateJoinCompany { get; set; }
