@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace ServicePortal.Migrations
 {
     /// <inheritdoc />
-    public partial class initDb : Migration
+    public partial class InitDb : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -111,8 +111,8 @@ namespace ServicePortal.Migrations
                 columns: table => new
                 {
                     id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    token = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    user_code = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    token = table.Column<string>(type: "nvarchar(450)", nullable: true),
+                    user_code = table.Column<string>(type: "nvarchar(450)", nullable: true),
                     expires_at = table.Column<DateTime>(type: "datetime2", nullable: true),
                     is_revoked = table.Column<bool>(type: "bit", nullable: true),
                     created_at = table.Column<DateTime>(type: "datetime2", nullable: true)
@@ -211,6 +211,26 @@ namespace ServicePortal.Migrations
                 name: "IX_deparments_id_parent_id",
                 table: "deparments",
                 columns: new[] { "id", "parent_id" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_position_deparments_deparment_id_position_id_position_deparment_level",
+                table: "position_deparments",
+                columns: new[] { "deparment_id", "position_id", "position_deparment_level" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_positions_id",
+                table: "positions",
+                column: "id");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_refresh_tokens_token_user_code_expires_at_is_revoked",
+                table: "refresh_tokens",
+                columns: new[] { "token", "user_code", "expires_at", "is_revoked" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_roles_id",
+                table: "roles",
+                column: "id");
 
             migrationBuilder.CreateIndex(
                 name: "IX_user_assignments_user_code_position_department_id",

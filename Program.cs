@@ -21,6 +21,8 @@ using ServicePortal.Modules.Deparment.Interfaces;
 using ServicePortal.Modules.Deparment.Services;
 using ServicePortal.Common.Middleware;
 using Serilog;
+using ServicePortal.Modules.PositionDeparment.Interfaces;
+using ServicePortal.Modules.PositionDeparment.Services;
 
 namespace ServicePortal
 {
@@ -79,6 +81,8 @@ namespace ServicePortal
             builder.Services.AddScoped<IPositionService, PositionService>();
 
             builder.Services.AddScoped<IDeparmentService, DeparmentService>();
+
+            builder.Services.AddScoped<IPositionDeparmentService, PositionDeparmentService>();
 
             builder.Services.AddScoped<JwtService>();
 
@@ -214,6 +218,16 @@ namespace ServicePortal
             app.UseMiddleware<GlobalExceptionMiddleware>();
 
             app.MapControllers();
+
+            app.Use(async (context, next) =>
+            {
+                if (context.Request.Path == "/")
+                {
+                    context.Response.Redirect("/swagger/index.html", permanent: false);
+                    return;
+                }
+                await next();
+            });
 
             app.Run();
 

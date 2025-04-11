@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ServicePortal.Domain.Entities
 {
-    [Table("deparments")]
+    [Table("deparments"), Index(nameof(Id), nameof(ParentId))]
     public class Deparment
     {
         [Column("id")]

@@ -12,8 +12,8 @@ using ServicePortal.Infrastructure.Data;
 namespace ServicePortal.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250410100755_initDb")]
-    partial class initDb
+    [Migration("20250411023229_InitDb")]
+    partial class InitDb
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -211,6 +211,8 @@ namespace ServicePortal.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Id");
+
                     b.ToTable("positions");
 
                     b.HasData(
@@ -297,6 +299,8 @@ namespace ServicePortal.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("DeparmentId", "PositionId", "PositionDeparmentLevel");
+
                     b.ToTable("position_deparments");
 
                     b.HasData(
@@ -330,14 +334,16 @@ namespace ServicePortal.Migrations
                         .HasColumnName("is_revoked");
 
                     b.Property<string>("Token")
-                        .HasColumnType("nvarchar(max)")
+                        .HasColumnType("nvarchar(450)")
                         .HasColumnName("token");
 
                     b.Property<string>("UserCode")
-                        .HasColumnType("nvarchar(max)")
+                        .HasColumnType("nvarchar(450)")
                         .HasColumnName("user_code");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Token", "UserCode", "ExpiresAt", "IsRevoked");
 
                     b.ToTable("refresh_tokens");
                 });
@@ -357,6 +363,8 @@ namespace ServicePortal.Migrations
                         .HasColumnName("name");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Id");
 
                     b.ToTable("roles");
 

@@ -55,19 +55,10 @@ namespace ServicePortal.Modules.Auth.Services
             _context.Users.Add(newUser);
             await _context.SaveChangesAsync();
 
-            var positionDeparment = new PositionDeparment
-            {
-                DeparmentId = request.DeparmentId,
-                PositionId = request.PositionId,
-                PositionDeparmentLevel = request.PositionDeparmentLevel,
-            };
-            _context.PositionDeparments.Add(positionDeparment);
-            await _context.SaveChangesAsync();
-
             var userAssignment = new UserAssignment
             {
                 UserCode = request.Code,
-                PositionDeparmentId = request.PositionId,
+                PositionDeparmentId = request.PositionDeparmentId,
             };
 
             _context.UserAssignments.Add(userAssignment);

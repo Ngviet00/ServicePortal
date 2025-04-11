@@ -1,8 +1,9 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
 
 namespace ServicePortal.Domain.Entities
 {
-    [Table("refresh_tokens")]
+    [Table("refresh_tokens"), Index(nameof(Token), nameof(UserCode), nameof(ExpiresAt), nameof(IsRevoked))]
     public class RefreshToken
     {
         [Column("id")]

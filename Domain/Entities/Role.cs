@@ -1,9 +1,10 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
 
 namespace ServicePortal.Domain.Entities
 {
-    [Table("roles")]
+    [Table("roles"), Index(nameof(Id))]
     public class Role
     {
         [Column("id")]

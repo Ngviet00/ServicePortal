@@ -33,6 +33,8 @@ namespace ServicePortal.Infrastructure.Data
                     CustomTitle = "SuperAdmin"
                 };
 
+                context.PositionDeparments.Add(positionDeparment);
+
                 await context.SaveChangesAsync();
 
                 context.UserAssignments.Add(new 

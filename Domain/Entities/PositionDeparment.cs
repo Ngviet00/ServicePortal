@@ -1,8 +1,9 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
 
 namespace ServicePortal.Domain.Entities
 {
-    [Table("position_deparments")]
+    [Table("position_deparments"), Index(nameof(DeparmentId), nameof(PositionId), nameof(PositionDeparmentLevel))]
     public class PositionDeparment
     {
         [Column("id")]
