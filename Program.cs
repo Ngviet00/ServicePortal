@@ -116,14 +116,17 @@ namespace ServicePortal
 
             #region Cors
 
+            var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>();
+
             builder.Services.AddCors(options =>
             {
-                options.AddPolicy("AllowAll",
+                options.AddPolicy("AllowPrivate",
                     policy =>
                     {
-                        policy.AllowAnyOrigin()
+                        policy.WithOrigins(allowedOrigins ?? ["http://localhost:5173"])
                               .AllowAnyMethod()
-                              .AllowAnyHeader();
+                              .AllowAnyHeader()
+                              .AllowCredentials();
                     });
             });
 
@@ -138,7 +141,11 @@ namespace ServicePortal
             })
             .AddJwtBearer(options =>
             {
+                options.RequireHttpsMetadata = false;
+                options.SaveToken = true;
+
                 var key = builder.Configuration["Jwt:Key"];
+
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
                     ValidateIssuer = false,
@@ -156,9 +163,22 @@ namespace ServicePortal
                         Console.WriteLine("JWT lỗi: " + context.Exception.Message);
                         FileHelper.WriteLog(TypeErrorEnum.ERROR,$"JWT lỗi: {context.Exception.Message}");
                         return Task.CompletedTask;
+                    },
+
+                    OnMessageReceived = context =>
+                    {
+                        // Đọc JWT từ cookie
+                        var token = context.Request.Cookies["refreshToken"];
+                        if (!string.IsNullOrEmpty(token))
+                        {
+                            context.Token = token;
+                        }
+                        return Task.CompletedTask;
                     }
                 };
             });
+
+            builder.Services.AddAuthorization();
 
             #endregion
 
@@ -205,7 +225,7 @@ namespace ServicePortal
             app.UseSwagger();
             app.UseSwaggerUI();
 
-            app.UseCors("AllowAll");
+            app.UseCors("AllowPrivate");
 
             app.UseHttpsRedirection();
 

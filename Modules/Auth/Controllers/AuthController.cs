@@ -6,6 +6,8 @@ using ServicePortal.Common;
 using ServicePortal.Modules.Auth.Requests;
 using ServicePortal.Modules.User.DTO;
 using ServicePortal.Modules.Auth.Interfaces;
+using Microsoft.AspNetCore.Authorization;
+using ServicePortal.Domain.Entities;
 
 namespace ServicePortal.Modules.Auth.Controllers
 {
@@ -27,6 +29,7 @@ namespace ServicePortal.Modules.Auth.Controllers
             {
                 HttpOnly = true,
                 Secure = true,
+                SameSite = SameSiteMode.None,
                 Expires = result.ExpiresAt
             });
 
@@ -58,14 +61,22 @@ namespace ServicePortal.Modules.Auth.Controllers
             return Ok(new BaseResponse<string>(200, "Logout successfully", null));
         }
 
+
         [HttpPost("change-password")]
         public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
         {
-            var employeeCode = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0";
+            var code = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var role = User.FindFirstValue("role");
+
+            var a = User;
+
+            var employeeCode = User.FindFirstValue(ClaimTypes.Name);
+
+            Console.WriteLine(User.FindFirstValue(ClaimTypes.Name));
 
             if (string.IsNullOrWhiteSpace(employeeCode))
             {
-                return Ok(new BaseResponse<string>(401, "Unauthorized exception", null));
+                return Unauthorized(new BaseResponse<string>(401, "Unauthorized exception", null));
             }
 
             await _authService.ChangePassword(request, employeeCode);
@@ -80,7 +91,7 @@ namespace ServicePortal.Modules.Auth.Controllers
 
             if (string.IsNullOrWhiteSpace(refreshToken))
             {
-                return Ok(new BaseResponse<string>(401, "Missing refresh token!", null));
+                return Unauthorized(new BaseResponse<string>(401, "Missing refresh token!", null));
             }
 
             var newAccessToken = await _authService.RefreshAccessToken(refreshToken);

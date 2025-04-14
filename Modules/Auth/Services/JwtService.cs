@@ -20,8 +20,10 @@ namespace ServicePortal.Application.Services
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"] ?? "service-portal-management-system"));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
+            var identity = new ClaimsIdentity(claims, "jwt");
+
             var token = new JwtSecurityToken(
-                claims: claims,
+                claims: identity.Claims,
                 expires: DateTime.UtcNow.AddMinutes(15),
                 signingCredentials: creds
             );

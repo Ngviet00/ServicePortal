@@ -70,7 +70,7 @@ namespace ServicePortal.Modules.Auth.Services
         public async Task<LoginResponse> Login(LoginRequest request)
         {
             //get info user include role
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Code == request.UserCode) ?? throw new NotFoundException("User not found!");
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Code == request.UserCode) ?? throw new ValidationException("User not found!");
 
             if (!Helper.VerifyString(user?.Password ?? "", request?.Password ?? ""))
             {
@@ -78,7 +78,7 @@ namespace ServicePortal.Modules.Auth.Services
             }
 
             var claims = new List<Claim> {
-                new(ClaimTypes.Name, user?.Code ?? ""),
+                new(ClaimTypes.NameIdentifier, user?.Code ?? ""),
                 new("role", RoleEnum.SuperAdmin.ToString()), //fake
             };
 
