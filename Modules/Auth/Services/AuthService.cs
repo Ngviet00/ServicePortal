@@ -10,7 +10,6 @@ using Microsoft.EntityFrameworkCore;
 using ServicePortal.Modules.Auth.Requests;
 using ServicePortal.Modules.User.DTO;
 using ServicePortal.Modules.Auth.Interfaces;
-using ServicePortal.Domain.Enums;
 using ServicePortal.Common.Mappers;
 
 namespace ServicePortal.Modules.Auth.Services
@@ -74,12 +73,11 @@ namespace ServicePortal.Modules.Auth.Services
 
             if (!Helper.VerifyString(user?.Password ?? "", request?.Password ?? ""))
             {
-                throw new UnauthorizedException("Password is incorrect!");
+                throw new ValidationException("Password is incorrect!");
             }
 
             var claims = new List<Claim> {
-                new(ClaimTypes.NameIdentifier, user?.Code ?? ""),
-                new("role", RoleEnum.SuperAdmin.ToString()), //fake
+                new("user_code", user?.Code ?? ""),
             };
 
             var accessToken = _jwtService.GenerateAccessToken(claims);

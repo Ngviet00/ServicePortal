@@ -23,8 +23,10 @@ namespace ServicePortal.Application.Services
             var identity = new ClaimsIdentity(claims, "jwt");
 
             var token = new JwtSecurityToken(
+                issuer: _config["Jwt:Issuer"],
+                audience: _config["Jwt:Audience"],
                 claims: identity.Claims,
-                expires: DateTime.UtcNow.AddMinutes(15),
+                expires: DateTime.Now.AddMinutes(_config.GetValue<int>("Jwt:AccessTokenExpirationMinutes")),
                 signingCredentials: creds
             );
 

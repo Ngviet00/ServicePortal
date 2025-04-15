@@ -6,8 +6,6 @@ using ServicePortal.Common;
 using ServicePortal.Modules.Auth.Requests;
 using ServicePortal.Modules.User.DTO;
 using ServicePortal.Modules.Auth.Interfaces;
-using Microsoft.AspNetCore.Authorization;
-using ServicePortal.Domain.Entities;
 
 namespace ServicePortal.Modules.Auth.Controllers
 {
@@ -15,9 +13,12 @@ namespace ServicePortal.Modules.Auth.Controllers
     public class AuthController : ControllerBase
     {
         private readonly IAuthService _authService;
-        public AuthController(IAuthService authService)
+        private readonly IConfiguration _config;
+
+        public AuthController(IAuthService authService, IConfiguration config)
         {
             _authService = authService;
+            _config = config;
         }
 
         [HttpPost("login")]
@@ -25,7 +26,15 @@ namespace ServicePortal.Modules.Auth.Controllers
         {
             var result = await _authService.Login(request);
 
-            Response.Cookies.Append("refreshToken", result.RefreshToken ?? "", new CookieOptions
+            Response.Cookies.Append("access_token", result.AccessToken ?? "", new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.None,
+                Expires = DateTime.Now.AddMinutes(_config.GetValue<int>("Jwt:AccessTokenExpirationMinutes")),
+            });
+
+            Response.Cookies.Append("refresh_token", result.RefreshToken ?? "", new CookieOptions
             {
                 HttpOnly = true,
                 Secure = true,
@@ -47,7 +56,8 @@ namespace ServicePortal.Modules.Auth.Controllers
         [HttpPost("logout")]
         public async Task<IActionResult> Logout()
         {
-            var refreshToken = Request.Cookies["refreshToken"];
+            var refreshToken = Request.Cookies["refresh_token"];
+            var accessToken = Request.Cookies["access_token"];
 
             if (string.IsNullOrWhiteSpace(refreshToken))
             {
@@ -56,7 +66,8 @@ namespace ServicePortal.Modules.Auth.Controllers
 
             await _authService.UpdateRefreshTokenWhenLogout(refreshToken);
 
-            Response.Cookies.Delete("refreshToken");
+            Response.Cookies.Delete("refresh_token");
+            Response.Cookies.Delete("access_token");
 
             return Ok(new BaseResponse<string>(200, "Logout successfully", null));
         }
@@ -65,14 +76,7 @@ namespace ServicePortal.Modules.Auth.Controllers
         [HttpPost("change-password")]
         public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
         {
-            var code = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var role = User.FindFirstValue("role");
-
-            var a = User;
-
-            var employeeCode = User.FindFirstValue(ClaimTypes.Name);
-
-            Console.WriteLine(User.FindFirstValue(ClaimTypes.Name));
+            var employeeCode = User.FindFirstValue("user_code");
 
             if (string.IsNullOrWhiteSpace(employeeCode))
             {
@@ -87,14 +91,22 @@ namespace ServicePortal.Modules.Auth.Controllers
         [HttpGet("refresh-token")]
         public async Task<IActionResult> RefreshAccessToken()
         {
-            var refreshToken = Request.Cookies["refreshToken"] ?? "";
+            var refreshToken = Request.Cookies["refresh_token"] ?? "";
 
             if (string.IsNullOrWhiteSpace(refreshToken))
             {
-                return Unauthorized(new BaseResponse<string>(401, "Missing refresh token!", null));
+                return Unauthorized(new BaseResponse<string>(401, "No refresh token!", null));
             }
 
             var newAccessToken = await _authService.RefreshAccessToken(refreshToken);
+
+            Response.Cookies.Append("access_token", newAccessToken, new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.None,
+                Expires = DateTime.Now.AddMinutes(_config.GetValue<int>("Jwt:AccessTokenExpirationMinutes"))
+            });
 
             return Ok(new BaseResponse<string>(200, "success", newAccessToken));
         }

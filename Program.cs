@@ -88,7 +88,6 @@ namespace ServicePortal
 
             #endregion
 
-
             // Add services to the container.
             builder.Services.AddControllers();
 
@@ -134,45 +133,35 @@ namespace ServicePortal
 
             #region JWT
 
-            builder.Services.AddAuthentication(options =>
-            {
-                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-            })
+            builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>
             {
-                options.RequireHttpsMetadata = false;
-                options.SaveToken = true;
-
-                var key = builder.Configuration["Jwt:Key"];
-
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
                     ValidateIssuer = false,
                     ValidateAudience = false,
                     ValidateLifetime = true,
                     ValidateIssuerSigningKey = true,
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key ?? "")),
-                    ClockSkew = TimeSpan.Zero
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] ?? "")),
                 };
 
                 options.Events = new JwtBearerEvents
                 {
                     OnAuthenticationFailed = context =>
                     {
-                        Console.WriteLine("JWT lỗi: " + context.Exception.Message);
                         FileHelper.WriteLog(TypeErrorEnum.ERROR,$"JWT lỗi: {context.Exception.Message}");
                         return Task.CompletedTask;
                     },
 
                     OnMessageReceived = context =>
                     {
-                        // Đọc JWT từ cookie
-                        var token = context.Request.Cookies["refreshToken"];
+                        var token = context.HttpContext.Request.Cookies["access_token"];
+
                         if (!string.IsNullOrEmpty(token))
                         {
                             context.Token = token;
                         }
+
                         return Task.CompletedTask;
                     }
                 };
@@ -209,13 +198,13 @@ namespace ServicePortal
 
             var app = builder.Build();
 
+            //when run app, excute class db seeder
             using (var scope = app.Services.CreateScope())
             {
                 var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
                 DbSeeder.SeedAsync(dbContext).GetAwaiter().GetResult();
             }
 
-            // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();
@@ -235,10 +224,12 @@ namespace ServicePortal
             // Add localization middleware
             app.UseRequestLocalization();
 
+            //add global exception
             app.UseMiddleware<GlobalExceptionMiddleware>();
 
             app.MapControllers();
 
+            //default redirect to swagger
             app.Use(async (context, next) =>
             {
                 if (context.Request.Path == "/")
