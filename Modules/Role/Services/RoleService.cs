@@ -2,6 +2,7 @@
 using ServicePortal.Infrastructure.Data;
 using ServicePortal.Common;
 using Microsoft.EntityFrameworkCore;
+using ServicePortal.Modules.Role.Requests;
 
 namespace ServicePortal.Modules.Role.Services
 {
@@ -14,11 +15,33 @@ namespace ServicePortal.Modules.Role.Services
             _context = context;
         }
 
-        public async Task<List<Domain.Entities.Role>> GetAll()
+        public async Task<PagedResults<Domain.Entities.Role>> GetAll(SearchRoleRequest request)
         {
-            List<Domain.Entities.Role> roles = await _context.Roles.ToListAsync();
+            string name = request.Name ?? "";
+            double pageSize = request.PageSize;
+            double page = request.Page;
 
-            return roles;
+            var query = _context.Roles.AsQueryable();
+
+            if (!string.IsNullOrEmpty(name))
+            {
+                query = query.Where(r => r.Name.Contains(name));
+            }
+
+            var totalItems = await query.CountAsync();
+
+            var totalPages = (int)Math.Ceiling(totalItems / pageSize);
+
+            var roles = await query.Skip((int)((page - 1) * pageSize)).Take((int)pageSize).ToListAsync();
+
+            var result = new PagedResults<Domain.Entities.Role>
+            {
+                Data = roles,
+                TotalItems = totalItems,
+                TotalPages = totalPages
+            };
+
+            return result;
         }
 
         public async Task<Domain.Entities.Role> GetById(int id)
@@ -28,14 +51,14 @@ namespace ServicePortal.Modules.Role.Services
             return role;
         }
 
-        public async Task<Domain.Entities.Role> Create(string name)
+        public async Task<Domain.Entities.Role> Create(CreateRoleRequest request)
         {
-            if (string.IsNullOrWhiteSpace(name))
+            if (string.IsNullOrWhiteSpace(request.Name))
             {
                 throw new ValidationException("Name can not empty!");
             }
 
-            var role = new Domain.Entities.Role { Name = name };
+            var role = new Domain.Entities.Role { Name = request.Name };
 
             _context.Roles.Add(role);
 
@@ -44,11 +67,11 @@ namespace ServicePortal.Modules.Role.Services
             return role;
         }
 
-        public async Task<Domain.Entities.Role> Update(int id, string name)
+        public async Task<Domain.Entities.Role> Update(int id, CreateRoleRequest request)
         {
             var role = await _context.Roles.FirstOrDefaultAsync(e => e.Id == id) ?? throw new NotFoundException("Role not found!");
 
-            role.Name = name;
+            role.Name = request.Name;
 
             _context.Roles.Update(role);
 

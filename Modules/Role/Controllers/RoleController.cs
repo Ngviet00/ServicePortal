@@ -1,8 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Serilog;
 using ServicePortal.Common;
-using ServicePortal.Common.Helpers;
 using ServicePortal.Modules.Role.Interfaces;
+using ServicePortal.Modules.Role.Requests;
 
 namespace ServicePortal.Modules.Role.Controllers
 {
@@ -17,13 +16,13 @@ namespace ServicePortal.Modules.Role.Controllers
         }
 
         [HttpGet("get-all")]
-        public async Task<IActionResult> GetAll()
+        public async Task<IActionResult> GetAll([FromQuery] SearchRoleRequest request)
         {
-            var roles = await _roleService.GetAll();
+            var results = await _roleService.GetAll(request);
 
-            //Log.Information("test log ok {roles}", Helper.ConvertObjToString(roles));
+            var response = new PageResponse<Domain.Entities.Role>(200, "Success", results.Data, results.TotalPages, request.Page, request.PageSize, results.TotalItems);
 
-            return Ok(new BaseResponse<List<Domain.Entities.Role>>(200, "success", roles));
+            return Ok(response);
         }
 
         [HttpGet("get-by-id/{id}")]
@@ -35,17 +34,17 @@ namespace ServicePortal.Modules.Role.Controllers
         }
 
         [HttpPost("create")]
-        public async Task<IActionResult> Create(string name)
+        public async Task<IActionResult> Create([FromBody] CreateRoleRequest request)
         {
-            var role = await _roleService.Create(name);
+            var role = await _roleService.Create(request);
 
             return Ok(new BaseResponse<Domain.Entities.Role>(200, "success", role));
         }
 
         [HttpPut("update/{id}")]
-        public async Task<IActionResult> Update(int id, string name)
+        public async Task<IActionResult> Update(int id, [FromBody] CreateRoleRequest request)
         {
-            var role = await _roleService.Update(id, name);
+            var role = await _roleService.Update(id, request);
 
             return Ok(new BaseResponse<Domain.Entities.Role>(200, "success", role));
         }
