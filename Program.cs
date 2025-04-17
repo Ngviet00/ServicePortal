@@ -32,7 +32,7 @@ namespace ServicePortal
         {
             #region Config Serilog
 
-            var logDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Logs", DateTime.Now.ToString("yyyy"), DateTime.Now.ToString("MM"));
+            var logDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Logs", DateTimeOffset.UtcNow.ToString("yyyy"), DateTimeOffset.UtcNow.ToString("MM"));
 
             if (!Directory.Exists(logDir))
             {
@@ -43,8 +43,6 @@ namespace ServicePortal
 
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Information()
-                //.MinimumLevel.Override("Microsoft", LogEventLevel.Warning)  
-                //.MinimumLevel.Override("System", LogEventLevel.Warning)
                 .Enrich.FromLogContext()
                 .WriteTo.File(
                     path: logFile,

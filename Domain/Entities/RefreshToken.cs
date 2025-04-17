@@ -16,12 +16,12 @@ namespace ServicePortal.Domain.Entities
         public string? UserCode { get; set; }
 
         [Column("expires_at")]
-        public DateTime? ExpiresAt { get; set; }
+        public DateTimeOffset? ExpiresAt { get; set; }
 
         [Column("is_revoked")]
         public bool? IsRevoked { get; set; }
 
         [Column("created_at")]
-        public DateTime? CreatedAt { get; set; }
+        public DateTimeOffset? CreatedAt { get; set; }
     }
 }

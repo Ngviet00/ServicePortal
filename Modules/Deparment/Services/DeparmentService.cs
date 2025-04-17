@@ -4,6 +4,7 @@ using ServicePortal.Common.Mappers;
 using ServicePortal.Infrastructure.Data;
 using ServicePortal.Modules.Deparment.DTO;
 using ServicePortal.Modules.Deparment.Interfaces;
+using ServicePortal.Modules.Deparment.Requests;
 
 namespace ServicePortal.Modules.Deparment.Services
 {
@@ -16,11 +17,33 @@ namespace ServicePortal.Modules.Deparment.Services
             _context = context;
         }
 
-        public async Task<List<Domain.Entities.Deparment>> GetAll()
+        public async Task<PagedResults<Domain.Entities.Deparment>> GetAll(GetAllDeparmentRequest request)
         {
-            List<Domain.Entities.Deparment> deparments = await _context.Deparments.ToListAsync();
+            string name = request.Name ?? "";
+            double pageSize = request.PageSize;
+            double page = request.Page;
 
-            return deparments;
+            var query = _context.Deparments.AsQueryable();
+
+            if (!string.IsNullOrEmpty(name))
+            {
+                query = query.Where(r => r.Name.Contains(name));
+            }
+
+            var totalItems = await query.CountAsync();
+
+            var totalPages = (int)Math.Ceiling(totalItems / pageSize);
+
+            var deparments = await query.Skip((int)((page - 1) * pageSize)).Take((int)pageSize).ToListAsync();
+
+            var result = new PagedResults<Domain.Entities.Deparment>
+            {
+                Data = deparments,
+                TotalItems = totalItems,
+                TotalPages = totalPages
+            };
+
+            return result;
         }
 
         public async Task<Domain.Entities.Deparment> GetById(int id)

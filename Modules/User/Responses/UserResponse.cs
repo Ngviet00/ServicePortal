@@ -6,7 +6,7 @@
         public string? EmployeeCode { get; set; }
         public string? Name { get; set; }
         public string? Email { get; set; }
-        public string? Deparment { get; set; }
+        public string? Department { get; set; }
         public string? Title { get; set; }
         public int Role { get; set; }
         public DateTime? CreatedAt { get; set; }

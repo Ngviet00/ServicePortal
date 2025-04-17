@@ -1,11 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using ServicePortal.Common;
 using ServicePortal.Modules.Role.Interfaces;
 using ServicePortal.Modules.Role.Requests;
 
 namespace ServicePortal.Modules.Role.Controllers
 {
-    [ApiController, Route("role")]
+    [ApiController, Route("api/role"), Authorize]
     public class RoleController : ControllerBase
     {
         private readonly IRoleService _roleService;
@@ -15,7 +16,7 @@ namespace ServicePortal.Modules.Role.Controllers
             _roleService = roleService;
         }
 
-        [HttpGet("get-all")]
+        [HttpGet("get-all"), Authorize]
         public async Task<IActionResult> GetAll([FromQuery] SearchRoleRequest request)
         {
             var results = await _roleService.GetAll(request);
@@ -25,7 +26,7 @@ namespace ServicePortal.Modules.Role.Controllers
             return Ok(response);
         }
 
-        [HttpGet("get-by-id/{id}")]
+        [HttpGet("get-by-id/{id}"), AllowAnonymous]
         public async Task<IActionResult> GetById(int id)
         {
             var role = await _roleService.GetById(id);

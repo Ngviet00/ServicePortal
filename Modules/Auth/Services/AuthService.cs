@@ -88,9 +88,9 @@ namespace ServicePortal.Modules.Auth.Services
             {
                 Token = refreshToken,
                 UserCode = user?.Code ?? "",
-                ExpiresAt = DateTime.Now.AddDays(_config.GetValue<int>("Jwt:RefreshTokenExpirationDays")),
+                ExpiresAt = DateTimeOffset.UtcNow.AddDays(_config.GetValue<int>("Jwt:RefreshTokenExpirationDays")),
                 IsRevoked = false,
-                CreatedAt = DateTime.Now
+                CreatedAt = DateTimeOffset.UtcNow
             };
 
             await _context.RefreshTokens.AddAsync(refreshTokenEntity);
@@ -103,7 +103,7 @@ namespace ServicePortal.Modules.Auth.Services
                 AccessToken = accessToken,
                 RefreshToken = refreshToken,
                 UserInfo = user,
-                ExpiresAt = (DateTime)refreshTokenEntity.ExpiresAt
+                ExpiresAt = refreshTokenEntity.ExpiresAt
             };
 
             return result;
@@ -111,7 +111,7 @@ namespace ServicePortal.Modules.Auth.Services
 
         public async Task<string> RefreshAccessToken(string refreshToken)
         {
-            var token = await _context.RefreshTokens.FirstOrDefaultAsync(x => x.Token == refreshToken && x.IsRevoked == false && x.ExpiresAt > DateTime.UtcNow);
+            var token = await _context.RefreshTokens.FirstOrDefaultAsync(x => x.Token == refreshToken && x.IsRevoked == false && x.ExpiresAt > DateTimeOffset.UtcNow);
 
             if (token == null)
             {

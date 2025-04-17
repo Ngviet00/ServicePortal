@@ -6,7 +6,7 @@ using ServicePortal.Modules.User.Interfaces;
 namespace ServicePortal.Modules.User.Controllers
 {
     //[Authorize]
-    [ApiController, Route("user")]
+    [ApiController, Route("api/user")]
     public class UserController : ControllerBase
     {
         private readonly IUserService _userService;

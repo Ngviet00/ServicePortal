@@ -1,12 +1,14 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using ServicePortal.Common;
 using ServicePortal.Modules.Deparment.DTO;
 using ServicePortal.Modules.Deparment.Interfaces;
+using ServicePortal.Modules.Deparment.Requests;
 
 namespace ServicePortal.Modules.Deparment.Controllers
 {
-    //[Authorize]
-    [ApiController, Route("deparment")]
+    [Authorize]
+    [ApiController, Route("api/deparment")]
     public class DeparmentController : ControllerBase
     {
         private readonly IDeparmentService _deparmentService;
@@ -17,11 +19,13 @@ namespace ServicePortal.Modules.Deparment.Controllers
         }
 
         [HttpGet("get-all")]
-        public async Task<IActionResult> GetAll()
+        public async Task<IActionResult> GetAll(GetAllDeparmentRequest request)
         {
-            var deparments = await _deparmentService.GetAll();
+            var results = await _deparmentService.GetAll(request);
 
-            return Ok(new BaseResponse<List<Domain.Entities.Deparment>>(200, "success", deparments));
+            var response = new PageResponse<Domain.Entities.Deparment>(200, "Success", results.Data, results.TotalPages, request.Page, request.PageSize, results.TotalItems);
+
+            return Ok(response);
         }
 
         [HttpGet("get-by-id/{id}")]
