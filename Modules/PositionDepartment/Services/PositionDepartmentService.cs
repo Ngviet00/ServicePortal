@@ -5,24 +5,24 @@ using ServicePortal.Modules.PositionDeparment.Interfaces;
 
 namespace ServicePortal.Modules.PositionDeparment.Services
 {
-    public class PositionDeparmentService : IPositionDeparmentService
+    public class PositionDepartmentService : IPositionDepartmentService
     {
         private readonly ApplicationDbContext _context;
 
-        public PositionDeparmentService(ApplicationDbContext context)
+        public PositionDepartmentService(ApplicationDbContext context)
         {
             _context = context;
         }
 
-        public async Task<PositionDeparmentDTO> Create(PositionDeparmentDTO dto)
+        public async Task<PositionDepartmentDTO> Create(PositionDepartmentDTO dto)
         {
-            var entity = PositionDeparmentMapper.ToEntity(dto);
+            var entity = PositionDepartmentMapper.ToEntity(dto);
 
-            _context.PositionDeparments.Add(entity);
+            _context.PositionDepartments.Add(entity);
 
             await _context.SaveChangesAsync();
 
-            return PositionDeparmentMapper.ToDto(entity);
+            return PositionDepartmentMapper.ToDto(entity);
         }
     }
 }

@@ -4,8 +4,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ServicePortal.Domain.Entities
 {
-    [Table("deparments"), Index(nameof(Id), nameof(ParentId))]
-    public class Deparment
+    [Table("departments"), Index(nameof(Id), nameof(ParentId))]
+    public class Department
     {
         [Column("id")]
         public int Id { get; set; }
@@ -18,5 +18,10 @@ namespace ServicePortal.Domain.Entities
 
         [Column("parent_id")]
         public int? ParentId { get; set; }
+
+        public static implicit operator bool(Department? v)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

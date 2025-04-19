@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace ServicePortal.Modules.PositionDeparment.DTO
 {
-    public class PositionDeparmentDTO
+    public class PositionDepartmentDTO
     {
         [JsonPropertyName("id")]
         public int Id { get; set; }

@@ -5,22 +5,22 @@ using ServicePortal.Modules.PositionDeparment.Interfaces;
 
 namespace ServicePortal.Modules.PositionDeparment.Controllers
 {
-    [ApiController, Route("position-deparment")]
-    public class PositionDeparmentController : ControllerBase
+    [ApiController, Route("position-department")]
+    public class PositionDepartmentController : ControllerBase
     {
-        private readonly IPositionDeparmentService _positionDeparmentService;
+        private readonly IPositionDepartmentService _positionDeparmentService;
 
-        public PositionDeparmentController(IPositionDeparmentService positionDeparmentService)
+        public PositionDepartmentController(IPositionDepartmentService positionDeparmentService)
         {
             _positionDeparmentService = positionDeparmentService;
         }
 
         [HttpPost("create")]
-        public async Task<IActionResult> Create(PositionDeparmentDTO dto)
+        public async Task<IActionResult> Create(PositionDepartmentDTO dto)
         {
             var positionDeparmentDto = await _positionDeparmentService.Create(dto);
 
-            return Ok(new BaseResponse<PositionDeparmentDTO>(200, "success", positionDeparmentDto));
+            return Ok(new BaseResponse<PositionDepartmentDTO>(200, "success", positionDeparmentDto));
         }
     }
 }

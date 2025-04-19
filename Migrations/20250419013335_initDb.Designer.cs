@@ -12,8 +12,8 @@ using ServicePortal.Infrastructure.Data;
 namespace ServicePortal.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250417031102_ChangeTimeTypeRefreshToken")]
-    partial class ChangeTimeTypeRefreshToken
+    [Migration("20250419013335_initDb")]
+    partial class initDb
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -62,7 +62,7 @@ namespace ServicePortal.Migrations
                     b.ToTable("approval_leave_request_steps");
                 });
 
-            modelBuilder.Entity("ServicePortal.Domain.Entities.Deparment", b =>
+            modelBuilder.Entity("ServicePortal.Domain.Entities.Department", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -89,7 +89,7 @@ namespace ServicePortal.Migrations
 
                     b.HasIndex("Id", "ParentId");
 
-                    b.ToTable("deparments");
+                    b.ToTable("departments");
 
                     b.HasData(
                         new
@@ -272,7 +272,7 @@ namespace ServicePortal.Migrations
                         });
                 });
 
-            modelBuilder.Entity("ServicePortal.Domain.Entities.PositionDeparment", b =>
+            modelBuilder.Entity("ServicePortal.Domain.Entities.PositionDepartment", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -287,11 +287,11 @@ namespace ServicePortal.Migrations
 
                     b.Property<int?>("DeparmentId")
                         .HasColumnType("int")
-                        .HasColumnName("deparment_id");
+                        .HasColumnName("department_id");
 
                     b.Property<int?>("PositionDeparmentLevel")
                         .HasColumnType("int")
-                        .HasColumnName("position_deparment_level");
+                        .HasColumnName("position_department_level");
 
                     b.Property<int?>("PositionId")
                         .HasColumnType("int")
@@ -301,7 +301,7 @@ namespace ServicePortal.Migrations
 
                     b.HasIndex("DeparmentId", "PositionId", "PositionDeparmentLevel");
 
-                    b.ToTable("position_deparments");
+                    b.ToTable("position_departments");
 
                     b.HasData(
                         new

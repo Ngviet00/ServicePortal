@@ -3,11 +3,11 @@ using ServicePortal.Modules.PositionDeparment.DTO;
 
 namespace ServicePortal.Common.Mappers
 {
-    public static class PositionDeparmentMapper
+    public static class PositionDepartmentMapper
     {
-        public static PositionDeparmentDTO ToDto(PositionDeparment entity)
+        public static PositionDepartmentDTO ToDto(PositionDepartment entity)
         {
-            return new PositionDeparmentDTO
+            return new PositionDepartmentDTO
             {
                 Id = entity.Id,
                 DeparmentId = entity.DeparmentId,
@@ -17,9 +17,9 @@ namespace ServicePortal.Common.Mappers
             };
         }
 
-        public static PositionDeparment ToEntity(PositionDeparmentDTO dto)
+        public static PositionDepartment ToEntity(PositionDepartmentDTO dto)
         {
-            return new PositionDeparment
+            return new PositionDepartment
             {
                 DeparmentId = dto.DeparmentId,
                 PositionId = dto.PositionId,

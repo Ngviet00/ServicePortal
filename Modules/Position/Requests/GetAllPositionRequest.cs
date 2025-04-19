@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 
-namespace ServicePortal.Modules.Deparment.Requests
+namespace ServicePortal.Modules.Position.Requests
 {
-    public class GetAllDeparmentRequest
+    public class GetAllPositionRequest
     {
         [FromQuery(Name = "name")]
         public string? Name { get; set; } //search by condition

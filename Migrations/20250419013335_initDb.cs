@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace ServicePortal.Migrations
 {
     /// <inheritdoc />
-    public partial class InitDb : Migration
+    public partial class initDb : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -31,7 +31,7 @@ namespace ServicePortal.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "deparments",
+                name: "departments",
                 columns: table => new
                 {
                     id = table.Column<int>(type: "int", nullable: false)
@@ -42,7 +42,7 @@ namespace ServicePortal.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_deparments", x => x.id);
+                    table.PrimaryKey("PK_departments", x => x.id);
                 });
 
             migrationBuilder.CreateTable(
@@ -77,19 +77,19 @@ namespace ServicePortal.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "position_deparments",
+                name: "position_departments",
                 columns: table => new
                 {
                     id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    deparment_id = table.Column<int>(type: "int", nullable: true),
+                    department_id = table.Column<int>(type: "int", nullable: true),
                     position_id = table.Column<int>(type: "int", nullable: true),
-                    position_deparment_level = table.Column<int>(type: "int", nullable: true),
+                    position_department_level = table.Column<int>(type: "int", nullable: true),
                     custom_title = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_position_deparments", x => x.id);
+                    table.PrimaryKey("PK_position_departments", x => x.id);
                 });
 
             migrationBuilder.CreateTable(
@@ -113,9 +113,9 @@ namespace ServicePortal.Migrations
                     id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     token = table.Column<string>(type: "nvarchar(450)", nullable: true),
                     user_code = table.Column<string>(type: "nvarchar(450)", nullable: true),
-                    expires_at = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    expires_at = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
                     is_revoked = table.Column<bool>(type: "bit", nullable: true),
-                    created_at = table.Column<DateTime>(type: "datetime2", nullable: true)
+                    created_at = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -171,13 +171,13 @@ namespace ServicePortal.Migrations
                 });
 
             migrationBuilder.InsertData(
-                table: "deparments",
+                table: "departments",
                 columns: new[] { "id", "name", "note", "parent_id" },
                 values: new object[] { 1, "IT/MIS", "IT", null });
 
             migrationBuilder.InsertData(
-                table: "position_deparments",
-                columns: new[] { "id", "custom_title", "deparment_id", "position_deparment_level", "position_id" },
+                table: "position_departments",
+                columns: new[] { "id", "custom_title", "department_id", "position_department_level", "position_id" },
                 values: new object[] { 1, "Manager IT/MIS", 1, 1, 4 });
 
             migrationBuilder.InsertData(
@@ -208,14 +208,14 @@ namespace ServicePortal.Migrations
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_deparments_id_parent_id",
-                table: "deparments",
+                name: "IX_departments_id_parent_id",
+                table: "departments",
                 columns: new[] { "id", "parent_id" });
 
             migrationBuilder.CreateIndex(
-                name: "IX_position_deparments_deparment_id_position_id_position_deparment_level",
-                table: "position_deparments",
-                columns: new[] { "deparment_id", "position_id", "position_deparment_level" });
+                name: "IX_position_departments_department_id_position_id_position_department_level",
+                table: "position_departments",
+                columns: new[] { "department_id", "position_id", "position_department_level" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_positions_id",
@@ -250,13 +250,13 @@ namespace ServicePortal.Migrations
                 name: "approval_leave_request_steps");
 
             migrationBuilder.DropTable(
-                name: "deparments");
+                name: "departments");
 
             migrationBuilder.DropTable(
                 name: "leave_requests");
 
             migrationBuilder.DropTable(
-                name: "position_deparments");
+                name: "position_departments");
 
             migrationBuilder.DropTable(
                 name: "positions");

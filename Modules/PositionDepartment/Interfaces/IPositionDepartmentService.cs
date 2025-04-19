@@ -2,8 +2,8 @@
 
 namespace ServicePortal.Modules.PositionDeparment.Interfaces
 {
-    public interface IPositionDeparmentService
+    public interface IPositionDepartmentService
     {
-        Task<PositionDeparmentDTO> Create(PositionDeparmentDTO dto);
+        Task<PositionDepartmentDTO> Create(PositionDepartmentDTO dto);
     }
 }

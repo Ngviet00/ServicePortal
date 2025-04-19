@@ -78,9 +78,9 @@ namespace ServicePortal
 
             builder.Services.AddScoped<IPositionService, PositionService>();
 
-            builder.Services.AddScoped<IDeparmentService, DeparmentService>();
+            builder.Services.AddScoped<IDepartmentService, DepartmentService>();
 
-            builder.Services.AddScoped<IPositionDeparmentService, PositionDeparmentService>();
+            builder.Services.AddScoped<IPositionDepartmentService, PositionDepartmentService>();
 
             builder.Services.AddScoped<JwtService>();
 

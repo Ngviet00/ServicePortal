@@ -1,9 +1,9 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 
-namespace ServicePortal.Modules.Deparment.DTO
+namespace ServicePortal.Modules.Position.DTO
 {
-    public class DeparmentDTO
+    public class PositionDTO
     {
         [JsonPropertyName("id")]
         public int? Id { get; set; }
@@ -11,10 +11,7 @@ namespace ServicePortal.Modules.Deparment.DTO
         [Required, JsonPropertyName("name")]
         public string? Name { get; set; }
 
-        [JsonPropertyName("note")]
-        public string? Note { get; set; }
-
-        [JsonPropertyName("parent_id")]
-        public int? ParentId { get; set; } = null;
+        [JsonPropertyName("position_level")]
+        public int? PositionLevel { get; set; }
     }
 }

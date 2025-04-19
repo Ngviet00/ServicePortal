@@ -25,7 +25,7 @@ namespace ServicePortal.Infrastructure.Data
 
                 await context.SaveChangesAsync();
 
-                var positionDeparment = new PositionDeparment
+                var positionDeparment = new PositionDepartment
                 {
                     DeparmentId = 1,
                     PositionId = -1,
@@ -33,7 +33,7 @@ namespace ServicePortal.Infrastructure.Data
                     CustomTitle = "SuperAdmin"
                 };
 
-                context.PositionDeparments.Add(positionDeparment);
+                context.PositionDepartments.Add(positionDeparment);
 
                 await context.SaveChangesAsync();
 

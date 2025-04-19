@@ -1,10 +1,12 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using ServicePortal.Common;
+using ServicePortal.Modules.Position.DTO;
 using ServicePortal.Modules.Position.Interfaces;
+using ServicePortal.Modules.Position.Requests;
 
 namespace ServicePortal.Modules.Position.Controllers
 {
-    [ApiController, Route("position")]
+    [ApiController, Route("api/position")]
     public class PositionController : ControllerBase
     {
         private readonly IPositionService _positionService;
@@ -15,51 +17,53 @@ namespace ServicePortal.Modules.Position.Controllers
         }
 
         [HttpGet("get-all")]
-        public async Task<IActionResult> GetAll()
+        public async Task<IActionResult> GetAll(GetAllPositionRequest request)
         {
-            var positions = await _positionService.GetAll();
+            var results = await _positionService.GetAll(request);
 
-            return Ok(new BaseResponse<List<Domain.Entities.Position>>(200, "success", positions));
+            var response = new PageResponse<PositionDTO>(200, "Success", results.Data, results.TotalPages, request.Page, request.PageSize, results.TotalItems);
+
+            return Ok(response);
         }
 
         [HttpGet("get-by-id/{id}")]
         public async Task<IActionResult> GetById(int id)
         {
-            var position = await _positionService.GetById(id);
+            var result = await _positionService.GetById(id);
 
-            return Ok(new BaseResponse<Domain.Entities.Position>(200, "success", position));
+            return Ok(new BaseResponse<PositionDTO>(200, "success", result));
         }
 
         [HttpPost("create")]
-        public async Task<IActionResult> Create(string name, int level)
+        public async Task<IActionResult> Create(PositionDTO dto)
         {
-            var position = await _positionService.Create(name, level);
+            var result = await _positionService.Create(dto);
 
-            return Ok(new BaseResponse<Domain.Entities.Position>(200, "success", position));
+            return Ok(new BaseResponse<PositionDTO>(200, "success", result));
         }
 
         [HttpPut("update/{id}")]
-        public async Task<IActionResult> Update(int id, string name, int level)
+        public async Task<IActionResult> Update(int id, PositionDTO dto)
         {
-            var position = await _positionService.Update(id, name, level);
+            var result = await _positionService.Update(id, dto);
 
-            return Ok(new BaseResponse<Domain.Entities.Position>(200, "success", position));
+            return Ok(new BaseResponse<PositionDTO>(200, "success", result));
         }
 
         [HttpDelete("delete/{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            var position = await _positionService.Delete(id);
+            var result = await _positionService.Delete(id);
 
-            return Ok(new BaseResponse<Domain.Entities.Position>(200, "success", position));
+            return Ok(new BaseResponse<PositionDTO>(200, "success", null));
         }
 
         [HttpDelete("force-delete/{id}")]
         public async Task<IActionResult> ForceDelete(int id)
         {
-            var position = await _positionService.ForceDelete(id);
+            var result = await _positionService.ForceDelete(id);
 
-            return Ok(new BaseResponse<Domain.Entities.Position>(200, "success", position));
+            return Ok(new BaseResponse<PositionDTO>(200, "success", null));
         }
     }
 }

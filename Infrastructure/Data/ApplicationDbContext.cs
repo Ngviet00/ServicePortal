@@ -7,7 +7,7 @@ namespace ServicePortal.Infrastructure.Data
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) { }
         
-        public DbSet<Deparment> Deparments { get; set; }
+        public DbSet<Department> Departments { get; set; }
         public DbSet<Position> Positions { get; set; }
         public DbSet<Role> Roles { get; set; }
         public DbSet<User> Users { get; set; }
@@ -15,14 +15,14 @@ namespace ServicePortal.Infrastructure.Data
         public DbSet<UserAssignment> UserAssignments { get; set; }
         public DbSet<LeaveRequest> LeaveRequests { get; set; }
         public DbSet<ApprovalLeaveRequestStep> ApprovalLeaveRequestSteps { get; set; }
-        public DbSet<PositionDeparment> PositionDeparments{ get; set; }
+        public DbSet<PositionDepartment> PositionDepartments{ get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
-            modelBuilder.Entity<Deparment>().HasData(
-                new Deparment
+            modelBuilder.Entity<Department>().HasData(
+                new Department
                 {
                     Id = 1,
                     Name = "IT/MIS",
@@ -51,8 +51,8 @@ namespace ServicePortal.Infrastructure.Data
             );
 
             //init position in IT deparment, include Manager
-            modelBuilder.Entity<PositionDeparment>().HasData(
-                new PositionDeparment
+            modelBuilder.Entity<PositionDepartment>().HasData(
+                new PositionDepartment
                 {
                     Id = 1,
                     DeparmentId = 1, //IT-MIS
