@@ -14,7 +14,7 @@ namespace ServicePortal.Domain.Enums
         SickLeave = 3,
 
         [Description("Nghỉ cưới")]
-        UnpaidLeave = 4,
+        WeddingLeave = 4,
 
         [Description("Nghỉ Tai nạn LĐ")]
         AccidentLeave = 5,

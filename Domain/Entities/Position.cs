@@ -12,7 +12,16 @@ namespace ServicePortal.Domain.Entities
         [Column("name")]
         public string? Name { get; set; }
 
-        [Column("position_level")]
-        public int? PositionLevel { get; set; }
+        [Column("title")]
+        public string? Title { get; set; }
+
+        [Column("department_id")]
+        public int? DepartmentId { get; set; }
+
+        [Column("level")]
+        public int? Level{ get; set; }
+
+        [Column("is_global")]
+        public bool? IsGlobal { get; set; } = false;
     }
 }

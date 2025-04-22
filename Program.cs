@@ -21,8 +21,9 @@ using ServicePortal.Modules.Deparment.Interfaces;
 using ServicePortal.Modules.Deparment.Services;
 using ServicePortal.Common.Middleware;
 using Serilog;
-using ServicePortal.Modules.PositionDeparment.Interfaces;
-using ServicePortal.Modules.PositionDeparment.Services;
+using ServicePortal.Modules.Team.Interfaces;
+using ServicePortal.Modules.Team.Services;
+using ServicePortal.Infrastructure.BackgroundServices;
 
 namespace ServicePortal
 {
@@ -80,7 +81,7 @@ namespace ServicePortal
 
             builder.Services.AddScoped<IDepartmentService, DepartmentService>();
 
-            builder.Services.AddScoped<IPositionDepartmentService, PositionDepartmentService>();
+            builder.Services.AddScoped<ITeamService, Teamservice>();
 
             builder.Services.AddScoped<JwtService>();
 
@@ -194,6 +195,8 @@ namespace ServicePortal
 
             #endregion
 
+            builder.Services.AddHostedService<LogCleanupService>();
+
             var app = builder.Build();
 
             //when run app, excute class db seeder
@@ -247,6 +250,8 @@ namespace ServicePortal
                     FileHelper.WriteLog(TypeErrorEnum.ERROR, $"[UnhandledException] {ex.Message}\n{ex.StackTrace}");
                 }
             };
+
+            FileHelper.CleanupOldLogs();
         }
     }
 }

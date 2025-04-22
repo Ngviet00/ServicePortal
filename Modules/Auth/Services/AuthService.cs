@@ -54,13 +54,13 @@ namespace ServicePortal.Modules.Auth.Services
             _context.Users.Add(newUser);
             await _context.SaveChangesAsync();
 
-            var userAssignment = new UserAssignment
-            {
-                UserCode = request.Code,
-                PositionDeparmentId = request.PositionDeparmentId,
-            };
+            //var userAssignment = new UserAssignment
+            //{
+            //    UserCode = request.Code,
+            //    PositionDeparmentId = request.PositionDeparmentId,
+            //};
 
-            _context.UserAssignments.Add(userAssignment);
+            //_context.UserAssignments.Add(userAssignment);
             await _context.SaveChangesAsync();
 
             return UserMapper.ToDto(newUser);

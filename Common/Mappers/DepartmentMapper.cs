@@ -1,6 +1,5 @@
 ﻿using ServicePortal.Domain.Entities;
 using ServicePortal.Modules.Deparment.DTO;
-using ServicePortal.Modules.User.DTO;
 
 namespace ServicePortal.Common.Mappers
 {

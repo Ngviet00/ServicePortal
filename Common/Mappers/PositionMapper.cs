@@ -11,7 +11,9 @@ namespace ServicePortal.Common.Mappers
             {
                 Id = entity.Id,
                 Name = entity.Name,
-                PositionLevel = entity.PositionLevel,
+                Level = entity.Level,
+                DepartmentId = entity.DepartmentId,
+                Title = entity.Title,
             };
         }
 
@@ -20,7 +22,9 @@ namespace ServicePortal.Common.Mappers
             return new Position
             {
                 Name = dto.Name,
-                PositionLevel = dto.PositionLevel
+                Level = dto.Level,
+                DepartmentId = dto.DepartmentId,
+                Title = dto.Title,
             };
         }
 

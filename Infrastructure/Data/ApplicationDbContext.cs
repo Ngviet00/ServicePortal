@@ -9,13 +9,12 @@ namespace ServicePortal.Infrastructure.Data
         
         public DbSet<Department> Departments { get; set; }
         public DbSet<Position> Positions { get; set; }
+        public DbSet<Team> Teams { get; set; }
         public DbSet<Role> Roles { get; set; }
         public DbSet<User> Users { get; set; }
         public DbSet<RefreshToken> RefreshTokens { get; set; }
-        public DbSet<UserAssignment> UserAssignments { get; set; }
-        public DbSet<LeaveRequest> LeaveRequests { get; set; }
-        public DbSet<ApprovalLeaveRequestStep> ApprovalLeaveRequestSteps { get; set; }
-        public DbSet<PositionDepartment> PositionDepartments{ get; set; }
+        //public DbSet<LeaveRequest> LeaveRequests { get; set; }
+        //public DbSet<ApprovalLeaveRequestStep> ApprovalLeaveRequestSteps { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -39,26 +38,41 @@ namespace ServicePortal.Infrastructure.Data
             );
 
             modelBuilder.Entity<Position>().HasData(
-                new Position { Id = -1, Name = "SuperAdmin", PositionLevel = 0 },
-                new Position { Id = 1, Name = "General Director", PositionLevel = 1 },
-                new Position { Id = 2, Name = "Assistant General Director", PositionLevel = 2 },
-                new Position { Id = 3, Name = "General Manager", PositionLevel = 3 },
-                new Position { Id = 4, Name = "Manager", PositionLevel = 4 },
-                new Position { Id = 5, Name = "Assistant Manager", PositionLevel = 5 },
-                new Position { Id = 6, Name = "Supervisor", PositionLevel = 6 },
-                new Position { Id = 7, Name = "Chief Accountant", PositionLevel = 6 },
-                new Position { Id = 8, Name = "Staff", PositionLevel = 7 }
-            );
-
-            //init position in IT deparment, include Manager
-            modelBuilder.Entity<PositionDepartment>().HasData(
-                new PositionDepartment
+                new Position
                 {
                     Id = 1,
-                    DeparmentId = 1, //IT-MIS
-                    PositionId = 4,  //Manager
-                    PositionDeparmentLevel = 1,
-                    CustomTitle = "Manager IT/MIS"
+                    Name = "General Director",
+                    Title = "General Director",
+                    DepartmentId = 0,
+                    Level = -2,
+                    IsGlobal = true,
+                },
+                new Position
+                {
+                    Id = 2,
+                    Name = "Assistant General Director",
+                    Title = "Assistant General Director",
+                    DepartmentId = 0,
+                    Level = -1,
+                    IsGlobal = true,
+                },
+                new Position
+                {
+                    Id = 3,
+                    Name = "Superadmin",
+                    Title = "Superadmin",
+                    DepartmentId = 1,
+                    Level = 0,
+                    IsGlobal = true,
+                },
+                new Position
+                {
+                    Id = 4,
+                    Name = "Manager",
+                    Title = "Manager IT/MIS",
+                    DepartmentId = 1,
+                    Level = 1,
+                    IsGlobal = false,
                 }
             );
         }

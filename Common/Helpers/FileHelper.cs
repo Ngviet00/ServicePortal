@@ -49,7 +49,7 @@ namespace ServicePortal.Common.Helpers
                 if (!Directory.Exists(logRootPath))
                     return;
 
-                DateTime thresholdDate = DateTime.Now.AddMonths(-2);
+                DateTime thresholdDate = DateTime.Now.AddMonths(-1);
 
                 foreach (var yearDir in Directory.GetDirectories(logRootPath))
                 {

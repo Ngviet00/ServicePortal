@@ -41,7 +41,7 @@ namespace ServicePortal.Modules.Position.Services
 
             var query = _context.Positions.AsQueryable();
 
-            query = query.Where(e => e.PositionLevel != 0);
+            query = query.Where(e => e.Level >= 1);
 
             if (!string.IsNullOrEmpty(name))
             {
@@ -52,13 +52,44 @@ namespace ServicePortal.Modules.Position.Services
 
             var totalPages = (int)Math.Ceiling(totalItems / pageSize);
 
-            var positions = await query.Skip((int)((page - 1) * pageSize)).Take((int)pageSize).ToListAsync();
+            var positions = await query
+                .Skip((int)((page - 1) * pageSize))
+                .Take((int)pageSize)
+                .ToListAsync();
 
-            List<PositionDTO> data = PositionMapper.ToDtoList(positions);
-          
+            // Lấy danh sách department liên quan
+            var departmentIds = positions
+                .Where(p => p.DepartmentId.HasValue)
+                .Select(p => p.DepartmentId.Value)
+                .Distinct()
+                .ToList();
+
+            var departments = await _context.Departments
+                .Where(d => departmentIds.Contains(d.Id))
+                .ToListAsync();
+
+            var departmentMap = departments.ToDictionary(d => d.Id, d => d);
+
+            // Gán DTO và inject department
+            var positionDtos = positions.Select(p =>
+            {
+                var dto = PositionMapper.ToDto(p);
+
+                if (p.DepartmentId.HasValue && departmentMap.TryGetValue(p.DepartmentId.Value, out var dept))
+                {
+                    dto.Department = DepartmentMapper.ToDto(dept);
+                }
+                else
+                {
+                    dto.Department = null;
+                }
+
+                return dto;
+            }).ToList();
+
             return new PagedResults<PositionDTO>
             {
-                Data = data,
+                Data = positionDtos,
                 TotalItems = totalItems,
                 TotalPages = totalPages
             };
@@ -75,9 +106,8 @@ namespace ServicePortal.Modules.Position.Services
         {
             var position = await _context.Positions.FirstOrDefaultAsync(e => e.Id == id) ?? throw new NotFoundException("Position not found!");
 
-            position.Name = dto.Name;
-
-            position.PositionLevel = dto.PositionLevel;
+            position = PositionMapper.ToEntity(dto);
+            position.Id = id;
 
             _context.Positions.Update(position);
 

@@ -18,10 +18,5 @@ namespace ServicePortal.Domain.Entities
 
         [Column("parent_id")]
         public int? ParentId { get; set; }
-
-        public static implicit operator bool(Department? v)
-        {
-            throw new NotImplementedException();
-        }
     }
 }

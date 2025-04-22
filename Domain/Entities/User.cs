@@ -30,6 +30,24 @@ namespace ServicePortal.Domain.Entities
         [Column("date_join_company")]
         public DateTime? DateJoinCompany{ get; set; }
 
+        [Column("date_of_birth")]
+        public DateTime? DateOfBirth { get; set; }
+
+        [Column("phone")]
+        public string? Phone{ get; set; }
+
+        [Column("sex")]
+        public byte? Sex { get; set; } //1 male - nam, 2 female - nu
+
+        [Column("department_id")]
+        public int? DepartmentId { get; set; }
+
+        [Column("position_id")]
+        public int? PositionId { get; set; }
+
+        [Column("team_id")]
+        public int? TeamId { get; set; }
+
         [Column("created_at")]
         public DateTime? CreatedAt { get; set; }
 

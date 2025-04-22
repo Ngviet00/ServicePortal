@@ -2,9 +2,9 @@
 using System.Text.Json.Serialization;
 using ServicePortal.Modules.Deparment.DTO;
 
-namespace ServicePortal.Modules.Position.DTO
+namespace ServicePortal.Modules.Team.DTO
 {
-    public class PositionDTO
+    public class TeamDTO
     {
         [JsonPropertyName("id")]
         public int? Id { get; set; }
@@ -12,14 +12,9 @@ namespace ServicePortal.Modules.Position.DTO
         [Required, JsonPropertyName("name")]
         public string? Name { get; set; }
 
-        [JsonPropertyName("title")]
-        public string? Title { get; set; }
-
         [JsonPropertyName("department_id")]
         public int? DepartmentId { get; set; }
 
-        [Required, JsonPropertyName("level")]
-        public int? Level { get; set; }
-        public DepartmentDTO? Department { get; set; }
+        public DepartmentDTO? departmentDto { get; set; }
     }
 }
