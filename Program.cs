@@ -58,6 +58,8 @@ namespace ServicePortal
 
             var builder = WebApplication.CreateBuilder(args);
 
+            builder.Services.AddHealthChecks();
+
             builder.Host.UseSerilog();
 
             #region Config SqlServer
@@ -198,6 +200,8 @@ namespace ServicePortal
             builder.Services.AddHostedService<LogCleanupService>();
 
             var app = builder.Build();
+
+            app.MapHealthChecks("/health");
 
             //when run app, excute class db seeder
             using (var scope = app.Services.CreateScope())

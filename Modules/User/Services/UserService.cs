@@ -1,9 +1,11 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
 using ServicePortal.Common;
 using ServicePortal.Common.Mappers;
 using ServicePortal.Infrastructure.Data;
 using ServicePortal.Modules.User.DTO;
 using ServicePortal.Modules.User.Interfaces;
+using ServicePortal.Modules.User.Requests;
 
 namespace ServicePortal.Modules.User.Services
 {
@@ -16,13 +18,34 @@ namespace ServicePortal.Modules.User.Services
             _context = context;
         }
 
-        public async Task<List<UserDTO>> GetAll()
+        public async Task<PagedResults<UserDTO>> GetAll(GetAllUserRequest request)
         {
-            var users = await _context.Users.ToListAsync();
+            string name = request.Name ?? "";
+            double pageSize = request.PageSize;
+            double page = request.Page;
 
-            List<UserDTO> userDTO = UserMapper.ToDtoList(users);
+            var query = _context.Users.AsQueryable();
 
-            return userDTO;
+            if (!string.IsNullOrEmpty(name))
+            {
+                query = query.Where(r => r.Name.Contains(name));
+            }
+
+            var totalItems = await query.CountAsync();
+
+            var totalPages = (int)Math.Ceiling(totalItems / pageSize);
+
+            var users = await query.Skip((int)((page - 1) * pageSize)).Take((int)pageSize).ToListAsync();
+
+
+            var result = new PagedResults<UserDTO>
+            {
+                Data = UserMapper.ToDtoList(users),
+                TotalItems = totalItems,
+                TotalPages = totalPages
+            };
+
+            return result;
         }
 
         public async Task<UserDTO> GetByCode(string code)

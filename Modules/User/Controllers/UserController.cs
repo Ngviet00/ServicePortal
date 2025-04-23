@@ -2,6 +2,7 @@
 using ServicePortal.Common;
 using ServicePortal.Modules.User.DTO;
 using ServicePortal.Modules.User.Interfaces;
+using ServicePortal.Modules.User.Requests;
 
 namespace ServicePortal.Modules.User.Controllers
 {
@@ -17,11 +18,13 @@ namespace ServicePortal.Modules.User.Controllers
         }
 
         [HttpGet("get-all")]
-        public async Task<IActionResult> GetAll()
+        public async Task<IActionResult> GetAll(GetAllUserRequest request)
         {
-            List<UserDTO> users = await _userService.GetAll();
+            var results = await _userService.GetAll(request);
 
-            return Ok(new BaseResponse<List<UserDTO>>(200, "Success", users));
+            var response = new PageResponse<UserDTO>(200, "Success", results.Data, results.TotalPages, request.Page, request.PageSize, results.TotalItems);
+
+            return Ok(response);
         }
 
         [HttpGet("get-by-id/{id}")]

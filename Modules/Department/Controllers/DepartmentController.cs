@@ -4,6 +4,7 @@ using ServicePortal.Common;
 using ServicePortal.Modules.Deparment.DTO;
 using ServicePortal.Modules.Deparment.Interfaces;
 using ServicePortal.Modules.Deparment.Requests;
+using ServicePortal.Modules.Department.DTO;
 
 namespace ServicePortal.Modules.Deparment.Controllers
 {
@@ -34,6 +35,14 @@ namespace ServicePortal.Modules.Deparment.Controllers
             var deparments = await _deparmentService.GetParentDepartment();
 
             return Ok(new BaseResponse<List<Domain.Entities.Department>>(200, "success", deparments));
+        }
+
+        [HttpGet("get-department-with-children-department-and-position")]
+        public async Task<IActionResult> GetDepartmentWithChildrenDepartmentAndPosition()
+        {
+            var results = await _deparmentService.GetDepartmentWithChildrenDepartmentAndPosition();
+
+            return Ok(new BaseResponse<List<DepartmentTreeDTO>>(200, "success", results));
         }
 
 

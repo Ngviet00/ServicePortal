@@ -1,11 +1,12 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using ServicePortal.Common;
 using ServicePortal.Common.Mappers;
-using ServicePortal.Domain.Entities;
 using ServicePortal.Infrastructure.Data;
 using ServicePortal.Modules.Deparment.DTO;
 using ServicePortal.Modules.Deparment.Interfaces;
 using ServicePortal.Modules.Deparment.Requests;
+using ServicePortal.Modules.Department.DTO;
+using ServicePortal.Modules.Position.DTO;
 
 namespace ServicePortal.Modules.Deparment.Services
 {
@@ -75,11 +76,59 @@ namespace ServicePortal.Modules.Deparment.Services
             };
         }
 
-        public async Task<List<Department>> GetParentDepartment()
+        public async Task<List<Domain.Entities.Department>> GetParentDepartment()
         {
             var deparment = await _context.Departments.Where(e => e.ParentId == null).ToListAsync();
 
             return deparment;
+        }
+
+        public async Task<List<DepartmentTreeDTO>> GetDepartmentWithChildrenDepartmentAndPosition()
+        {
+            var allDepartments = await _context.Departments.ToListAsync();
+
+            var allPositionsByDepartment = await _context.Positions
+                .Where(p => p.Level >= 1)
+                .GroupBy(p => p.DepartmentId ?? -1)
+                .ToDictionaryAsync(
+                    g => g.Key,
+                    g => g.Select(p => new PositionDTO
+                    {
+                        Id = p.Id,
+                        Name = p.Name,
+                        Title = p.Title,
+                        DepartmentId = p.DepartmentId,
+                        Level = p.Level
+                    }).ToList()
+               );
+
+            var departmentDtoMap = allDepartments.ToDictionary(
+                d => d.Id,
+                d => 
+                {
+                    allPositionsByDepartment.TryGetValue(d.Id, out var positions);
+                    return new DepartmentTreeDTO
+                    {
+                        Id = d.Id,
+                        Name = d.Name,
+                        ParentId = d.ParentId,
+                        Positions = positions ?? new List<PositionDTO>(),
+                        Childrens = new List<DepartmentTreeDTO>()
+                    };
+                }
+            );
+
+            foreach (var department in allDepartments)
+            {
+                if (department.ParentId.HasValue && departmentDtoMap.TryGetValue(department.ParentId.Value, out var parentDto))
+                {
+                    parentDto.Childrens.Add(departmentDtoMap[department.Id]);
+                }
+            }
+
+            var rootDepartments = departmentDtoMap.Values.Where(d => !d.ParentId.HasValue).ToList();
+
+            return rootDepartments;
         }
 
         public async Task<Domain.Entities.Department> GetById(int id)

@@ -39,11 +39,17 @@ namespace ServicePortal.Domain.Entities
         [Column("sex")]
         public byte? Sex { get; set; } //1 male - nam, 2 female - nu
 
-        [Column("department_id")]
-        public int? DepartmentId { get; set; }
+        [Column("parent_department_id")]
+        public int? ParentDepartmentId { get; set; }
+
+        [Column("child_department_id")]
+        public int? ChildDepartmentId { get; set; }
 
         [Column("position_id")]
         public int? PositionId { get; set; }
+        
+        [Column("management_position_id")]
+        public int? ManagementPositionId { get; set; }
 
         [Column("team_id")]
         public int? TeamId { get; set; }

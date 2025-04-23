@@ -9,12 +9,16 @@ namespace ServicePortal.Common.Mappers
         {
             return new UserDTO
             {
+                Id = entity.Id,
                 Code = entity.Code,
                 Name = entity.Name,
                 Email = entity.Email,
                 RoleId = entity.RoleId,
                 IsActive = entity.IsActive,
                 DateJoinCompany = entity.DateJoinCompany,
+                DateOfBirth = entity.DateOfBirth,
+                Phone = entity.Phone,
+                Sex = entity.Sex
             };
         }
 

@@ -48,19 +48,17 @@ namespace ServicePortal.Modules.Auth.Services
                 RoleId = request.RoleId,
                 IsActive = true,
                 DateJoinCompany = request.DateJoinCompany ?? null,
+                DateOfBirth = request.DateOfBirth ?? null,
+                Phone = request.Phone?? null,
+                Sex = request.Sex ?? null,
+                ParentDepartmentId = request.ParentDepartmentId,
+                ChildDepartmentId = request.ChildDepartmentId ?? null,
+                PositionId = request.PositionId ?? null,
+                ManagementPositionId = request.ManagementPositionId ?? null,
                 CreatedAt = DateTime.Now
             };
 
             _context.Users.Add(newUser);
-            await _context.SaveChangesAsync();
-
-            //var userAssignment = new UserAssignment
-            //{
-            //    UserCode = request.Code,
-            //    PositionDeparmentId = request.PositionDeparmentId,
-            //};
-
-            //_context.UserAssignments.Add(userAssignment);
             await _context.SaveChangesAsync();
 
             return UserMapper.ToDto(newUser);

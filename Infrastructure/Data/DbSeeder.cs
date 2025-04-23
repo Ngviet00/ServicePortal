@@ -22,7 +22,7 @@ namespace ServicePortal.Infrastructure.Data
                         DateOfBirth = new DateTime(2020, 5, 2),
                         Phone = "0345248120",
                         Sex = 1,
-                        DepartmentId = 1,
+                        ParentDepartmentId = 1,
                         PositionId = 3,
                         TeamId = null,
                         CreatedAt = new DateTime(2025, 4, 1)
