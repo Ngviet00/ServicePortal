@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ServicePortal.Infrastructure.Data;
 
@@ -11,9 +12,11 @@ using ServicePortal.Infrastructure.Data;
 namespace ServicePortal.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250424085536_AddTable")]
+    partial class AddTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -107,9 +110,9 @@ namespace ServicePortal.Migrations
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("reason");
 
-                    b.Property<byte?>("Status")
-                        .HasColumnType("tinyint")
-                        .HasColumnName("status");
+                    b.Property<string>("Status")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("state");
 
                     b.Property<byte?>("TimeLeave")
                         .HasColumnType("tinyint")

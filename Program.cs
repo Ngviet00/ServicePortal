@@ -24,6 +24,10 @@ using Serilog;
 using ServicePortal.Modules.Team.Interfaces;
 using ServicePortal.Modules.Team.Services;
 using ServicePortal.Infrastructure.BackgroundServices;
+using ServicePortal.Modules.LeaveRequest.Interfaces;
+using ServicePortal.Modules.LeaveRequest.Services;
+using ServicePortal.Modules.LeaveRequestStep.Services;
+using ServicePortal.Modules.LeaveRequestStep.Interfaces;
 
 namespace ServicePortal
 {
@@ -84,6 +88,10 @@ namespace ServicePortal
             builder.Services.AddScoped<IDepartmentService, DepartmentService>();
 
             builder.Services.AddScoped<ITeamService, Teamservice>();
+
+            builder.Services.AddScoped<ILeaveRequestService, LeaveRequestService>();
+
+            builder.Services.AddScoped<ILeaveRequestStepService, LeaveRequestStepService>();
 
             builder.Services.AddScoped<JwtService>();
 

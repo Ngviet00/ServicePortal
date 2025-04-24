@@ -11,6 +11,7 @@ using ServicePortal.Modules.Auth.Requests;
 using ServicePortal.Modules.User.DTO;
 using ServicePortal.Modules.Auth.Interfaces;
 using ServicePortal.Common.Mappers;
+using ServicePortal.Modules.User.Interfaces;
 
 namespace ServicePortal.Modules.Auth.Services
 {
@@ -18,13 +19,15 @@ namespace ServicePortal.Modules.Auth.Services
     {
         private readonly ApplicationDbContext _context;
         private readonly JwtService _jwtService;
+        private readonly IUserService _userService;
         private readonly IConfiguration _config;
 
-        public AuthService(JwtService jwtService, ApplicationDbContext context, IConfiguration config)
+        public AuthService(JwtService jwtService, ApplicationDbContext context, IConfiguration config, IUserService userService)
         {
             _jwtService = jwtService;
             _context = context;
             _config = config;
+            _userService = userService;
         }
 
         public async Task<UserDTO> Register(CreateUserRequest request)
@@ -66,8 +69,9 @@ namespace ServicePortal.Modules.Auth.Services
 
         public async Task<LoginResponse> Login(LoginRequest request)
         {
-            //get info user include role
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Code == request.UserCode) ?? throw new ValidationException("User not found!");
+            var query = _userService.GetUserQuery();
+
+            var user = await query.Where(e => e.Code == request.UserCode).FirstOrDefaultAsync() ?? throw new ValidationException("User not found!");
 
             if (!Helper.VerifyString(user?.Password ?? "", request?.Password ?? ""))
             {

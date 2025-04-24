@@ -1,63 +1,52 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
 
 namespace ServicePortal.Domain.Entities
 {
-    [Table("leave_requests")]
+    [Table("leave_requests"), Index(nameof(Id), nameof(UserCode))]
     public class LeaveRequest
     {
         [Column("id")]
         public Guid Id { get; set; }
 
         [Column("user_code")]
-        public string? UserCode { get; set; } //code of user
+        public string? UserCode { get; set; }
+
+        [Column("name")]
+        public string? Name { get; set; }
 
         [Column("name_register")]
-        public string? NameRegister { get; set; } //name of register
+        public string? NameRegister { get; set; }
 
-        [Column("position_id")]
-        public int? PositionId { get; set; }
+        [Column("position")]
+        public string? Position { get; set; }
 
-        [Column("deparment_id")]
-        public int? DeparmentId { get; set; }
-
-        [Column("reason")]
-        public string? Reason { get; set; }
-
-        [Column("from_hour")]
-        public string? FromHour { get; set; }
+        [Column("deparment")]
+        public string? Deparment { get; set; }
 
         [Column("from_date")]
         public DateTime? FromDate { get; set; }
 
-        [Column("to_hour")]
-        public string? ToHour { get; set; }
-
         [Column("to_date")]
         public DateTime? ToDate { get; set; }
 
-        [Column("state")]
-        public string? Status { get; set; } //status total of request //pending, complete, reject
-
-        [Column("display_hr")]
-        public bool? DisplayHr { get; set; }
-
-        [Column("type_leave")]
-        public int? TypeLeave { get; set; } //accident leave, annual leave,...
-
-        [Column("reason_type_leave_other")]
-        public string? ReasonTypeLeaveOther { get; set; } //if choose other leave, input reason of other leave
+        [Column("reason")]
+        public string? Reason { get; set; }
 
         [Column("time_leave")]
-        public int? TimeLeave { get; set; } //morning leave, afternoon leave, allday leave
+        public byte? TimeLeave { get; set; }
+
+        [Column("type_leave")]
+        public byte? TypeLeave { get; set; }
+
+        [Column("status")]
+        public byte? Status { get; set; }
 
         [Column("have_salary")]
-        public bool? HaveSalary { get; set; } //paid leave or unpaid leave
+        public bool? HaveSalary { get; set; }
 
         [Column("image")]
         public string? Image { get; set; }
-
-        [Column("meta_data")]
-        public string? MetaData { get; set; }
 
         [Column("created_at")]
         public DateTime? CreatedAt { get; set; }

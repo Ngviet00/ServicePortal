@@ -1,5 +1,8 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
+using ServicePortal.Domain.Entities;
+using ServicePortal.Modules.Deparment.DTO;
+using ServicePortal.Modules.Position.DTO;
 
 namespace ServicePortal.Modules.User.DTO
 {
@@ -16,6 +19,9 @@ namespace ServicePortal.Modules.User.DTO
 
         [JsonPropertyName("email")]
         public string? Email { get; set; }
+
+        [JsonPropertyName("password")]
+        public string? Password { get; set; }
 
         [JsonPropertyName("role_id")]
         public int? RoleId { get; set; }
@@ -34,5 +40,17 @@ namespace ServicePortal.Modules.User.DTO
 
         [JsonPropertyName("sex")]
         public byte? Sex { get; set; }
+
+        [JsonPropertyName("role")]
+        public Domain.Entities.Role? Role { get; set; }
+
+        [JsonPropertyName("parent_department")]
+        public DepartmentDTO? ParentDepartment { get; set; }
+
+        [JsonPropertyName("children_department")]
+        public DepartmentDTO? ChildrenDepartment { get; set; }
+
+        [JsonPropertyName("position")]
+        public PositionDTO? Position { get; set; }
     }
 }

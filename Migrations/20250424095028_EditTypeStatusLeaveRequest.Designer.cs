@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ServicePortal.Infrastructure.Data;
 
@@ -11,9 +12,11 @@ using ServicePortal.Infrastructure.Data;
 namespace ServicePortal.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250424095028_EditTypeStatusLeaveRequest")]
+    partial class EditTypeStatusLeaveRequest
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -109,7 +112,7 @@ namespace ServicePortal.Migrations
 
                     b.Property<byte?>("Status")
                         .HasColumnType("tinyint")
-                        .HasColumnName("status");
+                        .HasColumnName("state");
 
                     b.Property<byte?>("TimeLeave")
                         .HasColumnType("tinyint")

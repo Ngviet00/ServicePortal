@@ -13,8 +13,8 @@ namespace ServicePortal.Infrastructure.Data
         public DbSet<Role> Roles { get; set; }
         public DbSet<User> Users { get; set; }
         public DbSet<RefreshToken> RefreshTokens { get; set; }
-        //public DbSet<LeaveRequest> LeaveRequests { get; set; }
-        //public DbSet<ApprovalLeaveRequestStep> ApprovalLeaveRequestSteps { get; set; }
+        public DbSet<LeaveRequest> LeaveRequests { get; set; }
+        public DbSet<LeaveRequestStep> leaveRequestSteps{ get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
