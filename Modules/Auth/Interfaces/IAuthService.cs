@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Identity.Data;
-using ServicePortal.Application.DTOs.Auth.Requests;
+﻿using ServicePortal.Application.DTOs.Auth.Requests;
 using ServicePortal.Application.DTOs.Auth.Responses;
 using ServicePortal.Modules.Auth.Requests;
 using ServicePortal.Modules.User.DTO;

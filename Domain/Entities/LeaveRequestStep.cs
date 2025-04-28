@@ -17,7 +17,7 @@ namespace ServicePortal.Domain.Entities
         public int? PositionIdApproval { get; set; } //position approver, exam: Staff IT write leaver, position 2, => get position 1 Manager IT
 
         [Column("status_step")]
-        public byte? StatusStep{ get; set; } //1:pending, 2:complete, 3;reject 1,2
+        public byte? StatusStep{ get; set; } //1:pending, 2:approval, 3;reject 1,2
 
         [Column("approved_by")]
         public string? ApprovedBy { get; set; }

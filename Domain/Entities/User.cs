@@ -62,5 +62,7 @@ namespace ServicePortal.Domain.Entities
 
         [Column("deleted_at")]
         public DateTime? DeletedAt { get; set; }
+
+        public Position? Position { get; set; }
     }
 }

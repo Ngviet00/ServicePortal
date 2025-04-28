@@ -90,6 +90,7 @@ namespace ServicePortal.Common.Helpers
             }
             catch (Exception ex)
             {
+                WriteLog(TypeErrorEnum.ERROR, "Failed to auto delete file log!");
                 Console.WriteLine($"Cleanup Log Error: {ex.Message}");
             }
         }

@@ -27,6 +27,17 @@ namespace ServicePortal.Modules.LeaveRequest.Controllers
             return Ok(response);
         }
 
+        [HttpGet("get-leave-request-wait-approval")]
+        public async Task<IActionResult> GetWaitApproval(GetAllLeaveRequest request)
+        {
+            var results = await _leaveRequestService.GetAllWaitApproval(request);
+
+            var response = new PageResponse<LeaveRequestDTO>(200, "Success", results.Data, results.TotalPages, request.Page, request.PageSize, results.TotalItems);
+
+            return Ok(response);
+        }
+
+
         [HttpGet("get-by-id/{id}")]
         public async Task<IActionResult> GetById(Guid id)
         {
@@ -55,6 +66,14 @@ namespace ServicePortal.Modules.LeaveRequest.Controllers
         public async Task<IActionResult> Delete(Guid id)
         {
             var result = await _leaveRequestService.Delete(id);
+
+            return Ok(new BaseResponse<LeaveRequestDTO>(200, "success", result));
+        }
+
+        [HttpPost("approval")]
+        public async Task<IActionResult> Approval(ApprovalDTO request)
+        {
+            var result = await _leaveRequestService.Approval(request);
 
             return Ok(new BaseResponse<LeaveRequestDTO>(200, "success", result));
         }

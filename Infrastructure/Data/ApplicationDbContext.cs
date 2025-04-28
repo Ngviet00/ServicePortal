@@ -14,7 +14,7 @@ namespace ServicePortal.Infrastructure.Data
         public DbSet<User> Users { get; set; }
         public DbSet<RefreshToken> RefreshTokens { get; set; }
         public DbSet<LeaveRequest> LeaveRequests { get; set; }
-        public DbSet<LeaveRequestStep> leaveRequestSteps{ get; set; }
+        public DbSet<LeaveRequestStep> LeaveRequestSteps{ get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

@@ -45,9 +45,6 @@
     <Folder Include="Modules\LeaveRequestStep\DTO\" />
     <Folder Include="Modules\LeaveRequestStep\Requests\" />
     <Folder Include="Modules\LeaveRequestStep\Resources\" />
-    <Folder Include="Modules\LeaveRequest\Resources\" />
-    <Folder Include="Modules\LeaveRequest\Responses\" />
-    <Folder Include="Modules\User\Responses\" />
     <Folder Include="Properties\PublishProfiles\" />
   </ItemGroup>
 

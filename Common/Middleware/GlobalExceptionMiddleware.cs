@@ -37,14 +37,12 @@ namespace ServicePortal.Common.Middleware
                 if (statusCode >= 500)
                 {
                     Log.Error($"Message: {ex?.Message}\nStackTrace: {ex?.StackTrace}\n");
-                    //FileHelper.WriteLog(TypeErrorEnum.ERROR, $"Message: {ex?.Message}\nStackTrace: {ex?.StackTrace}\n");
                 }
             }
             else
             {
                 statusCode = StatusCodes.Status500InternalServerError;
                 message = "System error. Please try again later.";
-                //FileHelper.WriteLog(TypeErrorEnum.ERROR, $"Message: {ex?.Message}\nStackTrace: {ex?.StackTrace}\n");
                 Log.Error($"Message: {ex?.Message}\nStackTrace: {ex?.StackTrace}\n");
             }
 

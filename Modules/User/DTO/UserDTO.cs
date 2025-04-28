@@ -1,6 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System.Text.Json.Serialization;
-using ServicePortal.Domain.Entities;
+﻿using System.Text.Json.Serialization;
 using ServicePortal.Modules.Deparment.DTO;
 using ServicePortal.Modules.Position.DTO;
 

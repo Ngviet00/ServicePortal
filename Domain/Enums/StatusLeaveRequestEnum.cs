@@ -4,9 +4,8 @@
     {
         PENDING = 1,
         IN_PROCESS = 2,
-        WAIT_HR_APPROVAL = 3,
-        COMPLETE = 4,
-        REJECT = 5
+        COMPLETE = 3,
+        REJECT = 4
     }
 
     public enum StatusLeaveRequestStepEnum
