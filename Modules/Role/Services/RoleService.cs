@@ -23,6 +23,8 @@ namespace ServicePortal.Modules.Role.Services
 
             var query = _context.Roles.AsQueryable();
 
+            query = query.Where(e => e.Id > 1);
+
             if (!string.IsNullOrEmpty(name))
             {
                 query = query.Where(r => r.Name.Contains(name));

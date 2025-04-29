@@ -5,24 +5,24 @@
 namespace ServicePortal.Migrations
 {
     /// <inheritdoc />
-    public partial class ChangeNameStatusLeaveRequest : Migration
+    public partial class addColumnParentLevel : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.RenameColumn(
-                name: "state",
-                table: "leave_requests",
-                newName: "status");
+            migrationBuilder.AddColumn<string>(
+                name: "level_parent",
+                table: "users",
+                type: "nvarchar(max)",
+                nullable: true);
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.RenameColumn(
-                name: "status",
-                table: "leave_requests",
-                newName: "state");
+            migrationBuilder.DropColumn(
+                name: "level_parent",
+                table: "users");
         }
     }
 }

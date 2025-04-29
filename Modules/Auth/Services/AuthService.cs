@@ -32,12 +32,12 @@ namespace ServicePortal.Modules.Auth.Services
 
         public async Task<UserDTO> Register(CreateUserRequest request)
         {
-            if (await _context.Users.AnyAsync(u => u.Code == request.Code))
+            if (await _context.Users.AnyAsync(u => u.Code == request.Code && u.DeletedAt == null))
             {
                 throw new ValidationException("User is exists!");
             }
 
-            if (!string.IsNullOrWhiteSpace(request.Email) && await _context.Users.AnyAsync(u => u.Email == request.Email))
+            if (!string.IsNullOrWhiteSpace(request.Email) && await _context.Users.AnyAsync(u => u.Email == request.Email && u.DeletedAt == null))
             {
                 throw new ValidationException("Email already in use!");
             }
@@ -48,16 +48,16 @@ namespace ServicePortal.Modules.Auth.Services
                 Name = request.Name,
                 Password = Helper.HashString(request.Password),
                 Email = request.Email ?? null,
-                RoleId = request.RoleId,
                 IsActive = true,
                 DateJoinCompany = request.DateJoinCompany ?? null,
                 DateOfBirth = request.DateOfBirth ?? null,
                 Phone = request.Phone?? null,
                 Sex = request.Sex ?? null,
-                ParentDepartmentId = request.ParentDepartmentId,
-                ChildDepartmentId = request.ChildDepartmentId ?? null,
-                PositionId = request.PositionId ?? null,
-                ManagementPositionId = request.ManagementPositionId ?? null,
+                RoleId = request.RoleId,
+                DepartmentId = request.DepartmentId,
+                Level = request.Level,
+                LevelParent = request.LevelParent,
+                Position = request.Position,
                 CreatedAt = DateTime.Now
             };
 
@@ -71,7 +71,7 @@ namespace ServicePortal.Modules.Auth.Services
         {
             var query = _userService.GetUserQuery();
 
-            var user = await query.Where(e => e.Code == request.UserCode).FirstOrDefaultAsync() ?? throw new ValidationException("User not found!");
+            var user = await query.Where(e => e.Code == request.UserCode && e.DeletedAt == null).FirstOrDefaultAsync() ?? throw new ValidationException("User not found!");
 
             if (!Helper.VerifyString(user?.Password ?? "", request?.Password ?? ""))
             {

@@ -56,202 +56,19 @@ namespace ServicePortal.Migrations
                         {
                             Id = 1,
                             Name = "IT/MIS",
-                            Note = "IT"
-                        });
-                });
-
-            modelBuilder.Entity("ServicePortal.Domain.Entities.LeaveRequest", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("id");
-
-                    b.Property<DateTime?>("CreatedAt")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("created_at");
-
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("deleted_at");
-
-                    b.Property<string>("Deparment")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("deparment");
-
-                    b.Property<DateTime?>("FromDate")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("from_date");
-
-                    b.Property<bool?>("HaveSalary")
-                        .HasColumnType("bit")
-                        .HasColumnName("have_salary");
-
-                    b.Property<string>("Image")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("image");
-
-                    b.Property<string>("Name")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("name");
-
-                    b.Property<string>("NameRegister")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("name_register");
-
-                    b.Property<string>("Position")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("position");
-
-                    b.Property<string>("Reason")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("reason");
-
-                    b.Property<byte?>("Status")
-                        .HasColumnType("tinyint")
-                        .HasColumnName("status");
-
-                    b.Property<byte?>("TimeLeave")
-                        .HasColumnType("tinyint")
-                        .HasColumnName("time_leave");
-
-                    b.Property<DateTime?>("ToDate")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("to_date");
-
-                    b.Property<byte?>("TypeLeave")
-                        .HasColumnType("tinyint")
-                        .HasColumnName("type_leave");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("updated_at");
-
-                    b.Property<string>("UserCode")
-                        .HasColumnType("nvarchar(450)")
-                        .HasColumnName("user_code");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Id", "UserCode");
-
-                    b.ToTable("leave_requests");
-                });
-
-            modelBuilder.Entity("ServicePortal.Domain.Entities.LeaveRequestStep", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("id");
-
-                    b.Property<DateTime?>("ApprovedAt")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("approved_at");
-
-                    b.Property<string>("ApprovedBy")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("approved_by");
-
-                    b.Property<string>("CodeApprover")
-                        .HasColumnType("nvarchar(450)")
-                        .HasColumnName("code_approver");
-
-                    b.Property<Guid?>("LeaveRequestId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("leave_request_id");
-
-                    b.Property<string>("Note")
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)")
-                        .HasColumnName("note");
-
-                    b.Property<int?>("PositionIdApproval")
-                        .HasColumnType("int")
-                        .HasColumnName("position_id_approval");
-
-                    b.Property<byte?>("StatusStep")
-                        .HasColumnType("tinyint")
-                        .HasColumnName("status_step");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Id", "LeaveRequestId", "PositionIdApproval", "StatusStep", "CodeApprover");
-
-                    b.ToTable("leave_request_steps");
-                });
-
-            modelBuilder.Entity("ServicePortal.Domain.Entities.Position", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("id");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int?>("DepartmentId")
-                        .HasColumnType("int")
-                        .HasColumnName("department_id");
-
-                    b.Property<bool?>("IsGlobal")
-                        .HasColumnType("bit")
-                        .HasColumnName("is_global");
-
-                    b.Property<int?>("Level")
-                        .HasColumnType("int")
-                        .HasColumnName("level");
-
-                    b.Property<string>("Name")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("name");
-
-                    b.Property<string>("Title")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("title");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Id");
-
-                    b.ToTable("positions");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            DepartmentId = 0,
-                            IsGlobal = true,
-                            Level = -2,
-                            Name = "General Director",
-                            Title = "General Director"
+                            Note = "department.IT"
                         },
                         new
                         {
                             Id = 2,
-                            DepartmentId = 0,
-                            IsGlobal = true,
-                            Level = -1,
-                            Name = "Assistant General Director",
-                            Title = "Assistant General Director"
+                            Name = "HR",
+                            Note = "department.HR"
                         },
                         new
                         {
                             Id = 3,
-                            DepartmentId = 1,
-                            IsGlobal = true,
-                            Level = 0,
-                            Name = "Superadmin",
-                            Title = "Superadmin"
-                        },
-                        new
-                        {
-                            Id = 4,
-                            DepartmentId = 1,
-                            IsGlobal = false,
-                            Level = 1,
-                            Name = "Manager",
-                            Title = "Manager IT/MIS"
+                            Name = "Sản xuất",
+                            Note = "department.production"
                         });
                 });
 
@@ -317,11 +134,6 @@ namespace ServicePortal.Migrations
                         },
                         new
                         {
-                            Id = 2,
-                            Name = "IT"
-                        },
-                        new
-                        {
                             Id = 3,
                             Name = "HR"
                         },
@@ -332,39 +144,12 @@ namespace ServicePortal.Migrations
                         });
                 });
 
-            modelBuilder.Entity("ServicePortal.Domain.Entities.Team", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("id");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int?>("DepartmentId")
-                        .HasColumnType("int")
-                        .HasColumnName("department_id");
-
-                    b.Property<string>("Name")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)")
-                        .HasColumnName("name");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("teams");
-                });
-
             modelBuilder.Entity("ServicePortal.Domain.Entities.User", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("id");
-
-                    b.Property<int?>("ChildDepartmentId")
-                        .HasColumnType("int")
-                        .HasColumnName("child_department_id");
 
                     b.Property<string>("Code")
                         .HasColumnType("nvarchar(450)")
@@ -386,6 +171,10 @@ namespace ServicePortal.Migrations
                         .HasColumnType("datetime2")
                         .HasColumnName("deleted_at");
 
+                    b.Property<int?>("DepartmentId")
+                        .HasColumnType("int")
+                        .HasColumnName("department_id");
+
                     b.Property<string>("Email")
                         .HasColumnType("nvarchar(450)")
                         .HasColumnName("email");
@@ -394,17 +183,17 @@ namespace ServicePortal.Migrations
                         .HasColumnType("bit")
                         .HasColumnName("is_active");
 
-                    b.Property<int?>("ManagementPositionId")
-                        .HasColumnType("int")
-                        .HasColumnName("management_position_id");
+                    b.Property<string>("Level")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("level");
+
+                    b.Property<string>("LevelParent")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("level_parent");
 
                     b.Property<string>("Name")
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("name");
-
-                    b.Property<int?>("ParentDepartmentId")
-                        .HasColumnType("int")
-                        .HasColumnName("parent_department_id");
 
                     b.Property<string>("Password")
                         .HasColumnType("nvarchar(max)")
@@ -414,9 +203,9 @@ namespace ServicePortal.Migrations
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("phone");
 
-                    b.Property<int?>("PositionId")
-                        .HasColumnType("int")
-                        .HasColumnName("position_id");
+                    b.Property<string>("Position")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("position");
 
                     b.Property<int?>("RoleId")
                         .HasColumnType("int")
@@ -426,17 +215,15 @@ namespace ServicePortal.Migrations
                         .HasColumnType("tinyint")
                         .HasColumnName("sex");
 
-                    b.Property<int?>("TeamId")
-                        .HasColumnType("int")
-                        .HasColumnName("team_id");
-
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2")
                         .HasColumnName("updated_at");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("PositionId");
+                    b.HasIndex("DepartmentId");
+
+                    b.HasIndex("RoleId");
 
                     b.HasIndex("Code", "Email", "Id");
 
@@ -445,11 +232,17 @@ namespace ServicePortal.Migrations
 
             modelBuilder.Entity("ServicePortal.Domain.Entities.User", b =>
                 {
-                    b.HasOne("ServicePortal.Domain.Entities.Position", "Position")
+                    b.HasOne("ServicePortal.Domain.Entities.Department", "Department")
                         .WithMany()
-                        .HasForeignKey("PositionId");
+                        .HasForeignKey("DepartmentId");
 
-                    b.Navigation("Position");
+                    b.HasOne("ServicePortal.Domain.Entities.Role", "Role")
+                        .WithMany()
+                        .HasForeignKey("RoleId");
+
+                    b.Navigation("Department");
+
+                    b.Navigation("Role");
                 });
 #pragma warning restore 612, 618
         }

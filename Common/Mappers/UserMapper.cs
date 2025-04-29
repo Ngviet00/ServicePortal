@@ -18,7 +18,10 @@ namespace ServicePortal.Common.Mappers
                 DateJoinCompany = entity.DateJoinCompany,
                 DateOfBirth = entity.DateOfBirth,
                 Phone = entity.Phone,
-                Sex = entity.Sex
+                Sex = entity.Sex,
+                Position = entity.Position,
+                Level = entity.Level,
+                LevelParent = entity.LevelParent,
             };
         }
 

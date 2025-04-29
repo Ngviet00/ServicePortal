@@ -21,9 +21,6 @@ namespace ServicePortal.Domain.Entities
         [Column("email")]
         public string? Email { get; set; }
 
-        [Column("role_id")]
-        public int? RoleId { get; set; }
-
         [Column("is_active")]
         public bool? IsActive { get; set; }
 
@@ -39,20 +36,20 @@ namespace ServicePortal.Domain.Entities
         [Column("sex")]
         public byte? Sex { get; set; } //1 male - nam, 2 female - nu
 
-        [Column("parent_department_id")]
-        public int? ParentDepartmentId { get; set; }
+        [Column("position")]
+        public string? Position { get; set; }
 
-        [Column("child_department_id")]
-        public int? ChildDepartmentId { get; set; }
+        [Column("role_id")]
+        public int? RoleId { get; set; }
 
-        [Column("position_id")]
-        public int? PositionId { get; set; }
-        
-        [Column("management_position_id")]
-        public int? ManagementPositionId { get; set; }
+        [Column("department_id")]
+        public int? DepartmentId { get; set; }
 
-        [Column("team_id")]
-        public int? TeamId { get; set; }
+        [Column("level")]
+        public string? Level { get; set; }
+
+        [Column("level_parent")]
+        public string? LevelParent { get; set; }
 
         [Column("created_at")]
         public DateTime? CreatedAt { get; set; }
@@ -63,6 +60,7 @@ namespace ServicePortal.Domain.Entities
         [Column("deleted_at")]
         public DateTime? DeletedAt { get; set; }
 
-        public Position? Position { get; set; }
+        public Role? Role { get; set; }
+        public Department? Department { get; set; }
     }
 }

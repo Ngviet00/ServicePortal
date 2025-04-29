@@ -1,6 +1,5 @@
 ﻿using System.Text.Json.Serialization;
 using ServicePortal.Modules.Deparment.DTO;
-using ServicePortal.Modules.Position.DTO;
 
 namespace ServicePortal.Modules.User.DTO
 {
@@ -36,19 +35,25 @@ namespace ServicePortal.Modules.User.DTO
         [JsonPropertyName("phone")]
         public string? Phone { get; set; }
 
+        [JsonPropertyName("position")]
+        public string? Position { get; set; }
+
+        [JsonPropertyName("level")]
+        public string? Level { get; set; }
+
+        [JsonPropertyName("level_parent")]
+        public string? LevelParent { get; set; }
+
         [JsonPropertyName("sex")]
         public byte? Sex { get; set; }
 
         [JsonPropertyName("role")]
         public Domain.Entities.Role? Role { get; set; }
 
-        [JsonPropertyName("parent_department")]
-        public DepartmentDTO? ParentDepartment { get; set; }
+        [JsonPropertyName("department")]
+        public DepartmentDTO? Department { get; set; }
 
-        [JsonPropertyName("children_department")]
-        public DepartmentDTO? ChildrenDepartment { get; set; }
-
-        [JsonPropertyName("position")]
-        public PositionDTO? Position { get; set; }
+        [JsonPropertyName("deleted_at")]
+        public DateTime? DeletedAt { get; set; }
     }
 }

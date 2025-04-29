@@ -15,14 +15,10 @@ using ServicePortal.Modules.Auth.Interfaces;
 using ServicePortal.Modules.User.Interfaces;
 using ServicePortal.Modules.Role.Interfaces;
 using ServicePortal.Modules.Role.Services;
-using ServicePortal.Modules.Position.Interfaces;
-using ServicePortal.Modules.Position.Services;
 using ServicePortal.Modules.Deparment.Interfaces;
 using ServicePortal.Modules.Deparment.Services;
 using ServicePortal.Common.Middleware;
 using Serilog;
-using ServicePortal.Modules.Team.Interfaces;
-using ServicePortal.Modules.Team.Services;
 using ServicePortal.Infrastructure.BackgroundServices;
 using ServicePortal.Modules.LeaveRequest.Interfaces;
 using ServicePortal.Modules.LeaveRequest.Services;
@@ -83,11 +79,11 @@ namespace ServicePortal
 
             builder.Services.AddScoped<IRoleService, RoleService>();
 
-            builder.Services.AddScoped<IPositionService, PositionService>();
+            //builder.Services.AddScoped<IPositionService, PositionService>();
 
             builder.Services.AddScoped<IDepartmentService, DepartmentService>();
 
-            builder.Services.AddScoped<ITeamService, Teamservice>();
+            //builder.Services.AddScoped<ITeamService, Teamservice>();
 
             builder.Services.AddScoped<ILeaveRequestService, LeaveRequestService>();
 
