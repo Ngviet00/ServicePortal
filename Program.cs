@@ -24,6 +24,8 @@ using ServicePortal.Modules.LeaveRequest.Interfaces;
 using ServicePortal.Modules.LeaveRequest.Services;
 using ServicePortal.Modules.LeaveRequestStep.Services;
 using ServicePortal.Modules.LeaveRequestStep.Interfaces;
+using ServicePortal.Modules.TypeLeave.Services;
+using ServicePortal.Modules.TypeLeave.Interfaces;
 
 namespace ServicePortal
 {
@@ -79,11 +81,9 @@ namespace ServicePortal
 
             builder.Services.AddScoped<IRoleService, RoleService>();
 
-            //builder.Services.AddScoped<IPositionService, PositionService>();
+            builder.Services.AddScoped<ITypeLeaveService, TypeLeaveService>();
 
             builder.Services.AddScoped<IDepartmentService, DepartmentService>();
-
-            //builder.Services.AddScoped<ITeamService, Teamservice>();
 
             builder.Services.AddScoped<ILeaveRequestService, LeaveRequestService>();
 

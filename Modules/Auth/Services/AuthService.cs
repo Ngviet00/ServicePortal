@@ -37,10 +37,10 @@ namespace ServicePortal.Modules.Auth.Services
                 throw new ValidationException("User is exists!");
             }
 
-            if (!string.IsNullOrWhiteSpace(request.Email) && await _context.Users.AnyAsync(u => u.Email == request.Email && u.DeletedAt == null))
-            {
-                throw new ValidationException("Email already in use!");
-            }
+            //if (!string.IsNullOrWhiteSpace(request.Email) && await _context.Users.AnyAsync(u => u.Email == request.Email && u.DeletedAt == null))
+            //{
+            //    throw new ValidationException("Email already in use!");
+            //}
 
             var newUser = new ServicePortal.Domain.Entities.User
             {
@@ -71,7 +71,12 @@ namespace ServicePortal.Modules.Auth.Services
         {
             var query = _userService.GetUserQuery();
 
-            var user = await query.Where(e => e.Code == request.UserCode && e.DeletedAt == null).FirstOrDefaultAsync() ?? throw new ValidationException("User not found!");
+            var user = await query.Where(e => e.Code == request.UserCode).FirstOrDefaultAsync();
+
+            if (user == null)
+            {
+                throw new ValidationException("User not found!");
+            }
 
             if (!Helper.VerifyString(user?.Password ?? "", request?.Password ?? ""))
             {

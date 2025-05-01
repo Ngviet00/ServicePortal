@@ -11,6 +11,8 @@ namespace ServicePortal.Infrastructure.Data
         public DbSet<Role> Roles { get; set; }
         public DbSet<User> Users { get; set; }
         public DbSet<RefreshToken> RefreshTokens { get; set; }
+        public DbSet<TypeLeave> TypeLeaves { get; set; }
+
         //public DbSet<LeaveRequest> LeaveRequests { get; set; }
         //public DbSet<LeaveRequestStep> LeaveRequestSteps{ get; set; }
 
@@ -46,6 +48,15 @@ namespace ServicePortal.Infrastructure.Data
                 new Role { Id = 1, Name = "SuperAdmin" },
                 new Role { Id = 3, Name = "HR" },
                 new Role { Id = 4, Name = "User" }
+            );
+
+            modelBuilder.Entity<TypeLeave>().HasData(
+                new TypeLeave { Id = 1, Name = "Annual", Note = "type_leave.annual", ModifiedBy = "HR", ModifiedAt = new DateTime(2025, 5, 1, 15, 30, 0) },
+                new TypeLeave { Id = 2, Name = "Personal", Note = "type_leave.personal", ModifiedBy = "HR", ModifiedAt = new DateTime(2025, 5, 1, 15, 30, 0) },
+                new TypeLeave { Id = 3, Name = "Sick", Note = "type_leave.sick", ModifiedBy = "HR", ModifiedAt = new DateTime(2025, 5, 1, 15, 30, 0) },
+                new TypeLeave { Id = 4, Name = "Wedding", Note = "type_leave.wedding", ModifiedBy = "HR", ModifiedAt = new DateTime(2025, 5, 1, 15, 30, 0) },
+                new TypeLeave { Id = 5, Name = "Accident", Note = "type_leave.accident", ModifiedBy = "HR", ModifiedAt = new DateTime(2025, 5, 1, 15, 30, 0) },
+                new TypeLeave { Id = 6, Name = "Other", Note = "type_leave.other", ModifiedBy = "HR", ModifiedAt = new DateTime(2025, 5, 1, 15, 30, 0) }
             );
         }
     }
