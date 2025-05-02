@@ -4,9 +4,6 @@ namespace ServicePortal.Modules.LeaveRequest.Requests
 {
     public class GetAllLeaveRequest
     {
-        [FromQuery(Name = "position_id")]
-        public int? PositionId { get; set; }
-
         [FromQuery(Name = "user_code")]
         public string? UserCode { get; set; }
 

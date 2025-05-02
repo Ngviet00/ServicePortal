@@ -26,6 +26,7 @@ using ServicePortal.Modules.LeaveRequestStep.Services;
 using ServicePortal.Modules.LeaveRequestStep.Interfaces;
 using ServicePortal.Modules.TypeLeave.Services;
 using ServicePortal.Modules.TypeLeave.Interfaces;
+using ServicePortal.Infrastructure.Email;
 
 namespace ServicePortal
 {
@@ -69,6 +70,7 @@ namespace ServicePortal
 
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("StringConnectionDb"))
+                .LogTo(Console.WriteLine, LogLevel.Information)
                 .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking));
 
             #endregion
@@ -90,6 +92,8 @@ namespace ServicePortal
             builder.Services.AddScoped<ILeaveRequestStepService, LeaveRequestStepService>();
 
             builder.Services.AddScoped<JwtService>();
+
+            builder.Services.AddScoped<EmailService>();
 
             #endregion
 

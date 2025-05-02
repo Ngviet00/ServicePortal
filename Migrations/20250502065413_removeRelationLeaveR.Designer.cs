@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ServicePortal.Infrastructure.Data;
 
@@ -11,9 +12,11 @@ using ServicePortal.Infrastructure.Data;
 namespace ServicePortal.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250502065413_removeRelationLeaveR")]
+    partial class removeRelationLeaveR
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -111,10 +114,6 @@ namespace ServicePortal.Migrations
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("name_register");
 
-                    b.Property<string>("Note")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("note");
-
                     b.Property<string>("Position")
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("position");
@@ -191,8 +190,6 @@ namespace ServicePortal.Migrations
                         .HasColumnName("user_code_approver");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("LeaveRequestId");
 
                     b.HasIndex("Id", "LeaveRequestId", "UserCodeApprover", "StatusStep");
 
@@ -441,14 +438,6 @@ namespace ServicePortal.Migrations
                     b.ToTable("users");
                 });
 
-            modelBuilder.Entity("ServicePortal.Domain.Entities.LeaveRequestStep", b =>
-                {
-                    b.HasOne("ServicePortal.Domain.Entities.LeaveRequest", null)
-                        .WithMany("LeaveRequestSteps")
-                        .HasForeignKey("LeaveRequestId")
-                        .OnDelete(DeleteBehavior.Cascade);
-                });
-
             modelBuilder.Entity("ServicePortal.Domain.Entities.User", b =>
                 {
                     b.HasOne("ServicePortal.Domain.Entities.Department", "Department")
@@ -462,11 +451,6 @@ namespace ServicePortal.Migrations
                     b.Navigation("Department");
 
                     b.Navigation("Role");
-                });
-
-            modelBuilder.Entity("ServicePortal.Domain.Entities.LeaveRequest", b =>
-                {
-                    b.Navigation("LeaveRequestSteps");
                 });
 #pragma warning restore 612, 618
         }

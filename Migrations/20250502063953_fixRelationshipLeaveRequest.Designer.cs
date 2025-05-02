@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ServicePortal.Infrastructure.Data;
 
@@ -11,9 +12,11 @@ using ServicePortal.Infrastructure.Data;
 namespace ServicePortal.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250502063953_fixRelationshipLeaveRequest")]
+    partial class fixRelationshipLeaveRequest
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -111,10 +114,6 @@ namespace ServicePortal.Migrations
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("name_register");
 
-                    b.Property<string>("Note")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("note");
-
                     b.Property<string>("Position")
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("position");
@@ -190,13 +189,22 @@ namespace ServicePortal.Migrations
                         .HasColumnType("nvarchar(450)")
                         .HasColumnName("user_code_approver");
 
+                    b.Property<Guid?>("leave_request_id")
+                        .HasColumnType("uniqueidentifier");
+
                     b.HasKey("Id");
 
                     b.HasIndex("LeaveRequestId");
 
+                    b.HasIndex("leave_request_id");
+
                     b.HasIndex("Id", "LeaveRequestId", "UserCodeApprover", "StatusStep");
 
-                    b.ToTable("leave_request_steps");
+                    b.ToTable("leave_request_steps", t =>
+                        {
+                            t.Property("leave_request_id")
+                                .HasColumnName("leave_request_id1");
+                        });
                 });
 
             modelBuilder.Entity("ServicePortal.Domain.Entities.RefreshToken", b =>
@@ -443,10 +451,16 @@ namespace ServicePortal.Migrations
 
             modelBuilder.Entity("ServicePortal.Domain.Entities.LeaveRequestStep", b =>
                 {
+                    b.HasOne("ServicePortal.Domain.Entities.LeaveRequest", "LeaveRequest")
+                        .WithMany()
+                        .HasForeignKey("LeaveRequestId");
+
                     b.HasOne("ServicePortal.Domain.Entities.LeaveRequest", null)
                         .WithMany("LeaveRequestSteps")
-                        .HasForeignKey("LeaveRequestId")
+                        .HasForeignKey("leave_request_id")
                         .OnDelete(DeleteBehavior.Cascade);
+
+                    b.Navigation("LeaveRequest");
                 });
 
             modelBuilder.Entity("ServicePortal.Domain.Entities.User", b =>

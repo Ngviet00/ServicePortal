@@ -11,228 +11,274 @@ namespace ServicePortal.Modules.LeaveRequest.Services
 {
     public class LeaveRequestService : ILeaveRequestService
     {
-        //    private readonly ApplicationDbContext _context;
+        private readonly ApplicationDbContext _context;
 
-        //    public LeaveRequestService(ApplicationDbContext context)
-        //    {
-        //        _context = context;
-        //    }
+        public LeaveRequestService(ApplicationDbContext context)
+        {
+            _context = context;
+        }
 
-        //    public async Task<PagedResults<LeaveRequestDTO>> GetAll(GetAllLeaveRequest request)
-        //    {
-        //        double pageSize = request.PageSize;
+        public async Task<PagedResults<LeaveRequestDTO>> GetAll(GetAllLeaveRequest request)
+        {
+            double pageSize = request.PageSize;
 
-        //        double page = request.Page;
+            double page = request.Page;
 
-        //        byte? status = request.Status;
+            byte? status = request.Status;
 
-        //        var query = _context.LeaveRequests.AsQueryable();
+            var query = _context.LeaveRequests.AsQueryable();
 
-        //        //find leave request of current user
-        //        query = query.Where(e => e.UserCode == request.UserCode);
+            //find leave request of current user
+            query = query.Where(e => e.UserCode == request.UserCode);
 
-        //        //default get status leave request is pending
-        //        query = query.Where(e => e.Status == (status > 1 ? status : 1));
+            //default get status leave request is pending
+            query = query.Where(e => e.Status == (status > 1 ? status : 1));
 
-        //        var totalItems = await query.CountAsync();
+            var totalItems = await query.CountAsync();
 
-        //        var totalPages = (int)Math.Ceiling(totalItems / pageSize);
+            var totalPages = (int)Math.Ceiling(totalItems / pageSize);
 
-        //        var leaveRequests = await query.Skip((int)((page - 1) * pageSize)).Take((int)pageSize).ToListAsync();
+            var leaveRequests = await query.Skip((int)((page - 1) * pageSize)).Take((int)pageSize).ToListAsync();
 
-        //        return new PagedResults<LeaveRequestDTO>
-        //        {
-        //            Data = LeaveRequestMapper.ToDtoList(leaveRequests),
-        //            TotalItems = totalItems,
-        //            TotalPages = totalPages
-        //        };
-        //    }
+            return new PagedResults<LeaveRequestDTO>
+            {
+                Data = LeaveRequestMapper.ToDtoList(leaveRequests),
+                TotalItems = totalItems,
+                TotalPages = totalPages
+            };
+        }
 
-        //    public async Task<LeaveRequestDTO> GetById(Guid id)
-        //    {
-        //        var leaveRequest = await _context.LeaveRequests.FirstOrDefaultAsync(e => e.Id == id) ?? throw new NotFoundException("Leave request not found!");
+        public async Task<LeaveRequestDTO> GetById(Guid id)
+        {
+            var leaveRequest = await _context.LeaveRequests.FirstOrDefaultAsync(e => e.Id == id) ?? throw new NotFoundException("Leave request not found!");
 
-        //        return LeaveRequestMapper.ToDto(leaveRequest);
-        //    }
+            return LeaveRequestMapper.ToDto(leaveRequest);
+        }
 
-        //    public async Task<LeaveRequestDTO> Create(LeaveRequestDTO dto)
-        //    {
-        //        var entity = LeaveRequestMapper.ToEntity(dto);
+        public async Task<LeaveRequestDTO> Create(LeaveRequestDTO dto)
+        {
+            //create leave request
+            var entity = LeaveRequestMapper.ToEntity(dto);
 
-        //        entity.UpdatedAt = null;
-        //        entity.DeletedAt = null;
-        //        entity.CreatedAt = DateTime.Now;
-        //        entity.Status = (byte?)StatusLeaveRequestEnum.PENDING;
+            entity.UpdatedAt = null;
+            entity.DeletedAt = null;
+            entity.CreatedAt = DateTime.Now;
+            entity.Status = (byte?)StatusLeaveRequestEnum.PENDING;
 
-        //        _context.LeaveRequests.Add(entity);
+            _context.LeaveRequests.Add(entity);
 
-        //        await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync();
 
-        //        //get user approval => meaning position level next
-        //        var userHigher = await FindUserWithHigherPosition(entity.UserCode ?? "");
+            //get current user send leave request
+            var user = await _context.Users.Include(e => e.Department).Where(e => e.Code == dto.UserCodeRegister).FirstOrDefaultAsync();
 
-        //        Domain.Entities.LeaveRequestStep leaveRequestStep = new()
-        //        {
-        //            LeaveRequestId = entity.Id,
-        //            PositionIdApproval = userHigher.Position.Id,
-        //            StatusStep = (byte)StatusLeaveRequestStepEnum.PENDING,
-        //        };
+            //get level of next user approval
+            var levelNextUser = user?.LevelParent;
+            var currentDepartmentId = user?.Department?.Id;
 
-        //        _context.LeaveRequestSteps.Add(leaveRequestStep);
-        //        await _context.SaveChangesAsync();
+            //check has user with next level, if ok => send, else find next level
+            var nextUserApproval = await _context.Users.Where(e => e.DepartmentId == currentDepartmentId && e.Level == levelNextUser).FirstOrDefaultAsync();
+
+            //current then check exist user, if not find next level
+            if (true)
+            {
+
+            }
+
+            //add leave request step
+            Domain.Entities.LeaveRequestStep lrStepData = new Domain.Entities.LeaveRequestStep
+            {
+                LeaveRequestId = entity.Id,
+                UserCodeApprover = nextUserApproval?.Code,
+                StatusStep = (byte)StatusLeaveRequestStepEnum.PENDING,
+            };
+
+            _context.LeaveRequestSteps.Add(lrStepData);
+            await _context.SaveChangesAsync();
+
+            //send mail
+
+            return dto;
+        }
+
+        public async Task<LeaveRequestDTO> Update(Guid id, LeaveRequestDTO dto)
+        {
+            var leaveRequest = await _context.LeaveRequests.FirstOrDefaultAsync(e => e.Id == id) ?? throw new NotFoundException("Leave request not found!");
+
+            leaveRequest = LeaveRequestMapper.ToEntity(dto);
+            leaveRequest.Id = id;
+
+            _context.LeaveRequests.Update(leaveRequest);
+
+            await _context.SaveChangesAsync();
+
+            return LeaveRequestMapper.ToDto(leaveRequest);
+        }
+
+        public async Task<LeaveRequestDTO> Delete(Guid id)
+        {
+            var leaveRequest = await _context.LeaveRequests.FirstOrDefaultAsync(e => e.Id == id) ?? throw new NotFoundException("Leave request not found!");
+
+            _context.LeaveRequests.Remove(leaveRequest);
+
+            await _context.SaveChangesAsync();
+
+            return LeaveRequestMapper.ToDto(leaveRequest);
+        }
+
+        public async Task<Domain.Entities.User?> FindUserWithHigherPosition(string userCodeWriteLeaveRequest)
+        {
+            //var currentUser = await _context.Users.Include(e => e.Position).FirstOrDefaultAsync(u => u.Code == userCodeWriteLeaveRequest);
+
+            //if (currentUser == null || currentUser.Position == null)
+            //{
+            //    return null;
+            //}
+
+            //var currentLevel = currentUser.Position.Level;
+            //var parentDeptId = currentUser.ParentDepartmentId;
+            //var childDeptId = currentUser.ChildDepartmentId;
+
+            //var userHightPosition = await _context.Users
+            //    .Include(u => u.Position)
+            //    .Where(u =>
+            //        u.Position.Level == currentLevel - 1 &&
+            //        (u.ParentDepartmentId == parentDeptId || u.ChildDepartmentId == childDeptId))
+            //    .Select(u => new Domain.Entities.User
+            //    {
+            //        Id = u.Id,
+            //        Name = u.Name,
+            //        Position = u.Position
+            //    })
+            //    .FirstOrDefaultAsync();
+
+            //if (userHightPosition != null)
+            //{
+            //    return userHightPosition;
+            //}
+
+            return null;
+        }
+
+        public async Task<PagedResults<LeaveRequestDTO>> GetAllWaitApproval(GetAllLeaveRequest request)
+        {
+            double pageSize = request.PageSize;
+
+            double page = request.Page;
+
+            string userCode = request?.UserCode ?? "";
+
+            var query = _context.LeaveRequests
+                .Join(
+                    _context.LeaveRequestSteps,
+                    lr => lr.Id,
+                    lrs => lrs.LeaveRequestId,
+                    (lr, lrs) => new { LeaveRequest = lr, LeaveRequestStep = lrs }
+                )
+                .Where(e => e.LeaveRequestStep.StatusStep == (byte)StatusLeaveRequestStepEnum.PENDING && e.LeaveRequestStep.UserCodeApprover == userCode);
+
+            var totalItems = await query.CountAsync();
+
+            var totalPages = (int)Math.Ceiling(totalItems / pageSize);
+
+            var roles = await query.Skip((int)((page - 1) * pageSize)).Take((int)pageSize).ToListAsync();
+
+            var leaveRequests = await query.Skip((int)((page - 1) * pageSize)).Take((int)pageSize)
+                .Select(x => x.LeaveRequest)
+                .ToListAsync();
+
+            return new PagedResults<LeaveRequestDTO>
+            {
+                Data = LeaveRequestMapper.ToDtoList(leaveRequests),
+                TotalItems = totalItems,
+                TotalPages = totalPages
+            };
+        }
+
+        public async Task<LeaveRequestDTO?> Approval(ApprovalDTO request)
+        {
+            var userApproval = await _context.Users.FirstOrDefaultAsync(e => e.Code == request.UserCodeApproval);
+
+            if (userApproval == null)
+            {
+                throw new NotFoundException("Not found user approval");
+            }
+
+            var itemLeaveRequest = await _context.LeaveRequests.FirstOrDefaultAsync(e => e.Id == Guid.Parse(request.LeaveRequestId ?? "")) ?? throw new NotFoundException("Leave request not found!");
+            itemLeaveRequest.UpdatedAt = DateTime.Now;
+
+            var itemLeaveRequestStep = await _context.LeaveRequestSteps.FirstOrDefaultAsync(e => e.UserCodeApprover == request.UserCodeApproval && e.LeaveRequestId == Guid.Parse(request.LeaveRequestId ?? "")) ?? throw new NotFoundException("Leave request step not found!");
+            itemLeaveRequestStep.ApprovedBy = userApproval.Name;
+            itemLeaveRequestStep.ApprovedAt = DateTime.Now;
+
+            //check is hr, have permission or not, set status leave request step, leave request to complete or reject
+
+            //case reject
+            if (request.Status == false)
+            {
+                //update leave request with status reject
+                itemLeaveRequest.Status = (byte)StatusLeaveRequestEnum.REJECT;
+                itemLeaveRequest.Note = request.Note;
+                _context.LeaveRequests.Update(itemLeaveRequest);
+
+                //update leave request step with status reject                
+                itemLeaveRequestStep.StatusStep = (byte)StatusLeaveRequestStepEnum.REJECT;
+                _context.LeaveRequestSteps.Update(itemLeaveRequestStep);
+
+                await _context.SaveChangesAsync();
+
+                return LeaveRequestMapper.ToDto(itemLeaveRequest);
+            }
+
+            //case approval
+            itemLeaveRequest.Status = (byte)StatusLeaveRequestEnum.IN_PROCESS;
+            _context.LeaveRequests.Update(itemLeaveRequest);
+
+            itemLeaveRequestStep.StatusStep = (byte)StatusLeaveRequestStepEnum.APPROVAL;
+            _context.LeaveRequestSteps.Update(itemLeaveRequestStep);
 
 
-        //        return dto;
-        //    }
+            //check have permission send to hr, check case approval is hr
+            if (userApproval.Level == "2.1")
+            {
+                //send to hr
+                Domain.Entities.LeaveRequestStep newStep = new Domain.Entities.LeaveRequestStep
+                {
+                    LeaveRequestId = itemLeaveRequest.Id,
+                    UserCodeApprover = "HR_NTH",
+                    StatusStep = (byte)StatusLeaveRequestStepEnum.PENDING
+                };
+                _context.LeaveRequestSteps.Add(newStep);
+            }
+            else
+            {
+                //find next user
+                var nextUserApproval = await _context.Users.FirstOrDefaultAsync(e => e.Level == userApproval.LevelParent && e.DepartmentId == userApproval.DepartmentId);
 
-        //    public async Task<LeaveRequestDTO> Update(Guid id, LeaveRequestDTO dto)
-        //    {
-        //        var leaveRequest = await _context.LeaveRequests.FirstOrDefaultAsync(e => e.Id == id) ?? throw new NotFoundException("Leave request not found!");
+                if (userApproval == null)
+                {
+                    throw new NotFoundException("Not found user approval");
+                }
 
-        //        leaveRequest = LeaveRequestMapper.ToEntity(dto);
-        //        leaveRequest.Id = id;
+                Domain.Entities.LeaveRequestStep newStep = new Domain.Entities.LeaveRequestStep
+                {
+                    LeaveRequestId = itemLeaveRequest.Id,
+                    UserCodeApprover = nextUserApproval?.Code ?? "",
+                    StatusStep = (byte)StatusLeaveRequestStepEnum.PENDING
+                };
+                _context.LeaveRequestSteps.Add(newStep);
+            }
 
-        //        _context.LeaveRequests.Update(leaveRequest);
+            await _context.SaveChangesAsync();
 
-        //        await _context.SaveChangesAsync();
+            return LeaveRequestMapper.ToDto(itemLeaveRequest);
+        }
 
-        //        return LeaveRequestMapper.ToDto(leaveRequest);
-        //    }
+        public async Task<int> CountWaitApproval(string userCode)
+        {
+            var result = await _context.LeaveRequestSteps.Where(e => e.UserCodeApprover == userCode && e.StatusStep == (byte)StatusLeaveRequestStepEnum.PENDING).CountAsync();
 
-        //    public async Task<LeaveRequestDTO> Delete(Guid id)
-        //    {
-        //        var leaveRequest = await _context.LeaveRequests.FirstOrDefaultAsync(e => e.Id == id) ?? throw new NotFoundException("Leave request not found!");
-
-        //        _context.LeaveRequests.Remove(leaveRequest);
-
-        //        await _context.SaveChangesAsync();
-
-        //        return LeaveRequestMapper.ToDto(leaveRequest);
-        //    }
-
-        //    public async Task<Domain.Entities.User?> FindUserWithHigherPosition(string userCodeWriteLeaveRequest)
-        //    {
-        //        var currentUser = await _context.Users.Include(e => e.Position).FirstOrDefaultAsync(u => u.Code == userCodeWriteLeaveRequest);
-
-        //        if (currentUser == null || currentUser.Position == null)
-        //        {
-        //            return null;
-        //        }
-
-        //        var currentLevel = currentUser.Position.Level;
-        //        var parentDeptId = currentUser.ParentDepartmentId;
-        //        var childDeptId = currentUser.ChildDepartmentId;
-
-        //        var userHightPosition = await _context.Users
-        //            .Include(u => u.Position)
-        //            .Where(u =>
-        //                u.Position.Level == currentLevel - 1 &&
-        //                (u.ParentDepartmentId == parentDeptId || u.ChildDepartmentId == childDeptId))
-        //            .Select(u => new Domain.Entities.User {
-        //                Id = u.Id,
-        //                Name = u.Name,
-        //                Position = u.Position
-        //            })
-        //            .FirstOrDefaultAsync();
-
-        //        if (userHightPosition != null)
-        //        {
-        //            return userHightPosition;
-        //        }
-
-        //        return null;
-        //    }
-
-        //    public async Task<PagedResults<LeaveRequestDTO>> GetAllWaitApproval(GetAllLeaveRequest request)
-        //    {
-        //        double pageSize = request.PageSize;
-
-        //        double page = request.Page;
-
-        //        int? positionId = request.PositionId;
-
-        //        var query = _context.LeaveRequests
-        //            .Join(
-        //                _context.LeaveRequestSteps,
-        //                lr => lr.Id,
-        //                lrs => lrs.LeaveRequestId,
-        //                (lr, lrs) => new { LeaveRequest = lr, LeaveRequestStep = lrs }
-        //            )
-        //            .Where(x => x.LeaveRequestStep.PositionIdApproval == positionId && x.LeaveRequestStep.StatusStep == (byte)StatusLeaveRequestStepEnum.PENDING);
-
-        //        var totalItems = await query.CountAsync();
-
-        //        var totalPages = (int)Math.Ceiling(totalItems / pageSize);
-
-        //        var leaveRequests = await query.Skip((int)((page - 1) * pageSize)).Take((int)pageSize)
-        //            .Select(x => x.LeaveRequest)
-        //            .ToListAsync();
-
-        //        return new PagedResults<LeaveRequestDTO>
-        //        {
-        //            Data = LeaveRequestMapper.ToDtoList(leaveRequests),
-        //            TotalItems = totalItems,
-        //            TotalPages = totalPages
-        //        };
-        //    }
-
-        //    public async Task<LeaveRequestDTO?> Approval(ApprovalDTO request)
-        //    {
-        //        var user = await _context.Users.Include(e => e.Position).FirstOrDefaultAsync(e => e.Code == request.UserCodeApproval);
-
-        //        if (user == null)
-        //        {
-        //            throw new NotFoundException("User not found!");
-        //        }
-
-
-        //        var leaveRequestStep = await _context.LeaveRequestSteps.Where(e => e.LeaveRequestId == Guid.Parse(request.LeaveRequestId) && e.PositionIdApproval == user.PositionId).FirstOrDefaultAsync();
-
-        //        if (leaveRequestStep == null)
-        //        {
-        //            return null;
-        //        }
-
-        //        leaveRequestStep.Id = leaveRequestStep.Id;
-        //        leaveRequestStep.ApprovedBy = user.Name;
-        //        leaveRequestStep.CodeApprover = user.Code;
-        //        leaveRequestStep.StatusStep = request.Status ? (byte)StatusLeaveRequestStepEnum.APPROVAL : (byte)StatusLeaveRequestStepEnum.REJECT;
-        //        leaveRequestStep.ApprovedAt = DateTime.Now;
-
-        //        _context.LeaveRequestSteps.Update(leaveRequestStep);
-        //        await _context.SaveChangesAsync();
-
-        //        //fake send to hr and wait hr approval
-        //        if (request.Status)
-        //        {
-        //            Domain.Entities.LeaveRequestStep leaveRequestStepNew = new Domain.Entities.LeaveRequestStep
-        //            {
-        //                LeaveRequestId = Guid.Parse(request.LeaveRequestId),
-        //                PositionIdApproval = 99, //position hr am
-        //                StatusStep = (byte)StatusLeaveRequestStepEnum.PENDING
-        //            };
-        //        }
-
-        //        var leaveRequest = await _context.LeaveRequests.FirstOrDefaultAsync(e => e.Id == Guid.Parse(request.LeaveRequestId));
-
-        //        if (leaveRequest == null)
-        //        {
-        //            return null;
-        //        }
-
-        //        if (request.Status)
-        //        {
-        //            leaveRequest.Status = (byte)StatusLeaveRequestEnum.IN_PROCESS;
-        //        }
-        //        else
-        //        {
-        //            leaveRequest.Status = (byte)StatusLeaveRequestEnum.REJECT;
-        //        }
-
-        //        _context.LeaveRequests.Update(leaveRequest);
-        //        await _context.SaveChangesAsync();
-
-        //        return LeaveRequestMapper.ToDto(leaveRequest);
-        //    }
+            return result;
+        }
     }
 }

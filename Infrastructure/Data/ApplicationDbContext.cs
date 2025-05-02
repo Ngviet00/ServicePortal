@@ -12,9 +12,8 @@ namespace ServicePortal.Infrastructure.Data
         public DbSet<User> Users { get; set; }
         public DbSet<RefreshToken> RefreshTokens { get; set; }
         public DbSet<TypeLeave> TypeLeaves { get; set; }
-
-        //public DbSet<LeaveRequest> LeaveRequests { get; set; }
-        //public DbSet<LeaveRequestStep> LeaveRequestSteps{ get; set; }
+        public DbSet<LeaveRequest> LeaveRequests { get; set; }
+        public DbSet<LeaveRequestStep> LeaveRequestSteps { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -58,6 +57,12 @@ namespace ServicePortal.Infrastructure.Data
                 new TypeLeave { Id = 5, Name = "Accident", Note = "type_leave.accident", ModifiedBy = "HR", ModifiedAt = new DateTime(2025, 5, 1, 15, 30, 0) },
                 new TypeLeave { Id = 6, Name = "Other", Note = "type_leave.other", ModifiedBy = "HR", ModifiedAt = new DateTime(2025, 5, 1, 15, 30, 0) }
             );
+
+            modelBuilder.Entity<LeaveRequest>()
+                .HasMany(r => r.LeaveRequestSteps)
+                .WithOne()
+                .HasForeignKey(s => s.LeaveRequestId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }
