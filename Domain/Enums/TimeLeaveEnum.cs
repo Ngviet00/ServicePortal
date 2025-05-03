@@ -2,7 +2,7 @@
 
 namespace ServicePortal.Domain.Enums
 {
-    public enum TypeLeave
+    public enum TimeLeaveEnum
     {
         [Description("Nghỉ cả ngày")]
         AlldayLeave = 1,

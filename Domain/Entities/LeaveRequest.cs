@@ -54,6 +54,9 @@ namespace ServicePortal.Domain.Entities
         [Column("note")]
         public string? Note { get; set; }
 
+        [Column("department_id")]
+        public int? DepartmentId { get; set; }
+
         [Column("created_at")]
         public DateTime? CreatedAt { get; set; }
 
@@ -62,6 +65,8 @@ namespace ServicePortal.Domain.Entities
 
         [Column("deleted_at")]
         public DateTime? DeletedAt { get; set; }
+
+        public User? User { get; set; }
 
         public List<LeaveRequestStep>? LeaveRequestSteps { get; set; }
     }

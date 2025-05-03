@@ -2,13 +2,13 @@
 
 namespace ServicePortal.Modules.LeaveRequest.Requests
 {
-    public class GetAllLeaveRequest
+    public class GetAllLeaveRequestWaitApproval
     {
-        [FromQuery(Name = "user_code")]
-        public string? UserCode { get; set; }
+        [FromQuery(Name = "department_id")]
+        public int? DepartmentId { get; set; }
 
-        [FromQuery(Name = "status")]
-        public byte? Status { get; set; } = 1; //default get pending
+        [FromQuery(Name = "level")]
+        public string? Level { get; set; }
 
         [FromQuery(Name = "page")]
         public int Page { get; set; } = 1; //current page

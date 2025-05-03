@@ -12,5 +12,8 @@ namespace ServicePortal.Domain.Entities
 
         [MaxLength(50), Column("name")]
         public string? Name { get; set; }
+
+        [MaxLength(50), Column("code")]
+        public string? Code { get; set; }
     }
 }

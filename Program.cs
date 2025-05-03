@@ -22,11 +22,10 @@ using Serilog;
 using ServicePortal.Infrastructure.BackgroundServices;
 using ServicePortal.Modules.LeaveRequest.Interfaces;
 using ServicePortal.Modules.LeaveRequest.Services;
-using ServicePortal.Modules.LeaveRequestStep.Services;
-using ServicePortal.Modules.LeaveRequestStep.Interfaces;
 using ServicePortal.Modules.TypeLeave.Services;
 using ServicePortal.Modules.TypeLeave.Interfaces;
 using ServicePortal.Infrastructure.Email;
+using Hangfire;
 
 namespace ServicePortal
 {
@@ -75,6 +74,17 @@ namespace ServicePortal
 
             #endregion
 
+            #region Config hangfire
+            builder.Services.AddHangfire(config =>
+                config.SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+                  .UseSimpleAssemblyNameTypeSerializer()
+                  .UseRecommendedSerializerSettings()
+                  .UseSqlServerStorage(builder.Configuration.GetConnectionString("StringConnectionDb")));
+
+            builder.Services.AddHangfireServer();
+
+            #endregion
+
             #region DI
 
             builder.Services.AddScoped<IAuthService, AuthService>();
@@ -89,7 +99,7 @@ namespace ServicePortal
 
             builder.Services.AddScoped<ILeaveRequestService, LeaveRequestService>();
 
-            builder.Services.AddScoped<ILeaveRequestStepService, LeaveRequestStepService>();
+            builder.Services.AddScoped<IEmailService, EmailService>();
 
             builder.Services.AddScoped<JwtService>();
 
@@ -245,6 +255,7 @@ namespace ServicePortal
             //default redirect to swagger
             app.Use(async (context, next) =>
             {
+                
                 if (context.Request.Path == "/")
                 {
                     context.Response.Redirect("/swagger/index.html", permanent: false);
@@ -252,6 +263,8 @@ namespace ServicePortal
                 }
                 await next();
             });
+
+            app.UseHangfireDashboard();
 
             app.Run();
 

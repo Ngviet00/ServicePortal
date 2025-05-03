@@ -52,6 +52,9 @@ namespace ServicePortal.Modules.LeaveRequest.DTO
         [JsonPropertyName("note")]
         public string? Note { get; set; }
 
+        [JsonPropertyName("department_id")]
+        public int? DepartmentId { get; set; }
+
         [JsonPropertyName("created_at")]
         public DateTime? CreatedAt { get; set; }
 

@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ServicePortal.Infrastructure.Data;
 
@@ -11,9 +12,11 @@ using ServicePortal.Infrastructure.Data;
 namespace ServicePortal.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250503011719_AddColumnDepartmentAndLevel")]
+    partial class AddColumnDepartmentAndLevel
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -155,12 +158,7 @@ namespace ServicePortal.Migrations
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("user_code_register");
 
-                    b.Property<Guid?>("UserId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.HasKey("Id");
-
-                    b.HasIndex("UserId");
 
                     b.HasIndex("Id", "UserCode");
 
@@ -255,11 +253,6 @@ namespace ServicePortal.Migrations
                         .HasColumnName("id");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Code")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)")
-                        .HasColumnName("code");
 
                     b.Property<string>("Name")
                         .HasMaxLength(50)
@@ -458,15 +451,6 @@ namespace ServicePortal.Migrations
                     b.HasIndex("Code", "Email", "Id");
 
                     b.ToTable("users");
-                });
-
-            modelBuilder.Entity("ServicePortal.Domain.Entities.LeaveRequest", b =>
-                {
-                    b.HasOne("ServicePortal.Domain.Entities.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId");
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("ServicePortal.Domain.Entities.LeaveRequestStep", b =>

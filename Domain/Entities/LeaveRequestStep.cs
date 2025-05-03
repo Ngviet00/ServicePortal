@@ -19,6 +19,9 @@ namespace ServicePortal.Domain.Entities
         [Column("status_step")]
         public byte? StatusStep { get; set; } //1:pending, 2:approval, 3;reject 1,2
 
+        [Column("level_approval"), MaxLength(50)]
+        public string? LevelApproval { get; set; }
+
         [Column("note"), MaxLength(255)]
         public string? Note { get; set; }
 

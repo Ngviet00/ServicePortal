@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using ServicePortal.Common;
 using ServicePortal.Infrastructure.Data;
 using ServicePortal.Infrastructure.Email;
@@ -17,9 +16,9 @@ namespace ServicePortal.Modules.LeaveRequest.Controllers
 
         private readonly ApplicationDbContext _context;
 
-        private readonly EmailService _emailService;
+        private readonly IEmailService _emailService;
 
-        public LeaveRequestController(ILeaveRequestService leaveRequestService, ApplicationDbContext context, EmailService emailService)
+        public LeaveRequestController(ILeaveRequestService leaveRequestService, ApplicationDbContext context, IEmailService emailService)
         {
             _leaveRequestService = leaveRequestService;
             _context = context;
@@ -37,7 +36,7 @@ namespace ServicePortal.Modules.LeaveRequest.Controllers
         }
 
         [HttpGet("get-leave-request-wait-approval")]
-        public async Task<IActionResult> GetWaitApproval(GetAllLeaveRequest request)
+        public async Task<IActionResult> GetWaitApproval(GetAllLeaveRequestWaitApproval request)
         {
             var results = await _leaveRequestService.GetAllWaitApproval(request);
 
@@ -88,9 +87,9 @@ namespace ServicePortal.Modules.LeaveRequest.Controllers
         }
 
         [HttpGet("count-wait-approval")]
-        public async Task<IActionResult> CountWaitApproval([FromQuery(Name = "user_code")] string userCode)
+        public async Task<IActionResult> CountWaitApproval(GetAllLeaveRequestWaitApproval request)
         {
-            var result = await _leaveRequestService.CountWaitApproval(userCode);
+            var result = await _leaveRequestService.CountWaitApproval(request);
 
             return Ok(new BaseResponse<long>(200, "success", result));
         }
@@ -98,11 +97,7 @@ namespace ServicePortal.Modules.LeaveRequest.Controllers
         [HttpGet("test"), AllowAnonymous]
         public async Task<IActionResult> Test()
         {
-            var emailService = new EmailService();
-            emailService.SendEmail("nguyenviet@vsvn.com.vn", "Tiêu đề email", "Nội dung email gửi từ hệ thống.");
-
-
-            return Ok(new BaseResponse<List<Domain.Entities.LeaveRequest>>(200, "success", null));
+            return Ok(new BaseResponse<object>(200, "success", null));
         }
     }
 }
