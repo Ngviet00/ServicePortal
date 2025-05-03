@@ -163,9 +163,11 @@ namespace ServicePortal.Modules.LeaveRequest.Services
             else
             {
                 query = _context.LeaveRequests
-                    .Where(o => o.LeaveRequestSteps != null && o.DepartmentId == request.DepartmentId && o.LeaveRequestSteps.Any(e =>
-                        e.LevelApproval == level &&
-                        e.StatusStep == (byte)StatusLeaveRequestStepEnum.PENDING)
+                    .Where(o => 
+                        o.LeaveRequestSteps != null && 
+                        o.DepartmentId == request.DepartmentId && o.LeaveRequestSteps.Any(e =>
+                            e.LevelApproval == level &&
+                            e.StatusStep == (byte)StatusLeaveRequestStepEnum.PENDING)
                     );
             }
 
