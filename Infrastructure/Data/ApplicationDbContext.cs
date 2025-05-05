@@ -14,7 +14,10 @@ namespace ServicePortal.Infrastructure.Data
         public DbSet<TypeLeave> TypeLeaves { get; set; }
         public DbSet<LeaveRequest> LeaveRequests { get; set; }
         public DbSet<LeaveRequestStep> LeaveRequestSteps { get; set; }
-
+        public DbSet<UserRole> UserRoles { get; set; }
+        public DbSet<Permission> Permissions { get; set; }
+        public DbSet<UserPermission> UserPermission { get; set; }
+        
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -44,9 +47,9 @@ namespace ServicePortal.Infrastructure.Data
             );
 
             modelBuilder.Entity<Role>().HasData(
-                new Role { Id = 1, Name = "SuperAdmin" },
-                new Role { Id = 3, Name = "HR" },
-                new Role { Id = 4, Name = "User" }
+                new Role { Id = 1, Name = "SuperAdmin", Code = "superadmin" },
+                new Role { Id = 3, Name = "HR", Code = "HR" },
+                new Role { Id = 4, Name = "User", Code = "user" }
             );
 
             modelBuilder.Entity<TypeLeave>().HasData(
@@ -62,6 +65,51 @@ namespace ServicePortal.Infrastructure.Data
                 .HasMany(r => r.LeaveRequestSteps)
                 .WithOne()
                 .HasForeignKey(s => s.LeaveRequestId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            //user - role
+            modelBuilder.Entity<UserRole>()
+                .HasOne(ur => ur.User)
+                .WithMany(u => u.UserRoles)
+                .HasForeignKey(ur => ur.UserCode)
+                .HasPrincipalKey(u => u.Code)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<UserRole>()
+                .HasOne(ur => ur.Role)
+                .WithMany(r => r.UserRoles)
+                .HasForeignKey(ur => ur.RoleId)
+                .HasPrincipalKey(r => r.Id)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            //role - permision
+            modelBuilder.Entity<RolePermission>()
+                .HasOne(rp => rp.Role)
+                .WithMany(r => r.RolePermissions)
+                .HasForeignKey(rp => rp.RoleId)
+                .HasPrincipalKey(r => r.Id)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<RolePermission>()
+                .HasOne(rp => rp.Permission)
+                .WithMany(p => p.RolePermissions)
+                .HasForeignKey(rp => rp.PermissionId)
+                .HasPrincipalKey(p => p.Id)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            //user - permission
+            modelBuilder.Entity<UserPermission>()
+                .HasOne(up => up.User)
+                .WithMany(u => u.UserPermission)
+                .HasForeignKey(up => up.UserCode)
+                .HasPrincipalKey(u => u.Code)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<UserPermission>()
+                .HasOne(up => up.Permission)
+                .WithMany(p => p.UserPermission)
+                .HasForeignKey(up => up.PermissionId)
+                .HasPrincipalKey(p => p.Id)
                 .OnDelete(DeleteBehavior.Cascade);
         }
     }

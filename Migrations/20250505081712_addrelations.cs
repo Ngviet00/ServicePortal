@@ -5,7 +5,7 @@
 namespace ServicePortal.Migrations
 {
     /// <inheritdoc />
-    public partial class remove_relation : Migration
+    public partial class addrelations : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

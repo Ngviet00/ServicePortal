@@ -47,11 +47,17 @@ namespace ServicePortal.Modules.User.DTO
         [JsonPropertyName("sex")]
         public byte? Sex { get; set; }
 
-        [JsonPropertyName("role")]
-        public Domain.Entities.Role? Role { get; set; }
-
         [JsonPropertyName("department")]
         public DepartmentDTO? Department { get; set; }
+
+        [JsonPropertyName("roles")]
+        public List<Domain.Entities.Role> Roles { get; set; } = new();
+
+        [JsonPropertyName("permissions")]
+        public List<string?> Permissions { get; set; } = new();
+
+        [JsonPropertyName("user_permissions")]
+        public List<string?> UserPermissions { get; set; } = new();
 
         [JsonPropertyName("deleted_at")]
         public DateTime? DeletedAt { get; set; }

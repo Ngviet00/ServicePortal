@@ -54,7 +54,7 @@ namespace ServicePortal.Modules.User.Controllers
         [HttpDelete("delete/{id}")]
         public async Task<IActionResult> Delete(Guid id)
         {
-            await _userService.Delete(id);
+            await _userService.ForceDelete(id);
 
             return Ok(new BaseResponse<UserDTO>(200, "Delete user successfully", null));
         }

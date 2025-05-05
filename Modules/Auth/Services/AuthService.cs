@@ -12,6 +12,7 @@ using ServicePortal.Modules.User.DTO;
 using ServicePortal.Modules.Auth.Interfaces;
 using ServicePortal.Common.Mappers;
 using ServicePortal.Modules.User.Interfaces;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace ServicePortal.Modules.Auth.Services
 {
@@ -37,6 +38,8 @@ namespace ServicePortal.Modules.Auth.Services
                 throw new ValidationException("User is exists!");
             }
 
+            //check more condition. level parent have exist in department
+
             //if (!string.IsNullOrWhiteSpace(request.Email) && await _context.Users.AnyAsync(u => u.Email == request.Email && u.DeletedAt == null))
             //{
             //    throw new ValidationException("Email already in use!");
@@ -51,9 +54,8 @@ namespace ServicePortal.Modules.Auth.Services
                 IsActive = true,
                 DateJoinCompany = request.DateJoinCompany ?? null,
                 DateOfBirth = request.DateOfBirth ?? null,
-                Phone = request.Phone?? null,
+                Phone = request.Phone ?? null,
                 Sex = request.Sex ?? null,
-                RoleId = request.RoleId,
                 DepartmentId = request.DepartmentId,
                 Level = request.Level,
                 LevelParent = request.LevelParent,
@@ -62,6 +64,14 @@ namespace ServicePortal.Modules.Auth.Services
             };
 
             _context.Users.Add(newUser);
+
+            _context.UserRoles.Add(new UserRole
+            {
+                UserCode = request.Code,
+                RoleId = request.RoleId,
+                DepartmentId = request.DepartmentId
+            });
+
             await _context.SaveChangesAsync();
 
             return UserMapper.ToDto(newUser);
@@ -69,7 +79,7 @@ namespace ServicePortal.Modules.Auth.Services
 
         public async Task<LoginResponse> Login(LoginRequest request)
         {
-            var query = _userService.GetUserQuery();
+            var query = _userService.GetUserQueryLogin();
 
             var user = await query.Where(e => e.Code == request.UserCode).FirstOrDefaultAsync();
 

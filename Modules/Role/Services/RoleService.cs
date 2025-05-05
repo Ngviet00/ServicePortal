@@ -30,6 +30,8 @@ namespace ServicePortal.Modules.Role.Services
                 query = query.Where(r => r.Name.Contains(name));
             }
 
+            query = query.OrderBy(e => e.Name);
+
             var totalItems = await query.CountAsync();
 
             var totalPages = (int)Math.Ceiling(totalItems / pageSize);

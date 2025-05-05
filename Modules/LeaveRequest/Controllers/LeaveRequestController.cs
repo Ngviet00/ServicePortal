@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Mvc;
 using ServicePortal.Common;
 using ServicePortal.Infrastructure.Data;
-using ServicePortal.Infrastructure.Email;
 using ServicePortal.Modules.LeaveRequest.DTO;
 using ServicePortal.Modules.LeaveRequest.Interfaces;
 using ServicePortal.Modules.LeaveRequest.Requests;
@@ -16,13 +15,10 @@ namespace ServicePortal.Modules.LeaveRequest.Controllers
 
         private readonly ApplicationDbContext _context;
 
-        private readonly IEmailService _emailService;
-
-        public LeaveRequestController(ILeaveRequestService leaveRequestService, ApplicationDbContext context, IEmailService emailService)
+        public LeaveRequestController(ILeaveRequestService leaveRequestService, ApplicationDbContext context)
         {
             _leaveRequestService = leaveRequestService;
             _context = context;
-            _emailService = emailService;
         }
 
         [HttpGet("get-all")]

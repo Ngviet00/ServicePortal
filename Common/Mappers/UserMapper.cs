@@ -13,7 +13,6 @@ namespace ServicePortal.Common.Mappers
                 Code = entity.Code,
                 Name = entity.Name,
                 Email = entity.Email,
-                RoleId = entity.RoleId,
                 IsActive = entity.IsActive,
                 DateJoinCompany = entity.DateJoinCompany,
                 DateOfBirth = entity.DateOfBirth,

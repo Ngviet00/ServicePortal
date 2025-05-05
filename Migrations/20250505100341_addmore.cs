@@ -5,18 +5,36 @@
 namespace ServicePortal.Migrations
 {
     /// <inheritdoc />
-    public partial class AddColumnNoteRoleTable : Migration
+    public partial class addmore : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<string>(
-                name: "code",
+            migrationBuilder.UpdateData(
                 table: "roles",
-                type: "nvarchar(50)",
-                maxLength: 50,
-                nullable: true);
+                keyColumn: "id",
+                keyValue: 1,
+                column: "code",
+                value: "superadmin");
 
+            migrationBuilder.UpdateData(
+                table: "roles",
+                keyColumn: "id",
+                keyValue: 3,
+                column: "code",
+                value: "HR");
+
+            migrationBuilder.UpdateData(
+                table: "roles",
+                keyColumn: "id",
+                keyValue: 4,
+                column: "code",
+                value: "user");
+        }
+
+        /// <inheritdoc />
+        protected override void Down(MigrationBuilder migrationBuilder)
+        {
             migrationBuilder.UpdateData(
                 table: "roles",
                 keyColumn: "id",
@@ -37,14 +55,6 @@ namespace ServicePortal.Migrations
                 keyValue: 4,
                 column: "code",
                 value: null);
-        }
-
-        /// <inheritdoc />
-        protected override void Down(MigrationBuilder migrationBuilder)
-        {
-            migrationBuilder.DropColumn(
-                name: "code",
-                table: "roles");
         }
     }
 }

@@ -12,8 +12,8 @@ using ServicePortal.Infrastructure.Data;
 namespace ServicePortal.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250503092211_Remove")]
-    partial class Remove
+    [Migration("20250505081712_addrelations")]
+    partial class addrelations
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -216,6 +216,32 @@ namespace ServicePortal.Migrations
                     b.ToTable("leave_request_steps");
                 });
 
+            modelBuilder.Entity("ServicePortal.Domain.Entities.Permission", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)")
+                        .HasColumnName("description");
+
+                    b.Property<string>("Name")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)")
+                        .HasColumnName("name");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Id");
+
+                    b.ToTable("permissions");
+                });
+
             modelBuilder.Entity("ServicePortal.Domain.Entities.RefreshToken", b =>
                 {
                     b.Property<Guid>("Id")
@@ -291,6 +317,32 @@ namespace ServicePortal.Migrations
                             Id = 4,
                             Name = "User"
                         });
+                });
+
+            modelBuilder.Entity("ServicePortal.Domain.Entities.RolePermission", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("PermissionId")
+                        .HasColumnType("int")
+                        .HasColumnName("permission_id");
+
+                    b.Property<int?>("RoleId")
+                        .HasColumnType("int")
+                        .HasColumnName("role_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PermissionId");
+
+                    b.HasIndex("RoleId", "PermissionId");
+
+                    b.ToTable("role_permissions");
                 });
 
             modelBuilder.Entity("ServicePortal.Domain.Entities.TypeLeave", b =>
@@ -385,6 +437,7 @@ namespace ServicePortal.Migrations
                         .HasColumnName("id");
 
                     b.Property<string>("Code")
+                        .IsRequired()
                         .HasColumnType("nvarchar(450)")
                         .HasColumnName("code");
 
@@ -440,10 +493,6 @@ namespace ServicePortal.Migrations
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("position");
 
-                    b.Property<int?>("RoleId")
-                        .HasColumnType("int")
-                        .HasColumnName("role_id");
-
                     b.Property<byte?>("Sex")
                         .HasColumnType("tinyint")
                         .HasColumnName("sex");
@@ -456,11 +505,67 @@ namespace ServicePortal.Migrations
 
                     b.HasIndex("DepartmentId");
 
-                    b.HasIndex("RoleId");
-
                     b.HasIndex("Code", "Email", "Id");
 
                     b.ToTable("users");
+                });
+
+            modelBuilder.Entity("ServicePortal.Domain.Entities.UserPermission", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("PermissionId")
+                        .HasColumnType("int")
+                        .HasColumnName("permission_id");
+
+                    b.Property<string>("UserCode")
+                        .HasColumnType("nvarchar(450)")
+                        .HasColumnName("user_code");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PermissionId");
+
+                    b.HasIndex("UserCode", "PermissionId");
+
+                    b.ToTable("user_permissions");
+                });
+
+            modelBuilder.Entity("ServicePortal.Domain.Entities.UserRole", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("DepartmentId")
+                        .HasColumnType("int")
+                        .HasColumnName("department_id");
+
+                    b.Property<int?>("RoleId")
+                        .HasColumnType("int")
+                        .HasColumnName("role_id");
+
+                    b.Property<string>("UserCode")
+                        .HasColumnType("nvarchar(450)")
+                        .HasColumnName("user_code");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DepartmentId");
+
+                    b.HasIndex("RoleId");
+
+                    b.HasIndex("UserCode", "RoleId", "DepartmentId");
+
+                    b.ToTable("user_roles");
                 });
 
             modelBuilder.Entity("ServicePortal.Domain.Entities.LeaveRequest", b =>
@@ -480,24 +585,92 @@ namespace ServicePortal.Migrations
                         .OnDelete(DeleteBehavior.Cascade);
                 });
 
+            modelBuilder.Entity("ServicePortal.Domain.Entities.RolePermission", b =>
+                {
+                    b.HasOne("ServicePortal.Domain.Entities.Permission", "Permission")
+                        .WithMany("RolePermissions")
+                        .HasForeignKey("PermissionId");
+
+                    b.HasOne("ServicePortal.Domain.Entities.Role", "Role")
+                        .WithMany("RolePermissions")
+                        .HasForeignKey("RoleId");
+
+                    b.Navigation("Permission");
+
+                    b.Navigation("Role");
+                });
+
             modelBuilder.Entity("ServicePortal.Domain.Entities.User", b =>
                 {
                     b.HasOne("ServicePortal.Domain.Entities.Department", "Department")
                         .WithMany()
                         .HasForeignKey("DepartmentId");
 
-                    b.HasOne("ServicePortal.Domain.Entities.Role", "Role")
+                    b.Navigation("Department");
+                });
+
+            modelBuilder.Entity("ServicePortal.Domain.Entities.UserPermission", b =>
+                {
+                    b.HasOne("ServicePortal.Domain.Entities.Permission", "Permission")
+                        .WithMany("UserPermission")
+                        .HasForeignKey("PermissionId");
+
+                    b.HasOne("ServicePortal.Domain.Entities.User", "User")
+                        .WithMany("UserPermission")
+                        .HasForeignKey("UserCode")
+                        .HasPrincipalKey("Code");
+
+                    b.Navigation("Permission");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("ServicePortal.Domain.Entities.UserRole", b =>
+                {
+                    b.HasOne("ServicePortal.Domain.Entities.Department", "Department")
                         .WithMany()
+                        .HasForeignKey("DepartmentId");
+
+                    b.HasOne("ServicePortal.Domain.Entities.Role", "Role")
+                        .WithMany("UserRoles")
                         .HasForeignKey("RoleId");
+
+                    b.HasOne("ServicePortal.Domain.Entities.User", "User")
+                        .WithMany("UserRoles")
+                        .HasForeignKey("UserCode")
+                        .HasPrincipalKey("Code");
 
                     b.Navigation("Department");
 
                     b.Navigation("Role");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("ServicePortal.Domain.Entities.LeaveRequest", b =>
                 {
                     b.Navigation("LeaveRequestSteps");
+                });
+
+            modelBuilder.Entity("ServicePortal.Domain.Entities.Permission", b =>
+                {
+                    b.Navigation("RolePermissions");
+
+                    b.Navigation("UserPermission");
+                });
+
+            modelBuilder.Entity("ServicePortal.Domain.Entities.Role", b =>
+                {
+                    b.Navigation("RolePermissions");
+
+                    b.Navigation("UserRoles");
+                });
+
+            modelBuilder.Entity("ServicePortal.Domain.Entities.User", b =>
+                {
+                    b.Navigation("UserPermission");
+
+                    b.Navigation("UserRoles");
                 });
 #pragma warning restore 612, 618
         }

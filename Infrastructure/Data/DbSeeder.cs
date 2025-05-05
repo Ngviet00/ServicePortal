@@ -16,7 +16,6 @@ namespace ServicePortal.Infrastructure.Data
                         Name = "superadmin",
                         Password = Helper.HashString("123456"),
                         Email = "superadmin@vsvn.com.vn",
-                        RoleId = 1,
                         IsActive = true,
                         DateJoinCompany = new DateTime(2025, 4, 1),
                         DateOfBirth = new DateTime(2020, 5, 2),
@@ -28,6 +27,13 @@ namespace ServicePortal.Infrastructure.Data
                         CreatedAt = new DateTime(2025, 4, 1)
                     }
                 );
+
+                context.UserRoles.Add(new UserRole
+                {
+                    UserCode = "0",
+                    RoleId = 1,
+                    DepartmentId = 1
+                });
 
                 await context.SaveChangesAsync();
             }

@@ -39,9 +39,6 @@ namespace ServicePortal.Domain.Entities
         [Column("position")]
         public string? Position { get; set; }
 
-        [Column("role_id")]
-        public int? RoleId { get; set; }
-
         [Column("department_id")]
         public int? DepartmentId { get; set; }
 
@@ -60,7 +57,9 @@ namespace ServicePortal.Domain.Entities
         [Column("deleted_at")]
         public DateTime? DeletedAt { get; set; }
 
-        public Role? Role { get; set; }
         public Department? Department { get; set; }
+
+        public ICollection<UserRole> UserRoles { get; set; } = new List<UserRole>();
+        public ICollection<UserPermission> UserPermission { get; set; } = new List<UserPermission>();
     }
 }

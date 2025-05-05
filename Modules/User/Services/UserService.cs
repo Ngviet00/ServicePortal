@@ -24,7 +24,9 @@ namespace ServicePortal.Modules.User.Services
             double pageSize = request.PageSize;
             double page = request.Page;
 
-            var query = GetUserQuery();
+            var query = GetUserQueryLogin();
+
+            query = query.Where(e => e.Code != "0");
 
             if (!string.IsNullOrEmpty(name))
             {
@@ -32,6 +34,7 @@ namespace ServicePortal.Modules.User.Services
             }
 
             var totalItems = await query.CountAsync();
+
             var totalPages = (int)Math.Ceiling(totalItems / pageSize);
 
             var usersWithDetails = await query
@@ -89,11 +92,6 @@ namespace ServicePortal.Modules.User.Services
 
             var user = await _context.Users.FirstOrDefaultAsync(e => e.Id == id) ?? throw new NotFoundException("User not found!");
 
-            if (user.Id == id)
-            {
-                throw new ValidationException("Can not delete yourself!");
-            }
-
             user.DeletedAt = DateTime.Now;
 
             _context.Users.Update(user);
@@ -119,45 +117,57 @@ namespace ServicePortal.Modules.User.Services
             return UserMapper.ToDto(user);
         }
 
-        public IQueryable<UserDTO> GetUserQuery()
+        public IQueryable<UserDTO> GetUserQueryLogin()
         {
-            var query = _context
-                .Users
-                .Where(e => e.DeletedAt == null)
-                .AsQueryable();
-
-            var userQuery = query
-                .GroupJoin(_context.Roles, u => u.RoleId, r => r.Id, (u, roles) => new { u, roles })
-                .SelectMany(temp => temp.roles.DefaultIfEmpty(), (temp, role) => new { temp.u, Role = role })
-                .GroupJoin(_context.Departments, ur => ur.u.DepartmentId, d => d.Id, (ur, departments) => new { ur.u, ur.Role, departments })
-                .SelectMany(temp => temp.departments.DefaultIfEmpty(), (temp, department) => new UserDTO
+            var query = _context.Users
+                .Where(u => u.DeletedAt == null)
+                .Select(u => new UserDTO
                 {
-                    Id = temp.u.Id,
-                    Code = temp.u.Code,
-                    Name = temp.u.Name,
-                    Email = temp.u.Email,
-                    Password = temp.u.Password,
-                    IsActive = temp.u.IsActive,
-                    DateJoinCompany = temp.u.DateJoinCompany,
-                    Phone = temp.u.Phone,
-                    Sex = temp.u.Sex,
-                    Position = temp.u.Position,
-                    Level = temp.u.Level,
-                    LevelParent = temp.u.LevelParent,
-                    Role = temp.Role != null ? new Domain.Entities.Role
+                    Id = u.Id,
+                    Code = u.Code,
+                    Name = u.Name,
+                    Email = u.Email,
+                    Password = u.Password,
+                    IsActive = u.IsActive,
+                    DateJoinCompany = u.DateJoinCompany,
+                    Phone = u.Phone,
+                    Sex = u.Sex,
+                    Position = u.Position,
+                    Level = u.Level,
+                    LevelParent = u.LevelParent,
+                    Department = u.Department == null ? null : new DepartmentDTO
                     {
-                        Id = temp.Role.Id,
-                        Name = temp.Role.Name
-                    } : null,
-                    Department = department != null ? new DepartmentDTO
-                    {
-                        Id = department.Id,
-                        Name = department.Name,
-                        Note = department.Note
-                    } : null
+                        Id = u.Department.Id,
+                        Name = u.Department.Name,
+                    },
+
+                    Roles = u.UserRoles
+                        .Where(ur => ur.Role != null)
+                        .Select(ur => new Domain.Entities.Role
+                        {
+                            Id = ur.Role.Id,
+                            Name = ur.Role.Name
+                        })
+                        .Distinct()
+                        .ToList(),
+
+                    UserPermissions = u.UserPermission
+                        .Where(up => up.Permission != null)
+                        .Select(up => up.Permission.Name)
+                        .Distinct()
+                        .ToList(),
+
+                    Permissions = u.UserRoles
+                        .Where(ur => ur.Role != null)
+                        .SelectMany(ur => ur.Role.RolePermissions
+                            .Where(rp => rp.Permission != null)
+                            .Select(rp => rp.Permission.Name)
+                        )
+                        .Distinct()
+                        .ToList()
                 });
 
-            return userQuery;
+            return query;
         }
 
         public async Task<long> CountUser()
