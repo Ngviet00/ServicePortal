@@ -26,7 +26,7 @@ namespace ServicePortal.Modules.LeaveRequest.Controllers
         {
             var results = await _leaveRequestService.GetAll(request);
 
-            var response = new PageResponse<LeaveRequestDTO>(200, "Success", results.Data, results.TotalPages, request.Page, request.PageSize, results.TotalItems);
+            var response = new PageResponse<LeaveRequestDTO>(200, "Success", results.Data, results.TotalPages, request.Page, request.PageSize, results.TotalItems, results.CountPending, results.CountInProcess);
 
             return Ok(response);
         }
@@ -77,6 +77,18 @@ namespace ServicePortal.Modules.LeaveRequest.Controllers
         [HttpPost("approval")]
         public async Task<IActionResult> Approval(ApprovalDTO request)
         {
+            var userCode = User.FindFirst("user_code")?.Value;
+            
+            if (string.IsNullOrWhiteSpace(userCode))
+            {
+                throw new ForbiddenException("User forbidden!");
+            }
+
+            if (userCode.Trim() != request.UserCodeApproval)
+            {
+                throw new ForbiddenException("User forbidden!");
+            }
+
             var result = await _leaveRequestService.Approval(request);
 
             return Ok(new BaseResponse<LeaveRequestDTO>(200, "success", result));

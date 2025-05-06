@@ -17,6 +17,16 @@ namespace ServicePortal.Modules.User.Controllers
             _userService = userService;
         }
 
+        [HttpGet("me")]
+        public async Task<IActionResult> GetMe([FromQuery(Name = "code")]string code)
+        {
+            var results = await _userService.GetMe(code);
+
+            var response = new BaseResponse<UserDTO>(200, "Success", results);
+
+            return Ok(response);
+        }
+
         [HttpGet("get-all")]
         public async Task<IActionResult> GetAll(GetAllUserRequest request)
         {

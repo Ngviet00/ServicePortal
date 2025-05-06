@@ -12,7 +12,6 @@ using ServicePortal.Modules.User.DTO;
 using ServicePortal.Modules.Auth.Interfaces;
 using ServicePortal.Common.Mappers;
 using ServicePortal.Modules.User.Interfaces;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace ServicePortal.Modules.Auth.Services
 {

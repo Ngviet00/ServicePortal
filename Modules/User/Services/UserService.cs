@@ -24,7 +24,7 @@ namespace ServicePortal.Modules.User.Services
             double pageSize = request.PageSize;
             double page = request.Page;
 
-            var query = GetUserQueryLogin();
+            var query = _context.Users.Include(e => e.Department).AsQueryable();
 
             query = query.Where(e => e.Code != "0");
 
@@ -44,7 +44,7 @@ namespace ServicePortal.Modules.User.Services
 
             var result = new PagedResults<UserDTO>
             {
-                Data = usersWithDetails,
+                Data = UserMapper.ToDtoList(usersWithDetails),
                 TotalItems = totalItems,
                 TotalPages = totalPages
             };
@@ -135,6 +135,7 @@ namespace ServicePortal.Modules.User.Services
                     Position = u.Position,
                     Level = u.Level,
                     LevelParent = u.LevelParent,
+                    DepartmentId = u.DepartmentId,
                     Department = u.Department == null ? null : new DepartmentDTO
                     {
                         Id = u.Department.Id,
@@ -173,6 +174,23 @@ namespace ServicePortal.Modules.User.Services
         public async Task<long> CountUser()
         {
             return await _context.Users.CountAsync();
+        }
+
+        public async Task<UserDTO> GetMe(string code)
+        {
+            if (string.IsNullOrWhiteSpace(code))
+            {
+                throw new ValidationException("Code can not empty");
+            }
+
+            var user = await GetUserQueryLogin().FirstOrDefaultAsync(e => e.Code == code);
+
+            if (user == null)
+            {
+                throw new NotFoundException("User not found!");
+            }
+
+            return user;
         }
     }
 }

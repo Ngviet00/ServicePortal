@@ -33,6 +33,10 @@ namespace ServicePortal.Modules.LeaveRequest.Services
             //find leave request of current user
             query = query.Where(e => e.UserCode == request.UserCode);
 
+            var countPending = await query.Where(e => e.Status == (byte)StatusLeaveRequestEnum.PENDING).CountAsync();
+
+            var countInProcess = await query.Where(e => e.Status == (byte)StatusLeaveRequestEnum.IN_PROCESS).CountAsync();
+
             //default get status leave request is pending
             query = query.Where(e => e.Status == (status > 1 ? status : 1));
 
@@ -40,13 +44,34 @@ namespace ServicePortal.Modules.LeaveRequest.Services
 
             var totalPages = (int)Math.Ceiling(totalItems / pageSize);
 
-            var leaveRequests = await query.Skip((int)((page - 1) * pageSize)).Take((int)pageSize).ToListAsync();
+            var leaveRequests = await query
+                .Select(lr => new
+                {
+                    LeaveRequest = lr,
+                    ApprovedBy = lr.LeaveRequestSteps
+                        .Where(s => s.ApprovedBy != null && s.ApprovedAt != null)
+                        .OrderByDescending(s => s.ApprovedAt)
+                        .Select(s => s.ApprovedBy)
+                        .FirstOrDefault()
+                })
+                .Skip((int)((page - 1) * pageSize))
+                .Take((int)pageSize)
+                .ToListAsync();
+
+            var leaveRequestDTOs = leaveRequests.Select(x =>
+            {
+                var leaveRequestDto = LeaveRequestMapper.ToDto(x.LeaveRequest);
+                leaveRequestDto.ApprovedBy = x.ApprovedBy;
+                return leaveRequestDto;
+            }).ToList();
 
             return new PagedResults<LeaveRequestDTO>
             {
-                Data = LeaveRequestMapper.ToDtoList(leaveRequests),
+                Data = leaveRequestDTOs,
                 TotalItems = totalItems,
-                TotalPages = totalPages
+                TotalPages = totalPages,
+                CountPending = countPending,
+                CountInProcess = countInProcess,
             };
         }
 
@@ -163,13 +188,31 @@ namespace ServicePortal.Modules.LeaveRequest.Services
 
             var totalPages = (int)Math.Ceiling(totalItems / pageSize);
 
-            var roles = await query.Skip((int)((page - 1) * pageSize)).Take((int)pageSize).ToListAsync();
+            //continues get more data name approval
+            var leaveRequests = await query
+                .Select(lr => new
+                {
+                    LeaveRequest = lr,
+                    ApprovedBy = lr.LeaveRequestSteps
+                        .Where(s => s.ApprovedBy != null && s.ApprovedAt != null)
+                        .OrderByDescending(s => s.ApprovedAt)
+                        .Select(s => s.ApprovedBy)
+                        .FirstOrDefault()
+                })
+                .Skip((int)((page - 1) * pageSize))
+                .Take((int)pageSize)
+                .ToListAsync();
 
-            var leaveRequests = await query.Skip((int)((page - 1) * pageSize)).Take((int)pageSize).ToListAsync();
+            var leaveRequestDTOs = leaveRequests.Select(x =>
+            {
+                var leaveRequestDto = LeaveRequestMapper.ToDto(x.LeaveRequest);
+                leaveRequestDto.ApprovedBy = x.ApprovedBy;
+                return leaveRequestDto;
+            }).ToList();
 
             return new PagedResults<LeaveRequestDTO>
             {
-                Data = LeaveRequestMapper.ToDtoList(leaveRequests),
+                Data = leaveRequestDTOs,
                 TotalItems = totalItems,
                 TotalPages = totalPages
             };
@@ -365,16 +408,21 @@ namespace ServicePortal.Modules.LeaveRequest.Services
                     IsRoleHR = u.UserRoles.Any(ur => ur.Role.Code.ToUpper() == "HR")
                 }).FirstOrDefaultAsync();
 
-            if (user.IsRoleHR)
+            if (user != null)
             {
-                query = QueryWaitApprovalHR(user.Department.Id, user.Level);
-            }
-            else
-            {
-                query = QueryWaitApprovalNormalUser(request?.DepartmentId, request.Level);
+                if (user.IsRoleHR)
+                {
+                    query = QueryWaitApprovalHR(user.Department.Id, user.Level);
+                }
+                else
+                {
+                    query = QueryWaitApprovalNormalUser(request?.DepartmentId, request.Level);
+                }
+
+                return await query.CountAsync();
             }
 
-            return await query.CountAsync();
+            return 0;
         }
 
         public IQueryable<Domain.Entities.LeaveRequest> QueryWaitApprovalHR(int? departmentId, string? level)

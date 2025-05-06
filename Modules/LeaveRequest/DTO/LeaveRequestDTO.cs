@@ -55,6 +55,9 @@ namespace ServicePortal.Modules.LeaveRequest.DTO
         [JsonPropertyName("department_id")]
         public int? DepartmentId { get; set; }
 
+        [JsonPropertyName("approved_by")]
+        public string? ApprovedBy { get; set; }
+
         [JsonPropertyName("created_at")]
         public DateTime? CreatedAt { get; set; }
 

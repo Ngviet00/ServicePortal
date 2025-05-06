@@ -47,6 +47,9 @@ namespace ServicePortal.Modules.User.DTO
         [JsonPropertyName("sex")]
         public byte? Sex { get; set; }
 
+        [JsonPropertyName("department_id")]
+        public int? DepartmentId { get; set; }
+
         [JsonPropertyName("department")]
         public DepartmentDTO? Department { get; set; }
 

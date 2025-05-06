@@ -266,6 +266,12 @@ namespace ServicePortal
 
             app.UseHangfireDashboard();
 
+            RecurringJob.AddOrUpdate<JwtService>(
+                "DeleteOldRefreshTokensDaily",
+                (job) => job.DeleteOldRefreshToken(),
+                Cron.Weekly
+            );
+
             app.Run();
 
             AppDomain.CurrentDomain.UnhandledException += (sender, e) =>
@@ -275,8 +281,6 @@ namespace ServicePortal
                     FileHelper.WriteLog(TypeErrorEnum.ERROR, $"[UnhandledException] {ex.Message}\n{ex.StackTrace}");
                 }
             };
-
-            FileHelper.CleanupOldLogs();
         }
     }
 }

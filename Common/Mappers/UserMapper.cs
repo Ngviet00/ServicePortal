@@ -21,6 +21,7 @@ namespace ServicePortal.Common.Mappers
                 Position = entity.Position,
                 Level = entity.Level,
                 LevelParent = entity.LevelParent,
+                Department = DepartmentMapper.ToDto(entity.Department)
             };
         }
 
