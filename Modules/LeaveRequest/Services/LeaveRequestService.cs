@@ -218,8 +218,18 @@ namespace ServicePortal.Modules.LeaveRequest.Services
             };
         }
 
-        public async Task<LeaveRequestDTO?> Approval(ApprovalDTO request)
+        public async Task<LeaveRequestDTO?> Approval(ApprovalDTO request, string currentUserCode)
         {
+            //if (string.IsNullOrWhiteSpace(currentUserCode))
+            //{
+            //    throw new ForbiddenException("User forbidden!");
+            //}
+
+            //if (currentUserCode.Trim() != request.UserCodeApproval)
+            //{
+            //    throw new ForbiddenException("User forbidden!");
+            //}
+
             var userApproval = await _context.Users
                 .Select(u => new
                 {
@@ -242,7 +252,9 @@ namespace ServicePortal.Modules.LeaveRequest.Services
                 throw new NotFoundException("Not found user approval");
             }
 
-            var leaveRequest = await _context.LeaveRequests.FirstOrDefaultAsync(e => e.Id == Guid.Parse(request.LeaveRequestId ?? ""));
+            var leaveRequest = await _context
+                .LeaveRequests
+                .FirstOrDefaultAsync(e => e.Id == Guid.Parse(request.LeaveRequestId ?? ""));
 
             if (leaveRequest == null)
             {

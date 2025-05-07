@@ -30,7 +30,7 @@ namespace ServicePortal.Modules.User.Services
 
             if (!string.IsNullOrEmpty(name))
             {
-                query = query.Where(u => u.Name.Contains(name) || u.Email.Contains(name) || u.Phone.Contains(name));
+                query = query.Where(u => u.Name.Contains(name) || u.Email.Contains(name) || u.Phone.Contains(name) || u.Code.Contains(name));
             }
 
             var totalItems = await query.CountAsync();
@@ -191,6 +191,62 @@ namespace ServicePortal.Modules.User.Services
             }
 
             return user;
+        }
+
+        public async Task<List<OrgChartChildNode>> BuildTree(int? departmentId)
+        {
+            var users = await _context.Users
+                .Where(e => e.DepartmentId == departmentId && e.Level != "0")
+                .Select(x => new OrgChartUserDto
+                {
+                    Id = x.Id,
+                    Name = x.Name,
+                    Position = x.Position,
+                    Level = x.Level,
+                    LevelParent = x.LevelParent
+                })
+                .ToListAsync();
+
+            var allLevelCodes = users.Select(x => x.Level).ToHashSet();
+
+            var rootNodes = users
+                .Where(x => string.IsNullOrEmpty(x.LevelParent) || !allLevelCodes.Contains(x.LevelParent))
+                .Select(x => x.LevelParent)
+                .Distinct();
+
+            var trees = new List<OrgChartChildNode>();
+
+            foreach (var root in rootNodes)
+            {
+                trees.AddRange(BuildTreeRecursive(root ?? "", users));
+            }
+
+            return trees;
+        }
+
+        private List<OrgChartChildNode> BuildTreeRecursive(string parentLevelCode, List<OrgChartUserDto> users)
+        {
+            var groupedChildren = users
+                .Where(x => x.LevelParent == parentLevelCode)
+                .GroupBy(x => x.Level);
+
+            var children = new List<OrgChartChildNode>();
+
+            foreach (var group in groupedChildren)
+            {
+                var levelCode = group.Key;
+
+                var childNode = new OrgChartChildNode
+                {
+                    Level = levelCode ?? "",
+                    People = group.ToList(),
+                    Children = BuildTreeRecursive(levelCode ?? "", users)
+                };
+
+                children.Add(childNode);
+            }
+
+            return children;
         }
     }
 }

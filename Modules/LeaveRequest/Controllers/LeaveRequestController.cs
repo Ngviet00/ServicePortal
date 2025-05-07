@@ -77,19 +77,9 @@ namespace ServicePortal.Modules.LeaveRequest.Controllers
         [HttpPost("approval")]
         public async Task<IActionResult> Approval(ApprovalDTO request)
         {
-            var userCode = User.FindFirst("user_code")?.Value;
+            var currentUserCode = User.FindFirst("user_code")?.Value;
             
-            if (string.IsNullOrWhiteSpace(userCode))
-            {
-                throw new ForbiddenException("User forbidden!");
-            }
-
-            if (userCode.Trim() != request.UserCodeApproval)
-            {
-                throw new ForbiddenException("User forbidden!");
-            }
-
-            var result = await _leaveRequestService.Approval(request);
+            var result = await _leaveRequestService.Approval(request, currentUserCode ?? "");
 
             return Ok(new BaseResponse<LeaveRequestDTO>(200, "success", result));
         }

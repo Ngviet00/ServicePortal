@@ -47,6 +47,10 @@
     <Folder Include="Properties\PublishProfiles\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="Modules\User\DTO\OrgChartDTO.cs" />
+  </ItemGroup>
+
 	<ItemGroup>
 		<Content Update="web.config">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>

@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using ServicePortal.Common;
 using ServicePortal.Modules.User.DTO;
 using ServicePortal.Modules.User.Interfaces;
@@ -18,9 +19,11 @@ namespace ServicePortal.Modules.User.Controllers
         }
 
         [HttpGet("me")]
-        public async Task<IActionResult> GetMe([FromQuery(Name = "code")]string code)
+        public async Task<IActionResult> GetMe()
         {
-            var results = await _userService.GetMe(code);
+            var currentUserCode = User.FindFirst("user_code")?.Value;
+
+            var results = await _userService.GetMe(currentUserCode ?? "");
 
             var response = new BaseResponse<UserDTO>(200, "Success", results);
 
@@ -75,6 +78,14 @@ namespace ServicePortal.Modules.User.Controllers
             await _userService.ForceDelete(id);
 
             return Ok(new BaseResponse<UserDTO>(200, "Delete user permanently successfully", null));
+        }
+
+        [HttpGet("org-chart")]
+        public async Task<IActionResult> GetUsersOrgChart([FromQuery(Name = "department_id")] int? departmentId)
+        {
+            var result = await _userService.BuildTree(departmentId);
+
+            return Ok(new BaseResponse<List<OrgChartChildNode>>(200, "Success", result));
         }
     }
 }

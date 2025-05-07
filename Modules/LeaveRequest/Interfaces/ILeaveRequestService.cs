@@ -9,7 +9,7 @@ namespace ServicePortal.Modules.LeaveRequest.Interfaces
         Task<PagedResults<LeaveRequestDTO>> GetAll(GetAllLeaveRequest request);
         Task<PagedResults<LeaveRequestDTO>> GetAllWaitApproval(GetAllLeaveRequestWaitApproval request);
         Task<LeaveRequestDTO> GetById(Guid id);
-        Task<LeaveRequestDTO?> Approval(ApprovalDTO request);
+        Task<LeaveRequestDTO?> Approval(ApprovalDTO request, string currentUserCode);
         Task<LeaveRequestDTO> Create(LeaveRequestDTO dto);
         Task<LeaveRequestDTO> Update(Guid id, LeaveRequestDTO dto);
         Task<LeaveRequestDTO> Delete(Guid id);
