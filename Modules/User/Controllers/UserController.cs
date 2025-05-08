@@ -7,7 +7,7 @@ using ServicePortal.Modules.User.Requests;
 
 namespace ServicePortal.Modules.User.Controllers
 {
-    //[Authorize]
+    [Authorize]
     [ApiController, Route("api/user")]
     public class UserController : ControllerBase
     {
@@ -86,6 +86,14 @@ namespace ServicePortal.Modules.User.Controllers
             var result = await _userService.BuildTree(departmentId);
 
             return Ok(new BaseResponse<List<OrgChartChildNode>>(200, "Success", result));
+        }
+
+        [HttpPost("update-user-role")]
+        public async Task<IActionResult> UpdateUserRole(UpdateUserRoleDTO dto)
+        {
+            var result = await _userService.UpdateUserRole(dto);
+
+            return Ok(new BaseResponse<bool>(200, "Success", result));
         }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using Hangfire;
 using Microsoft.EntityFrameworkCore;
 using ServicePortal.Common;
+using ServicePortal.Common.Filters;
 using ServicePortal.Common.Mappers;
 using ServicePortal.Domain.Enums;
 using ServicePortal.Infrastructure.Data;
@@ -172,6 +173,16 @@ namespace ServicePortal.Modules.LeaveRequest.Services
                     IsRoleHR = u.UserRoles.Any(ur => ur.Role.Code == "HR")
                 }).FirstOrDefaultAsync();
 
+            if (user == null)
+            {
+                return new PagedResults<LeaveRequestDTO>
+                {
+                    Data = [],
+                    TotalItems = 0,
+                    TotalPages = 0
+                };
+            }
+
             IQueryable<Domain.Entities.LeaveRequest> query;
 
             //get list approval by hr
@@ -241,7 +252,7 @@ namespace ServicePortal.Modules.LeaveRequest.Services
                     u.DepartmentId,
                     u.Department,
                     UserPermission = u.UserPermission.Select(up => up.Permission.Name).ToList(),
-                    Roles = u.UserRoles.Select(ur => ur.Role.Name).ToList(),
+                    Roles = u.UserRoles.Select(ur => ur.Role.Code).ToList(),
                     IsRoleHR = u.UserRoles.Any(ur => ur.Role.Code == "HR"),
                     IsRoleHRManager = u.UserRoles.Any(ur => ur.Role.Code == "HR_Manager")
                 })
@@ -272,7 +283,8 @@ namespace ServicePortal.Modules.LeaveRequest.Services
                 throw new NotFoundException("Leave request step not found!");
             }
 
-            //case reject
+            //------- case reject
+
             if (request.Status == false)
             {
                 leaveRequest.Status = (byte)StatusLeaveRequestEnum.REJECT;
@@ -290,10 +302,19 @@ namespace ServicePortal.Modules.LeaveRequest.Services
                 return LeaveRequestMapper.ToDto(leaveRequest);
             }
 
-            //check case hr approval of user normal
-            //now only check code is hr and level step is hr
+            //------- case approval
+
+            //case hr approval for other member
             if ((userApproval.IsRoleHR && leaveRequestStep.LevelApproval == "HR") || userApproval.IsRoleHRManager)
             {
+                if (!userApproval.IsRoleHRManager)
+                {
+                    if (!userApproval.Roles.Any(r => r.Contains("leave_request.hr_approval")))
+                    {
+                        throw new ForbiddenException("Bạn chưa có quyền, liên hệ team IT");
+                    }
+                }
+
                 leaveRequest.Status = (byte)StatusLeaveRequestEnum.COMPLETE;
                 leaveRequest.UpdatedAt = DateTime.Now;
                 _context.LeaveRequests.Update(leaveRequest);
@@ -346,8 +367,7 @@ namespace ServicePortal.Modules.LeaveRequest.Services
                 return LeaveRequestMapper.ToDto(leaveRequest);
             }
 
-            //fake meaning have permission approval send to hr
-            if (userApproval.UserPermission.Contains("leave_request.can_send_to_hr"))
+            if (userApproval.Roles.Any(role => role.Contains("leave_request.approval_to_hr")))
             {
                 Domain.Entities.LeaveRequestStep newStep = new Domain.Entities.LeaveRequestStep
                 {
@@ -368,8 +388,6 @@ namespace ServicePortal.Modules.LeaveRequest.Services
                     e.DepartmentId == userApproval.DepartmentId &&
                     e.Level == userApproval.LevelParent
                 );
-
-                //exception when not found user approval, default send to hr
 
                 Domain.Entities.LeaveRequestStep newStep = new Domain.Entities.LeaveRequestStep
                 {

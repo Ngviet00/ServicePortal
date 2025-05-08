@@ -1,7 +1,10 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Serilog;
 using ServicePortal.Common;
 using ServicePortal.Common.Mappers;
+using ServicePortal.Domain.Entities;
 using ServicePortal.Infrastructure.Data;
+using ServicePortal.Infrastructure.Hubs;
 using ServicePortal.Modules.Deparment.DTO;
 using ServicePortal.Modules.User.DTO;
 using ServicePortal.Modules.User.Interfaces;
@@ -13,9 +16,12 @@ namespace ServicePortal.Modules.User.Services
     {
         private readonly ApplicationDbContext _context;
 
-        public UserService(ApplicationDbContext context)
+        private readonly NotificationService _notificationService;
+
+        public UserService(ApplicationDbContext context, NotificationService notificationService)
         {
             _context = context;
+            _notificationService = notificationService;
         }
 
         public async Task<PagedResults<UserDTO>> GetAll(GetAllUserRequest request)
@@ -24,7 +30,11 @@ namespace ServicePortal.Modules.User.Services
             double pageSize = request.PageSize;
             double page = request.Page;
 
-            var query = _context.Users.Include(e => e.Department).AsQueryable();
+            var query = _context.Users
+                .Include(e => e.Department)
+                .Include(e => e.UserRoles)
+                    .ThenInclude(ur => ur.Role)
+                .AsQueryable();
 
             query = query.Where(e => e.Code != "0");
 
@@ -147,7 +157,8 @@ namespace ServicePortal.Modules.User.Services
                         .Select(ur => new Domain.Entities.Role
                         {
                             Id = ur.Role.Id,
-                            Name = ur.Role.Name
+                            Name = ur.Role.Name,
+                            Code = ur.Role.Code
                         })
                         .Distinct()
                         .ToList(),
@@ -247,6 +258,39 @@ namespace ServicePortal.Modules.User.Services
             }
 
             return children;
+        }
+
+        public async Task<bool> UpdateUserRole(UpdateUserRoleDTO dto)
+        {
+            try
+            {
+                List<UserRole> ur = new List<UserRole>();
+
+                var oldUserRoles = await _context.UserRoles.Where(e => e.UserCode == dto.UserCode).ToListAsync();
+                _context.UserRoles.RemoveRange(oldUserRoles);
+
+                foreach (var item in dto.RoleIds)
+                {
+                    ur.Add(new UserRole
+                    {
+                        UserCode = dto.UserCode,
+                        RoleId = item
+                    });
+                }
+
+                _context.UserRoles.AddRange(ur);
+
+                await _context.SaveChangesAsync();
+
+                await _notificationService.SendMessageToUser(dto.UserCode, "login_again");
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"Error can not update user role, error: {ex.Message}");
+                return false;
+            }
         }
     }
 }

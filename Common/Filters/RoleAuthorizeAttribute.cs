@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
-using ServicePortal.Domain.Enums;
 
 namespace ServicePortal.Common.Filters
 {
@@ -8,10 +7,10 @@ namespace ServicePortal.Common.Filters
     {
         private readonly HashSet<string> _allowedRoles;
 
-        public RoleAuthorizeAttribute(params RoleEnum[] roles)
+        public RoleAuthorizeAttribute(params string[] roles)
         {
             _allowedRoles = roles
-                .Select(r => r.ToString())
+                .Select(r => r.Trim())
                 .ToHashSet(StringComparer.OrdinalIgnoreCase);
         }
 
@@ -29,33 +28,38 @@ namespace ServicePortal.Common.Filters
                 {
                     StatusCode = StatusCodes.Status401Unauthorized
                 };
+                return;
             }
 
-            var roleClaim = user.Claims.FirstOrDefault(c => c.Type == "role")?.Value;
+            var roleClaims = user.Claims
+                .Where(c => c.Type == "role")
+                .Select(c => c.Value)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-            if (string.IsNullOrEmpty(roleClaim))
+            if (roleClaims.Count == 0)
             {
                 context.Result = new JsonResult(new
                 {
                     status = 403,
-                    message = "Forbidden"
+                    message = "Bạn không có quyền truy cập, liên hệ team IT"
                 })
                 {
                     StatusCode = StatusCodes.Status403Forbidden
                 };
+                return;
             }
 
-            if (string.Equals(roleClaim, RoleEnum.SuperAdmin.ToString(), StringComparison.OrdinalIgnoreCase))
+            if (roleClaims.Contains("superadmin"))
             {
                 return;
             }
 
-            if (string.IsNullOrEmpty(roleClaim) || !_allowedRoles.Contains(roleClaim))
+            if (!_allowedRoles.Overlaps(roleClaims))
             {
                 context.Result = new JsonResult(new
                 {
                     status = 403,
-                    message = "Forbidden"
+                    message = "Bạn không có quyền truy cập, liên hệ team IT"
                 })
                 {
                     StatusCode = StatusCodes.Status403Forbidden

@@ -7,5 +7,9 @@ namespace ServicePortal.Modules.Role.Requests
     {
         [Required, JsonPropertyName("name")]
         public string? Name { get; set; }
+
+
+        [JsonPropertyName("code")]
+        public string? Code { get; set; }
     }
 }

@@ -30,7 +30,7 @@ namespace ServicePortal.Modules.Role.Services
                 query = query.Where(r => r.Name.Contains(name));
             }
 
-            query = query.OrderBy(e => e.Name);
+            query = query.OrderBy(e => e.Code);
 
             var totalItems = await query.CountAsync();
 
@@ -62,7 +62,11 @@ namespace ServicePortal.Modules.Role.Services
                 throw new ValidationException("Name can not empty!");
             }
 
-            var role = new Domain.Entities.Role { Name = request.Name };
+            var role = new Domain.Entities.Role
+            { 
+                Name = request.Name,
+                Code = request.Code
+            };
 
             _context.Roles.Add(role);
 
@@ -76,6 +80,7 @@ namespace ServicePortal.Modules.Role.Services
             var role = await _context.Roles.FirstOrDefaultAsync(e => e.Id == id) ?? throw new NotFoundException("Role not found!");
 
             role.Name = request.Name;
+            role.Code = request.Code;
 
             _context.Roles.Update(role);
 

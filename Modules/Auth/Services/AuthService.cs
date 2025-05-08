@@ -12,6 +12,7 @@ using ServicePortal.Modules.User.DTO;
 using ServicePortal.Modules.Auth.Interfaces;
 using ServicePortal.Common.Mappers;
 using ServicePortal.Modules.User.Interfaces;
+using Azure.Core;
 
 namespace ServicePortal.Modules.Auth.Services
 {
@@ -96,6 +97,8 @@ namespace ServicePortal.Modules.Auth.Services
                 new("user_code", user?.Code ?? ""),
             };
 
+            claims.AddRange(user.Roles.Select(r => new Claim("role", r.Code)));
+
             var accessToken = _jwtService.GenerateAccessToken(claims);
 
             var refreshToken = _jwtService.GenerateRefreshToken();
@@ -134,9 +137,15 @@ namespace ServicePortal.Modules.Auth.Services
                 throw new UnauthorizedException("Invalid refresh token");
             }
 
+            var query = _userService.GetUserQueryLogin();
+
+            var user = await query.Where(e => e.Code == token.UserCode).FirstOrDefaultAsync();
+
             var claims = new List<Claim> {
-                new(ClaimTypes.NameIdentifier, token.UserCode ?? "")
+                new("user_code", token?.UserCode ?? ""),
             };
+
+            claims.AddRange(user.Roles.Select(r => new Claim("role", r.Code)));
 
             var newAccessToken = _jwtService.GenerateAccessToken(claims);
 

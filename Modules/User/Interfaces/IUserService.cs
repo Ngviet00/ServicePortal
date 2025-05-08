@@ -15,5 +15,6 @@ namespace ServicePortal.Modules.User.Interfaces
         IQueryable<UserDTO> GetUserQueryLogin();
         Task<UserDTO> GetMe(string code);
         Task<List<OrgChartChildNode>> BuildTree(int? departmentId);
+        Task<bool> UpdateUserRole(UpdateUserRoleDTO dto);
     }
 }

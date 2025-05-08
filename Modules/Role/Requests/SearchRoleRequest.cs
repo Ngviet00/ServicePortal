@@ -11,6 +11,6 @@ namespace ServicePortal.Modules.Role.Requests
         public int Page { get; set; } = 1; //current page
 
         [FromQuery(Name = "page_size")]
-        public int PageSize { get; set; } = 5; //each item in per page
+        public int PageSize { get; set; } = 20; //each item in per page
     }
 }

@@ -26,6 +26,7 @@ using ServicePortal.Modules.TypeLeave.Services;
 using ServicePortal.Modules.TypeLeave.Interfaces;
 using ServicePortal.Infrastructure.Email;
 using Hangfire;
+using ServicePortal.Infrastructure.Hubs;
 
 namespace ServicePortal
 {
@@ -104,6 +105,8 @@ namespace ServicePortal
             builder.Services.AddScoped<JwtService>();
 
             builder.Services.AddScoped<EmailService>();
+
+            builder.Services.AddScoped<NotificationService>();
 
             #endregion
 
@@ -217,7 +220,11 @@ namespace ServicePortal
 
             builder.Services.AddHostedService<LogCleanupService>();
 
+            builder.Services.AddSignalR();
+
             var app = builder.Build();
+
+            app.MapHub<NotificationHub>("/notificationHub");
 
             app.MapHealthChecks("/health");
 
