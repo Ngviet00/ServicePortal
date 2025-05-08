@@ -48,8 +48,12 @@ namespace ServicePortal.Infrastructure.Data
 
             modelBuilder.Entity<Role>().HasData(
                 new Role { Id = 1, Name = "SuperAdmin", Code = "superadmin" },
+                new Role { Id = 2, Name = "HR Manager", Code = "HR_Manager" },
                 new Role { Id = 3, Name = "HR", Code = "HR" },
-                new Role { Id = 4, Name = "User", Code = "user" }
+                new Role { Id = 4, Name = "User", Code = "user" },
+                new Role { Id = 5, Name = "Duyệt đơn nghỉ phép", Code = "leave_request.approval" },
+                new Role { Id = 6, Name = "Duyệt đơn nghỉ phép tới HR", Code = "leave_request.approval_to_hr" },
+                new Role { Id = 7, Name = "HR duyệt đơn nghỉ phép", Code = "leave_request.hr_approval" }
             );
 
             modelBuilder.Entity<TypeLeave>().HasData(
