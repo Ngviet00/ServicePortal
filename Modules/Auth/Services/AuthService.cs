@@ -97,7 +97,7 @@ namespace ServicePortal.Modules.Auth.Services
                 new("user_code", user?.Code ?? ""),
             };
 
-            claims.AddRange(user.Roles.Select(r => new Claim("role", r.Code)));
+            claims.AddRange(user.Roles.Select(r => new Claim(ClaimTypes.Role, r.Code)));
 
             var accessToken = _jwtService.GenerateAccessToken(claims);
 

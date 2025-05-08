@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
+using System.Security.Claims;
 
 namespace ServicePortal.Common.Filters
 {
@@ -32,7 +33,7 @@ namespace ServicePortal.Common.Filters
             }
 
             var roleClaims = user.Claims
-                .Where(c => c.Type == "role")
+                .Where(c => c.Type == ClaimTypes.Role)
                 .Select(c => c.Value)
                 .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
@@ -41,7 +42,7 @@ namespace ServicePortal.Common.Filters
                 context.Result = new JsonResult(new
                 {
                     status = 403,
-                    message = "Bạn không có quyền truy cập, liên hệ team IT"
+                    message = "Bạn không có quyền truy cập, hãy liên hệ team IT"
                 })
                 {
                     StatusCode = StatusCodes.Status403Forbidden
@@ -59,7 +60,7 @@ namespace ServicePortal.Common.Filters
                 context.Result = new JsonResult(new
                 {
                     status = 403,
-                    message = "Bạn không có quyền truy cập, liên hệ team IT"
+                    message = "Bạn không có quyền truy cập, hãy liên hệ team IT"
                 })
                 {
                     StatusCode = StatusCodes.Status403Forbidden
