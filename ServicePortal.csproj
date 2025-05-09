@@ -45,7 +45,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Modules\NewFolder\" />
     <Folder Include="Properties\PublishProfiles\" />
   </ItemGroup>
 

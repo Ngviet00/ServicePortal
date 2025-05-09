@@ -12,7 +12,6 @@ using ServicePortal.Modules.User.DTO;
 using ServicePortal.Modules.Auth.Interfaces;
 using ServicePortal.Common.Mappers;
 using ServicePortal.Modules.User.Interfaces;
-using Azure.Core;
 
 namespace ServicePortal.Modules.Auth.Services
 {
@@ -37,13 +36,6 @@ namespace ServicePortal.Modules.Auth.Services
             {
                 throw new ValidationException("User is exists!");
             }
-
-            //check more condition. level parent have exist in department
-
-            //if (!string.IsNullOrWhiteSpace(request.Email) && await _context.Users.AnyAsync(u => u.Email == request.Email && u.DeletedAt == null))
-            //{
-            //    throw new ValidationException("Email already in use!");
-            //}
 
             var newUser = new ServicePortal.Domain.Entities.User
             {

@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ServicePortal.Common;
+using ServicePortal.Common.Filters;
 using ServicePortal.Modules.TypeLeave.DTO;
 using ServicePortal.Modules.TypeLeave.DTO.Requests;
 using ServicePortal.Modules.TypeLeave.Interfaces;
@@ -17,7 +18,7 @@ namespace ServicePortal.Modules.TypeLeave.Controllers
             _typeLeaveService = typeLeaveService;
         }
 
-        [HttpGet("get-all"), Authorize]
+        [HttpGet("get-all"), Authorize, RoleAuthorize("HR", "HR_Manager", "user")]
         public async Task<IActionResult> GetAll([FromQuery] GetAllTypeLeaveRequest request)
         {
             var results = await _typeLeaveService.GetAll(request);
@@ -27,7 +28,7 @@ namespace ServicePortal.Modules.TypeLeave.Controllers
             return Ok(response);
         }
 
-        [HttpGet("get-by-id/{id}"), AllowAnonymous]
+        [HttpGet("get-by-id/{id}"), RoleAuthorize("HR", "HR_Manager")]
         public async Task<IActionResult> GetById(int id)
         {
             var result = await _typeLeaveService.GetById(id);
@@ -35,7 +36,7 @@ namespace ServicePortal.Modules.TypeLeave.Controllers
             return Ok(new BaseResponse<Domain.Entities.TypeLeave>(200, "success", result));
         }
 
-        [HttpPost("create")]
+        [HttpPost("create"), RoleAuthorize("HR", "HR_Manager")]
         public async Task<IActionResult> Create([FromBody] TypeLeaveDTO dto)
         {
             var result = await _typeLeaveService.Create(dto);
@@ -43,7 +44,7 @@ namespace ServicePortal.Modules.TypeLeave.Controllers
             return Ok(new BaseResponse<Domain.Entities.TypeLeave>(200, "success", result));
         }
 
-        [HttpPut("update/{id}")]
+        [HttpPut("update/{id}"), RoleAuthorize("HR", "HR_Manager")]
         public async Task<IActionResult> Update(int id, [FromBody] TypeLeaveDTO dto)
         {
             var result = await _typeLeaveService.Update(id, dto);
@@ -51,7 +52,7 @@ namespace ServicePortal.Modules.TypeLeave.Controllers
             return Ok(new BaseResponse<Domain.Entities.TypeLeave>(200, "success", result));
         }
 
-        [HttpDelete("delete/{id}")]
+        [HttpDelete("delete/{id}"), RoleAuthorize("HR", "HR_Manager")]
         public async Task<IActionResult> Delete(int id)
         {
             var result = await _typeLeaveService.Delete(id);

@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ServicePortal.Common;
+using ServicePortal.Common.Filters;
 using ServicePortal.Modules.User.DTO;
 using ServicePortal.Modules.User.Interfaces;
 using ServicePortal.Modules.User.Requests;
@@ -8,7 +9,7 @@ using ServicePortal.Modules.User.Requests;
 namespace ServicePortal.Modules.User.Controllers
 {
     [Authorize]
-    [ApiController, Route("api/user")]
+    [ApiController, Route("api/user"), RoleAuthorize("HR", "HR_Manager")]
     public class UserController : ControllerBase
     {
         private readonly IUserService _userService;
@@ -88,7 +89,7 @@ namespace ServicePortal.Modules.User.Controllers
             return Ok(new BaseResponse<List<OrgChartChildNode>>(200, "Success", result));
         }
 
-        [HttpPost("update-user-role")]
+        [HttpPost("update-user-role"), RoleAuthorize("superadmin")]
         public async Task<IActionResult> UpdateUserRole(UpdateUserRoleDTO dto)
         {
             var result = await _userService.UpdateUserRole(dto);

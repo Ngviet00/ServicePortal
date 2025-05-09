@@ -16,7 +16,7 @@ namespace ServicePortal.Infrastructure.Email
             _config = config;
         }
 
-        public async Task SendEmailLeaveRequest(string to, LeaveRequest leaveRequest)
+        public async Task SendEmailLeaveRequest(string to, LeaveRequest leaveRequest, string UrlFrontEnd)
         {
             try
             {
@@ -28,7 +28,7 @@ namespace ServicePortal.Infrastructure.Email
                     EnableSsl = bool.Parse(smtp["EnableSsl"])
                 };
 
-                string content = FormatContentMailLeaveRequest(leaveRequest);
+                string content = FormatContentMailLeaveRequest(leaveRequest, UrlFrontEnd);
 
                 string subject = $"Đơn xin nghỉ phép - {leaveRequest.Name}";
 
@@ -50,12 +50,14 @@ namespace ServicePortal.Infrastructure.Email
             }
         }
 
-        public string FormatContentMailLeaveRequest(LeaveRequest leaveRequest)
+        public string FormatContentMailLeaveRequest(LeaveRequest leaveRequest, string UrlFrontEnd)
         {
+            string urlWaitApproval = $"{UrlFrontEnd}/leave/wait-approval";
+
             return $@"
                     <h4>
                         <span>Duyệt đơn: </span>
-                        <a href=""http://localhost:5173/leave/wait-approval"">http://localhost:5173/leave/wait-approval</a>
+                        <a href={urlWaitApproval}>{urlWaitApproval}</a>
                     </h4>
                     <table cellpadding=""10"" cellspacing=""0"" style=""border-collapse: collapse; width: 100%; font-family: Arial, sans-serif; border: 1px solid #ccc;"">
                           <tr>

@@ -10,9 +10,7 @@ namespace ServicePortal.Common.Filters
 
         public RoleAuthorizeAttribute(params string[] roles)
         {
-            _allowedRoles = roles
-                .Select(r => r.Trim())
-                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            _allowedRoles = roles.Select(r => r.Trim()).ToHashSet(StringComparer.OrdinalIgnoreCase);
         }
 
         public void OnAuthorization(AuthorizationFilterContext context)
@@ -32,10 +30,7 @@ namespace ServicePortal.Common.Filters
                 return;
             }
 
-            var roleClaims = user.Claims
-                .Where(c => c.Type == ClaimTypes.Role)
-                .Select(c => c.Value)
-                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var roleClaims = user.Claims.Where(c => c.Type == ClaimTypes.Role).Select(c => c.Value).ToHashSet(StringComparer.OrdinalIgnoreCase);
 
             if (roleClaims.Count == 0)
             {

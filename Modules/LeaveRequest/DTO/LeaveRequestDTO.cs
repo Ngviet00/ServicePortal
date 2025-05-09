@@ -66,5 +66,8 @@ namespace ServicePortal.Modules.LeaveRequest.DTO
 
         [JsonPropertyName("deleted_at")]
         public DateTime? DeletedAt { get; set; }
+
+        [JsonPropertyName("url_front_end")]
+        public string? UrlFrontEnd { get; set; }
     }
 }

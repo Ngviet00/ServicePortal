@@ -1,7 +1,6 @@
 ﻿using Hangfire;
 using Microsoft.EntityFrameworkCore;
 using ServicePortal.Common;
-using ServicePortal.Common.Filters;
 using ServicePortal.Common.Mappers;
 using ServicePortal.Domain.Enums;
 using ServicePortal.Infrastructure.Data;
@@ -112,7 +111,7 @@ namespace ServicePortal.Modules.LeaveRequest.Services
             //send mail
             if (!string.IsNullOrWhiteSpace(nextUserApproval?.Email))
             {
-                BackgroundJob.Enqueue<EmailService>(job => job.SendEmailLeaveRequest(nextUserApproval.Email, entity));
+                BackgroundJob.Enqueue<EmailService>(job => job.SendEmailLeaveRequest(nextUserApproval.Email, entity, dto.UrlFrontEnd));
             }
 
             await _context.SaveChangesAsync();
@@ -122,29 +121,32 @@ namespace ServicePortal.Modules.LeaveRequest.Services
 
         public async Task<LeaveRequestDTO> Update(Guid id, LeaveRequestDTO dto)
         {
-            //var leaveRequest = await _context.LeaveRequests.FirstOrDefaultAsync(e => e.Id == id) ?? throw new NotFoundException("Leave request not found!");
+            var leaveRequest = await _context.LeaveRequests.FirstOrDefaultAsync(e => e.Id == id) ?? throw new NotFoundException("Leave request not found!");
 
-            //leaveRequest = LeaveRequestMapper.ToEntity(dto);
-            //leaveRequest.Id = id;
+            var updateEntity = LeaveRequestMapper.ToEntity(dto);
 
-            //_context.LeaveRequests.Update(leaveRequest);
+            updateEntity.Id = id;
+            updateEntity.Status = (byte)StatusLeaveRequestEnum.PENDING;
+            updateEntity.DepartmentId = leaveRequest.DepartmentId;
+            updateEntity.CreatedAt = leaveRequest.CreatedAt;
+            updateEntity.UpdatedAt = DateTime.Now;
 
-            //await _context.SaveChangesAsync();
+            _context.LeaveRequests.Update(updateEntity);
 
-            //return LeaveRequestMapper.ToDto(leaveRequest);
-            return null;
+            await _context.SaveChangesAsync();
+
+            return LeaveRequestMapper.ToDto(leaveRequest);
         }
 
         public async Task<LeaveRequestDTO> Delete(Guid id)
         {
-            //var leaveRequest = await _context.LeaveRequests.FirstOrDefaultAsync(e => e.Id == id) ?? throw new NotFoundException("Leave request not found!");
+            var leaveRequest = await _context.LeaveRequests.FirstOrDefaultAsync(e => e.Id == id) ?? throw new NotFoundException("Leave request not found!");
 
-            //_context.LeaveRequests.Remove(leaveRequest);
+            _context.LeaveRequests.Remove(leaveRequest);
 
-            //await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync();
 
-            //return LeaveRequestMapper.ToDto(leaveRequest);
-            return null;
+            return LeaveRequestMapper.ToDto(leaveRequest);
         }
 
         public async Task<PagedResults<LeaveRequestDTO>> GetAllWaitApproval(GetAllLeaveRequestWaitApproval request)
@@ -231,15 +233,16 @@ namespace ServicePortal.Modules.LeaveRequest.Services
 
         public async Task<LeaveRequestDTO?> Approval(ApprovalDTO request, string currentUserCode)
         {
-            //if (string.IsNullOrWhiteSpace(currentUserCode))
-            //{
-            //    throw new ForbiddenException("User forbidden!");
-            //}
+            //check current user is user in jwt token
+            if (string.IsNullOrWhiteSpace(currentUserCode))
+            {
+                throw new ForbiddenException("User forbidden!");
+            }
 
-            //if (currentUserCode.Trim() != request.UserCodeApproval)
-            //{
-            //    throw new ForbiddenException("User forbidden!");
-            //}
+            if (currentUserCode.Trim() != request.UserCodeApproval)
+            {
+                throw new ForbiddenException("User forbidden!");
+            }
 
             var userApproval = await _context.Users
                 .Select(u => new
@@ -358,7 +361,7 @@ namespace ServicePortal.Modules.LeaveRequest.Services
 
                     if (!string.IsNullOrWhiteSpace(nextUserApproval?.Email))
                     {
-                        BackgroundJob.Enqueue<EmailService>(job => job.SendEmailLeaveRequest(nextUserApproval.Email, leaveRequest));
+                        BackgroundJob.Enqueue<EmailService>(job => job.SendEmailLeaveRequest(nextUserApproval.Email, leaveRequest, request.UrlFrontEnd));
                     }
                 }
 
@@ -378,7 +381,7 @@ namespace ServicePortal.Modules.LeaveRequest.Services
                 _context.LeaveRequestSteps.Add(newStep);
 
                 //send email to group hr, now fake 
-                BackgroundJob.Enqueue<EmailService>(job => job.SendEmailLeaveRequest("nguyenviet@vsvn.com.vn", leaveRequest));
+                BackgroundJob.Enqueue<EmailService>(job => job.SendEmailLeaveRequest("nguyenviet@vsvn.com.vn", leaveRequest, request.UrlFrontEnd));
             }
             else
             {
@@ -400,7 +403,7 @@ namespace ServicePortal.Modules.LeaveRequest.Services
 
                 if (!string.IsNullOrWhiteSpace(nextUserApproval?.Email))
                 {
-                    BackgroundJob.Enqueue<EmailService>(job => job.SendEmailLeaveRequest(nextUserApproval.Email, leaveRequest));
+                    BackgroundJob.Enqueue<EmailService>(job => job.SendEmailLeaveRequest(nextUserApproval.Email, leaveRequest, request.UrlFrontEnd));
                 }
             }
 

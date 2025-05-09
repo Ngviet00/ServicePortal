@@ -15,5 +15,8 @@ namespace ServicePortal.Modules.LeaveRequest.DTO
 
         [JsonPropertyName("note")]
         public string? Note { get; set; }
+
+        [JsonPropertyName("url_front_end")]
+        public string? UrlFrontEnd { get; set; }
     }
 }

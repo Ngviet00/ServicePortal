@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 using ServicePortal.Common;
 using ServicePortal.Common.Filters;
 using ServicePortal.Infrastructure.Data;
-using ServicePortal.Infrastructure.Hubs;
 using ServicePortal.Modules.LeaveRequest.DTO;
 using ServicePortal.Modules.LeaveRequest.Interfaces;
 using ServicePortal.Modules.LeaveRequest.Requests;
@@ -17,12 +16,9 @@ namespace ServicePortal.Modules.LeaveRequest.Controllers
 
         private readonly ApplicationDbContext _context;
 
-        private readonly NotificationService _notificationService;
-
-        public LeaveRequestController(ILeaveRequestService leaveRequestService, ApplicationDbContext context, NotificationService notificationService)
+        public LeaveRequestController(ILeaveRequestService leaveRequestService, ApplicationDbContext context)
         {
             _leaveRequestService = leaveRequestService;
-            _notificationService = notificationService;
             _context = context;
         }
 
@@ -80,7 +76,7 @@ namespace ServicePortal.Modules.LeaveRequest.Controllers
         }
 
         [HttpPost("approval")]
-        [RoleAuthorize("leave_request.approval")]
+        [RoleAuthorize("leave_request.approval", "HR", "HR_Manager")]
         public async Task<IActionResult> Approval(ApprovalDTO request)
         {
             var currentUserCode = User.FindFirst("user_code")?.Value;
@@ -101,13 +97,6 @@ namespace ServicePortal.Modules.LeaveRequest.Controllers
         [HttpGet("test"), AllowAnonymous]
         public async Task<IActionResult> Test()
         {
-            var roles = User.Claims
-                .Where(c => c.Type == "role")
-                .Select(c => c.Value)
-                .ToList();
-
-            Console.WriteLine(roles);
-
             return Ok(new BaseResponse<object>(200, "success", null));
         }
     }

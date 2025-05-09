@@ -7,7 +7,7 @@ namespace ServicePortal.Domain.Entities
     public class UserRole
     {
         [Column("id")]
-        public int? Id { get; set; }
+        public Guid? Id { get; set; }
 
         [Column("user_code")]
         public string? UserCode { get; set; }

@@ -23,12 +23,14 @@ namespace ServicePortal.Common.Mappers
                 Level = entity.Level,
                 LevelParent = entity.LevelParent,
                 Department = entity.Department != null ? DepartmentMapper.ToDto(entity.Department) : null,
-                Roles =  entity != null && entity.UserRoles != null ? entity.UserRoles.Select(ur => new Role
+                Roles = entity?.UserRoles != null && entity.UserRoles.All(ur => ur.Role != null)
+                ? entity.UserRoles.Select(ur => new Role
                 {
                     Id = ur.Role.Id,
                     Name = ur.Role.Name,
                     Code = ur.Role.Code
-                }).ToList() : [],
+                }).ToList()
+                : new List<Role>(),
             };
         }
 
