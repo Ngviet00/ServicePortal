@@ -30,6 +30,7 @@ using ServicePortal.Infrastructure.Hubs;
 using ServicePortal.Modules.CustomApprovalFlow.Interfaces;
 using ServicePortal.Modules.CustomApprovalFlow.Services;
 using Serilog.Exceptions;
+using Serilog.Events;
 
 namespace ServicePortal
 {
@@ -46,19 +47,31 @@ namespace ServicePortal
                 Directory.CreateDirectory(logDir);
             }
 
-            var logFile = Path.Combine(logDir, "log-.txt");
+            var logFileInfo = Path.Combine(logDir, "info-.txt");
+            var logFileError = Path.Combine(logDir, "error-.txt");
 
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Information()
                 .Enrich.FromLogContext()
                 .Enrich.WithExceptionDetails()
+
                 .WriteTo.File(
-                    path: logFile,
-                    outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] ===========> {Message:lj}{NewLine}{Exception}",
+                    path: logFileInfo,
+                    outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] ==> {Message:lj}{NewLine}{Exception}",
                     rollingInterval: RollingInterval.Day,
                     retainedFileCountLimit: 90,
                     shared: true
                 )
+
+                .WriteTo.File(
+                    path: logFileError,
+                    outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] ==> {Message:lj}{NewLine}{Exception}",
+                    rollingInterval: RollingInterval.Day,
+                    retainedFileCountLimit: 90,
+                    shared: true,
+                    restrictedToMinimumLevel: LogEventLevel.Error
+                )
+
                 .CreateLogger();
 
             #endregion
