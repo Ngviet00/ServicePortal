@@ -36,14 +36,15 @@ namespace ServicePortal.Common.Middleware
 
                 if (statusCode >= 500)
                 {
-                    Log.Error($"Message: {ex?.Message}\nStackTrace: {ex?.StackTrace}\n");
+                    Log.Error(httpEx, "HttpException caught in middleware");
                 }
             }
             else
             {
                 statusCode = StatusCodes.Status500InternalServerError;
                 message = "System error. Please try again later.";
-                Log.Error($"Message: {ex?.Message}\nStackTrace: {ex?.StackTrace}\n");
+
+                Log.Error(ex, "Unhandled exception caught in middleware");
             }
 
             var response = new

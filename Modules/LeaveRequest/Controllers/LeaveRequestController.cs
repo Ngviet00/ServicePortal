@@ -95,9 +95,11 @@ namespace ServicePortal.Modules.LeaveRequest.Controllers
         }
 
         [HttpGet("test"), AllowAnonymous]
-        public async Task<IActionResult> Test()
+        public async Task<IActionResult> Test(string? a)
         {
-            return Ok(new BaseResponse<object>(200, "success", null));
+            var b = a.ToLower();
+
+            return Ok(new BaseResponse<object>(200, "success", b));
         }
     }
 }

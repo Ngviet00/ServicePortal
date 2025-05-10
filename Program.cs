@@ -29,6 +29,7 @@ using Hangfire;
 using ServicePortal.Infrastructure.Hubs;
 using ServicePortal.Modules.CustomApprovalFlow.Interfaces;
 using ServicePortal.Modules.CustomApprovalFlow.Services;
+using Serilog.Exceptions;
 
 namespace ServicePortal
 {
@@ -50,6 +51,7 @@ namespace ServicePortal
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Information()
                 .Enrich.FromLogContext()
+                .Enrich.WithExceptionDetails()
                 .WriteTo.File(
                     path: logFile,
                     outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] ===========> {Message:lj}{NewLine}{Exception}",
@@ -228,6 +230,9 @@ namespace ServicePortal
 
             var app = builder.Build();
 
+            //add global exception
+            app.UseMiddleware<GlobalExceptionMiddleware>();
+
             app.MapHub<NotificationHub>("/notificationHub");
 
             app.MapHealthChecks("/health");
@@ -257,9 +262,6 @@ namespace ServicePortal
 
             // Add localization middleware
             app.UseRequestLocalization();
-
-            //add global exception
-            app.UseMiddleware<GlobalExceptionMiddleware>();
 
             app.MapControllers();
 
