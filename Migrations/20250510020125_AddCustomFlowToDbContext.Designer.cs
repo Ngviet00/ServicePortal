@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ServicePortal.Infrastructure.Data;
 
@@ -11,9 +12,11 @@ using ServicePortal.Infrastructure.Data;
 namespace ServicePortal.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250510020125_AddCustomFlowToDbContext")]
+    partial class AddCustomFlowToDbContext
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -620,16 +623,6 @@ namespace ServicePortal.Migrations
                     b.HasIndex("UserCode", "RoleId", "DepartmentId");
 
                     b.ToTable("user_roles");
-                });
-
-            modelBuilder.Entity("ServicePortal.Domain.Entities.CustomApprovalFlow", b =>
-                {
-                    b.HasOne("ServicePortal.Domain.Entities.Department", "Department")
-                        .WithMany()
-                        .HasForeignKey("DepartmentId")
-                        .OnDelete(DeleteBehavior.Cascade);
-
-                    b.Navigation("Department");
                 });
 
             modelBuilder.Entity("ServicePortal.Domain.Entities.LeaveRequest", b =>

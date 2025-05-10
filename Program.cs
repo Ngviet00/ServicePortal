@@ -27,6 +27,8 @@ using ServicePortal.Modules.TypeLeave.Interfaces;
 using ServicePortal.Infrastructure.Email;
 using Hangfire;
 using ServicePortal.Infrastructure.Hubs;
+using ServicePortal.Modules.CustomApprovalFlow.Interfaces;
+using ServicePortal.Modules.CustomApprovalFlow.Services;
 
 namespace ServicePortal
 {
@@ -101,6 +103,8 @@ namespace ServicePortal
             builder.Services.AddScoped<ILeaveRequestService, LeaveRequestService>();
 
             builder.Services.AddScoped<IEmailService, EmailService>();
+
+            builder.Services.AddScoped<ICustomApprovalFlowService, CustomApprovalFlowService>();
 
             builder.Services.AddScoped<JwtService>();
 

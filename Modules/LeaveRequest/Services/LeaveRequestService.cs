@@ -82,12 +82,28 @@ namespace ServicePortal.Modules.LeaveRequest.Services
             return LeaveRequestMapper.ToDto(leaveRequest);
         }
 
+        //can check more have role send yourselt to hr
         public async Task<LeaveRequestDTO> Create(LeaveRequestDTO dto)
         {
             //get current user send leave request
             var user = await _context.Users.Include(e => e.Department).Where(e => e.Code == dto.UserCodeRegister).FirstOrDefaultAsync();
 
-            //get next user
+            //check have custom 
+            var haveCustomApproval = await _context
+                .CustomApprovalFlows
+                .FirstOrDefaultAsync(e => e.TypeCustomApproval == "LEAVE_REQUEST" && e.DepartmentId == user.DepartmentId && e.From == user.Level);
+
+
+            Domain.Entities.User nextUserCustomApproval = null;
+
+            bool flagHaveCustomApproval = false;
+
+            if (haveCustomApproval != null)
+            {
+                nextUserCustomApproval = await _context.Users.Where(e => e.DepartmentId == user.DepartmentId && e.Level == haveCustomApproval.To).FirstOrDefaultAsync();
+                flagHaveCustomApproval = true;
+            }
+
             var nextUserApproval = await _context.Users.Where(e => e.DepartmentId == user.DepartmentId && e.Level == user.LevelParent).FirstOrDefaultAsync();
 
             //create leave request
@@ -97,21 +113,43 @@ namespace ServicePortal.Modules.LeaveRequest.Services
             entity.DeletedAt = null;
             entity.CreatedAt = DateTime.Now;
             entity.DepartmentId = user?.Department?.Id ?? null;
-            entity.Status = nextUserApproval == null ? (byte?)StatusLeaveRequestEnum.IN_PROCESS :(byte?)StatusLeaveRequestEnum.PENDING;
-            _context.LeaveRequests.Add(entity);
+
+            entity.Status = (byte?)StatusLeaveRequestEnum.IN_PROCESS;
 
             Domain.Entities.LeaveRequestStep lrStepData = new Domain.Entities.LeaveRequestStep
             {
-                LeaveRequestId = entity.Id,
-                LevelApproval = nextUserApproval == null ? "HR" : user?.LevelParent ?? null,
                 StatusStep = (byte)StatusLeaveRequestStepEnum.PENDING,
             };
+
+            var email = string.Empty;
+            lrStepData.LevelApproval = "HR";
+            email = "nguyenviet@vsvn.com.vn"; //email hr
+
+            if ((nextUserApproval != null && flagHaveCustomApproval == false) || (flagHaveCustomApproval && nextUserCustomApproval == null))
+            {
+                lrStepData.LevelApproval = nextUserApproval.Level;
+                email = nextUserApproval.Email;
+
+                entity.Status = (byte?)StatusLeaveRequestEnum.PENDING;
+            }
+            else if (flagHaveCustomApproval && nextUserCustomApproval != null)
+            {
+                lrStepData.LevelApproval = nextUserCustomApproval.Level;
+                email = nextUserCustomApproval.Email;
+
+                entity.Status = (byte?)StatusLeaveRequestEnum.PENDING;
+            }
+
+            _context.LeaveRequests.Add(entity);
+
+            lrStepData.LeaveRequestId = entity.Id;
+
             _context.LeaveRequestSteps.Add(lrStepData);
-            
-            //send mail
+
+            //send email
             if (!string.IsNullOrWhiteSpace(nextUserApproval?.Email))
             {
-                BackgroundJob.Enqueue<EmailService>(job => job.SendEmailLeaveRequest(nextUserApproval.Email, entity, dto.UrlFrontEnd));
+                BackgroundJob.Enqueue<EmailService>(job => job.SendEmailLeaveRequest(email, entity, dto.UrlFrontEnd));
             }
 
             await _context.SaveChangesAsync();
@@ -231,15 +269,15 @@ namespace ServicePortal.Modules.LeaveRequest.Services
             };
         }
 
-        public async Task<LeaveRequestDTO?> Approval(ApprovalDTO request, string currentUserCode)
+        public async Task<LeaveRequestDTO?> Approval(ApprovalDTO request, string currentUserCodeInJwt)
         {
             //check current user is user in jwt token
-            if (string.IsNullOrWhiteSpace(currentUserCode))
+            if (string.IsNullOrWhiteSpace(currentUserCodeInJwt))
             {
                 throw new ForbiddenException("User forbidden!");
             }
 
-            if (currentUserCode.Trim() != request.UserCodeApproval)
+            if (currentUserCodeInJwt.Trim() != request.UserCodeApproval)
             {
                 throw new ForbiddenException("User forbidden!");
             }
@@ -264,6 +302,22 @@ namespace ServicePortal.Modules.LeaveRequest.Services
             if (userApproval == null)
             {
                 throw new NotFoundException("Not found user approval");
+            }
+
+            //check have custom 
+            var haveCustomApproval = await _context
+                .CustomApprovalFlows
+                .FirstOrDefaultAsync(e => e.TypeCustomApproval == "LEAVE_REQUEST" && e.DepartmentId == userApproval.DepartmentId && e.From == userApproval.Level);
+
+
+            Domain.Entities.User nextUserCustomApproval = null;
+
+            bool flagHaveCustomApproval = false;
+
+            if (haveCustomApproval != null)
+            {
+                nextUserCustomApproval = await _context.Users.Where(e => e.DepartmentId == userApproval.DepartmentId && e.Level == haveCustomApproval.To).FirstOrDefaultAsync();
+                flagHaveCustomApproval = true;
             }
 
             var leaveRequest = await _context
@@ -396,14 +450,27 @@ namespace ServicePortal.Modules.LeaveRequest.Services
                 {
                     LeaveRequestId = leaveRequest.Id,
                     StatusStep = (byte)StatusLeaveRequestStepEnum.PENDING,
-                    LevelApproval = nextUserApproval == null ? "HR" : nextUserApproval?.Level ?? null
                 };
+
+                newStep.LevelApproval = "HR";
+                var email = "nguyenviet@vsvn.com.vn"; //email hr
+
+                if ((nextUserApproval != null && flagHaveCustomApproval == false) || (flagHaveCustomApproval && nextUserCustomApproval == null))
+                {
+                    newStep.LevelApproval = nextUserApproval.Level;
+                    email = nextUserApproval.Email;
+                }
+                else if (flagHaveCustomApproval && nextUserCustomApproval != null)
+                {
+                    newStep.LevelApproval = nextUserCustomApproval.Level;
+                    email = nextUserCustomApproval.Email;
+                }
 
                 _context.LeaveRequestSteps.Add(newStep);
 
                 if (!string.IsNullOrWhiteSpace(nextUserApproval?.Email))
                 {
-                    BackgroundJob.Enqueue<EmailService>(job => job.SendEmailLeaveRequest(nextUserApproval.Email, leaveRequest, request.UrlFrontEnd));
+                    BackgroundJob.Enqueue<EmailService>(job => job.SendEmailLeaveRequest(email, leaveRequest, request.UrlFrontEnd));
                 }
             }
 

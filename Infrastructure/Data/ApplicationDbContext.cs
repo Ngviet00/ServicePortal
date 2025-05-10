@@ -17,7 +17,8 @@ namespace ServicePortal.Infrastructure.Data
         public DbSet<UserRole> UserRoles { get; set; }
         public DbSet<Permission> Permissions { get; set; }
         public DbSet<UserPermission> UserPermission { get; set; }
-        
+        public DbSet<CustomApprovalFlow> CustomApprovalFlows { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -114,6 +115,13 @@ namespace ServicePortal.Infrastructure.Data
                 .WithMany(p => p.UserPermission)
                 .HasForeignKey(up => up.PermissionId)
                 .HasPrincipalKey(p => p.Id)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<CustomApprovalFlow>()
+                .HasOne(c => c.Department)
+                .WithMany()
+                .HasForeignKey(c => c.DepartmentId)
+                .HasPrincipalKey(d => d.Id)
                 .OnDelete(DeleteBehavior.Cascade);
         }
     }

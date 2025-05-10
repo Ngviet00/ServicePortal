@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ServicePortal.Infrastructure.Data;
 
@@ -11,9 +12,11 @@ using ServicePortal.Infrastructure.Data;
 namespace ServicePortal.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250510012459_addTableCustomApprovalFlow")]
+    partial class addTableCustomApprovalFlow
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -21,38 +24,6 @@ namespace ServicePortal.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
-
-            modelBuilder.Entity("ServicePortal.Domain.Entities.CustomApprovalFlow", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("id");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int?>("DepartmentId")
-                        .HasColumnType("int")
-                        .HasColumnName("department_id");
-
-                    b.Property<string>("From")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("from");
-
-                    b.Property<string>("To")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("to");
-
-                    b.Property<string>("TypeCustomApproval")
-                        .HasColumnType("nvarchar(450)")
-                        .HasColumnName("type_custom_approval");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("DepartmentId", "TypeCustomApproval");
-
-                    b.ToTable("custom_approval_flows");
-                });
 
             modelBuilder.Entity("ServicePortal.Domain.Entities.Department", b =>
                 {
@@ -620,16 +591,6 @@ namespace ServicePortal.Migrations
                     b.HasIndex("UserCode", "RoleId", "DepartmentId");
 
                     b.ToTable("user_roles");
-                });
-
-            modelBuilder.Entity("ServicePortal.Domain.Entities.CustomApprovalFlow", b =>
-                {
-                    b.HasOne("ServicePortal.Domain.Entities.Department", "Department")
-                        .WithMany()
-                        .HasForeignKey("DepartmentId")
-                        .OnDelete(DeleteBehavior.Cascade);
-
-                    b.Navigation("Department");
                 });
 
             modelBuilder.Entity("ServicePortal.Domain.Entities.LeaveRequest", b =>
