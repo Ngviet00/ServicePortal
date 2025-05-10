@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ServicePortal.Common;
+using ServicePortal.Common.Filters;
 using ServicePortal.Modules.Deparment.DTO;
 using ServicePortal.Modules.Deparment.Interfaces;
 using ServicePortal.Modules.Deparment.Requests;
@@ -9,7 +10,7 @@ using ServicePortal.Modules.Department.DTO;
 namespace ServicePortal.Modules.Deparment.Controllers
 {
     [Authorize]
-    [ApiController, Route("api/department")]
+    [ApiController, Route("api/department"), RoleAuthorize("HR", "HR_Manager")]
     public class DepartmentController : ControllerBase
     {
         private readonly IDepartmentService _deparmentService;
@@ -70,7 +71,6 @@ namespace ServicePortal.Modules.Deparment.Controllers
             return Ok(new BaseResponse<Domain.Entities.Department>(200, "success", deparment));
         }
 
-        //[RoleAuthorize(RoleEnum.SuperAdmin)]
         [HttpDelete("delete/{id}")]
         public async Task<IActionResult> Delete(int id)
         {

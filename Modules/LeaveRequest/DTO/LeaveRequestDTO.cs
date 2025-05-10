@@ -13,6 +13,9 @@ namespace ServicePortal.Modules.LeaveRequest.DTO
         [JsonPropertyName("name")]
         public string? Name { get; set; }
 
+        [JsonPropertyName("user_code_register")]
+        public string? UserCodeRegister { get; set; }
+
         [JsonPropertyName("name_register")]
         public string? NameRegister { get; set; }
 
@@ -46,6 +49,15 @@ namespace ServicePortal.Modules.LeaveRequest.DTO
         [JsonPropertyName("have_salary")]
         public bool? HaveSalary { get; set; }
 
+        [JsonPropertyName("note")]
+        public string? Note { get; set; }
+
+        [JsonPropertyName("department_id")]
+        public int? DepartmentId { get; set; }
+
+        [JsonPropertyName("approved_by")]
+        public string? ApprovedBy { get; set; }
+
         [JsonPropertyName("created_at")]
         public DateTime? CreatedAt { get; set; }
 
@@ -54,5 +66,8 @@ namespace ServicePortal.Modules.LeaveRequest.DTO
 
         [JsonPropertyName("deleted_at")]
         public DateTime? DeletedAt { get; set; }
+
+        [JsonPropertyName("url_front_end")]
+        public string? UrlFrontEnd { get; set; }
     }
 }

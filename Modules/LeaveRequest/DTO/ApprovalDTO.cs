@@ -12,5 +12,11 @@ namespace ServicePortal.Modules.LeaveRequest.DTO
 
         [JsonPropertyName("status")]
         public bool Status { get; set; } //true approval, false reject
+
+        [JsonPropertyName("note")]
+        public string? Note { get; set; }
+
+        [JsonPropertyName("url_front_end")]
+        public string? UrlFrontEnd { get; set; }
     }
 }

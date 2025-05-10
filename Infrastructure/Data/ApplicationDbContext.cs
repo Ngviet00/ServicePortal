@@ -8,13 +8,16 @@ namespace ServicePortal.Infrastructure.Data
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) { }
         
         public DbSet<Department> Departments { get; set; }
-        public DbSet<Position> Positions { get; set; }
-        public DbSet<Team> Teams { get; set; }
         public DbSet<Role> Roles { get; set; }
         public DbSet<User> Users { get; set; }
         public DbSet<RefreshToken> RefreshTokens { get; set; }
+        public DbSet<TypeLeave> TypeLeaves { get; set; }
         public DbSet<LeaveRequest> LeaveRequests { get; set; }
-        public DbSet<LeaveRequestStep> LeaveRequestSteps{ get; set; }
+        public DbSet<LeaveRequestStep> LeaveRequestSteps { get; set; }
+        public DbSet<UserRole> UserRoles { get; set; }
+        public DbSet<Permission> Permissions { get; set; }
+        public DbSet<UserPermission> UserPermission { get; set; }
+        public DbSet<CustomApprovalFlow> CustomApprovalFlows { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -25,56 +28,101 @@ namespace ServicePortal.Infrastructure.Data
                 {
                     Id = 1,
                     Name = "IT/MIS",
-                    Note = "IT",
+                    Note = "department.IT",
+                    ParentId = null
+                },
+                new Department
+                {
+                    Id = 2,
+                    Name = "HR",
+                    Note = "department.HR",
+                    ParentId = null
+                },
+                new Department
+                {
+                    Id = 3,
+                    Name = "Sản xuất",
+                    Note = "department.production",
                     ParentId = null
                 }
             );
 
             modelBuilder.Entity<Role>().HasData(
-                new Role { Id = 1, Name = "SuperAdmin" },
-                new Role { Id = 2, Name = "IT" },
-                new Role { Id = 3, Name = "HR" },
-                new Role { Id = 4, Name = "User" }
+                new Role { Id = 1, Name = "SuperAdmin", Code = "superadmin" },
+                new Role { Id = 2, Name = "HR Manager", Code = "HR_Manager" },
+                new Role { Id = 3, Name = "HR", Code = "HR" },
+                new Role { Id = 4, Name = "User", Code = "user" },
+                new Role { Id = 5, Name = "Duyệt đơn nghỉ phép", Code = "leave_request.approval" },
+                new Role { Id = 6, Name = "Duyệt đơn nghỉ phép tới HR", Code = "leave_request.approval_to_hr" },
+                new Role { Id = 7, Name = "HR duyệt đơn nghỉ phép", Code = "leave_request.hr_approval" }
             );
 
-            modelBuilder.Entity<Position>().HasData(
-                new Position
-                {
-                    Id = 1,
-                    Name = "General Director",
-                    Title = "General Director",
-                    DepartmentId = 0,
-                    Level = -2,
-                    IsGlobal = true,
-                },
-                new Position
-                {
-                    Id = 2,
-                    Name = "Assistant General Director",
-                    Title = "Assistant General Director",
-                    DepartmentId = 0,
-                    Level = -1,
-                    IsGlobal = true,
-                },
-                new Position
-                {
-                    Id = 3,
-                    Name = "Superadmin",
-                    Title = "Superadmin",
-                    DepartmentId = 1,
-                    Level = 0,
-                    IsGlobal = true,
-                },
-                new Position
-                {
-                    Id = 4,
-                    Name = "Manager",
-                    Title = "Manager IT/MIS",
-                    DepartmentId = 1,
-                    Level = 1,
-                    IsGlobal = false,
-                }
+            modelBuilder.Entity<TypeLeave>().HasData(
+                new TypeLeave { Id = 1, Name = "Annual", Note = "type_leave.annual", ModifiedBy = "HR", ModifiedAt = new DateTime(2025, 5, 1, 15, 30, 0) },
+                new TypeLeave { Id = 2, Name = "Personal", Note = "type_leave.personal", ModifiedBy = "HR", ModifiedAt = new DateTime(2025, 5, 1, 15, 30, 0) },
+                new TypeLeave { Id = 3, Name = "Sick", Note = "type_leave.sick", ModifiedBy = "HR", ModifiedAt = new DateTime(2025, 5, 1, 15, 30, 0) },
+                new TypeLeave { Id = 4, Name = "Wedding", Note = "type_leave.wedding", ModifiedBy = "HR", ModifiedAt = new DateTime(2025, 5, 1, 15, 30, 0) },
+                new TypeLeave { Id = 5, Name = "Accident", Note = "type_leave.accident", ModifiedBy = "HR", ModifiedAt = new DateTime(2025, 5, 1, 15, 30, 0) },
+                new TypeLeave { Id = 6, Name = "Other", Note = "type_leave.other", ModifiedBy = "HR", ModifiedAt = new DateTime(2025, 5, 1, 15, 30, 0) }
             );
+
+            modelBuilder.Entity<LeaveRequest>()
+                .HasMany(r => r.LeaveRequestSteps)
+                .WithOne()
+                .HasForeignKey(s => s.LeaveRequestId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            //user - role
+            modelBuilder.Entity<UserRole>()
+                .HasOne(ur => ur.User)
+                .WithMany(u => u.UserRoles)
+                .HasForeignKey(ur => ur.UserCode)
+                .HasPrincipalKey(u => u.Code)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<UserRole>()
+                .HasOne(ur => ur.Role)
+                .WithMany(r => r.UserRoles)
+                .HasForeignKey(ur => ur.RoleId)
+                .HasPrincipalKey(r => r.Id)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            //role - permision
+            modelBuilder.Entity<RolePermission>()
+                .HasOne(rp => rp.Role)
+                .WithMany(r => r.RolePermissions)
+                .HasForeignKey(rp => rp.RoleId)
+                .HasPrincipalKey(r => r.Id)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<RolePermission>()
+                .HasOne(rp => rp.Permission)
+                .WithMany(p => p.RolePermissions)
+                .HasForeignKey(rp => rp.PermissionId)
+                .HasPrincipalKey(p => p.Id)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            //user - permission
+            modelBuilder.Entity<UserPermission>()
+                .HasOne(up => up.User)
+                .WithMany(u => u.UserPermission)
+                .HasForeignKey(up => up.UserCode)
+                .HasPrincipalKey(u => u.Code)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<UserPermission>()
+                .HasOne(up => up.Permission)
+                .WithMany(p => p.UserPermission)
+                .HasForeignKey(up => up.PermissionId)
+                .HasPrincipalKey(p => p.Id)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<CustomApprovalFlow>()
+                .HasOne(c => c.Department)
+                .WithMany()
+                .HasForeignKey(c => c.DepartmentId)
+                .HasPrincipalKey(d => d.Id)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

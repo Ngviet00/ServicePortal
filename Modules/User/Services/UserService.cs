@@ -1,9 +1,11 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Serilog;
 using ServicePortal.Common;
 using ServicePortal.Common.Mappers;
+using ServicePortal.Domain.Entities;
 using ServicePortal.Infrastructure.Data;
+using ServicePortal.Infrastructure.Hubs;
 using ServicePortal.Modules.Deparment.DTO;
-using ServicePortal.Modules.Position.DTO;
 using ServicePortal.Modules.User.DTO;
 using ServicePortal.Modules.User.Interfaces;
 using ServicePortal.Modules.User.Requests;
@@ -14,9 +16,12 @@ namespace ServicePortal.Modules.User.Services
     {
         private readonly ApplicationDbContext _context;
 
-        public UserService(ApplicationDbContext context)
+        private readonly NotificationService _notificationService;
+
+        public UserService(ApplicationDbContext context, NotificationService notificationService)
         {
             _context = context;
+            _notificationService = notificationService;
         }
 
         public async Task<PagedResults<UserDTO>> GetAll(GetAllUserRequest request)
@@ -25,14 +30,21 @@ namespace ServicePortal.Modules.User.Services
             double pageSize = request.PageSize;
             double page = request.Page;
 
-            var query = GetUserQuery();
+            var query = _context.Users
+                .Include(e => e.Department)
+                .Include(e => e.UserRoles)
+                    .ThenInclude(ur => ur.Role)
+                .AsQueryable();
+
+            query = query.Where(e => e.Code != "0");
 
             if (!string.IsNullOrEmpty(name))
             {
-                query = query.Where(u => u.Name.Contains(name) || u.Email.Contains(name) || u.Phone.Contains(name));
+                query = query.Where(u => u.Name.Contains(name) || u.Email.Contains(name) || u.Phone.Contains(name) || u.Code.Contains(name));
             }
 
             var totalItems = await query.CountAsync();
+
             var totalPages = (int)Math.Ceiling(totalItems / pageSize);
 
             var usersWithDetails = await query
@@ -42,7 +54,7 @@ namespace ServicePortal.Modules.User.Services
 
             var result = new PagedResults<UserDTO>
             {
-                Data = usersWithDetails,
+                Data = UserMapper.ToDtoList(usersWithDetails),
                 TotalItems = totalItems,
                 TotalPages = totalPages
             };
@@ -115,63 +127,170 @@ namespace ServicePortal.Modules.User.Services
             return UserMapper.ToDto(user);
         }
 
-        public IQueryable<UserDTO> GetUserQuery()
+        public IQueryable<UserDTO> GetUserQueryLogin()
         {
-            var query = _context.Users.AsQueryable();
+            var query = _context.Users
+                .Where(u => u.DeletedAt == null)
+                .Select(u => new UserDTO
+                {
+                    Id = u.Id,
+                    Code = u.Code,
+                    Name = u.Name,
+                    Email = u.Email,
+                    Password = u.Password,
+                    IsActive = u.IsActive,
+                    DateJoinCompany = u.DateJoinCompany,
+                    Phone = u.Phone,
+                    Sex = u.Sex,
+                    Position = u.Position,
+                    Level = u.Level,
+                    LevelParent = u.LevelParent,
+                    DepartmentId = u.DepartmentId,
+                    Department = u.Department == null ? null : new DepartmentDTO
+                    {
+                        Id = u.Department.Id,
+                        Name = u.Department.Name,
+                    },
 
-            var userQuery = query
-             .GroupJoin(_context.Roles, u => u.RoleId, r => r.Id, (u, r) => new { u, r })
-             .SelectMany(temp => temp.r.DefaultIfEmpty(), (temp, r) => new { temp.u, Role = r })
+                    Roles = u.UserRoles
+                        .Where(ur => ur.Role != null)
+                        .Select(ur => new Domain.Entities.Role
+                        {
+                            Id = ur.Role.Id,
+                            Name = ur.Role.Name,
+                            Code = ur.Role.Code
+                        })
+                        .Distinct()
+                        .ToList(),
 
-             .GroupJoin(_context.Departments, temp => temp.u.ParentDepartmentId, d => d.Id, (temp, pd) => new { temp.u, temp.Role, pd })
-             .SelectMany(temp => temp.pd.DefaultIfEmpty(), (temp, pd) => new { temp.u, temp.Role, ParentDepartment = pd })
+                    UserPermissions = u.UserPermission
+                        .Where(up => up.Permission != null)
+                        .Select(up => up.Permission.Name)
+                        .Distinct()
+                        .ToList(),
 
-             .GroupJoin(_context.Departments, temp => temp.u.ChildDepartmentId, d => d.Id, (temp, cd) => new { temp.u, temp.Role, temp.ParentDepartment, cd })
-             .SelectMany(temp => temp.cd.DefaultIfEmpty(), (temp, cd) => new { temp.u, temp.Role, temp.ParentDepartment, ChildrenDepartment = cd })
+                    Permissions = u.UserRoles
+                        .Where(ur => ur.Role != null)
+                        .SelectMany(ur => ur.Role.RolePermissions
+                            .Where(rp => rp.Permission != null)
+                            .Select(rp => rp.Permission.Name)
+                        )
+                        .Distinct()
+                        .ToList()
+                });
 
-             .GroupJoin(_context.Positions, temp => temp.u.PositionId, p => p.Id, (temp, pos) => new { temp.u, temp.Role, temp.ParentDepartment, temp.ChildrenDepartment, pos })
-             .SelectMany(temp => temp.pos.DefaultIfEmpty(), (temp, position) => new UserDTO
-             {
-                 Code = temp.u.Code,
-                 Name = temp.u.Name,
-                 Email = temp.u.Email,
-                 Password = temp.u.Password,
-                 IsActive = temp.u.IsActive,
-                 DateJoinCompany = temp.u.DateJoinCompany,
-                 Phone = temp.u.Phone,
-                 Sex = temp.u.Sex,
-                 Role = temp.Role != null ? new Domain.Entities.Role
-                 {
-                     Id = temp.Role.Id,
-                     Name = temp.Role.Name
-                 } : null,
-                 ParentDepartment = temp.ParentDepartment == null ? null : new DepartmentDTO
-                 {
-                     Id = temp.ParentDepartment.Id,
-                     Name = temp.ParentDepartment.Name,
-                     Note = temp.ParentDepartment.Note
-                 },
-                 ChildrenDepartment = temp.ChildrenDepartment == null ? null : new DepartmentDTO
-                 {
-                     Id = temp.ChildrenDepartment.Id,
-                     Name = temp.ChildrenDepartment.Name,
-                     Note = temp.ChildrenDepartment.Note
-                 },
-                 Position = position == null ? null : new PositionDTO
-                 {
-                     Id = position.Id,
-                     Name = position.Name,
-                     Title = position.Title,
-                     Level = position.Level
-                 }
-             });
-
-            return userQuery;
+            return query;
         }
 
         public async Task<long> CountUser()
         {
             return await _context.Users.CountAsync();
+        }
+
+        public async Task<UserDTO> GetMe(string code)
+        {
+            if (string.IsNullOrWhiteSpace(code))
+            {
+                throw new ValidationException("Code can not empty");
+            }
+
+            var user = await GetUserQueryLogin().FirstOrDefaultAsync(e => e.Code == code);
+
+            if (user == null)
+            {
+                throw new NotFoundException("User not found!");
+            }
+
+            return user;
+        }
+
+        public async Task<List<OrgChartChildNode>> BuildTree(int? departmentId)
+        {
+            var users = await _context.Users
+                .Where(e => e.DepartmentId == departmentId && e.Level != "0")
+                .Select(x => new OrgChartUserDto
+                {
+                    Id = x.Id,
+                    Name = x.Name,
+                    Position = x.Position,
+                    Level = x.Level,
+                    LevelParent = x.LevelParent
+                })
+                .ToListAsync();
+
+            var allLevelCodes = users.Select(x => x.Level).ToHashSet();
+
+            var rootNodes = users
+                .Where(x => string.IsNullOrEmpty(x.LevelParent) || !allLevelCodes.Contains(x.LevelParent))
+                .Select(x => x.LevelParent)
+                .Distinct();
+
+            var trees = new List<OrgChartChildNode>();
+
+            foreach (var root in rootNodes)
+            {
+                trees.AddRange(BuildTreeRecursive(root ?? "", users));
+            }
+
+            return trees;
+        }
+
+        private List<OrgChartChildNode> BuildTreeRecursive(string parentLevelCode, List<OrgChartUserDto> users)
+        {
+            var groupedChildren = users
+                .Where(x => x.LevelParent == parentLevelCode)
+                .GroupBy(x => x.Level);
+
+            var children = new List<OrgChartChildNode>();
+
+            foreach (var group in groupedChildren)
+            {
+                var levelCode = group.Key;
+
+                var childNode = new OrgChartChildNode
+                {
+                    Level = levelCode ?? "",
+                    People = group.ToList(),
+                    Children = BuildTreeRecursive(levelCode ?? "", users)
+                };
+
+                children.Add(childNode);
+            }
+
+            return children;
+        }
+
+        public async Task<bool> UpdateUserRole(UpdateUserRoleDTO dto)
+        {
+            try
+            {
+                List<UserRole> ur = new List<UserRole>();
+
+                var oldUserRoles = await _context.UserRoles.Where(e => e.UserCode == dto.UserCode).ToListAsync();
+                _context.UserRoles.RemoveRange(oldUserRoles);
+
+                foreach (var item in dto.RoleIds)
+                {
+                    ur.Add(new UserRole
+                    {
+                        UserCode = dto.UserCode,
+                        RoleId = item
+                    });
+                }
+
+                _context.UserRoles.AddRange(ur);
+
+                await _context.SaveChangesAsync();
+
+                await _notificationService.SendMessageToUser(dto.UserCode, "login_again");
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"Error can not update user role, error: {ex.Message}");
+                return false;
+            }
         }
     }
 }

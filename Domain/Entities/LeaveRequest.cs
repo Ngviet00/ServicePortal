@@ -15,6 +15,9 @@ namespace ServicePortal.Domain.Entities
         [Column("name")]
         public string? Name { get; set; }
 
+        [Column("user_code_register")]
+        public string? UserCodeRegister { get; set; }
+
         [Column("name_register")]
         public string? NameRegister { get; set; }
 
@@ -40,13 +43,19 @@ namespace ServicePortal.Domain.Entities
         public byte? TypeLeave { get; set; }
 
         [Column("status")]
-        public byte? Status { get; set; }
+        public byte? Status { get; set; } //1 pending, 2, in-process, 3 complete, 4 reject
 
         [Column("have_salary")]
         public bool? HaveSalary { get; set; }
 
         [Column("image")]
         public string? Image { get; set; }
+
+        [Column("note")]
+        public string? Note { get; set; }
+
+        [Column("department_id")]
+        public int? DepartmentId { get; set; }
 
         [Column("created_at")]
         public DateTime? CreatedAt { get; set; }
@@ -56,5 +65,9 @@ namespace ServicePortal.Domain.Entities
 
         [Column("deleted_at")]
         public DateTime? DeletedAt { get; set; }
+
+        public User? User { get; set; }
+
+        public List<LeaveRequestStep>? LeaveRequestSteps { get; set; }
     }
 }

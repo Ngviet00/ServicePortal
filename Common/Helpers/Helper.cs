@@ -45,6 +45,15 @@ namespace ServicePortal.Common.Helpers
                 .ToList();
         }
 
+        public static string GetDescriptionFromValue<TEnum>(int value) where TEnum : Enum
+        {
+            if (!Enum.IsDefined(typeof(TEnum), value))
+                return value.ToString();
+
+            var enumValue = (TEnum)Enum.ToObject(typeof(TEnum), value);
+            return GetDescriptionEnum(enumValue);
+        }
+
         #endregion
 
         public static string ConvertObjToString(object obj)

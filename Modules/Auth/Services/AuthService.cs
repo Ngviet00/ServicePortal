@@ -32,14 +32,9 @@ namespace ServicePortal.Modules.Auth.Services
 
         public async Task<UserDTO> Register(CreateUserRequest request)
         {
-            if (await _context.Users.AnyAsync(u => u.Code == request.Code))
+            if (await _context.Users.AnyAsync(u => u.Code == request.Code && u.DeletedAt == null))
             {
                 throw new ValidationException("User is exists!");
-            }
-
-            if (!string.IsNullOrWhiteSpace(request.Email) && await _context.Users.AnyAsync(u => u.Email == request.Email))
-            {
-                throw new ValidationException("Email already in use!");
             }
 
             var newUser = new ServicePortal.Domain.Entities.User
@@ -48,20 +43,27 @@ namespace ServicePortal.Modules.Auth.Services
                 Name = request.Name,
                 Password = Helper.HashString(request.Password),
                 Email = request.Email ?? null,
-                RoleId = request.RoleId,
                 IsActive = true,
                 DateJoinCompany = request.DateJoinCompany ?? null,
                 DateOfBirth = request.DateOfBirth ?? null,
-                Phone = request.Phone?? null,
+                Phone = request.Phone ?? null,
                 Sex = request.Sex ?? null,
-                ParentDepartmentId = request.ParentDepartmentId,
-                ChildDepartmentId = request.ChildDepartmentId ?? null,
-                PositionId = request.PositionId ?? null,
-                ManagementPositionId = request.ManagementPositionId ?? null,
+                DepartmentId = request.DepartmentId,
+                Level = request.Level,
+                LevelParent = request.LevelParent,
+                Position = request.Position,
                 CreatedAt = DateTime.Now
             };
 
             _context.Users.Add(newUser);
+
+            _context.UserRoles.Add(new UserRole
+            {
+                UserCode = request.Code,
+                RoleId = request.RoleId,
+                DepartmentId = request.DepartmentId
+            });
+
             await _context.SaveChangesAsync();
 
             return UserMapper.ToDto(newUser);
@@ -69,9 +71,14 @@ namespace ServicePortal.Modules.Auth.Services
 
         public async Task<LoginResponse> Login(LoginRequest request)
         {
-            var query = _userService.GetUserQuery();
+            var query = _userService.GetUserQueryLogin();
 
-            var user = await query.Where(e => e.Code == request.UserCode).FirstOrDefaultAsync() ?? throw new ValidationException("User not found!");
+            var user = await query.Where(e => e.Code == request.UserCode).FirstOrDefaultAsync();
+
+            if (user == null)
+            {
+                throw new ValidationException("User not found!");
+            }
 
             if (!Helper.VerifyString(user?.Password ?? "", request?.Password ?? ""))
             {
@@ -81,6 +88,8 @@ namespace ServicePortal.Modules.Auth.Services
             var claims = new List<Claim> {
                 new("user_code", user?.Code ?? ""),
             };
+
+            claims.AddRange(user.Roles.Select(r => new Claim(ClaimTypes.Role, r.Code)));
 
             var accessToken = _jwtService.GenerateAccessToken(claims);
 
@@ -120,9 +129,15 @@ namespace ServicePortal.Modules.Auth.Services
                 throw new UnauthorizedException("Invalid refresh token");
             }
 
+            var query = _userService.GetUserQueryLogin();
+
+            var user = await query.Where(e => e.Code == token.UserCode).FirstOrDefaultAsync();
+
             var claims = new List<Claim> {
-                new(ClaimTypes.NameIdentifier, token.UserCode ?? "")
+                new("user_code", token?.UserCode ?? ""),
             };
+
+            claims.AddRange(user.Roles.Select(r => new Claim(ClaimTypes.Role, r.Code)));
 
             var newAccessToken = _jwtService.GenerateAccessToken(claims);
 

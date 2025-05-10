@@ -1,4 +1,5 @@
-﻿using ServicePortal.Domain.Entities;
+﻿using System.Data;
+using ServicePortal.Domain.Entities;
 using ServicePortal.Modules.User.DTO;
 
 namespace ServicePortal.Common.Mappers
@@ -13,12 +14,23 @@ namespace ServicePortal.Common.Mappers
                 Code = entity.Code,
                 Name = entity.Name,
                 Email = entity.Email,
-                RoleId = entity.RoleId,
                 IsActive = entity.IsActive,
                 DateJoinCompany = entity.DateJoinCompany,
                 DateOfBirth = entity.DateOfBirth,
                 Phone = entity.Phone,
-                Sex = entity.Sex
+                Sex = entity.Sex,
+                Position = entity.Position,
+                Level = entity.Level,
+                LevelParent = entity.LevelParent,
+                Department = entity.Department != null ? DepartmentMapper.ToDto(entity.Department) : null,
+                Roles = entity?.UserRoles != null && entity.UserRoles.All(ur => ur.Role != null)
+                ? entity.UserRoles.Select(ur => new Role
+                {
+                    Id = ur.Role.Id,
+                    Name = ur.Role.Name,
+                    Code = ur.Role.Code
+                }).ToList()
+                : new List<Role>(),
             };
         }
 

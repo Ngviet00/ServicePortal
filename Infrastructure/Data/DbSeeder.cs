@@ -13,21 +13,27 @@ namespace ServicePortal.Infrastructure.Data
                     new User
                     {
                         Code = "0",
-                        Name = "Superadmin",
+                        Name = "superadmin",
                         Password = Helper.HashString("123456"),
                         Email = "superadmin@vsvn.com.vn",
-                        RoleId = 1,
                         IsActive = true,
                         DateJoinCompany = new DateTime(2025, 4, 1),
                         DateOfBirth = new DateTime(2020, 5, 2),
-                        Phone = "0345248120",
+                        Phone = "123456789",
                         Sex = 1,
-                        ParentDepartmentId = 1,
-                        PositionId = 3,
-                        TeamId = null,
+                        DepartmentId = 1,
+                        Level = "0",
+                        Position = "superadmin",
                         CreatedAt = new DateTime(2025, 4, 1)
                     }
                 );
+
+                context.UserRoles.Add(new UserRole
+                {
+                    UserCode = "0",
+                    RoleId = 1,
+                    DepartmentId = 1
+                });
 
                 await context.SaveChangesAsync();
             }

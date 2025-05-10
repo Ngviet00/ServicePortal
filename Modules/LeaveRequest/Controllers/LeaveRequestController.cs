@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ServicePortal.Common;
+using ServicePortal.Common.Filters;
+using ServicePortal.Infrastructure.Data;
 using ServicePortal.Modules.LeaveRequest.DTO;
 using ServicePortal.Modules.LeaveRequest.Interfaces;
 using ServicePortal.Modules.LeaveRequest.Requests;
@@ -12,9 +14,12 @@ namespace ServicePortal.Modules.LeaveRequest.Controllers
     {
         private readonly ILeaveRequestService _leaveRequestService;
 
-        public LeaveRequestController(ILeaveRequestService leaveRequestService)
+        private readonly ApplicationDbContext _context;
+
+        public LeaveRequestController(ILeaveRequestService leaveRequestService, ApplicationDbContext context)
         {
             _leaveRequestService = leaveRequestService;
+            _context = context;
         }
 
         [HttpGet("get-all")]
@@ -22,13 +27,13 @@ namespace ServicePortal.Modules.LeaveRequest.Controllers
         {
             var results = await _leaveRequestService.GetAll(request);
 
-            var response = new PageResponse<LeaveRequestDTO>(200, "Success", results.Data, results.TotalPages, request.Page, request.PageSize, results.TotalItems);
+            var response = new PageResponse<LeaveRequestDTO>(200, "Success", results.Data, results.TotalPages, request.Page, request.PageSize, results.TotalItems, results.CountPending, results.CountInProcess);
 
             return Ok(response);
         }
 
         [HttpGet("get-leave-request-wait-approval")]
-        public async Task<IActionResult> GetWaitApproval(GetAllLeaveRequest request)
+        public async Task<IActionResult> GetWaitApproval(GetAllLeaveRequestWaitApproval request)
         {
             var results = await _leaveRequestService.GetAllWaitApproval(request);
 
@@ -71,11 +76,28 @@ namespace ServicePortal.Modules.LeaveRequest.Controllers
         }
 
         [HttpPost("approval")]
+        [RoleAuthorize("leave_request.approval", "HR", "HR_Manager")]
         public async Task<IActionResult> Approval(ApprovalDTO request)
         {
-            var result = await _leaveRequestService.Approval(request);
+            var currentUserCode = User.FindFirst("user_code")?.Value;
+            
+            var result = await _leaveRequestService.Approval(request, currentUserCode ?? "");
 
             return Ok(new BaseResponse<LeaveRequestDTO>(200, "success", result));
+        }
+
+        [HttpGet("count-wait-approval")]
+        public async Task<IActionResult> CountWaitApproval(GetAllLeaveRequestWaitApproval request)
+        {
+            var result = await _leaveRequestService.CountWaitApproval(request);
+
+            return Ok(new BaseResponse<long>(200, "success", result));
+        }
+
+        [HttpGet("test"), AllowAnonymous]
+        public async Task<IActionResult> Test()
+        {
+            return Ok(new BaseResponse<object>(200, "success", null));
         }
     }
 }

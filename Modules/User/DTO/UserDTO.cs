@@ -1,6 +1,5 @@
 ﻿using System.Text.Json.Serialization;
 using ServicePortal.Modules.Deparment.DTO;
-using ServicePortal.Modules.Position.DTO;
 
 namespace ServicePortal.Modules.User.DTO
 {
@@ -36,19 +35,34 @@ namespace ServicePortal.Modules.User.DTO
         [JsonPropertyName("phone")]
         public string? Phone { get; set; }
 
+        [JsonPropertyName("position")]
+        public string? Position { get; set; }
+
+        [JsonPropertyName("level")]
+        public string? Level { get; set; }
+
+        [JsonPropertyName("level_parent")]
+        public string? LevelParent { get; set; }
+
         [JsonPropertyName("sex")]
         public byte? Sex { get; set; }
 
-        [JsonPropertyName("role")]
-        public Domain.Entities.Role? Role { get; set; }
+        [JsonPropertyName("department_id")]
+        public int? DepartmentId { get; set; }
 
-        [JsonPropertyName("parent_department")]
-        public DepartmentDTO? ParentDepartment { get; set; }
+        [JsonPropertyName("department")]
+        public DepartmentDTO? Department { get; set; }
 
-        [JsonPropertyName("children_department")]
-        public DepartmentDTO? ChildrenDepartment { get; set; }
+        [JsonPropertyName("roles")]
+        public List<Domain.Entities.Role> Roles { get; set; } = new();
 
-        [JsonPropertyName("position")]
-        public PositionDTO? Position { get; set; }
+        [JsonPropertyName("permissions")]
+        public List<string?> Permissions { get; set; } = new();
+
+        [JsonPropertyName("user_permissions")]
+        public List<string?> UserPermissions { get; set; } = new();
+
+        [JsonPropertyName("deleted_at")]
+        public DateTime? DeletedAt { get; set; }
     }
 }

@@ -1,4 +1,5 @@
-﻿using ServicePortal.Domain.Enums;
+﻿using Serilog;
+using ServicePortal.Domain.Enums;
 
 namespace ServicePortal.Common.Helpers
 {
@@ -41,57 +42,46 @@ namespace ServicePortal.Common.Helpers
             }
         }
 
-        public static void CleanupOldLogs()
+        public static void DeleteOldFiles(string path, DateTime now, int dayDelete)
         {
-            try
+            if (!Directory.Exists(path))
             {
-                string logRootPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Logs");
-                if (!Directory.Exists(logRootPath))
-                    return;
+                Log.Information($"Path {path} not found for deletion!");
+                return;
+            }
 
-                DateTime thresholdDate = DateTime.Now.AddMonths(-1);
+            int batchSize = 200;
 
-                foreach (var yearDir in Directory.GetDirectories(logRootPath))
+            var fileBatch = Directory.EnumerateFiles(path).Take(batchSize);
+
+            while (fileBatch.Any())
+            {
+                foreach (var file in fileBatch)
                 {
-                    foreach (var monthDir in Directory.GetDirectories(yearDir))
+                    DateTime creationTime = File.GetCreationTime(file); 
+                    TimeSpan fileAge = now - creationTime;
+
+                    if (fileAge.TotalDays > dayDelete)
                     {
-                        foreach (var logFile in Directory.GetFiles(monthDir, "*.txt"))
+                        try
                         {
-                            DateTime fileDate;
-                            string fileName = Path.GetFileNameWithoutExtension(logFile);
-
-                            if (DateTime.TryParseExact(fileName, "dd", null, System.Globalization.DateTimeStyles.None, out fileDate))
-                            {
-                                fileDate = new DateTime(int.Parse(Path.GetFileName(yearDir)), int.Parse(Path.GetFileName(monthDir)), fileDate.Day);
-                            }
-                            else
-                            {
-                                fileDate = File.GetLastWriteTime(logFile);
-                            }
-
-                            if (fileDate < thresholdDate)
-                            {
-                                File.Delete(logFile);
-                                Console.WriteLine($"Deleted log: {logFile}");
-                            }
+                            File.Delete(file);
+                            Log.Information($"Deleted: {file}");
                         }
-
-                        if (Directory.GetFiles(monthDir).Length == 0 && Directory.GetDirectories(monthDir).Length == 0)
+                        catch (Exception ex)
                         {
-                            Directory.Delete(monthDir);
+                            Log.Error($"Error deleting file {file}, error: {ex.Message}");
                         }
-                    }
-
-                    if (Directory.GetFiles(yearDir).Length == 0 && Directory.GetDirectories(yearDir).Length == 0)
-                    {
-                        Directory.Delete(yearDir);
                     }
                 }
+
+                fileBatch = Directory.EnumerateFiles(path).Skip(batchSize).Take(batchSize);
             }
-            catch (Exception ex)
+
+            var directories = Directory.GetDirectories(path);
+            foreach (var directory in directories)
             {
-                WriteLog(TypeErrorEnum.ERROR, "Failed to auto delete file log!");
-                Console.WriteLine($"Cleanup Log Error: {ex.Message}");
+                DeleteOldFiles(directory, now, dayDelete);
             }
         }
     }

@@ -12,6 +12,9 @@ namespace ServicePortal.Modules.User.Interfaces
         //Task<UserDTO> Update(Guid id, UpdateUserRequest request);
         Task<UserDTO> Delete(Guid id);
         Task<UserDTO> ForceDelete(Guid id);
-        IQueryable<UserDTO> GetUserQuery();
+        IQueryable<UserDTO> GetUserQueryLogin();
+        Task<UserDTO> GetMe(string code);
+        Task<List<OrgChartChildNode>> BuildTree(int? departmentId);
+        Task<bool> UpdateUserRole(UpdateUserRoleDTO dto);
     }
 }

@@ -15,19 +15,20 @@ using ServicePortal.Modules.Auth.Interfaces;
 using ServicePortal.Modules.User.Interfaces;
 using ServicePortal.Modules.Role.Interfaces;
 using ServicePortal.Modules.Role.Services;
-using ServicePortal.Modules.Position.Interfaces;
-using ServicePortal.Modules.Position.Services;
 using ServicePortal.Modules.Deparment.Interfaces;
 using ServicePortal.Modules.Deparment.Services;
 using ServicePortal.Common.Middleware;
 using Serilog;
-using ServicePortal.Modules.Team.Interfaces;
-using ServicePortal.Modules.Team.Services;
 using ServicePortal.Infrastructure.BackgroundServices;
 using ServicePortal.Modules.LeaveRequest.Interfaces;
 using ServicePortal.Modules.LeaveRequest.Services;
-using ServicePortal.Modules.LeaveRequestStep.Services;
-using ServicePortal.Modules.LeaveRequestStep.Interfaces;
+using ServicePortal.Modules.TypeLeave.Services;
+using ServicePortal.Modules.TypeLeave.Interfaces;
+using ServicePortal.Infrastructure.Email;
+using Hangfire;
+using ServicePortal.Infrastructure.Hubs;
+using ServicePortal.Modules.CustomApprovalFlow.Interfaces;
+using ServicePortal.Modules.CustomApprovalFlow.Services;
 
 namespace ServicePortal
 {
@@ -71,7 +72,19 @@ namespace ServicePortal
 
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("StringConnectionDb"))
+                .LogTo(Console.WriteLine, LogLevel.Information)
                 .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking));
+
+            #endregion
+
+            #region Config hangfire
+            builder.Services.AddHangfire(config =>
+                config.SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+                  .UseSimpleAssemblyNameTypeSerializer()
+                  .UseRecommendedSerializerSettings()
+                  .UseSqlServerStorage(builder.Configuration.GetConnectionString("StringConnectionDb")));
+
+            builder.Services.AddHangfireServer();
 
             #endregion
 
@@ -83,17 +96,21 @@ namespace ServicePortal
 
             builder.Services.AddScoped<IRoleService, RoleService>();
 
-            builder.Services.AddScoped<IPositionService, PositionService>();
+            builder.Services.AddScoped<ITypeLeaveService, TypeLeaveService>();
 
             builder.Services.AddScoped<IDepartmentService, DepartmentService>();
 
-            builder.Services.AddScoped<ITeamService, Teamservice>();
-
             builder.Services.AddScoped<ILeaveRequestService, LeaveRequestService>();
 
-            builder.Services.AddScoped<ILeaveRequestStepService, LeaveRequestStepService>();
+            builder.Services.AddScoped<IEmailService, EmailService>();
+
+            builder.Services.AddScoped<ICustomApprovalFlowService, CustomApprovalFlowService>();
 
             builder.Services.AddScoped<JwtService>();
+
+            builder.Services.AddScoped<EmailService>();
+
+            builder.Services.AddScoped<NotificationService>();
 
             #endregion
 
@@ -207,7 +224,11 @@ namespace ServicePortal
 
             builder.Services.AddHostedService<LogCleanupService>();
 
+            builder.Services.AddSignalR();
+
             var app = builder.Build();
+
+            app.MapHub<NotificationHub>("/notificationHub");
 
             app.MapHealthChecks("/health");
 
@@ -245,6 +266,7 @@ namespace ServicePortal
             //default redirect to swagger
             app.Use(async (context, next) =>
             {
+                
                 if (context.Request.Path == "/")
                 {
                     context.Response.Redirect("/swagger/index.html", permanent: false);
@@ -252,6 +274,14 @@ namespace ServicePortal
                 }
                 await next();
             });
+
+            app.UseHangfireDashboard();
+
+            RecurringJob.AddOrUpdate<JwtService>(
+                "DeleteOldRefreshTokensDaily",
+                (job) => job.DeleteOldRefreshToken(),
+                Cron.Weekly
+            );
 
             app.Run();
 
@@ -262,8 +292,6 @@ namespace ServicePortal
                     FileHelper.WriteLog(TypeErrorEnum.ERROR, $"[UnhandledException] {ex.Message}\n{ex.StackTrace}");
                 }
             };
-
-            FileHelper.CleanupOldLogs();
         }
     }
 }

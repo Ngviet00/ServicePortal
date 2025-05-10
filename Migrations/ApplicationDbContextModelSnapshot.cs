@@ -22,6 +22,38 @@ namespace ServicePortal.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("ServicePortal.Domain.Entities.CustomApprovalFlow", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("DepartmentId")
+                        .HasColumnType("int")
+                        .HasColumnName("department_id");
+
+                    b.Property<string>("From")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("from");
+
+                    b.Property<string>("To")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("to");
+
+                    b.Property<string>("TypeCustomApproval")
+                        .HasColumnType("nvarchar(450)")
+                        .HasColumnName("type_custom_approval");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DepartmentId", "TypeCustomApproval");
+
+                    b.ToTable("custom_approval_flows");
+                });
+
             modelBuilder.Entity("ServicePortal.Domain.Entities.Department", b =>
                 {
                     b.Property<int>("Id")
@@ -56,7 +88,19 @@ namespace ServicePortal.Migrations
                         {
                             Id = 1,
                             Name = "IT/MIS",
-                            Note = "IT"
+                            Note = "department.IT"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Name = "HR",
+                            Note = "department.HR"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Name = "Sản xuất",
+                            Note = "department.production"
                         });
                 });
 
@@ -79,6 +123,10 @@ namespace ServicePortal.Migrations
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("deparment");
 
+                    b.Property<int?>("DepartmentId")
+                        .HasColumnType("int")
+                        .HasColumnName("department_id");
+
                     b.Property<DateTime?>("FromDate")
                         .HasColumnType("datetime2")
                         .HasColumnName("from_date");
@@ -98,6 +146,10 @@ namespace ServicePortal.Migrations
                     b.Property<string>("NameRegister")
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("name_register");
+
+                    b.Property<string>("Note")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("note");
 
                     b.Property<string>("Position")
                         .HasColumnType("nvarchar(max)")
@@ -131,7 +183,16 @@ namespace ServicePortal.Migrations
                         .HasColumnType("nvarchar(450)")
                         .HasColumnName("user_code");
 
+                    b.Property<string>("UserCodeRegister")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("user_code_register");
+
+                    b.Property<Guid?>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("UserId");
 
                     b.HasIndex("Id", "UserCode");
 
@@ -153,35 +214,38 @@ namespace ServicePortal.Migrations
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("approved_by");
 
-                    b.Property<string>("CodeApprover")
-                        .HasColumnType("nvarchar(450)")
-                        .HasColumnName("code_approver");
-
                     b.Property<Guid?>("LeaveRequestId")
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("leave_request_id");
+
+                    b.Property<string>("LevelApproval")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)")
+                        .HasColumnName("level_approval");
 
                     b.Property<string>("Note")
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)")
                         .HasColumnName("note");
 
-                    b.Property<int?>("PositionIdApproval")
-                        .HasColumnType("int")
-                        .HasColumnName("position_id_approval");
-
                     b.Property<byte?>("StatusStep")
                         .HasColumnType("tinyint")
                         .HasColumnName("status_step");
 
+                    b.Property<string>("UserCodeApprover")
+                        .HasColumnType("nvarchar(450)")
+                        .HasColumnName("user_code_approver");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("Id", "LeaveRequestId", "PositionIdApproval", "StatusStep", "CodeApprover");
+                    b.HasIndex("LeaveRequestId");
+
+                    b.HasIndex("Id", "LeaveRequestId", "UserCodeApprover", "StatusStep");
 
                     b.ToTable("leave_request_steps");
                 });
 
-            modelBuilder.Entity("ServicePortal.Domain.Entities.Position", b =>
+            modelBuilder.Entity("ServicePortal.Domain.Entities.Permission", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -190,69 +254,21 @@ namespace ServicePortal.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("DepartmentId")
-                        .HasColumnType("int")
-                        .HasColumnName("department_id");
-
-                    b.Property<bool?>("IsGlobal")
-                        .HasColumnType("bit")
-                        .HasColumnName("is_global");
-
-                    b.Property<int?>("Level")
-                        .HasColumnType("int")
-                        .HasColumnName("level");
+                    b.Property<string>("Description")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)")
+                        .HasColumnName("description");
 
                     b.Property<string>("Name")
-                        .HasColumnType("nvarchar(max)")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)")
                         .HasColumnName("name");
-
-                    b.Property<string>("Title")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("title");
 
                     b.HasKey("Id");
 
                     b.HasIndex("Id");
 
-                    b.ToTable("positions");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            DepartmentId = 0,
-                            IsGlobal = true,
-                            Level = -2,
-                            Name = "General Director",
-                            Title = "General Director"
-                        },
-                        new
-                        {
-                            Id = 2,
-                            DepartmentId = 0,
-                            IsGlobal = true,
-                            Level = -1,
-                            Name = "Assistant General Director",
-                            Title = "Assistant General Director"
-                        },
-                        new
-                        {
-                            Id = 3,
-                            DepartmentId = 1,
-                            IsGlobal = true,
-                            Level = 0,
-                            Name = "Superadmin",
-                            Title = "Superadmin"
-                        },
-                        new
-                        {
-                            Id = 4,
-                            DepartmentId = 1,
-                            IsGlobal = false,
-                            Level = 1,
-                            Name = "Manager",
-                            Title = "Manager IT/MIS"
-                        });
+                    b.ToTable("permissions");
                 });
 
             modelBuilder.Entity("ServicePortal.Domain.Entities.RefreshToken", b =>
@@ -298,6 +314,11 @@ namespace ServicePortal.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("Code")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)")
+                        .HasColumnName("code");
+
                     b.Property<string>("Name")
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)")
@@ -313,26 +334,48 @@ namespace ServicePortal.Migrations
                         new
                         {
                             Id = 1,
+                            Code = "superadmin",
                             Name = "SuperAdmin"
                         },
                         new
                         {
                             Id = 2,
-                            Name = "IT"
+                            Code = "HR_Manager",
+                            Name = "HR Manager"
                         },
                         new
                         {
                             Id = 3,
+                            Code = "HR",
                             Name = "HR"
                         },
                         new
                         {
                             Id = 4,
+                            Code = "user",
                             Name = "User"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Code = "leave_request.approval",
+                            Name = "Duyệt đơn nghỉ phép"
+                        },
+                        new
+                        {
+                            Id = 6,
+                            Code = "leave_request.approval_to_hr",
+                            Name = "Duyệt đơn nghỉ phép tới HR"
+                        },
+                        new
+                        {
+                            Id = 7,
+                            Code = "leave_request.hr_approval",
+                            Name = "HR duyệt đơn nghỉ phép"
                         });
                 });
 
-            modelBuilder.Entity("ServicePortal.Domain.Entities.Team", b =>
+            modelBuilder.Entity("ServicePortal.Domain.Entities.RolePermission", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -341,18 +384,105 @@ namespace ServicePortal.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("DepartmentId")
+                    b.Property<int?>("PermissionId")
                         .HasColumnType("int")
-                        .HasColumnName("department_id");
+                        .HasColumnName("permission_id");
+
+                    b.Property<int?>("RoleId")
+                        .HasColumnType("int")
+                        .HasColumnName("role_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PermissionId");
+
+                    b.HasIndex("RoleId", "PermissionId");
+
+                    b.ToTable("role_permissions");
+                });
+
+            modelBuilder.Entity("ServicePortal.Domain.Entities.TypeLeave", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime?>("ModifiedAt")
+                        .HasMaxLength(200)
+                        .HasColumnType("datetime2")
+                        .HasColumnName("modified_at");
+
+                    b.Property<string>("ModifiedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)")
+                        .HasColumnName("modified_by");
 
                     b.Property<string>("Name")
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)")
                         .HasColumnName("name");
 
+                    b.Property<string>("Note")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)")
+                        .HasColumnName("note");
+
                     b.HasKey("Id");
 
-                    b.ToTable("teams");
+                    b.ToTable("type_leaves");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            ModifiedAt = new DateTime(2025, 5, 1, 15, 30, 0, 0, DateTimeKind.Unspecified),
+                            ModifiedBy = "HR",
+                            Name = "Annual",
+                            Note = "type_leave.annual"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            ModifiedAt = new DateTime(2025, 5, 1, 15, 30, 0, 0, DateTimeKind.Unspecified),
+                            ModifiedBy = "HR",
+                            Name = "Personal",
+                            Note = "type_leave.personal"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            ModifiedAt = new DateTime(2025, 5, 1, 15, 30, 0, 0, DateTimeKind.Unspecified),
+                            ModifiedBy = "HR",
+                            Name = "Sick",
+                            Note = "type_leave.sick"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            ModifiedAt = new DateTime(2025, 5, 1, 15, 30, 0, 0, DateTimeKind.Unspecified),
+                            ModifiedBy = "HR",
+                            Name = "Wedding",
+                            Note = "type_leave.wedding"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            ModifiedAt = new DateTime(2025, 5, 1, 15, 30, 0, 0, DateTimeKind.Unspecified),
+                            ModifiedBy = "HR",
+                            Name = "Accident",
+                            Note = "type_leave.accident"
+                        },
+                        new
+                        {
+                            Id = 6,
+                            ModifiedAt = new DateTime(2025, 5, 1, 15, 30, 0, 0, DateTimeKind.Unspecified),
+                            ModifiedBy = "HR",
+                            Name = "Other",
+                            Note = "type_leave.other"
+                        });
                 });
 
             modelBuilder.Entity("ServicePortal.Domain.Entities.User", b =>
@@ -362,11 +492,8 @@ namespace ServicePortal.Migrations
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("id");
 
-                    b.Property<int?>("ChildDepartmentId")
-                        .HasColumnType("int")
-                        .HasColumnName("child_department_id");
-
                     b.Property<string>("Code")
+                        .IsRequired()
                         .HasColumnType("nvarchar(450)")
                         .HasColumnName("code");
 
@@ -386,6 +513,10 @@ namespace ServicePortal.Migrations
                         .HasColumnType("datetime2")
                         .HasColumnName("deleted_at");
 
+                    b.Property<int?>("DepartmentId")
+                        .HasColumnType("int")
+                        .HasColumnName("department_id");
+
                     b.Property<string>("Email")
                         .HasColumnType("nvarchar(450)")
                         .HasColumnName("email");
@@ -394,17 +525,17 @@ namespace ServicePortal.Migrations
                         .HasColumnType("bit")
                         .HasColumnName("is_active");
 
-                    b.Property<int?>("ManagementPositionId")
-                        .HasColumnType("int")
-                        .HasColumnName("management_position_id");
+                    b.Property<string>("Level")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("level");
+
+                    b.Property<string>("LevelParent")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("level_parent");
 
                     b.Property<string>("Name")
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("name");
-
-                    b.Property<int?>("ParentDepartmentId")
-                        .HasColumnType("int")
-                        .HasColumnName("parent_department_id");
 
                     b.Property<string>("Password")
                         .HasColumnType("nvarchar(max)")
@@ -414,21 +545,13 @@ namespace ServicePortal.Migrations
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("phone");
 
-                    b.Property<int?>("PositionId")
-                        .HasColumnType("int")
-                        .HasColumnName("position_id");
-
-                    b.Property<int?>("RoleId")
-                        .HasColumnType("int")
-                        .HasColumnName("role_id");
+                    b.Property<string>("Position")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("position");
 
                     b.Property<byte?>("Sex")
                         .HasColumnType("tinyint")
                         .HasColumnName("sex");
-
-                    b.Property<int?>("TeamId")
-                        .HasColumnType("int")
-                        .HasColumnName("team_id");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2")
@@ -436,20 +559,188 @@ namespace ServicePortal.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("PositionId");
+                    b.HasIndex("DepartmentId");
 
                     b.HasIndex("Code", "Email", "Id");
 
                     b.ToTable("users");
                 });
 
+            modelBuilder.Entity("ServicePortal.Domain.Entities.UserPermission", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("PermissionId")
+                        .HasColumnType("int")
+                        .HasColumnName("permission_id");
+
+                    b.Property<string>("UserCode")
+                        .HasColumnType("nvarchar(450)")
+                        .HasColumnName("user_code");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PermissionId");
+
+                    b.HasIndex("UserCode", "PermissionId");
+
+                    b.ToTable("user_permissions");
+                });
+
+            modelBuilder.Entity("ServicePortal.Domain.Entities.UserRole", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("id");
+
+                    b.Property<int?>("DepartmentId")
+                        .HasColumnType("int")
+                        .HasColumnName("department_id");
+
+                    b.Property<int?>("RoleId")
+                        .HasColumnType("int")
+                        .HasColumnName("role_id");
+
+                    b.Property<string>("UserCode")
+                        .HasColumnType("nvarchar(450)")
+                        .HasColumnName("user_code");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DepartmentId");
+
+                    b.HasIndex("RoleId");
+
+                    b.HasIndex("UserCode", "RoleId", "DepartmentId");
+
+                    b.ToTable("user_roles");
+                });
+
+            modelBuilder.Entity("ServicePortal.Domain.Entities.CustomApprovalFlow", b =>
+                {
+                    b.HasOne("ServicePortal.Domain.Entities.Department", "Department")
+                        .WithMany()
+                        .HasForeignKey("DepartmentId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.Navigation("Department");
+                });
+
+            modelBuilder.Entity("ServicePortal.Domain.Entities.LeaveRequest", b =>
+                {
+                    b.HasOne("ServicePortal.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("ServicePortal.Domain.Entities.LeaveRequestStep", b =>
+                {
+                    b.HasOne("ServicePortal.Domain.Entities.LeaveRequest", null)
+                        .WithMany("LeaveRequestSteps")
+                        .HasForeignKey("LeaveRequestId")
+                        .OnDelete(DeleteBehavior.Cascade);
+                });
+
+            modelBuilder.Entity("ServicePortal.Domain.Entities.RolePermission", b =>
+                {
+                    b.HasOne("ServicePortal.Domain.Entities.Permission", "Permission")
+                        .WithMany("RolePermissions")
+                        .HasForeignKey("PermissionId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("ServicePortal.Domain.Entities.Role", "Role")
+                        .WithMany("RolePermissions")
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.Navigation("Permission");
+
+                    b.Navigation("Role");
+                });
+
             modelBuilder.Entity("ServicePortal.Domain.Entities.User", b =>
                 {
-                    b.HasOne("ServicePortal.Domain.Entities.Position", "Position")
+                    b.HasOne("ServicePortal.Domain.Entities.Department", "Department")
                         .WithMany()
-                        .HasForeignKey("PositionId");
+                        .HasForeignKey("DepartmentId");
 
-                    b.Navigation("Position");
+                    b.Navigation("Department");
+                });
+
+            modelBuilder.Entity("ServicePortal.Domain.Entities.UserPermission", b =>
+                {
+                    b.HasOne("ServicePortal.Domain.Entities.Permission", "Permission")
+                        .WithMany("UserPermission")
+                        .HasForeignKey("PermissionId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("ServicePortal.Domain.Entities.User", "User")
+                        .WithMany("UserPermission")
+                        .HasForeignKey("UserCode")
+                        .HasPrincipalKey("Code")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.Navigation("Permission");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("ServicePortal.Domain.Entities.UserRole", b =>
+                {
+                    b.HasOne("ServicePortal.Domain.Entities.Department", "Department")
+                        .WithMany()
+                        .HasForeignKey("DepartmentId");
+
+                    b.HasOne("ServicePortal.Domain.Entities.Role", "Role")
+                        .WithMany("UserRoles")
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("ServicePortal.Domain.Entities.User", "User")
+                        .WithMany("UserRoles")
+                        .HasForeignKey("UserCode")
+                        .HasPrincipalKey("Code")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.Navigation("Department");
+
+                    b.Navigation("Role");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("ServicePortal.Domain.Entities.LeaveRequest", b =>
+                {
+                    b.Navigation("LeaveRequestSteps");
+                });
+
+            modelBuilder.Entity("ServicePortal.Domain.Entities.Permission", b =>
+                {
+                    b.Navigation("RolePermissions");
+
+                    b.Navigation("UserPermission");
+                });
+
+            modelBuilder.Entity("ServicePortal.Domain.Entities.Role", b =>
+                {
+                    b.Navigation("RolePermissions");
+
+                    b.Navigation("UserRoles");
+                });
+
+            modelBuilder.Entity("ServicePortal.Domain.Entities.User", b =>
+                {
+                    b.Navigation("UserPermission");
+
+                    b.Navigation("UserRoles");
                 });
 #pragma warning restore 612, 618
         }
