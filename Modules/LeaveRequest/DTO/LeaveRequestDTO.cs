@@ -2,7 +2,7 @@
 
 namespace ServicePortal.Modules.LeaveRequest.DTO
 {
-    public class LeaveRequestDTO
+    public class LeaveRequestDto
     {
         [JsonPropertyName("id")]
         public Guid Id { get; set; }

@@ -8,16 +8,12 @@
 
   <ItemGroup>
     <Compile Remove="Controllers\**" />
-    <Compile Remove="Modules\Auth\DTO\**" />
     <Compile Remove="Modules\User - Copy - Copy %283%29\**" />
     <Content Remove="Controllers\**" />
-    <Content Remove="Modules\Auth\DTO\**" />
     <Content Remove="Modules\User - Copy - Copy %283%29\**" />
     <EmbeddedResource Remove="Controllers\**" />
-    <EmbeddedResource Remove="Modules\Auth\DTO\**" />
     <EmbeddedResource Remove="Modules\User - Copy - Copy %283%29\**" />
     <None Remove="Controllers\**" />
-    <None Remove="Modules\Auth\DTO\**" />
     <None Remove="Modules\User - Copy - Copy %283%29\**" />
     <None Remove="Properties\PublishProfiles\FolderProfile.pubxml" />
     <None Remove="Properties\PublishProfiles\FolderProfile1.pubxml" />
@@ -50,7 +46,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="Modules\User\DTO\OrgChartDTO.cs" />
+    <None Include="Modules\User\DTO\Responses\OrgChartResponseDto.cs" />
   </ItemGroup>
 
 	<ItemGroup>

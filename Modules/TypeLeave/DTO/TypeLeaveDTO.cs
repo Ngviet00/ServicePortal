@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace ServicePortal.Modules.TypeLeave.DTO
 {
-    public class TypeLeaveDTO
+    public class TypeLeaveDto
     {
         [Required, JsonPropertyName("name")]
         public string? Name { get; set; }

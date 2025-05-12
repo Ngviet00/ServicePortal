@@ -16,31 +16,37 @@ namespace ServicePortal.Infrastructure.Email
             _config = config;
         }
 
-        public async Task SendEmailLeaveRequest(string to, LeaveRequest leaveRequest, string UrlFrontEnd)
+        public async Task SendEmailLeaveRequest(List<string> listEmail, LeaveRequest leaveRequest, string? UrlFrontEnd)
         {
             try
             {
                 var smtp = _config.GetSection("SmtpSettings");
                 using var smtpClient = new SmtpClient(smtp["Host"])
                 {
-                    Port = int.Parse(smtp["Port"]),
+                    Port = int.Parse(smtp["Port"] ?? ""),
                     Credentials = new NetworkCredential(smtp["Username"], smtp["Password"]),
-                    EnableSsl = bool.Parse(smtp["EnableSsl"])
+                    EnableSsl = bool.Parse(smtp["EnableSsl"] ?? "")
                 };
 
-                string content = FormatContentMailLeaveRequest(leaveRequest, UrlFrontEnd);
+                string content = FormatContentMailLeaveRequest(leaveRequest, UrlFrontEnd ?? "http://localhost:5173");
 
                 string subject = $"Đơn xin nghỉ phép - {leaveRequest.Name}";
 
                 var message = new MailMessage
                 {
-                    From = new MailAddress(smtp["From"]),
+                    From = new MailAddress(smtp["From"] ?? ""),
                     Subject = subject,
                     Body = content,
                     IsBodyHtml = true
                 };
 
-                message.To.Add(to);
+                foreach (var email in listEmail)
+                {
+                    if (!string.IsNullOrWhiteSpace(email))
+                    {
+                        message.To.Add(email.Trim());
+                    }
+                }
 
                 await smtpClient.SendMailAsync(message);
             }
@@ -53,6 +59,15 @@ namespace ServicePortal.Infrastructure.Email
         public string FormatContentMailLeaveRequest(LeaveRequest leaveRequest, string UrlFrontEnd)
         {
             string urlWaitApproval = $"{UrlFrontEnd}/leave/wait-approval";
+
+            string typeLeaveDescription = leaveRequest.TypeLeave != null
+                ? Helper.GetDescriptionFromValue<TypeLeaveEnum>((int)leaveRequest.TypeLeave)
+                : "";
+
+            string timeLeaveDescription = leaveRequest.TimeLeave != null
+                ? Helper.GetDescriptionFromValue<TimeLeaveEnum>((int)leaveRequest.TimeLeave)
+                : "";
+
 
             return $@"
                     <h4>
@@ -91,11 +106,11 @@ namespace ServicePortal.Infrastructure.Email
                           </tr>
                           <tr style=""border-bottom: 1px solid #ddd;"">
                             <td style=""background-color: #f9f9f9;""><strong>Loại phép:</strong></td>
-                            <td>{Helper.GetDescriptionFromValue<TypeLeaveEnum>((int)leaveRequest.TypeLeave)}</td>
+                            <td>{typeLeaveDescription}</td>
                           </tr>
                           <tr style=""border-bottom: 1px solid #ddd;"">
                             <td style=""background-color: #f9f9f9;""><strong>Thời gian nghỉ:</strong></td>
-                            <td>{Helper.GetDescriptionFromValue<TimeLeaveEnum>((int)leaveRequest.TimeLeave)}</td>
+                            <td>{timeLeaveDescription}</td>
                           </tr>
                           <tr style=""border-bottom: 1px solid #ddd;"">
                             <td style=""background-color: #f9f9f9;""><strong>Lý do nghỉ:</strong></td>

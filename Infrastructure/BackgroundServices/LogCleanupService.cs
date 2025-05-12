@@ -1,5 +1,5 @@
-﻿using ServicePortal.Common.Helpers;
-using ServicePortal.Domain.Enums;
+﻿using Serilog;
+using ServicePortal.Common.Helpers;
 
 namespace ServicePortal.Infrastructure.BackgroundServices
 {
@@ -15,7 +15,7 @@ namespace ServicePortal.Infrastructure.BackgroundServices
                 }
                 catch (Exception ex)
                 {
-                    FileHelper.WriteLog(TypeErrorEnum.ERROR, $"Error clean log file, error: {ex.Message}");
+                    Log.Error($"Error can not clean log file, ex:{ex.Message}");
                 }
                 await Task.Delay(TimeSpan.FromHours(24), stoppingToken);
             }

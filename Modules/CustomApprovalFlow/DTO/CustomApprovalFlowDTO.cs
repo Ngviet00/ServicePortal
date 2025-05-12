@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ServicePortal.Modules.CustomApprovalFlow.DTO
 {
-    public class CustomApprovalFlowDTO
+    public class CustomApprovalFlowDto
     {
         [JsonPropertyName("id"), FromQuery(Name = "id")]
         public int? Id { get; set; }

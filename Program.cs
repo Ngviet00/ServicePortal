@@ -9,28 +9,26 @@ using Microsoft.AspNetCore.Localization;
 using System.Globalization;
 using ServicePortal.Modules.User.Services;
 using ServicePortal.Modules.Auth.Services;
-using ServicePortal.Common.Helpers;
-using ServicePortal.Domain.Enums;
-using ServicePortal.Modules.Auth.Interfaces;
-using ServicePortal.Modules.User.Interfaces;
-using ServicePortal.Modules.Role.Interfaces;
 using ServicePortal.Modules.Role.Services;
-using ServicePortal.Modules.Deparment.Interfaces;
 using ServicePortal.Modules.Deparment.Services;
 using ServicePortal.Common.Middleware;
 using Serilog;
 using ServicePortal.Infrastructure.BackgroundServices;
-using ServicePortal.Modules.LeaveRequest.Interfaces;
 using ServicePortal.Modules.LeaveRequest.Services;
 using ServicePortal.Modules.TypeLeave.Services;
-using ServicePortal.Modules.TypeLeave.Interfaces;
 using ServicePortal.Infrastructure.Email;
 using Hangfire;
 using ServicePortal.Infrastructure.Hubs;
-using ServicePortal.Modules.CustomApprovalFlow.Interfaces;
 using ServicePortal.Modules.CustomApprovalFlow.Services;
 using Serilog.Exceptions;
 using Serilog.Events;
+using ServicePortal.Modules.User.Services.Interfaces;
+using ServicePortal.Modules.TypeLeave.Services.Interfaces;
+using ServicePortal.Modules.Role.Services.Interfaces;
+using ServicePortal.Modules.LeaveRequest.Services.Interfaces;
+using ServicePortal.Modules.Department.Services.Interfaces;
+using ServicePortal.Modules.CustomApprovalFlow.Services.Interfaces;
+using ServicePortal.Modules.Auth.Services.Interfaces;
 
 namespace ServicePortal
 {
@@ -40,7 +38,7 @@ namespace ServicePortal
         {
             #region Config Serilog
 
-            var logDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Logs", DateTimeOffset.UtcNow.ToString("yyyy"), DateTimeOffset.UtcNow.ToString("MM"));
+            var logDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Logs", DateTimeOffset.UtcNow.ToString("yyyy"), DateTimeOffset.UtcNow.ToString("MM"), DateTimeOffset.UtcNow.ToString("dd"));
 
             if (!Directory.Exists(logDir))
             {
@@ -54,50 +52,46 @@ namespace ServicePortal
                 .MinimumLevel.Information()
                 .Enrich.FromLogContext()
                 .Enrich.WithExceptionDetails()
-
                 .WriteTo.File(
                     path: logFileInfo,
-                    outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] ==> {Message:lj}{NewLine}{Exception}",
+                    outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] ======> {Message:lj}{NewLine}{Exception}",
                     rollingInterval: RollingInterval.Day,
                     retainedFileCountLimit: 90,
                     shared: true
                 )
-
                 .WriteTo.File(
                     path: logFileError,
-                    outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] ==> {Message:lj}{NewLine}{Exception}",
+                    outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] ======> {Message:lj}{NewLine}{Exception}",
                     rollingInterval: RollingInterval.Day,
                     retainedFileCountLimit: 90,
                     shared: true,
                     restrictedToMinimumLevel: LogEventLevel.Error
                 )
-
                 .CreateLogger();
 
             #endregion
 
             var builder = WebApplication.CreateBuilder(args);
 
-            builder.Services.AddHealthChecks();
-
             builder.Host.UseSerilog();
+
+            builder.Services.AddHealthChecks();
 
             #region Config SqlServer
 
-
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("StringConnectionDb"))
-                .LogTo(Console.WriteLine, LogLevel.Information)
-                .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking));
+                        .LogTo(Console.WriteLine, LogLevel.Information)
+                        .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking));
 
             #endregion
 
             #region Config hangfire
             builder.Services.AddHangfire(config =>
                 config.SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
-                  .UseSimpleAssemblyNameTypeSerializer()
-                  .UseRecommendedSerializerSettings()
-                  .UseSqlServerStorage(builder.Configuration.GetConnectionString("StringConnectionDb")));
+                        .UseSimpleAssemblyNameTypeSerializer()
+                        .UseRecommendedSerializerSettings()
+                        .UseSqlServerStorage(builder.Configuration.GetConnectionString("StringConnectionDb")));
 
             builder.Services.AddHangfireServer();
 
@@ -190,7 +184,7 @@ namespace ServicePortal
                 {
                     OnAuthenticationFailed = context =>
                     {
-                        FileHelper.WriteLog(TypeErrorEnum.ERROR,$"JWT lỗi: {context.Exception.Message}");
+                        Log.Error($"JWT error: {context.Exception.Message}");
                         return Task.CompletedTask;
                     },
 
@@ -243,14 +237,16 @@ namespace ServicePortal
 
             var app = builder.Build();
 
-            //add global exception
+            //global exception
             app.UseMiddleware<GlobalExceptionMiddleware>();
 
+            //signalR realtime
             app.MapHub<NotificationHub>("/notificationHub");
 
+            //check app is running
             app.MapHealthChecks("/health");
 
-            //when run app, excute class db seeder
+            //run class seeder
             using (var scope = app.Services.CreateScope())
             {
                 var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
@@ -292,6 +288,7 @@ namespace ServicePortal
 
             app.UseHangfireDashboard();
 
+            //job auto delete token every weekly
             RecurringJob.AddOrUpdate<JwtService>(
                 "DeleteOldRefreshTokensDaily",
                 (job) => job.DeleteOldRefreshToken(),
@@ -304,7 +301,7 @@ namespace ServicePortal
             {
                 if (e.ExceptionObject is Exception ex)
                 {
-                    FileHelper.WriteLog(TypeErrorEnum.ERROR, $"[UnhandledException] {ex.Message}\n{ex.StackTrace}");
+                    Log.Error($"[UnhandledException] {ex.Message}\n{ex.StackTrace}");
                 }
             };
         }

@@ -4,7 +4,7 @@ using ServicePortal.Common;
 using ServicePortal.Common.Filters;
 using ServicePortal.Modules.TypeLeave.DTO;
 using ServicePortal.Modules.TypeLeave.DTO.Requests;
-using ServicePortal.Modules.TypeLeave.Interfaces;
+using ServicePortal.Modules.TypeLeave.Services.Interfaces;
 
 namespace ServicePortal.Modules.TypeLeave.Controllers
 {
@@ -19,11 +19,19 @@ namespace ServicePortal.Modules.TypeLeave.Controllers
         }
 
         [HttpGet("get-all"), Authorize, RoleAuthorize("HR", "HR_Manager", "user")]
-        public async Task<IActionResult> GetAll([FromQuery] GetAllTypeLeaveRequest request)
+        public async Task<IActionResult> GetAll([FromQuery] GetAllTypeLeaveRequestDto request)
         {
             var results = await _typeLeaveService.GetAll(request);
 
-            var response = new PageResponse<Domain.Entities.TypeLeave>(200, "Success", results.Data, results.TotalPages, request.Page, request.PageSize, results.TotalItems);
+            var response = new PageResponse<Domain.Entities.TypeLeave>(
+                200, 
+                "Success",
+                results.Data,
+                results.TotalPages,
+                request.Page,
+                request.PageSize,
+                results.TotalItems
+            );
 
             return Ok(response);
         }
@@ -37,7 +45,7 @@ namespace ServicePortal.Modules.TypeLeave.Controllers
         }
 
         [HttpPost("create"), RoleAuthorize("HR", "HR_Manager")]
-        public async Task<IActionResult> Create([FromBody] TypeLeaveDTO dto)
+        public async Task<IActionResult> Create([FromBody] TypeLeaveDto dto)
         {
             var result = await _typeLeaveService.Create(dto);
 
@@ -45,7 +53,7 @@ namespace ServicePortal.Modules.TypeLeave.Controllers
         }
 
         [HttpPut("update/{id}"), RoleAuthorize("HR", "HR_Manager")]
-        public async Task<IActionResult> Update(int id, [FromBody] TypeLeaveDTO dto)
+        public async Task<IActionResult> Update(int id, [FromBody] TypeLeaveDto dto)
         {
             var result = await _typeLeaveService.Update(id, dto);
 

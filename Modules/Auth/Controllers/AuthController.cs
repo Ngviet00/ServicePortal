@@ -1,12 +1,11 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using LoginRequest = ServicePortal.Application.DTOs.Auth.Requests.LoginRequest;
-using ServicePortal.Application.DTOs.Auth.Requests;
+using LoginRequestDto = ServicePortal.Modules.Auth.DTO.Requests.LoginRequestDto;
 using System.Security.Claims;
 using ServicePortal.Common;
-using ServicePortal.Modules.Auth.Requests;
-using ServicePortal.Modules.User.DTO;
-using ServicePortal.Modules.Auth.Interfaces;
 using Microsoft.AspNetCore.Authorization;
+using ServicePortal.Modules.User.DTO.Responses;
+using ServicePortal.Modules.Auth.Services.Interfaces;
+using ServicePortal.Modules.Auth.DTO.Requests;
 
 namespace ServicePortal.Modules.Auth.Controllers
 {
@@ -23,7 +22,7 @@ namespace ServicePortal.Modules.Auth.Controllers
         }
 
         [HttpPost("login")]
-        public async Task<IActionResult> Login(LoginRequest request)
+        public async Task<IActionResult> Login(LoginRequestDto request)
         {
             var result = await _authService.Login(request);
 
@@ -47,11 +46,11 @@ namespace ServicePortal.Modules.Auth.Controllers
         }
 
         [HttpPost("register")]
-        public async Task<IActionResult> Register(CreateUserRequest request)
+        public async Task<IActionResult> Register(CreateUserDto request)
         {
-            UserDTO? userDTO = await _authService.Register(request);
+            UserResponseDto? userDTO = await _authService.Register(request);
 
-            return Ok(new BaseResponse<UserDTO>(200, "Register user successfully", userDTO));
+            return Ok(new BaseResponse<UserResponseDto>(200, "Register user successfully", userDTO));
         }
 
         [HttpPost("logout"), Authorize]
@@ -88,7 +87,7 @@ namespace ServicePortal.Modules.Auth.Controllers
 
 
         [HttpPost("change-password"), Authorize]
-        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequestDto request)
         {
             var employeeCode = User.FindFirstValue("user_code");
 

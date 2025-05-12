@@ -3,7 +3,7 @@ using ServicePortal.Common;
 using ServicePortal.Infrastructure.Data;
 using ServicePortal.Modules.TypeLeave.DTO;
 using ServicePortal.Modules.TypeLeave.DTO.Requests;
-using ServicePortal.Modules.TypeLeave.Interfaces;
+using ServicePortal.Modules.TypeLeave.Services.Interfaces;
 
 namespace ServicePortal.Modules.TypeLeave.Services
 {
@@ -16,7 +16,7 @@ namespace ServicePortal.Modules.TypeLeave.Services
             _context = context;
         }
 
-        public async Task<PagedResults<Domain.Entities.TypeLeave>> GetAll(GetAllTypeLeaveRequest request)
+        public async Task<PagedResults<Domain.Entities.TypeLeave>> GetAll(GetAllTypeLeaveRequestDto request)
         {
             string name = request.Name ?? "";
             double pageSize = request.PageSize;
@@ -24,9 +24,9 @@ namespace ServicePortal.Modules.TypeLeave.Services
 
             var query = _context.TypeLeaves.AsQueryable();
 
-            if (!string.IsNullOrEmpty(name))
+            if (!string.IsNullOrWhiteSpace(name))
             {
-                query = query.Where(r => r.Name.Contains(name));
+                query = query.Where(r => r.Name != null && r.Name.Contains(name));
             }
 
             var totalItems = await query.CountAsync();
@@ -52,7 +52,7 @@ namespace ServicePortal.Modules.TypeLeave.Services
             return result;
         }
 
-        public async Task<Domain.Entities.TypeLeave> Create(TypeLeaveDTO dto)
+        public async Task<Domain.Entities.TypeLeave> Create(TypeLeaveDto dto)
         {
             if (string.IsNullOrWhiteSpace(dto.Name))
             {
@@ -73,7 +73,7 @@ namespace ServicePortal.Modules.TypeLeave.Services
             return typeLeave;
         }
 
-        public async Task<Domain.Entities.TypeLeave> Update(int id, TypeLeaveDTO dto)
+        public async Task<Domain.Entities.TypeLeave> Update(int id, TypeLeaveDto dto)
         {
             var typeLeave = await _context.TypeLeaves.FirstOrDefaultAsync(e => e.Id == id) ?? throw new NotFoundException("Type leave not found!");
 
