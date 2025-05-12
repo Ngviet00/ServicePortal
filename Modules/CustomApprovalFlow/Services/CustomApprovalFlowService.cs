@@ -3,7 +3,7 @@ using ServicePortal.Common;
 using ServicePortal.Common.Mappers;
 using ServicePortal.Infrastructure.Data;
 using ServicePortal.Modules.CustomApprovalFlow.DTO;
-using ServicePortal.Modules.CustomApprovalFlow.Interfaces;
+using ServicePortal.Modules.CustomApprovalFlow.Services.Interfaces;
 
 namespace ServicePortal.Modules.CustomApprovalFlow.Services
 {
@@ -16,7 +16,7 @@ namespace ServicePortal.Modules.CustomApprovalFlow.Services
             _context = context;
         }
 
-        public async Task<PagedResults<CustomApprovalFlowDTO>> GetAll(CustomApprovalFlowDTO request)
+        public async Task<PagedResults<CustomApprovalFlowDto>> GetAll(CustomApprovalFlowDto request)
         {
             int? departmentId = request.DepartmentId;
 
@@ -41,7 +41,7 @@ namespace ServicePortal.Modules.CustomApprovalFlow.Services
                 .Take((int)pageSize)
                 .ToListAsync();
 
-            var result = new PagedResults<CustomApprovalFlowDTO>
+            var result = new PagedResults<CustomApprovalFlowDto>
             {
                 Data = CustomApprovalFlowMapper.ToDtoList(customApprovalFlows),
                 TotalItems = totalItems,
@@ -51,14 +51,14 @@ namespace ServicePortal.Modules.CustomApprovalFlow.Services
             return result;
         }
 
-        public async Task<CustomApprovalFlowDTO> GetById(int id)
+        public async Task<CustomApprovalFlowDto> GetById(int id)
         {
             var result = await _context.CustomApprovalFlows.FirstOrDefaultAsync(e => e.Id == id) ?? throw new NotFoundException("Data not found!");
 
             return CustomApprovalFlowMapper.ToDto(result);
         }
 
-        public async Task<Domain.Entities.CustomApprovalFlow> Create(CustomApprovalFlowDTO dto)
+        public async Task<Domain.Entities.CustomApprovalFlow> Create(CustomApprovalFlowDto dto)
         {
             var entity = new Domain.Entities.CustomApprovalFlow
             {
@@ -74,7 +74,7 @@ namespace ServicePortal.Modules.CustomApprovalFlow.Services
             return entity;
         }
 
-        public async Task<Domain.Entities.CustomApprovalFlow> Update(int id, CustomApprovalFlowDTO dto)
+        public async Task<Domain.Entities.CustomApprovalFlow> Update(int id, CustomApprovalFlowDto dto)
         {
             var entity = await _context.CustomApprovalFlows.FirstOrDefaultAsync(e => e.Id == id) ?? throw new NotFoundException("Data not found!");
 

@@ -7,8 +7,9 @@ using ServicePortal.Infrastructure.Data;
 using ServicePortal.Infrastructure.Hubs;
 using ServicePortal.Modules.Deparment.DTO;
 using ServicePortal.Modules.User.DTO;
-using ServicePortal.Modules.User.Interfaces;
-using ServicePortal.Modules.User.Requests;
+using ServicePortal.Modules.User.DTO.Requests;
+using ServicePortal.Modules.User.DTO.Responses;
+using ServicePortal.Modules.User.Services.Interfaces;
 
 namespace ServicePortal.Modules.User.Services
 {
@@ -24,7 +25,7 @@ namespace ServicePortal.Modules.User.Services
             _notificationService = notificationService;
         }
 
-        public async Task<PagedResults<UserDTO>> GetAll(GetAllUserRequest request)
+        public async Task<PagedResults<UserResponseDto>> GetAll(GetAllUserRequestDto request)
         {
             string name = request.Name ?? "";
             double pageSize = request.PageSize;
@@ -40,7 +41,12 @@ namespace ServicePortal.Modules.User.Services
 
             if (!string.IsNullOrEmpty(name))
             {
-                query = query.Where(u => u.Name.Contains(name) || u.Email.Contains(name) || u.Phone.Contains(name) || u.Code.Contains(name));
+                query = query.Where(u => 
+                    (u.Name != null && u.Name.Contains(name)) || 
+                    (u.Email != null && u.Email.Contains(name)) || 
+                    (u.Phone != null && u.Phone.Contains(name)) || 
+                    (u.Code != null && u.Code.Contains(name))
+                );
             }
 
             var totalItems = await query.CountAsync();
@@ -52,7 +58,7 @@ namespace ServicePortal.Modules.User.Services
                 .Take((int)pageSize)
                 .ToListAsync();
 
-            var result = new PagedResults<UserDTO>
+            var result = new PagedResults<UserResponseDto>
             {
                 Data = UserMapper.ToDtoList(usersWithDetails),
                 TotalItems = totalItems,
@@ -62,7 +68,7 @@ namespace ServicePortal.Modules.User.Services
             return result;
         }
 
-        public async Task<UserDTO> GetByCode(string code)
+        public async Task<UserResponseDto> GetByCode(string code)
         {
             if (string.IsNullOrWhiteSpace(code))
             {
@@ -74,7 +80,7 @@ namespace ServicePortal.Modules.User.Services
             return UserMapper.ToDto(user);
         }
 
-        public async Task<UserDTO> GetById(Guid id)
+        public async Task<UserResponseDto> GetById(Guid id)
         {
             if (string.IsNullOrWhiteSpace(id.ToString()))
             {
@@ -86,14 +92,7 @@ namespace ServicePortal.Modules.User.Services
             return UserMapper.ToDto(user);
         }
 
-        //public async Task<UserDTO> Update(Guid id, UpdateUserRequest request)
-        //{
-        //    var user = await _context.Users.FirstOrDefaultAsync(e => e.Id == id) ?? throw new NotFoundException("User not found!");
-
-        //    throw new NotImplementedException();
-        //}
-
-        public async Task<UserDTO> Delete(Guid id)
+        public async Task<UserResponseDto> Delete(Guid id)
         {
             if (string.IsNullOrWhiteSpace(id.ToString()))
             {
@@ -111,7 +110,7 @@ namespace ServicePortal.Modules.User.Services
             return UserMapper.ToDto(user);
         }
 
-        public async Task<UserDTO> ForceDelete(Guid id)
+        public async Task<UserResponseDto> ForceDelete(Guid id)
         {
             if (string.IsNullOrWhiteSpace(id.ToString()))
             {
@@ -127,11 +126,11 @@ namespace ServicePortal.Modules.User.Services
             return UserMapper.ToDto(user);
         }
 
-        public IQueryable<UserDTO> GetUserQueryLogin()
+        public IQueryable<UserResponseDto> GetUserQueryLogin()
         {
             var query = _context.Users
                 .Where(u => u.DeletedAt == null)
-                .Select(u => new UserDTO
+                .Select(u => new UserResponseDto
                 {
                     Id = u.Id,
                     Code = u.Code,
@@ -156,7 +155,7 @@ namespace ServicePortal.Modules.User.Services
                         .Where(ur => ur.Role != null)
                         .Select(ur => new Domain.Entities.Role
                         {
-                            Id = ur.Role.Id,
+                            Id = ur.Role!.Id,
                             Name = ur.Role.Name,
                             Code = ur.Role.Code
                         })
@@ -165,15 +164,15 @@ namespace ServicePortal.Modules.User.Services
 
                     UserPermissions = u.UserPermission
                         .Where(up => up.Permission != null)
-                        .Select(up => up.Permission.Name)
+                        .Select(up => up.Permission!.Name)
                         .Distinct()
                         .ToList(),
 
                     Permissions = u.UserRoles
                         .Where(ur => ur.Role != null)
-                        .SelectMany(ur => ur.Role.RolePermissions
+                        .SelectMany(ur => ur.Role!.RolePermissions
                             .Where(rp => rp.Permission != null)
-                            .Select(rp => rp.Permission.Name)
+                            .Select(rp => rp.Permission!.Name)
                         )
                         .Distinct()
                         .ToList()
@@ -187,7 +186,7 @@ namespace ServicePortal.Modules.User.Services
             return await _context.Users.CountAsync();
         }
 
-        public async Task<UserDTO> GetMe(string code)
+        public async Task<UserResponseDto> GetMe(string code)
         {
             if (string.IsNullOrWhiteSpace(code))
             {
@@ -260,7 +259,7 @@ namespace ServicePortal.Modules.User.Services
             return children;
         }
 
-        public async Task<bool> UpdateUserRole(UpdateUserRoleDTO dto)
+        public async Task<bool> UpdateUserRole(UpdateUserRoleDto dto)
         {
             try
             {
@@ -269,20 +268,23 @@ namespace ServicePortal.Modules.User.Services
                 var oldUserRoles = await _context.UserRoles.Where(e => e.UserCode == dto.UserCode).ToListAsync();
                 _context.UserRoles.RemoveRange(oldUserRoles);
 
-                foreach (var item in dto.RoleIds)
+                if (dto?.RoleIds != null)
                 {
-                    ur.Add(new UserRole
+                    foreach (var item in dto.RoleIds)
                     {
-                        UserCode = dto.UserCode,
-                        RoleId = item
-                    });
+                        ur.Add(new UserRole
+                        {
+                            UserCode = dto.UserCode,
+                            RoleId = item
+                        });
+                    }
                 }
 
                 _context.UserRoles.AddRange(ur);
 
                 await _context.SaveChangesAsync();
 
-                await _notificationService.SendMessageToUser(dto.UserCode, "login_again");
+                await _notificationService.SendMessageToUser(dto?.UserCode ?? "", "login_again");
 
                 return true;
             }

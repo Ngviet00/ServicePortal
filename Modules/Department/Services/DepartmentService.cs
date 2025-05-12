@@ -3,9 +3,8 @@ using ServicePortal.Common;
 using ServicePortal.Common.Mappers;
 using ServicePortal.Infrastructure.Data;
 using ServicePortal.Modules.Deparment.DTO;
-using ServicePortal.Modules.Deparment.Interfaces;
-using ServicePortal.Modules.Deparment.Requests;
-using ServicePortal.Modules.Department.DTO;
+using ServicePortal.Modules.Department.DTO.Requests;
+using ServicePortal.Modules.Department.Services.Interfaces;
 
 namespace ServicePortal.Modules.Deparment.Services
 {
@@ -18,7 +17,7 @@ namespace ServicePortal.Modules.Deparment.Services
             _context = context;
         }
 
-        public async Task<PagedResults<DepartmentDTO>> GetAll(GetAllDepartmentRequest request)
+        public async Task<PagedResults<DepartmentDTO>> GetAll(GetAllDepartmentRequestDto request)
         {
             string name = request.Name ?? "";
             double pageSize = request.PageSize;
@@ -28,7 +27,7 @@ namespace ServicePortal.Modules.Deparment.Services
 
             if (!string.IsNullOrEmpty(name))
             {
-                query = query.Where(r => r.Name.Contains(name));
+                query = query.Where(r => r.Name != null && r.Name.Contains(name));
             }
 
             var totalItems = await query.CountAsync();
@@ -42,7 +41,7 @@ namespace ServicePortal.Modules.Deparment.Services
 
             var parentIds = departments
                 .Where(d => d.ParentId.HasValue)
-                .Select(d => d.ParentId.Value)
+                .Select(d => d.ParentId!.Value)
                 .Distinct()
                 .ToList();
 
@@ -80,54 +79,6 @@ namespace ServicePortal.Modules.Deparment.Services
             var deparment = await _context.Departments.Where(e => e.ParentId == null).ToListAsync();
 
             return deparment;
-        }
-
-        public async Task<List<DepartmentTreeDTO>> GetDepartmentWithChildrenDepartmentAndPosition()
-        {
-            var allDepartments = await _context.Departments.ToListAsync();
-
-            //var allPositionsByDepartment = await _context.Positions
-            //    .Where(p => p.Level >= 1)
-            //    .GroupBy(p => p.DepartmentId ?? -1)
-            //    .ToDictionaryAsync(
-            //        g => g.Key,
-            //        g => g.Select(p => new PositionDTO
-            //        {
-            //            Id = p.Id,
-            //            Name = p.Name,
-            //            Title = p.Title,
-            //            DepartmentId = p.DepartmentId,
-            //            Level = p.Level
-            //        }).ToList()
-               //);
-
-            var departmentDtoMap = allDepartments.ToDictionary(
-                d => d.Id
-                //d => 
-                //{
-                //    allPositionsByDepartment.TryGetValue(d.Id, out var positions);
-                //    return new DepartmentTreeDTO
-                //    {
-                //        Id = d.Id,
-                //        Name = d.Name,
-                //        ParentId = d.ParentId,
-                //        //Positions = positions ?? new List<PositionDTO>(),
-                //        Childrens = new List<DepartmentTreeDTO>()
-                //    };
-                //}
-            );
-
-            foreach (var department in allDepartments)
-            {
-                if (department.ParentId.HasValue && departmentDtoMap.TryGetValue(department.ParentId.Value, out var parentDto))
-                {
-                    //parentDto.Childrens.Add(departmentDtoMap[department.Id]);
-                }
-            }
-
-            var rootDepartments = departmentDtoMap.Values.Where(d => !d.ParentId.HasValue).ToList();
-
-            return null;
         }
 
         public async Task<Domain.Entities.Department> GetById(int id)

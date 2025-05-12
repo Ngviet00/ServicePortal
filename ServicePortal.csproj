@@ -8,16 +8,12 @@
 
   <ItemGroup>
     <Compile Remove="Controllers\**" />
-    <Compile Remove="Modules\Auth\DTO\**" />
     <Compile Remove="Modules\User - Copy - Copy %283%29\**" />
     <Content Remove="Controllers\**" />
-    <Content Remove="Modules\Auth\DTO\**" />
     <Content Remove="Modules\User - Copy - Copy %283%29\**" />
     <EmbeddedResource Remove="Controllers\**" />
-    <EmbeddedResource Remove="Modules\Auth\DTO\**" />
     <EmbeddedResource Remove="Modules\User - Copy - Copy %283%29\**" />
     <None Remove="Controllers\**" />
-    <None Remove="Modules\Auth\DTO\**" />
     <None Remove="Modules\User - Copy - Copy %283%29\**" />
     <None Remove="Properties\PublishProfiles\FolderProfile.pubxml" />
     <None Remove="Properties\PublishProfiles\FolderProfile1.pubxml" />
@@ -40,6 +36,7 @@
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="Serilog" Version="4.2.0" />
     <PackageReference Include="Serilog.AspNetCore" Version="9.0.0" />
+    <PackageReference Include="Serilog.Exceptions" Version="8.4.0" />
     <PackageReference Include="Serilog.Sinks.File" Version="6.0.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
   </ItemGroup>
@@ -49,7 +46,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="Modules\User\DTO\OrgChartDTO.cs" />
+    <None Include="Modules\User\DTO\Responses\OrgChartResponseDto.cs" />
   </ItemGroup>
 
 	<ItemGroup>

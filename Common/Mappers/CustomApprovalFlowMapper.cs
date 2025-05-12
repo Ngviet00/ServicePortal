@@ -5,9 +5,9 @@ namespace ServicePortal.Common.Mappers
 {
     public static class CustomApprovalFlowMapper
     {
-        public static CustomApprovalFlowDTO ToDto(CustomApprovalFlow entity)
+        public static CustomApprovalFlowDto ToDto(CustomApprovalFlow entity)
         {
-            return new CustomApprovalFlowDTO
+            return new CustomApprovalFlowDto
             {
                 Id = entity.Id,
                 DepartmentId = entity.DepartmentId,
@@ -18,7 +18,7 @@ namespace ServicePortal.Common.Mappers
             };
         }
 
-        public static CustomApprovalFlow ToEntity(CustomApprovalFlowDTO dto)
+        public static CustomApprovalFlow ToEntity(CustomApprovalFlowDto dto)
         {
             return new CustomApprovalFlow
             {
@@ -30,12 +30,12 @@ namespace ServicePortal.Common.Mappers
             };
         }
 
-        public static List<CustomApprovalFlowDTO> ToDtoList(List<CustomApprovalFlow> entities)
+        public static List<CustomApprovalFlowDto> ToDtoList(List<CustomApprovalFlow> entities)
         {
             return entities.Select(ToDto).ToList();
         }
 
-        public static List<CustomApprovalFlow> ToEntityList(List<CustomApprovalFlowDTO> dtos)
+        public static List<CustomApprovalFlow> ToEntityList(List<CustomApprovalFlowDto> dtos)
         {
             return dtos.Select(ToEntity).ToList();
         }

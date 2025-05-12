@@ -6,9 +6,9 @@ namespace ServicePortal.Common.Mappers
 {
     public class LeaveRequestMapper
     {
-        public static LeaveRequestDTO ToDto(LeaveRequest entity)
+        public static LeaveRequestDto ToDto(LeaveRequest entity)
         {
-            return new LeaveRequestDTO
+            return new LeaveRequestDto
             {
                 Id = entity.Id,
                 UserCode = entity.UserCode,
@@ -33,7 +33,7 @@ namespace ServicePortal.Common.Mappers
             };
         }
 
-        public static LeaveRequest ToEntity(LeaveRequestDTO dto)
+        public static LeaveRequest ToEntity(LeaveRequestDto dto)
         {
             return new LeaveRequest
             {
@@ -60,12 +60,12 @@ namespace ServicePortal.Common.Mappers
             };
         }
 
-        public static List<LeaveRequestDTO> ToDtoList(List<LeaveRequest> entities)
+        public static List<LeaveRequestDto> ToDtoList(List<LeaveRequest> entities)
         {
             return entities.Select(ToDto).ToList();
         }
 
-        public static List<LeaveRequest> ToEntityList(List<LeaveRequestDTO> dtos)
+        public static List<LeaveRequest> ToEntityList(List<LeaveRequestDto> dtos)
         {
             return dtos.Select(ToEntity).ToList();
         }

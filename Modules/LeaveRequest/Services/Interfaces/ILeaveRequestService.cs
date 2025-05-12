@@ -1,0 +1,18 @@
+﻿using ServicePortal.Common;
+using ServicePortal.Modules.LeaveRequest.DTO;
+using ServicePortal.Modules.LeaveRequest.DTO.Requests;
+
+namespace ServicePortal.Modules.LeaveRequest.Services.Interfaces
+{
+    public interface ILeaveRequestService
+    {
+        Task<PagedResults<LeaveRequestDto>> GetAll(GetAllLeaveRequestDto request);
+        Task<PagedResults<LeaveRequestDto>> GetAllWaitApproval(GetAllLeaveRequestWaitApprovalDto request);
+        Task<LeaveRequestDto> GetById(Guid id);
+        Task<LeaveRequestDto?> Approval(ApprovalDto request, string currentUserCode);
+        Task<LeaveRequestDto> Create(LeaveRequestDto dto);
+        Task<LeaveRequestDto> Update(Guid id, LeaveRequestDto dto);
+        Task<LeaveRequestDto> Delete(Guid id);
+        Task<int> CountWaitApproval(GetAllLeaveRequestWaitApprovalDto request);
+    }
+}

@@ -2,8 +2,8 @@
 using Microsoft.AspNetCore.Mvc;
 using ServicePortal.Common;
 using ServicePortal.Common.Filters;
-using ServicePortal.Modules.Role.Interfaces;
-using ServicePortal.Modules.Role.Requests;
+using ServicePortal.Modules.Role.DTO.Requests;
+using ServicePortal.Modules.Role.Services.Interfaces;
 
 namespace ServicePortal.Modules.Role.Controllers
 {
@@ -18,11 +18,19 @@ namespace ServicePortal.Modules.Role.Controllers
         }
 
         [HttpGet("get-all"), Authorize, RoleAuthorize("HR", "HR_Manager")]
-        public async Task<IActionResult> GetAll([FromQuery] SearchRoleRequest request)
+        public async Task<IActionResult> GetAll([FromQuery] SearchRoleRequestDto request)
         {
             var results = await _roleService.GetAll(request);
 
-            var response = new PageResponse<Domain.Entities.Role>(200, "Success", results.Data, results.TotalPages, request.Page, request.PageSize, results.TotalItems);
+            var response = new PageResponse<Domain.Entities.Role>(
+                200, 
+                "Success", 
+                results.Data, 
+                results.TotalPages,
+                request.Page, 
+                request.PageSize,
+                results.TotalItems
+            );
 
             return Ok(response);
         }
@@ -36,7 +44,7 @@ namespace ServicePortal.Modules.Role.Controllers
         }
 
         [HttpPost("create"), RoleAuthorize("superadmin")]
-        public async Task<IActionResult> Create([FromBody] CreateRoleRequest request)
+        public async Task<IActionResult> Create([FromBody] CreateRoleDto request)
         {
             var role = await _roleService.Create(request);
 
@@ -44,7 +52,7 @@ namespace ServicePortal.Modules.Role.Controllers
         }
 
         [HttpPut("update/{id}"), RoleAuthorize("superadmin")]
-        public async Task<IActionResult> Update(int id, [FromBody] CreateRoleRequest request)
+        public async Task<IActionResult> Update(int id, [FromBody] CreateRoleDto request)
         {
             var role = await _roleService.Update(id, request);
 

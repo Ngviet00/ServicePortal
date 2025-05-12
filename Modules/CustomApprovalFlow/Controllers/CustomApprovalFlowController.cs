@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using ServicePortal.Common;
 using ServicePortal.Common.Filters;
 using ServicePortal.Modules.CustomApprovalFlow.DTO;
-using ServicePortal.Modules.CustomApprovalFlow.Interfaces;
+using ServicePortal.Modules.CustomApprovalFlow.Services.Interfaces;
 
 namespace ServicePortal.Modules.CustomApprovalFlow.Controllers
 {
@@ -19,11 +19,19 @@ namespace ServicePortal.Modules.CustomApprovalFlow.Controllers
         }
 
         [HttpGet("get-all")]
-        public async Task<IActionResult> GetAll([FromQuery]CustomApprovalFlowDTO request)
+        public async Task<IActionResult> GetAll([FromQuery]CustomApprovalFlowDto request)
         {
             var results = await _customApprovalFlowService.GetAll(request);
 
-            var response = new PageResponse<CustomApprovalFlowDTO>(200, "Success", results.Data, results.TotalPages, results.TotalItems, request.Page, request.PageSize);
+            var response = new PageResponse<CustomApprovalFlowDto>(
+                200,
+                "Success",
+                results.Data,
+                results.TotalPages,
+                results.TotalItems,
+                request.Page,
+                request.PageSize
+            );
 
             return Ok(response);
         }
@@ -33,11 +41,11 @@ namespace ServicePortal.Modules.CustomApprovalFlow.Controllers
         {
             var result = await _customApprovalFlowService.GetById(id);
 
-            return Ok(new BaseResponse<CustomApprovalFlowDTO>(200, "success", result));
+            return Ok(new BaseResponse<CustomApprovalFlowDto>(200, "success", result));
         }
 
         [HttpPost("create")]
-        public async Task<IActionResult> Create([FromBody] CustomApprovalFlowDTO dto)
+        public async Task<IActionResult> Create([FromBody] CustomApprovalFlowDto dto)
         {
             var result = await _customApprovalFlowService.Create(dto);
 
@@ -45,7 +53,7 @@ namespace ServicePortal.Modules.CustomApprovalFlow.Controllers
         }
 
         [HttpPut("update/{id}")]
-        public async Task<IActionResult> Update(int id, [FromBody] CustomApprovalFlowDTO dto)
+        public async Task<IActionResult> Update(int id, [FromBody] CustomApprovalFlowDto dto)
         {
             var result = await _customApprovalFlowService.Update(id, dto);
 

@@ -4,6 +4,6 @@ namespace ServicePortal.Infrastructure.Email
 {
     public interface IEmailService
     {
-        Task SendEmailLeaveRequest(string to, LeaveRequest request, string UrlFrontEnd);
+        Task SendEmailLeaveRequest(List<string> listEmail, LeaveRequest request, string UrlFrontEnd);
     }
 }

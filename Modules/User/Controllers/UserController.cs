@@ -3,8 +3,9 @@ using Microsoft.AspNetCore.Mvc;
 using ServicePortal.Common;
 using ServicePortal.Common.Filters;
 using ServicePortal.Modules.User.DTO;
-using ServicePortal.Modules.User.Interfaces;
-using ServicePortal.Modules.User.Requests;
+using ServicePortal.Modules.User.DTO.Requests;
+using ServicePortal.Modules.User.DTO.Responses;
+using ServicePortal.Modules.User.Services.Interfaces;
 
 namespace ServicePortal.Modules.User.Controllers
 {
@@ -26,17 +27,25 @@ namespace ServicePortal.Modules.User.Controllers
 
             var results = await _userService.GetMe(currentUserCode ?? "");
 
-            var response = new BaseResponse<UserDTO>(200, "Success", results);
+            var response = new BaseResponse<UserResponseDto>(200, "Success", results);
 
             return Ok(response);
         }
 
         [HttpGet("get-all")]
-        public async Task<IActionResult> GetAll(GetAllUserRequest request)
+        public async Task<IActionResult> GetAll(GetAllUserRequestDto request)
         {
             var results = await _userService.GetAll(request);
 
-            var response = new PageResponse<UserDTO>(200, "Success", results.Data, results.TotalPages, request.Page, request.PageSize, results.TotalItems);
+            var response = new PageResponse<UserResponseDto>(
+                200,
+                "Success",
+                results.Data,
+                results.TotalPages, 
+                request.Page,
+                request.PageSize,
+                results.TotalItems
+            );
 
             return Ok(response);
         }
@@ -44,17 +53,17 @@ namespace ServicePortal.Modules.User.Controllers
         [HttpGet("get-by-id/{id}")]
         public async Task<IActionResult> GetById(Guid id)
         {
-            UserDTO? userDTO = await _userService.GetById(id);
+            UserResponseDto? userDTO = await _userService.GetById(id);
 
-            return Ok(new BaseResponse<UserDTO>(200, "success", userDTO));
+            return Ok(new BaseResponse<UserResponseDto>(200, "success", userDTO));
         }
 
         [HttpGet("get-by-code/{code}")]
         public async Task<IActionResult> GetByCode(string code)
         {
-            UserDTO? userDTO = await _userService.GetByCode(code);
+            UserResponseDto? userDTO = await _userService.GetByCode(code);
 
-            return Ok(new BaseResponse<UserDTO>(200, "success", userDTO));
+            return Ok(new BaseResponse<UserResponseDto>(200, "success", userDTO));
         }
 
         //[HttpPut("/update")]
@@ -70,7 +79,7 @@ namespace ServicePortal.Modules.User.Controllers
         {
             await _userService.ForceDelete(id);
 
-            return Ok(new BaseResponse<UserDTO>(200, "Delete user successfully", null));
+            return Ok(new BaseResponse<UserResponseDto>(200, "Delete user successfully", null));
         }
 
         [HttpDelete("force-delete/{id}")]
@@ -78,7 +87,7 @@ namespace ServicePortal.Modules.User.Controllers
         {
             await _userService.ForceDelete(id);
 
-            return Ok(new BaseResponse<UserDTO>(200, "Delete user permanently successfully", null));
+            return Ok(new BaseResponse<UserResponseDto>(200, "Delete user permanently successfully", null));
         }
 
         [HttpGet("org-chart")]
@@ -90,7 +99,7 @@ namespace ServicePortal.Modules.User.Controllers
         }
 
         [HttpPost("update-user-role"), RoleAuthorize("superadmin")]
-        public async Task<IActionResult> UpdateUserRole(UpdateUserRoleDTO dto)
+        public async Task<IActionResult> UpdateUserRole(UpdateUserRoleDto dto)
         {
             var result = await _userService.UpdateUserRole(dto);
 

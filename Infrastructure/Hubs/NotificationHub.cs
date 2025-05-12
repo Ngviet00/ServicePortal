@@ -16,7 +16,7 @@ namespace ServicePortal.Infrastructure.Hubs
             return base.OnConnectedAsync();
         }
 
-        public override Task OnDisconnectedAsync(Exception exception)
+        public override Task OnDisconnectedAsync(Exception? exception)
         {
             var userCode = Context.User?.FindFirst("user_code")?.Value;
 

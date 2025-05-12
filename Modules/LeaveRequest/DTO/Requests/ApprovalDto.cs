@@ -1,0 +1,22 @@
+﻿using System.Text.Json.Serialization;
+
+namespace ServicePortal.Modules.LeaveRequest.DTO.Requests
+{
+    public class ApprovalDto
+    {
+        [JsonPropertyName("user_code_approval")]
+        public string? UserCodeApproval { get; set; }
+
+        [JsonPropertyName("leave_request_id")]
+        public string? LeaveRequestId { get; set; }
+
+        [JsonPropertyName("status")]
+        public bool Status { get; set; } //true approval, false reject
+
+        [JsonPropertyName("note")]
+        public string? Note { get; set; }
+
+        [JsonPropertyName("url_front_end")]
+        public string? UrlFrontEnd { get; set; }
+    }
+}

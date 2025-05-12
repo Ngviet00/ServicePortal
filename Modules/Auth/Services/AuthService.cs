@@ -1,17 +1,16 @@
-﻿using ServicePortal.Application.DTOs.Auth.Requests;
-using ServicePortal.Application.DTOs.Auth.Responses;
-using ServicePortal.Application.Services;
+﻿using ServicePortal.Application.Services;
 using ServicePortal.Common.Helpers;
 using ServicePortal.Common;
 using ServicePortal.Domain.Entities;
 using ServicePortal.Infrastructure.Data;
 using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
-using ServicePortal.Modules.Auth.Requests;
-using ServicePortal.Modules.User.DTO;
-using ServicePortal.Modules.Auth.Interfaces;
 using ServicePortal.Common.Mappers;
-using ServicePortal.Modules.User.Interfaces;
+using ServicePortal.Modules.User.Services.Interfaces;
+using ServicePortal.Modules.User.DTO.Responses;
+using ServicePortal.Modules.Auth.Services.Interfaces;
+using ServicePortal.Modules.Auth.DTO.Responses;
+using ServicePortal.Modules.Auth.DTO.Requests;
 
 namespace ServicePortal.Modules.Auth.Services
 {
@@ -30,7 +29,7 @@ namespace ServicePortal.Modules.Auth.Services
             _userService = userService;
         }
 
-        public async Task<UserDTO> Register(CreateUserRequest request)
+        public async Task<UserResponseDto> Register(CreateUserDto request)
         {
             if (await _context.Users.AnyAsync(u => u.Code == request.Code && u.DeletedAt == null))
             {
@@ -69,7 +68,7 @@ namespace ServicePortal.Modules.Auth.Services
             return UserMapper.ToDto(newUser);
         }
 
-        public async Task<LoginResponse> Login(LoginRequest request)
+        public async Task<LoginResponseDto> Login(LoginRequestDto request)
         {
             var query = _userService.GetUserQueryLogin();
 
@@ -89,7 +88,7 @@ namespace ServicePortal.Modules.Auth.Services
                 new("user_code", user?.Code ?? ""),
             };
 
-            claims.AddRange(user.Roles.Select(r => new Claim(ClaimTypes.Role, r.Code)));
+            claims.AddRange(user!.Roles.Select(r => new Claim(ClaimTypes.Role, r.Code ?? "")));
 
             var accessToken = _jwtService.GenerateAccessToken(claims);
 
@@ -109,7 +108,7 @@ namespace ServicePortal.Modules.Auth.Services
 
             user!.Password = null;
 
-            var result = new LoginResponse
+            var result = new LoginResponseDto
             {
                 AccessToken = accessToken,
                 RefreshToken = refreshToken,
@@ -137,14 +136,14 @@ namespace ServicePortal.Modules.Auth.Services
                 new("user_code", token?.UserCode ?? ""),
             };
 
-            claims.AddRange(user.Roles.Select(r => new Claim(ClaimTypes.Role, r.Code)));
+            claims.AddRange(user!.Roles.Select(r => new Claim(ClaimTypes.Role, r.Code ?? "")));
 
             var newAccessToken = _jwtService.GenerateAccessToken(claims);
 
             return newAccessToken;
         }
 
-        public async Task ChangePassword(ChangePasswordRequest request, string userCode)
+        public async Task ChangePassword(ChangePasswordRequestDto request, string userCode)
         {
             var user = await _context.Users.FirstOrDefaultAsync(e => e.Code == userCode) ?? throw new NotFoundException("Not found user!");
 

@@ -6,8 +6,8 @@ using ServicePortal.Domain.Enums;
 using ServicePortal.Infrastructure.Data;
 using ServicePortal.Infrastructure.Email;
 using ServicePortal.Modules.LeaveRequest.DTO;
-using ServicePortal.Modules.LeaveRequest.Interfaces;
-using ServicePortal.Modules.LeaveRequest.Requests;
+using ServicePortal.Modules.LeaveRequest.DTO.Requests;
+using ServicePortal.Modules.LeaveRequest.Services.Interfaces;
 
 namespace ServicePortal.Modules.LeaveRequest.Services
 {
@@ -20,7 +20,7 @@ namespace ServicePortal.Modules.LeaveRequest.Services
             _context = context;
         }
 
-        public async Task<PagedResults<LeaveRequestDTO>> GetAll(GetAllLeaveRequest request)
+        public async Task<PagedResults<LeaveRequestDto>> GetAll(GetAllLeaveRequestDto request)
         {
             double pageSize = request.PageSize;
 
@@ -48,11 +48,11 @@ namespace ServicePortal.Modules.LeaveRequest.Services
                 .Select(lr => new
                 {
                     LeaveRequest = lr,
-                    ApprovedBy = lr.LeaveRequestSteps
+                    ApprovedBy = lr.LeaveRequestSteps != null ? lr.LeaveRequestSteps
                         .Where(s => s.ApprovedBy != null && s.ApprovedAt != null)
                         .OrderByDescending(s => s.ApprovedAt)
                         .Select(s => s.ApprovedBy)
-                        .FirstOrDefault()
+                        .FirstOrDefault() : null
                 })
                 .Skip((int)((page - 1) * pageSize))
                 .Take((int)pageSize)
@@ -65,7 +65,7 @@ namespace ServicePortal.Modules.LeaveRequest.Services
                 return leaveRequestDto;
             }).ToList();
 
-            return new PagedResults<LeaveRequestDTO>
+            return new PagedResults<LeaveRequestDto>
             {
                 Data = leaveRequestDTOs,
                 TotalItems = totalItems,
@@ -75,7 +75,7 @@ namespace ServicePortal.Modules.LeaveRequest.Services
             };
         }
 
-        public async Task<LeaveRequestDTO> GetById(Guid id)
+        public async Task<LeaveRequestDto> GetById(Guid id)
         {
             var leaveRequest = await _context.LeaveRequests.FirstOrDefaultAsync(e => e.Id == id) ?? throw new NotFoundException("Leave request not found!");
 
@@ -83,7 +83,7 @@ namespace ServicePortal.Modules.LeaveRequest.Services
         }
 
         //can check more have role send yourselt to hr
-        public async Task<LeaveRequestDTO> Create(LeaveRequestDTO dto)
+        public async Task<LeaveRequestDto> Create(LeaveRequestDto dto)
         {
             //get current user send leave request
             var user = await _context.Users.Include(e => e.Department).Where(e => e.Code == dto.UserCodeRegister).FirstOrDefaultAsync();
@@ -91,20 +91,20 @@ namespace ServicePortal.Modules.LeaveRequest.Services
             //check have custom 
             var haveCustomApproval = await _context
                 .CustomApprovalFlows
-                .FirstOrDefaultAsync(e => e.TypeCustomApproval == "LEAVE_REQUEST" && e.DepartmentId == user.DepartmentId && e.From == user.Level);
+                .FirstOrDefaultAsync(e => e.TypeCustomApproval == "LEAVE_REQUEST" && e.DepartmentId == user!.DepartmentId && e.From == user.Level);
 
 
-            Domain.Entities.User nextUserCustomApproval = null;
+            Domain.Entities.User? nextUserCustomApproval = null;
 
             bool flagHaveCustomApproval = false;
 
             if (haveCustomApproval != null)
             {
-                nextUserCustomApproval = await _context.Users.Where(e => e.DepartmentId == user.DepartmentId && e.Level == haveCustomApproval.To).FirstOrDefaultAsync();
+                nextUserCustomApproval = await _context.Users.Where(e => e.DepartmentId == user!.DepartmentId && e.Level == haveCustomApproval.To).FirstOrDefaultAsync();
                 flagHaveCustomApproval = true;
             }
 
-            var nextUserApproval = await _context.Users.Where(e => e.DepartmentId == user.DepartmentId && e.Level == user.LevelParent).FirstOrDefaultAsync();
+            var nextUserApproval = await _context.Users.Where(e => e.DepartmentId == user!.DepartmentId && e.Level == user.LevelParent).FirstOrDefaultAsync();
 
             //create leave request
             var entity = LeaveRequestMapper.ToEntity(dto);
@@ -127,7 +127,7 @@ namespace ServicePortal.Modules.LeaveRequest.Services
 
             if ((nextUserApproval != null && flagHaveCustomApproval == false) || (flagHaveCustomApproval && nextUserCustomApproval == null))
             {
-                lrStepData.LevelApproval = nextUserApproval.Level;
+                lrStepData.LevelApproval = nextUserApproval!.Level;
                 email = nextUserApproval.Email;
 
                 entity.Status = (byte?)StatusLeaveRequestEnum.PENDING;
@@ -149,7 +149,7 @@ namespace ServicePortal.Modules.LeaveRequest.Services
             //send email
             if (!string.IsNullOrWhiteSpace(nextUserApproval?.Email))
             {
-                BackgroundJob.Enqueue<EmailService>(job => job.SendEmailLeaveRequest(email, entity, dto.UrlFrontEnd));
+                BackgroundJob.Enqueue<EmailService>(job => job.SendEmailLeaveRequest(new List<string> { email ?? "" }, entity, dto.UrlFrontEnd));
             }
 
             await _context.SaveChangesAsync();
@@ -157,7 +157,7 @@ namespace ServicePortal.Modules.LeaveRequest.Services
             return dto;
         }
 
-        public async Task<LeaveRequestDTO> Update(Guid id, LeaveRequestDTO dto)
+        public async Task<LeaveRequestDto> Update(Guid id, LeaveRequestDto dto)
         {
             var leaveRequest = await _context.LeaveRequests.FirstOrDefaultAsync(e => e.Id == id) ?? throw new NotFoundException("Leave request not found!");
 
@@ -176,7 +176,7 @@ namespace ServicePortal.Modules.LeaveRequest.Services
             return LeaveRequestMapper.ToDto(leaveRequest);
         }
 
-        public async Task<LeaveRequestDTO> Delete(Guid id)
+        public async Task<LeaveRequestDto> Delete(Guid id)
         {
             var leaveRequest = await _context.LeaveRequests.FirstOrDefaultAsync(e => e.Id == id) ?? throw new NotFoundException("Leave request not found!");
 
@@ -187,7 +187,7 @@ namespace ServicePortal.Modules.LeaveRequest.Services
             return LeaveRequestMapper.ToDto(leaveRequest);
         }
 
-        public async Task<PagedResults<LeaveRequestDTO>> GetAllWaitApproval(GetAllLeaveRequestWaitApproval request)
+        public async Task<PagedResults<LeaveRequestDto>> GetAllWaitApproval(GetAllLeaveRequestWaitApprovalDto request)
         {
             double pageSize = request.PageSize;
 
@@ -209,13 +209,16 @@ namespace ServicePortal.Modules.LeaveRequest.Services
                     u.LevelParent,
                     u.DepartmentId,
                     u.Department,
-                    Roles = u.UserRoles.Select(ur => ur.Role.Name).ToList(),
-                    IsRoleHR = u.UserRoles.Any(ur => ur.Role.Code == "HR")
+                    Roles = u.UserRoles
+                        .Where(ur => ur.Role != null)
+                        .Select(ur => ur.Role!.Name).ToList(),
+                    IsRoleHR = u.UserRoles
+                    .Any(ur => ur.Role != null && ur.Role!.Code == "HR")
                 }).FirstOrDefaultAsync();
 
             if (user == null)
             {
-                return new PagedResults<LeaveRequestDTO>
+                return new PagedResults<LeaveRequestDto>
                 {
                     Data = [],
                     TotalItems = 0,
@@ -228,11 +231,11 @@ namespace ServicePortal.Modules.LeaveRequest.Services
             //get list approval by hr
             if (user.IsRoleHR)
             {
-                query = QueryWaitApprovalHR(user.Department.Id, user.Level);
+                query = QueryWaitApprovalHR(user?.Department?.Id, user?.Level);
             }
             else //get list approval user normal
             {
-                query = QueryWaitApprovalNormalUser(request?.DepartmentId, request.Level);
+                query = QueryWaitApprovalNormalUser(request?.DepartmentId, request?.Level);
             }
 
             var totalItems = await query.CountAsync();
@@ -244,11 +247,11 @@ namespace ServicePortal.Modules.LeaveRequest.Services
                 .Select(lr => new
                 {
                     LeaveRequest = lr,
-                    ApprovedBy = lr.LeaveRequestSteps
+                    ApprovedBy = lr.LeaveRequestSteps != null ? lr.LeaveRequestSteps
                         .Where(s => s.ApprovedBy != null && s.ApprovedAt != null)
                         .OrderByDescending(s => s.ApprovedAt)
                         .Select(s => s.ApprovedBy)
-                        .FirstOrDefault()
+                        .FirstOrDefault() : null
                 })
                 .Skip((int)((page - 1) * pageSize))
                 .Take((int)pageSize)
@@ -261,7 +264,7 @@ namespace ServicePortal.Modules.LeaveRequest.Services
                 return leaveRequestDto;
             }).ToList();
 
-            return new PagedResults<LeaveRequestDTO>
+            return new PagedResults<LeaveRequestDto>
             {
                 Data = leaveRequestDTOs,
                 TotalItems = totalItems,
@@ -269,7 +272,7 @@ namespace ServicePortal.Modules.LeaveRequest.Services
             };
         }
 
-        public async Task<LeaveRequestDTO?> Approval(ApprovalDTO request, string currentUserCodeInJwt)
+        public async Task<LeaveRequestDto?> Approval(ApprovalDto request, string currentUserCodeInJwt)
         {
             //check current user is user in jwt token
             if (string.IsNullOrWhiteSpace(currentUserCodeInJwt))
@@ -292,10 +295,16 @@ namespace ServicePortal.Modules.LeaveRequest.Services
                     u.LevelParent,
                     u.DepartmentId,
                     u.Department,
-                    UserPermission = u.UserPermission.Select(up => up.Permission.Name).ToList(),
-                    Roles = u.UserRoles.Select(ur => ur.Role.Code).ToList(),
-                    IsRoleHR = u.UserRoles.Any(ur => ur.Role.Code == "HR"),
-                    IsRoleHRManager = u.UserRoles.Any(ur => ur.Role.Code == "HR_Manager")
+                    UserPermission = u.UserPermission
+                        .Where(up => up.Permission != null)
+                        .Select(up => up.Permission!.Name).ToList(),
+                    Roles = u.UserRoles
+                        .Where(ur => ur.Role != null)
+                        .Select(ur => ur.Role!.Code).ToList(),
+                    IsRoleHR = u.UserRoles
+                        .Any(ur => ur.Role != null && ur.Role.Code == "HR"),
+                    IsRoleHRManager = u.UserRoles
+                        .Any(ur => ur.Role != null && ur.Role.Code == "HR_Manager")
                 })
                 .FirstOrDefaultAsync(e => e.Code == request.UserCodeApproval);
 
@@ -310,7 +319,7 @@ namespace ServicePortal.Modules.LeaveRequest.Services
                 .FirstOrDefaultAsync(e => e.TypeCustomApproval == "LEAVE_REQUEST" && e.DepartmentId == userApproval.DepartmentId && e.From == userApproval.Level);
 
 
-            Domain.Entities.User nextUserCustomApproval = null;
+            Domain.Entities.User? nextUserCustomApproval = null;
 
             bool flagHaveCustomApproval = false;
 
@@ -366,7 +375,7 @@ namespace ServicePortal.Modules.LeaveRequest.Services
             {
                 if (!userApproval.IsRoleHRManager)
                 {
-                    if (!userApproval.Roles.Any(r => r.Contains("leave_request.hr_approval")))
+                    if (!userApproval.Roles.Any(r => r != null && r.Contains("leave_request.hr_approval")))
                     {
                         throw new ForbiddenException("Bạn chưa có quyền, liên hệ team IT");
                     }
@@ -415,7 +424,7 @@ namespace ServicePortal.Modules.LeaveRequest.Services
 
                     if (!string.IsNullOrWhiteSpace(nextUserApproval?.Email))
                     {
-                        BackgroundJob.Enqueue<EmailService>(job => job.SendEmailLeaveRequest(nextUserApproval.Email, leaveRequest, request.UrlFrontEnd));
+                        BackgroundJob.Enqueue<EmailService>(job => job.SendEmailLeaveRequest(new List<string> { nextUserApproval.Email }, leaveRequest, request.UrlFrontEnd));
                     }
                 }
 
@@ -424,7 +433,7 @@ namespace ServicePortal.Modules.LeaveRequest.Services
                 return LeaveRequestMapper.ToDto(leaveRequest);
             }
 
-            if (userApproval.Roles.Any(role => role.Contains("leave_request.approval_to_hr")))
+            if (userApproval.Roles.Any(role => role != null && role.Contains("leave_request.approval_to_hr")))
             {
                 Domain.Entities.LeaveRequestStep newStep = new Domain.Entities.LeaveRequestStep
                 {
@@ -435,7 +444,7 @@ namespace ServicePortal.Modules.LeaveRequest.Services
                 _context.LeaveRequestSteps.Add(newStep);
 
                 //send email to group hr, now fake 
-                BackgroundJob.Enqueue<EmailService>(job => job.SendEmailLeaveRequest("nguyenviet@vsvn.com.vn", leaveRequest, request.UrlFrontEnd));
+                BackgroundJob.Enqueue<EmailService>(job => job.SendEmailLeaveRequest(new List<string> { "nguyenviet@vsvn.com.vn" }, leaveRequest, request.UrlFrontEnd));
             }
             else
             {
@@ -457,8 +466,8 @@ namespace ServicePortal.Modules.LeaveRequest.Services
 
                 if ((nextUserApproval != null && flagHaveCustomApproval == false) || (flagHaveCustomApproval && nextUserCustomApproval == null))
                 {
-                    newStep.LevelApproval = nextUserApproval.Level;
-                    email = nextUserApproval.Email;
+                    newStep.LevelApproval = nextUserApproval?.Level;
+                    email = nextUserApproval?.Email;
                 }
                 else if (flagHaveCustomApproval && nextUserCustomApproval != null)
                 {
@@ -470,7 +479,7 @@ namespace ServicePortal.Modules.LeaveRequest.Services
 
                 if (!string.IsNullOrWhiteSpace(nextUserApproval?.Email))
                 {
-                    BackgroundJob.Enqueue<EmailService>(job => job.SendEmailLeaveRequest(email, leaveRequest, request.UrlFrontEnd));
+                    BackgroundJob.Enqueue<EmailService>(job => job.SendEmailLeaveRequest(new List<string> { email ?? "" }, leaveRequest, request.UrlFrontEnd));
                 }
             }
 
@@ -489,7 +498,7 @@ namespace ServicePortal.Modules.LeaveRequest.Services
             return LeaveRequestMapper.ToDto(leaveRequest);
         }
 
-        public async Task<int> CountWaitApproval(GetAllLeaveRequestWaitApproval request)
+        public async Task<int> CountWaitApproval(GetAllLeaveRequestWaitApprovalDto request)
         {
             IQueryable<Domain.Entities.LeaveRequest> query;
 
@@ -504,19 +513,22 @@ namespace ServicePortal.Modules.LeaveRequest.Services
                     u.LevelParent,
                     u.DepartmentId,
                     u.Department,
-                    Roles = u.UserRoles.Select(ur => ur.Role.Name).ToList(),
-                    IsRoleHR = u.UserRoles.Any(ur => ur.Role.Code.ToUpper() == "HR")
+                    Roles = u.UserRoles
+                        .Where(ur => ur.Role != null)
+                        .Select(ur => ur.Role!.Name).ToList(),
+                    IsRoleHR = u.UserRoles
+                        .Any(ur => ur.Role != null && ur.Role.Code!.ToUpper() == "HR")
                 }).FirstOrDefaultAsync();
 
             if (user != null)
             {
                 if (user.IsRoleHR)
                 {
-                    query = QueryWaitApprovalHR(user.Department.Id, user.Level);
+                    query = QueryWaitApprovalHR(user?.Department?.Id, user?.Level);
                 }
                 else
                 {
-                    query = QueryWaitApprovalNormalUser(request?.DepartmentId, request.Level);
+                    query = QueryWaitApprovalNormalUser(request?.DepartmentId, request?.Level);
                 }
 
                 return await query.CountAsync();
