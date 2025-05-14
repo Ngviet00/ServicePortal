@@ -11,6 +11,9 @@ namespace ServicePortal.Modules.User.DTO
         [JsonPropertyName("name")]
         public string? Name { get; set; }
 
+        [JsonPropertyName("code")]
+        public string? Code { get; set; }
+
         [JsonPropertyName("position")]
         public string? Position { get; set; }
 

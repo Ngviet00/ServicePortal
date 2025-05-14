@@ -29,6 +29,26 @@ namespace ServicePortal.Modules.Auth.Services
             _userService = userService;
         }
 
+        public async Task<object> RegisterV2(string usercode, string password)
+        {
+            //check exist in viclock
+            if (true)
+            {
+                //throw new lien he voi hr
+            }
+
+            //check has exist in web system
+            if (true)
+            {
+                //throw new nguoi dung da ton tai
+            }
+
+            //check not exist in web system
+            //save to database, with is_change_pw = false, sau khi doi mat khau xong, set true
+
+            return null;
+        }
+
         public async Task<UserResponseDto> Register(CreateUserDto request)
         {
             if (await _context.Users.AnyAsync(u => u.Code == request.Code && u.DeletedAt == null))

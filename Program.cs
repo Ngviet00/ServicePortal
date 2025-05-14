@@ -240,6 +240,8 @@ namespace ServicePortal
             //global exception
             app.UseMiddleware<GlobalExceptionMiddleware>();
 
+            app.UseRouting();
+
             //signalR realtime
             app.MapHub<NotificationHub>("/notificationHub");
 

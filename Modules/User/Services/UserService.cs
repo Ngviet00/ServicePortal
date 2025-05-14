@@ -161,21 +161,23 @@ namespace ServicePortal.Modules.User.Services
                         })
                         .Distinct()
                         .ToList(),
+                    UserPermissions = new List<string?>(),
 
-                    UserPermissions = u.UserPermission
-                        .Where(up => up.Permission != null)
-                        .Select(up => up.Permission!.Name)
-                        .Distinct()
-                        .ToList(),
+                    //UserPermissions = u.UserPermission
+                    //    .Where(up => up.Permission != null)
+                    //    .Select(up => up.Permission!.Name)
+                    //    .Distinct()
+                    //    .ToList(),
+                    Permissions = new List<string?>(),
 
-                    Permissions = u.UserRoles
-                        .Where(ur => ur.Role != null)
-                        .SelectMany(ur => ur.Role!.RolePermissions
-                            .Where(rp => rp.Permission != null)
-                            .Select(rp => rp.Permission!.Name)
-                        )
-                        .Distinct()
-                        .ToList()
+                    //Permissions = u.UserRoles
+                    //    .Where(ur => ur.Role != null)
+                    //    .SelectMany(ur => ur.Role!.RolePermissions
+                    //        .Where(rp => rp.Permission != null)
+                    //        .Select(rp => rp.Permission!.Name)
+                    //    )
+                    //    .Distinct()
+                    //    .ToList()
                 });
 
             return query;
@@ -211,6 +213,7 @@ namespace ServicePortal.Modules.User.Services
                 {
                     Id = x.Id,
                     Name = x.Name,
+                    Code = x.Code,
                     Position = x.Position,
                     Level = x.Level,
                     LevelParent = x.LevelParent
