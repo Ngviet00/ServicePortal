@@ -11,18 +11,11 @@ namespace ServicePortal.Common.Mappers
             return new UserResponseDto
             {
                 Id = entity.Id,
-                Code = entity.Code,
-                Name = entity.Name,
-                Email = entity.Email,
+                UserCode = entity.UserCode,
+                PositionId = entity.PositionId,
+                Password = entity.Password,
                 IsActive = entity.IsActive,
-                DateJoinCompany = entity.DateJoinCompany,
-                DateOfBirth = entity.DateOfBirth,
-                Phone = entity.Phone,
-                Sex = entity.Sex,
-                Position = entity.Position,
-                Level = entity.Level,
-                LevelParent = entity.LevelParent,
-                Department = entity.Department != null ? DepartmentMapper.ToDto(entity.Department) : null,
+                IsChangePassword = entity.IsChangePassword,
                 Roles = entity?.UserRoles != null && entity.UserRoles.All(ur => ur.Role != null)
                 ? entity.UserRoles.Select(ur => new Role
                 {

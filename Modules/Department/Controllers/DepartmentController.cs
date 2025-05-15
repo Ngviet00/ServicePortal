@@ -12,69 +12,70 @@ namespace ServicePortal.Modules.Deparment.Controllers
     [ApiController, Route("api/department"), RoleAuthorize("HR", "HR_Manager")]
     public class DepartmentController : ControllerBase
     {
-        private readonly IDepartmentService _deparmentService;
+        //private readonly IDepartmentService _deparmentService;
 
-        public DepartmentController(IDepartmentService deparmentService)
-        {
-            _deparmentService = deparmentService;
-        }
+        //public DepartmentController(IDepartmentService deparmentService)
+        //{
+        //    _deparmentService = deparmentService;
+        //}
 
-        [HttpGet("get-all")]
-        public async Task<IActionResult> GetAll([FromQuery] GetAllDepartmentRequestDto request)
-        {
-            var results = await _deparmentService.GetAll(request);
+        //[HttpGet("get-all")]
+        //public async Task<IActionResult> GetAll([FromQuery] GetAllDepartmentRequestDto request)
+        //{
+        //    //var results = await _deparmentService.GetAll(request);
 
-            var response = new PageResponse<DepartmentDTO>(
-                200,
-                "Success",
-                results.Data,
-                results.TotalPages,
-                request.Page,
-                request.PageSize,
-                results.TotalItems
-            );
+        //    //var response = new PageResponse<DepartmentDTO>(
+        //    //    200,
+        //    //    "Success",
+        //    //    results.Data,
+        //    //    results.TotalPages,
+        //    //    request.Page,
+        //    //    request.PageSize,
+        //    //    results.TotalItems
+        //    //);
 
-            return Ok(response);
-        }
+        //    //return Ok(response);
+        //    return Ok();
+        //}
 
-        [HttpGet("get-parent-department")]
-        public async Task<IActionResult> GetParentDepartment()
-        {
-            var deparments = await _deparmentService.GetParentDepartment();
+        //[HttpGet("get-parent-department")]
+        //public async Task<IActionResult> GetParentDepartment()
+        //{
+        //    var deparments = await _deparmentService.GetParentDepartment();
 
-            return Ok(new BaseResponse<List<Domain.Entities.Department>>(200, "success", deparments));
-        }
+        //    return Ok(new BaseResponse<List<Domain.Entities.Department>>(200, "success", deparments));
+        //}
 
-        [HttpGet("get-by-id/{id}")]
-        public async Task<IActionResult> GetById(int id)
-        {
-            var deparment = await _deparmentService.GetById(id);
+        //[HttpGet("get-by-id/{id}")]
+        //public async Task<IActionResult> GetById(int id)
+        //{
+        //    var deparment = await _deparmentService.GetById(id);
 
-            return Ok(new BaseResponse<Domain.Entities.Department>(200, "success", deparment));
-        }
+        //    return Ok(new BaseResponse<Domain.Entities.Department>(200, "success", deparment));
+        //}
 
-        [HttpPost("create")]
-        public async Task<IActionResult> Create(DepartmentDTO dto)
-        {
-            var deparment = await _deparmentService.Create(dto);
+        //[HttpPost("create")]
+        //public async Task<IActionResult> Create(DepartmentDTO dto)
+        //{
+        //    var deparment = await _deparmentService.Create(dto);
 
-            return Ok(new BaseResponse<Domain.Entities.Department>(200, "success", deparment));
-        }
+        //    return Ok(new BaseResponse<Domain.Entities.Department>(200, "success", deparment));
+        //}
 
-        [HttpPut("update/{id}")]
-        public async Task<IActionResult> Update(int id, DepartmentDTO dto)
-        {
-            var deparment = await _deparmentService.Update(id, dto);
+        //[HttpPut("update/{id}")]
+        //public async Task<IActionResult> Update(int id, DepartmentDTO dto)
+        //{
+        //    var deparment = await _deparmentService.Update(id, dto);
 
-            return Ok(new BaseResponse<Domain.Entities.Department>(200, "success", deparment));
-        }
+        //    return Ok(new BaseResponse<Domain.Entities.Department>(200, "success", deparment));
+        //}
 
-        [HttpDelete("delete/{id}"), RoleAuthorize("superadmin")]
-        public async Task<IActionResult> Delete(int id)
-        {
-            var deparment = await _deparmentService.Delete(id);
+        //[HttpDelete("delete/{id}"), RoleAuthorize("superadmin")]
+        //public async Task<IActionResult> Delete(int id)
+        //{
+        //    var deparment = await _deparmentService.Delete(id);
 
-            return Ok(new BaseResponse<Domain.Entities.Department>(200, "success", deparment));
-        }
+        //    return Ok(new BaseResponse<Domain.Entities.Department>(200, "success", deparment));
+        //}
     }
 }

@@ -20,35 +20,35 @@ namespace ServicePortal.Infrastructure.Email
         {
             try
             {
-                var smtp = _config.GetSection("SmtpSettings");
-                using var smtpClient = new SmtpClient(smtp["Host"])
-                {
-                    Port = int.Parse(smtp["Port"] ?? ""),
-                    Credentials = new NetworkCredential(smtp["Username"], smtp["Password"]),
-                    EnableSsl = bool.Parse(smtp["EnableSsl"] ?? "")
-                };
+                //var smtp = _config.GetSection("SmtpSettings");
+                //using var smtpClient = new SmtpClient(smtp["Host"])
+                //{
+                //    Port = int.Parse(smtp["Port"] ?? ""),
+                //    Credentials = new NetworkCredential(smtp["Username"], smtp["Password"]),
+                //    EnableSsl = bool.Parse(smtp["EnableSsl"] ?? "")
+                //};
 
-                string content = FormatContentMailLeaveRequest(leaveRequest, UrlFrontEnd ?? "http://localhost:5173");
+                //string content = FormatContentMailLeaveRequest(leaveRequest, UrlFrontEnd ?? "http://localhost:5173");
 
-                string subject = $"Đơn xin nghỉ phép - {leaveRequest.Name}";
+                //string subject = $"Đơn xin nghỉ phép - {leaveRequest.Name}";
 
-                var message = new MailMessage
-                {
-                    From = new MailAddress(smtp["From"] ?? ""),
-                    Subject = subject,
-                    Body = content,
-                    IsBodyHtml = true
-                };
+                //var message = new MailMessage
+                //{
+                //    From = new MailAddress(smtp["From"] ?? ""),
+                //    Subject = subject,
+                //    Body = content,
+                //    IsBodyHtml = true
+                //};
 
-                foreach (var email in listEmail)
-                {
-                    if (!string.IsNullOrWhiteSpace(email))
-                    {
-                        message.To.Add(email.Trim());
-                    }
-                }
+                //foreach (var email in listEmail)
+                //{
+                //    if (!string.IsNullOrWhiteSpace(email))
+                //    {
+                //        message.To.Add(email.Trim());
+                //    }
+                //}
 
-                await smtpClient.SendMailAsync(message);
+                //await smtpClient.SendMailAsync(message);
             }
             catch (Exception ex)
             {
@@ -60,13 +60,16 @@ namespace ServicePortal.Infrastructure.Email
         {
             string urlWaitApproval = $"{UrlFrontEnd}/leave/wait-approval";
 
-            string typeLeaveDescription = leaveRequest.TypeLeave != null
-                ? Helper.GetDescriptionFromValue<TypeLeaveEnum>((int)leaveRequest.TypeLeave)
-                : "";
+            //string typeLeaveDescription = leaveRequest.TypeLeave != null
+            //    ? Helper.GetDescriptionFromValue<TypeLeaveEnum>((int)leaveRequest.TypeLeave)
+            //    : "";
 
-            string timeLeaveDescription = leaveRequest.TimeLeave != null
-                ? Helper.GetDescriptionFromValue<TimeLeaveEnum>((int)leaveRequest.TimeLeave)
-                : "";
+            //string timeLeaveDescription = leaveRequest.TimeLeave != null
+            //    ? Helper.GetDescriptionFromValue<TimeLeaveEnum>((int)leaveRequest.TimeLeave)
+            //    : "";
+
+            string typeLeaveDescription = "1";
+            string timeLeaveDescription = "2";
 
 
             return $@"
@@ -80,22 +83,7 @@ namespace ServicePortal.Infrastructure.Email
                               ĐƠN XIN NGHỈ PHÉP
                             </th>
                           </tr>
-                          <tr style=""border-bottom: 1px solid #ddd;"">
-                            <td style=""background-color: #f9f9f9;""><strong>Mã nhân viên:</strong></td>
-                            <td>{leaveRequest.UserCode}</td>
-                          </tr>
-                          <tr style=""border-bottom: 1px solid #ddd;"">
-                            <td style=""background-color: #f9f9f9;""><strong>Họ tên:</strong></td>
-                            <td>{leaveRequest.Name}</td>
-                          </tr>
-                          <tr style=""border-bottom: 1px solid #ddd;"">
-                            <td style=""background-color: #f9f9f9;""><strong>Phòng ban:</strong></td>
-                            <td>{leaveRequest.Deparment}</td>
-                          </tr>
-                          <tr style=""border-bottom: 1px solid #ddd;"">
-                            <td style=""background-color: #f9f9f9;""><strong>Chức vụ:</strong></td>
-                            <td>{leaveRequest.Position}</td>
-                          </tr>
+
                           <tr style=""border-bottom: 1px solid #ddd;"">
                             <td style=""background-color: #f9f9f9;""><strong>Ngày nghỉ từ:</strong></td>
                             <td>{leaveRequest.FromDate}</td>
@@ -120,3 +108,23 @@ namespace ServicePortal.Infrastructure.Email
         }
     }
 }
+
+/*
+ *                           <tr style=""border-bottom: 1px solid #ddd;"">
+                            <td style=""background-color: #f9f9f9;""><strong>Mã nhân viên:</strong></td>
+                            <td>{leaveRequest.UserCode}</td>
+                          </tr>
+                          <tr style=""border-bottom: 1px solid #ddd;"">
+                            <td style=""background-color: #f9f9f9;""><strong>Họ tên:</strong></td>
+                            <td>{leaveRequest.Name}</td>
+                          </tr>
+                          <tr style=""border-bottom: 1px solid #ddd;"">
+                            <td style=""background-color: #f9f9f9;""><strong>Phòng ban:</strong></td>
+                            <td>{leaveRequest.Deparment}</td>
+                          </tr>
+                          <tr style=""border-bottom: 1px solid #ddd;"">
+                            <td style=""background-color: #f9f9f9;""><strong>Chức vụ:</strong></td>
+                            <td>{leaveRequest.Position}</td>
+                          </tr>
+ * 
+ * */

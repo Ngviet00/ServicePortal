@@ -3,7 +3,6 @@ using LoginRequestDto = ServicePortal.Modules.Auth.DTO.Requests.LoginRequestDto;
 using System.Security.Claims;
 using ServicePortal.Common;
 using Microsoft.AspNetCore.Authorization;
-using ServicePortal.Modules.User.DTO.Responses;
 using ServicePortal.Modules.Auth.Services.Interfaces;
 using ServicePortal.Modules.Auth.DTO.Requests;
 
@@ -48,9 +47,25 @@ namespace ServicePortal.Modules.Auth.Controllers
         [HttpPost("register")]
         public async Task<IActionResult> Register(CreateUserDto request)
         {
-            UserResponseDto? userDTO = await _authService.Register(request);
+            var result = await _authService.Register(request);
 
-            return Ok(new BaseResponse<UserResponseDto>(200, "Register user successfully", userDTO));
+            Response.Cookies.Append("access_token", result.AccessToken ?? "", new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.None,
+                Expires = DateTimeOffset.UtcNow.AddMinutes(_config.GetValue<int>("Jwt:AccessTokenExpirationMinutes")),
+            });
+
+            Response.Cookies.Append("refresh_token", result.RefreshToken ?? "", new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.None,
+                Expires = result.ExpiresAt
+            });
+
+            return Ok(new { accessToken = result?.AccessToken, user = result?.UserInfo });
         }
 
         [HttpPost("logout"), Authorize]

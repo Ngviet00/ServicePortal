@@ -6,46 +6,22 @@ namespace ServicePortal.Infrastructure.Data
     public class ApplicationDbContext : DbContext
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) { }
-        
-        public DbSet<Department> Departments { get; set; }
+    
         public DbSet<Role> Roles { get; set; }
         public DbSet<User> Users { get; set; }
         public DbSet<RefreshToken> RefreshTokens { get; set; }
         public DbSet<TypeLeave> TypeLeaves { get; set; }
         public DbSet<LeaveRequest> LeaveRequests { get; set; }
-        public DbSet<LeaveRequestStep> LeaveRequestSteps { get; set; }
         public DbSet<UserRole> UserRoles { get; set; }
         public DbSet<Permission> Permissions { get; set; }
-        public DbSet<UserPermission> UserPermission { get; set; }
-        public DbSet<CustomApprovalFlow> CustomApprovalFlows { get; set; }
+        public DbSet<ApprovalFlow> ApprovalFlows { get; set; }
+        public DbSet<ApprovalAction> ApprovalActions { get; set; }
+        public DbSet<ApprovalRequest> ApprovalRequests { get; set; }
+        public DbSet<UserConfig> UserConfigs { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
-
-            modelBuilder.Entity<Department>().HasData(
-                new Department
-                {
-                    Id = 1,
-                    Name = "IT/MIS",
-                    Note = "department.IT",
-                    ParentId = null
-                },
-                new Department
-                {
-                    Id = 2,
-                    Name = "HR",
-                    Note = "department.HR",
-                    ParentId = null
-                },
-                new Department
-                {
-                    Id = 3,
-                    Name = "Sản xuất",
-                    Note = "department.production",
-                    ParentId = null
-                }
-            );
 
             modelBuilder.Entity<Role>().HasData(
                 new Role { Id = 1, Name = "SuperAdmin", Code = "superadmin" },
@@ -66,18 +42,12 @@ namespace ServicePortal.Infrastructure.Data
                 new TypeLeave { Id = 6, Name = "Other", Note = "type_leave.other", ModifiedBy = "HR", ModifiedAt = new DateTime(2025, 5, 1, 15, 30, 0) }
             );
 
-            modelBuilder.Entity<LeaveRequest>()
-                .HasMany(r => r.LeaveRequestSteps)
-                .WithOne()
-                .HasForeignKey(s => s.LeaveRequestId)
-                .OnDelete(DeleteBehavior.Cascade);
-
             //user - role
             modelBuilder.Entity<UserRole>()
                 .HasOne(ur => ur.User)
                 .WithMany(u => u.UserRoles)
                 .HasForeignKey(ur => ur.UserCode)
-                .HasPrincipalKey(u => u.Code)
+                .HasPrincipalKey(u => u.UserCode)
                 .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<UserRole>()
@@ -100,28 +70,6 @@ namespace ServicePortal.Infrastructure.Data
                 .WithMany(p => p.RolePermissions)
                 .HasForeignKey(rp => rp.PermissionId)
                 .HasPrincipalKey(p => p.Id)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            //user - permission
-            modelBuilder.Entity<UserPermission>()
-                .HasOne(up => up.User)
-                .WithMany(u => u.UserPermission)
-                .HasForeignKey(up => up.UserCode)
-                .HasPrincipalKey(u => u.Code)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            modelBuilder.Entity<UserPermission>()
-                .HasOne(up => up.Permission)
-                .WithMany(p => p.UserPermission)
-                .HasForeignKey(up => up.PermissionId)
-                .HasPrincipalKey(p => p.Id)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            modelBuilder.Entity<CustomApprovalFlow>()
-                .HasOne(c => c.Department)
-                .WithMany()
-                .HasForeignKey(c => c.DepartmentId)
-                .HasPrincipalKey(d => d.Id)
                 .OnDelete(DeleteBehavior.Cascade);
         }
     }

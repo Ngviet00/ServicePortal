@@ -25,8 +25,5 @@ namespace ServicePortal.Modules.CustomApprovalFlow.DTO
 
         [JsonPropertyName("page_size"), FromQuery(Name = "page_size")]
         public int PageSize { get; set; } = 10;
-
-        [JsonPropertyName("department"), FromQuery(Name = "department")]
-        public Domain.Entities.Department? Department { get; set; }
     }
 }

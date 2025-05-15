@@ -107,13 +107,13 @@ namespace ServicePortal
 
             builder.Services.AddScoped<ITypeLeaveService, TypeLeaveService>();
 
-            builder.Services.AddScoped<IDepartmentService, DepartmentService>();
+            //builder.Services.AddScoped<IDepartmentService, DepartmentService>();
 
             builder.Services.AddScoped<ILeaveRequestService, LeaveRequestService>();
 
             builder.Services.AddScoped<IEmailService, EmailService>();
 
-            builder.Services.AddScoped<ICustomApprovalFlowService, CustomApprovalFlowService>();
+            //builder.Services.AddScoped<ICustomApprovalFlowService, CustomApprovalFlowService>();
 
             builder.Services.AddScoped<JwtService>();
 

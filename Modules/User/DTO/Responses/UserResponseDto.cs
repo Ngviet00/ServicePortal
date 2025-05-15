@@ -1,68 +1,13 @@
-﻿using System.Text.Json.Serialization;
-using ServicePortal.Modules.Deparment.DTO;
-
-namespace ServicePortal.Modules.User.DTO.Responses
+﻿namespace ServicePortal.Modules.User.DTO.Responses
 {
     public class UserResponseDto
     {
-        [JsonPropertyName("id")]
         public Guid? Id { get; set; }
-
-        [JsonPropertyName("code")]
-        public string? Code { get; set; }
-
-        [JsonPropertyName("name")]
-        public string? Name { get; set; }
-
-        [JsonPropertyName("email")]
-        public string? Email { get; set; }
-
-        [JsonPropertyName("password")]
+        public string? UserCode { get; set; }
         public string? Password { get; set; }
-
-        [JsonPropertyName("role_id")]
-        public int? RoleId { get; set; }
-
-        [JsonPropertyName("is_active")]
-        public bool? IsActive { get; set; }
-
-        [JsonPropertyName("date_join_company")]
-        public DateTime? DateJoinCompany { get; set; }
-
-        [JsonPropertyName("date_of_birth")]
-        public DateTime? DateOfBirth { get; set; }
-
-        [JsonPropertyName("phone")]
-        public string? Phone { get; set; }
-
-        [JsonPropertyName("position")]
-        public string? Position { get; set; }
-
-        [JsonPropertyName("level")]
-        public string? Level { get; set; }
-
-        [JsonPropertyName("level_parent")]
-        public string? LevelParent { get; set; }
-
-        [JsonPropertyName("sex")]
-        public byte? Sex { get; set; }
-
-        [JsonPropertyName("department_id")]
-        public int? DepartmentId { get; set; }
-
-        [JsonPropertyName("department")]
-        public DepartmentDTO? Department { get; set; }
-
-        [JsonPropertyName("roles")]
+        public int? PositionId { get; set; }
+        public byte? IsChangePassword { get; set; }
+        public byte? IsActive { get; set; }
         public List<Domain.Entities.Role> Roles { get; set; } = new();
-
-        [JsonPropertyName("permissions")]
-        public List<string?> Permissions { get; set; } = new();
-
-        [JsonPropertyName("user_permissions")]
-        public List<string?> UserPermissions { get; set; } = new();
-
-        [JsonPropertyName("deleted_at")]
-        public DateTime? DeletedAt { get; set; }
     }
 }

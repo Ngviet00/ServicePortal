@@ -1,11 +1,11 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Serilog;
 using ServicePortal.Common;
+using ServicePortal.Common.Helpers;
 using ServicePortal.Common.Mappers;
 using ServicePortal.Domain.Entities;
 using ServicePortal.Infrastructure.Data;
 using ServicePortal.Infrastructure.Hubs;
-using ServicePortal.Modules.Deparment.DTO;
 using ServicePortal.Modules.User.DTO;
 using ServicePortal.Modules.User.DTO.Requests;
 using ServicePortal.Modules.User.DTO.Responses;
@@ -32,21 +32,15 @@ namespace ServicePortal.Modules.User.Services
             double page = request.Page;
 
             var query = _context.Users
-                .Include(e => e.Department)
                 .Include(e => e.UserRoles)
                     .ThenInclude(ur => ur.Role)
                 .AsQueryable();
 
-            query = query.Where(e => e.Code != "0");
+            query = query.Where(e => e.UserCode != "0");
 
             if (!string.IsNullOrEmpty(name))
             {
-                query = query.Where(u => 
-                    (u.Name != null && u.Name.Contains(name)) || 
-                    (u.Email != null && u.Email.Contains(name)) || 
-                    (u.Phone != null && u.Phone.Contains(name)) || 
-                    (u.Code != null && u.Code.Contains(name))
-                );
+                query = query.Where(u => (u.UserCode != null && u.UserCode.Contains(name)));
             }
 
             var totalItems = await query.CountAsync();
@@ -58,7 +52,7 @@ namespace ServicePortal.Modules.User.Services
                 .Take((int)pageSize)
                 .ToListAsync();
 
-            var result = new PagedResults<UserResponseDto>
+        var result = new PagedResults<UserResponseDto>
             {
                 Data = UserMapper.ToDtoList(usersWithDetails),
                 TotalItems = totalItems,
@@ -75,7 +69,7 @@ namespace ServicePortal.Modules.User.Services
                 throw new ValidationException("Code can not empty");
             }
 
-            var user = await _context.Users.FirstOrDefaultAsync(e => e.Code == code) ?? throw new NotFoundException("User not found!");
+            var user = await _context.Users.FirstOrDefaultAsync(e => e.UserCode == code) ?? throw new NotFoundException("User not found!");
 
             return UserMapper.ToDto(user);
         }
@@ -100,8 +94,6 @@ namespace ServicePortal.Modules.User.Services
             }
 
             var user = await _context.Users.FirstOrDefaultAsync(e => e.Id == id) ?? throw new NotFoundException("User not found!");
-
-            user.DeletedAt = DateTime.Now;
 
             _context.Users.Update(user);
 
@@ -128,59 +120,60 @@ namespace ServicePortal.Modules.User.Services
 
         public IQueryable<UserResponseDto> GetUserQueryLogin()
         {
-            var query = _context.Users
-                .Where(u => u.DeletedAt == null)
-                .Select(u => new UserResponseDto
-                {
-                    Id = u.Id,
-                    Code = u.Code,
-                    Name = u.Name,
-                    Email = u.Email,
-                    Password = u.Password,
-                    IsActive = u.IsActive,
-                    DateJoinCompany = u.DateJoinCompany,
-                    Phone = u.Phone,
-                    Sex = u.Sex,
-                    Position = u.Position,
-                    Level = u.Level,
-                    LevelParent = u.LevelParent,
-                    DepartmentId = u.DepartmentId,
-                    Department = u.Department == null ? null : new DepartmentDTO
-                    {
-                        Id = u.Department.Id,
-                        Name = u.Department.Name,
-                    },
+            //var query = _context.Users
+            //    .Where(u => u.DeletedAt == null)
+            //    .Select(u => new UserResponseDto
+            //    {
+            //        Id = u.Id,
+            //        Code = u.Code,
+            //        Name = u.Name,
+            //        Email = u.Email,
+            //        Password = u.Password,
+            //        IsActive = u.IsActive,
+            //        DateJoinCompany = u.DateJoinCompany,
+            //        Phone = u.Phone,
+            //        Sex = u.Sex,
+            //        Position = u.Position,
+            //        Level = u.Level,
+            //        LevelParent = u.LevelParent,
+            //        DepartmentId = u.DepartmentId,
+            //        Department = u.Department == null ? null : new DepartmentDTO
+            //        {
+            //            Id = u.Department.Id,
+            //            Name = u.Department.Name,
+            //        },
 
-                    Roles = u.UserRoles
-                        .Where(ur => ur.Role != null)
-                        .Select(ur => new Domain.Entities.Role
-                        {
-                            Id = ur.Role!.Id,
-                            Name = ur.Role.Name,
-                            Code = ur.Role.Code
-                        })
-                        .Distinct()
-                        .ToList(),
-                    UserPermissions = new List<string?>(),
+            //        Roles = u.UserRoles
+            //            .Where(ur => ur.Role != null)
+            //            .Select(ur => new Domain.Entities.Role
+            //            {
+            //                Id = ur.Role!.Id,
+            //                Name = ur.Role.Name,
+            //                Code = ur.Role.Code
+            //            })
+            //            .Distinct()
+            //            .ToList(),
+            //        UserPermissions = new List<string?>(),
 
-                    //UserPermissions = u.UserPermission
-                    //    .Where(up => up.Permission != null)
-                    //    .Select(up => up.Permission!.Name)
-                    //    .Distinct()
-                    //    .ToList(),
-                    Permissions = new List<string?>(),
+            //        //UserPermissions = u.UserPermission
+            //        //    .Where(up => up.Permission != null)
+            //        //    .Select(up => up.Permission!.Name)
+            //        //    .Distinct()
+            //        //    .ToList(),
+            //        Permissions = new List<string?>(),
 
-                    //Permissions = u.UserRoles
-                    //    .Where(ur => ur.Role != null)
-                    //    .SelectMany(ur => ur.Role!.RolePermissions
-                    //        .Where(rp => rp.Permission != null)
-                    //        .Select(rp => rp.Permission!.Name)
-                    //    )
-                    //    .Distinct()
-                    //    .ToList()
-                });
+            //        //Permissions = u.UserRoles
+            //        //    .Where(ur => ur.Role != null)
+            //        //    .SelectMany(ur => ur.Role!.RolePermissions
+            //        //        .Where(rp => rp.Permission != null)
+            //        //        .Select(rp => rp.Permission!.Name)
+            //        //    )
+            //        //    .Distinct()
+            //        //    .ToList()
+            //    });
 
-            return query;
+            //return query;
+            return null;
         }
 
         public async Task<long> CountUser()
@@ -195,7 +188,7 @@ namespace ServicePortal.Modules.User.Services
                 throw new ValidationException("Code can not empty");
             }
 
-            var user = await GetUserQueryLogin().FirstOrDefaultAsync(e => e.Code == code);
+            var user = await GetUserQueryLogin().FirstOrDefaultAsync(e => e.UserCode == code);
 
             if (user == null)
             {
@@ -207,34 +200,35 @@ namespace ServicePortal.Modules.User.Services
 
         public async Task<List<OrgChartChildNode>> BuildTree(int? departmentId)
         {
-            var users = await _context.Users
-                .Where(e => e.DepartmentId == departmentId && e.Level != "0")
-                .Select(x => new OrgChartUserDto
-                {
-                    Id = x.Id,
-                    Name = x.Name,
-                    Code = x.Code,
-                    Position = x.Position,
-                    Level = x.Level,
-                    LevelParent = x.LevelParent
-                })
-                .ToListAsync();
+            //var users = await _context.Users
+            //    .Where(e => e.DepartmentId == departmentId && e.Level != "0")
+            //    .Select(x => new OrgChartUserDto
+            //    {
+            //        Id = x.Id,
+            //        Name = x.Name,
+            //        Code = x.Code,
+            //        Position = x.Position,
+            //        Level = x.Level,
+            //        LevelParent = x.LevelParent
+            //    })
+            //    .ToListAsync();
 
-            var allLevelCodes = users.Select(x => x.Level).ToHashSet();
+            //var allLevelCodes = users.Select(x => x.Level).ToHashSet();
 
-            var rootNodes = users
-                .Where(x => string.IsNullOrEmpty(x.LevelParent) || !allLevelCodes.Contains(x.LevelParent))
-                .Select(x => x.LevelParent)
-                .Distinct();
+            //var rootNodes = users
+            //    .Where(x => string.IsNullOrEmpty(x.LevelParent) || !allLevelCodes.Contains(x.LevelParent))
+            //    .Select(x => x.LevelParent)
+            //    .Distinct();
 
-            var trees = new List<OrgChartChildNode>();
+            //var trees = new List<OrgChartChildNode>();
 
-            foreach (var root in rootNodes)
-            {
-                trees.AddRange(BuildTreeRecursive(root ?? "", users));
-            }
+            //foreach (var root in rootNodes)
+            //{
+            //    trees.AddRange(BuildTreeRecursive(root ?? "", users));
+            //}
 
-            return trees;
+            //return trees;
+            return null;
         }
 
         private List<OrgChartChildNode> BuildTreeRecursive(string parentLevelCode, List<OrgChartUserDto> users)
@@ -296,6 +290,19 @@ namespace ServicePortal.Modules.User.Services
                 Log.Error($"Error can not update user role, error: {ex.Message}");
                 return false;
             }
+        }
+
+        public async Task<UserResponseDto> ResetPassword(string userCode)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(e => e.UserCode == userCode) ?? throw new NotFoundException("User not found!");
+
+            user.Password = Helper.HashString(userCode);
+
+            _context.Users.Update(user);
+
+            await _context.SaveChangesAsync();
+
+            return UserMapper.ToDto(user);
         }
     }
 }

@@ -66,14 +66,6 @@ namespace ServicePortal.Modules.User.Controllers
             return Ok(new BaseResponse<UserResponseDto>(200, "success", userDTO));
         }
 
-        //[HttpPut("/update")]
-        //public async Task<IActionResult> Update(UserResponse user)
-        //{
-        //    UserResponse? userResponse = await _userService.Update(user);
-
-        //    return Ok(new BaseResponse<UserResponse>(200, "Update user successfully", userResponse));
-        //}
-
         [HttpDelete("delete/{id}")]
         public async Task<IActionResult> Delete(Guid id)
         {
@@ -104,6 +96,14 @@ namespace ServicePortal.Modules.User.Controllers
             var result = await _userService.UpdateUserRole(dto);
 
             return Ok(new BaseResponse<bool>(200, "Success", result));
+        }
+
+        [HttpPost("reset-password"), RoleAuthorize("superadmin")]
+        public async Task<IActionResult> ResetPassword([FromBody]string userCode)
+        {
+            var result = await _userService.ResetPassword(userCode);
+
+            return Ok(new BaseResponse<UserResponseDto>(200, "Success", result));
         }
     }
 }

@@ -5,12 +5,11 @@ using ServicePortal.Domain.Entities;
 using ServicePortal.Infrastructure.Data;
 using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
-using ServicePortal.Common.Mappers;
 using ServicePortal.Modules.User.Services.Interfaces;
-using ServicePortal.Modules.User.DTO.Responses;
 using ServicePortal.Modules.Auth.Services.Interfaces;
 using ServicePortal.Modules.Auth.DTO.Responses;
 using ServicePortal.Modules.Auth.DTO.Requests;
+using ServicePortal.Common.Mappers;
 
 namespace ServicePortal.Modules.Auth.Services
 {
@@ -29,70 +28,92 @@ namespace ServicePortal.Modules.Auth.Services
             _userService = userService;
         }
 
-        public async Task<object> RegisterV2(string usercode, string password)
+        public async Task<LoginResponseDto> Register(CreateUserDto request)
         {
-            //check exist in viclock
-            if (true)
-            {
-                //throw new lien he voi hr
-            }
+            var currentUser = await _context.Users
+                .Where(e => e.UserCode == request.UserCode)
+                .FirstOrDefaultAsync();
 
-            //check has exist in web system
-            if (true)
-            {
-                //throw new nguoi dung da ton tai
-            }
-
-            //check not exist in web system
-            //save to database, with is_change_pw = false, sau khi doi mat khau xong, set true
-
-            return null;
-        }
-
-        public async Task<UserResponseDto> Register(CreateUserDto request)
-        {
-            if (await _context.Users.AnyAsync(u => u.Code == request.Code && u.DeletedAt == null))
+            if (currentUser != null)
             {
                 throw new ValidationException("User is exists!");
             }
 
-            var newUser = new ServicePortal.Domain.Entities.User
+            var newUser = new Domain.Entities.User
             {
-                Code = request.Code,
-                Name = request.Name,
+                UserCode = request.UserCode,
                 Password = Helper.HashString(request.Password),
-                Email = request.Email ?? null,
-                IsActive = true,
-                DateJoinCompany = request.DateJoinCompany ?? null,
-                DateOfBirth = request.DateOfBirth ?? null,
-                Phone = request.Phone ?? null,
-                Sex = request.Sex ?? null,
-                DepartmentId = request.DepartmentId,
-                Level = request.Level,
-                LevelParent = request.LevelParent,
-                Position = request.Position,
-                CreatedAt = DateTime.Now
+                IsActive = 1, //true
+                IsChangePassword = 0, //false
             };
 
             _context.Users.Add(newUser);
 
+            //role default user
+            var roleUser = await _context.Roles.FirstOrDefaultAsync(e => e.Code == "user");
+
             _context.UserRoles.Add(new UserRole
             {
-                UserCode = request.Code,
-                RoleId = request.RoleId,
-                DepartmentId = request.DepartmentId
+                UserCode = request.UserCode,
+                RoleId = roleUser?.Id,
             });
 
             await _context.SaveChangesAsync();
 
-            return UserMapper.ToDto(newUser);
+            var createdUser = await _context.Users
+                .Include(u => u.UserRoles)
+                    .ThenInclude(ur => ur.Role)
+                .FirstOrDefaultAsync(u => u.UserCode == request.UserCode);
+
+            var claims = new List<Claim> { new("user_code", createdUser?.UserCode ?? "") };
+
+
+            if (createdUser != null)
+            {
+                claims.AddRange(
+                    createdUser.UserRoles.Select(ur =>
+                        new Claim(ClaimTypes.Role, ur.Role?.Code ?? "")
+                    )
+                );
+            }
+
+            var accessToken = _jwtService.GenerateAccessToken(claims);
+
+            var refreshToken = _jwtService.GenerateRefreshToken();
+
+            var refreshTokenEntity = new RefreshToken
+            {
+                Token = refreshToken,
+                UserCode = createdUser?.UserCode ?? "",
+                ExpiresAt = DateTimeOffset.UtcNow.AddDays(_config.GetValue<int>("Jwt:RefreshTokenExpirationDays")),
+                IsRevoked = false,
+                CreatedAt = DateTimeOffset.UtcNow
+            };
+
+            _context.RefreshTokens.Add(refreshTokenEntity);
+
+            createdUser!.Password = null;
+
+            await _context.SaveChangesAsync();
+
+            var result = new LoginResponseDto
+            {
+                AccessToken = accessToken,
+                RefreshToken = refreshToken,
+                UserInfo = UserMapper.ToDto(createdUser),
+                ExpiresAt = refreshTokenEntity.ExpiresAt
+            };
+
+            return result;
         }
 
         public async Task<LoginResponseDto> Login(LoginRequestDto request)
         {
-            var query = _userService.GetUserQueryLogin();
-
-            var user = await query.Where(e => e.Code == request.UserCode).FirstOrDefaultAsync();
+            var user = await _context.Users
+                .Include(ur => ur.UserRoles)
+                    .ThenInclude(r => r.Role)
+                .Where(e => e.UserCode == request.UserCode)
+                .FirstOrDefaultAsync();
 
             if (user == null)
             {
@@ -104,11 +125,9 @@ namespace ServicePortal.Modules.Auth.Services
                 throw new ValidationException("Password is incorrect!");
             }
 
-            var claims = new List<Claim> {
-                new("user_code", user?.Code ?? ""),
-            };
+            var claims = new List<Claim> { new("user_code", user?.UserCode ?? "")};
 
-            claims.AddRange(user!.Roles.Select(r => new Claim(ClaimTypes.Role, r.Code ?? "")));
+            claims.AddRange(user!.UserRoles.Select(ur => new Claim(ClaimTypes.Role, ur.Role?.Code ?? "")));
 
             var accessToken = _jwtService.GenerateAccessToken(claims);
 
@@ -117,7 +136,7 @@ namespace ServicePortal.Modules.Auth.Services
             var refreshTokenEntity = new RefreshToken
             {
                 Token = refreshToken,
-                UserCode = user?.Code ?? "",
+                UserCode = user?.UserCode ?? "",
                 ExpiresAt = DateTimeOffset.UtcNow.AddDays(_config.GetValue<int>("Jwt:RefreshTokenExpirationDays")),
                 IsRevoked = false,
                 CreatedAt = DateTimeOffset.UtcNow
@@ -132,7 +151,7 @@ namespace ServicePortal.Modules.Auth.Services
             {
                 AccessToken = accessToken,
                 RefreshToken = refreshToken,
-                UserInfo = user,
+                UserInfo = UserMapper.ToDto(user),
                 ExpiresAt = refreshTokenEntity.ExpiresAt
             };
 
@@ -148,15 +167,15 @@ namespace ServicePortal.Modules.Auth.Services
                 throw new UnauthorizedException("Invalid refresh token");
             }
 
-            var query = _userService.GetUserQueryLogin();
+            var user = await _context.Users
+                .Include(ur => ur.UserRoles)
+                    .ThenInclude(r => r.Role)
+                .Where(e => e.UserCode == token.UserCode)
+                .FirstOrDefaultAsync();
 
-            var user = await query.Where(e => e.Code == token.UserCode).FirstOrDefaultAsync();
+            var claims = new List<Claim> {new("user_code", user?.UserCode ?? "")};
 
-            var claims = new List<Claim> {
-                new("user_code", token?.UserCode ?? ""),
-            };
-
-            claims.AddRange(user!.Roles.Select(r => new Claim(ClaimTypes.Role, r.Code ?? "")));
+            claims.AddRange(user!.UserRoles.Select(r => new Claim(ClaimTypes.Role, r.Role?.Code ?? "")));
 
             var newAccessToken = _jwtService.GenerateAccessToken(claims);
 
@@ -165,9 +184,10 @@ namespace ServicePortal.Modules.Auth.Services
 
         public async Task ChangePassword(ChangePasswordRequestDto request, string userCode)
         {
-            var user = await _context.Users.FirstOrDefaultAsync(e => e.Code == userCode) ?? throw new NotFoundException("Not found user!");
+            var user = await _context.Users.FirstOrDefaultAsync(e => e.UserCode == userCode) ?? throw new NotFoundException("User not found!");
 
             user.Password = Helper.HashString(request.NewPassword);
+            user.IsChangePassword = 1;
 
             _context.Users.Update(user);
 
