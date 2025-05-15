@@ -2,9 +2,10 @@
 using Microsoft.AspNetCore.Mvc;
 using ServicePortal.Common;
 using ServicePortal.Common.Filters;
-using ServicePortal.Modules.User.DTO;
+using ServicePortal.Infrastructure.Data;
 using ServicePortal.Modules.User.DTO.Requests;
 using ServicePortal.Modules.User.DTO.Responses;
+using ServicePortal.Modules.User.Services;
 using ServicePortal.Modules.User.Services.Interfaces;
 
 namespace ServicePortal.Modules.User.Controllers
@@ -15,9 +16,12 @@ namespace ServicePortal.Modules.User.Controllers
     {
         private readonly IUserService _userService;
 
-        public UserController(IUserService userService)
+        private readonly ApplicationDbContext _context;
+
+        public UserController(IUserService userService, ApplicationDbContext context)
         {
             _userService = userService;
+            _context = context;
         }
 
         [HttpGet("me")]
@@ -82,14 +86,6 @@ namespace ServicePortal.Modules.User.Controllers
             return Ok(new BaseResponse<UserResponseDto>(200, "Delete user permanently successfully", null));
         }
 
-        [HttpGet("org-chart")]
-        public async Task<IActionResult> GetUsersOrgChart([FromQuery(Name = "department_id")] int? departmentId)
-        {
-            var result = await _userService.BuildTree(departmentId);
-
-            return Ok(new BaseResponse<List<OrgChartChildNode>>(200, "Success", result));
-        }
-
         [HttpPost("update-user-role"), RoleAuthorize("superadmin")]
         public async Task<IActionResult> UpdateUserRole(UpdateUserRoleDto dto)
         {
@@ -105,5 +101,14 @@ namespace ServicePortal.Modules.User.Controllers
 
             return Ok(new BaseResponse<UserResponseDto>(200, "Success", result));
         }
+
+        [HttpGet("org-chart")]
+        public async Task<IActionResult> GetUsersOrgChart([FromQuery(Name = "department_id")] int? departmentId)
+        {
+
+            var result = await _userService.BuildTree(departmentId);
+
+            return Ok(new BaseResponse<OrgChartNode>(200, "Success", result));
+        }   
     }
 }

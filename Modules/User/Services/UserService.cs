@@ -19,10 +19,13 @@ namespace ServicePortal.Modules.User.Services
 
         private readonly NotificationService _notificationService;
 
-        public UserService(ApplicationDbContext context, NotificationService notificationService)
+        private readonly OrgChartBuilder _orgChartBuilder;
+
+        public UserService(ApplicationDbContext context, NotificationService notificationService, OrgChartBuilder orgChartBuilder)
         {
             _context = context;
             _notificationService = notificationService;
+            _orgChartBuilder = orgChartBuilder;
         }
 
         public async Task<PagedResults<UserResponseDto>> GetAll(GetAllUserRequestDto request)
@@ -198,39 +201,6 @@ namespace ServicePortal.Modules.User.Services
             return user;
         }
 
-        public async Task<List<OrgChartChildNode>> BuildTree(int? departmentId)
-        {
-            //var users = await _context.Users
-            //    .Where(e => e.DepartmentId == departmentId && e.Level != "0")
-            //    .Select(x => new OrgChartUserDto
-            //    {
-            //        Id = x.Id,
-            //        Name = x.Name,
-            //        Code = x.Code,
-            //        Position = x.Position,
-            //        Level = x.Level,
-            //        LevelParent = x.LevelParent
-            //    })
-            //    .ToListAsync();
-
-            //var allLevelCodes = users.Select(x => x.Level).ToHashSet();
-
-            //var rootNodes = users
-            //    .Where(x => string.IsNullOrEmpty(x.LevelParent) || !allLevelCodes.Contains(x.LevelParent))
-            //    .Select(x => x.LevelParent)
-            //    .Distinct();
-
-            //var trees = new List<OrgChartChildNode>();
-
-            //foreach (var root in rootNodes)
-            //{
-            //    trees.AddRange(BuildTreeRecursive(root ?? "", users));
-            //}
-
-            //return trees;
-            return null;
-        }
-
         private List<OrgChartChildNode> BuildTreeRecursive(string parentLevelCode, List<OrgChartUserDto> users)
         {
             var groupedChildren = users
@@ -303,6 +273,11 @@ namespace ServicePortal.Modules.User.Services
             await _context.SaveChangesAsync();
 
             return UserMapper.ToDto(user);
+        }
+
+        public async Task<OrgChartNode> BuildTree(int? departmentId)
+        {
+            return await _orgChartBuilder.BuildTree(departmentId);
         }
     }
 }

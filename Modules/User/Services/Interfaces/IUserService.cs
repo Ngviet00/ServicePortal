@@ -14,7 +14,7 @@ namespace ServicePortal.Modules.User.Services.Interfaces
         Task<UserResponseDto> ForceDelete(Guid id);
         IQueryable<UserResponseDto> GetUserQueryLogin();
         Task<UserResponseDto> GetMe(string code);
-        Task<List<OrgChartChildNode>> BuildTree(int? departmentId);
+        Task<OrgChartNode> BuildTree(int? departmentId);
         Task<bool> UpdateUserRole(UpdateUserRoleDto dto);
         Task<UserResponseDto> ResetPassword(string userCode);
     }

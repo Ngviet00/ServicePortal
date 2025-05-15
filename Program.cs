@@ -121,6 +121,8 @@ namespace ServicePortal
 
             builder.Services.AddScoped<NotificationService>();
 
+            builder.Services.AddScoped<OrgChartBuilder>();
+
             #endregion
 
             // Add services to the container.
