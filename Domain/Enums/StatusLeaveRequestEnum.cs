@@ -2,11 +2,12 @@
 {
     public enum StatusLeaveRequestEnum
     {
-        PENDING = 1,
-        IN_PROCESS = 2,
-        COMPLETE = 3,
-        REJECT = 4,
-        WAIT_HR = 5
+        PENDING,
+        IN_PROCESS,
+        COMPLETED,
+        REJECT,
+
+        WAIT_HR = -10
     }
 
     public enum StatusLeaveRequestStepEnum

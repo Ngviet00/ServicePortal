@@ -1,73 +1,24 @@
-﻿using System.Text.Json.Serialization;
+﻿using ServicePortal.Domain.Entities;
 
 namespace ServicePortal.Modules.LeaveRequest.DTO
 {
     public class LeaveRequestDto
     {
-        [JsonPropertyName("id")]
-        public Guid Id { get; set; }
-
-        [JsonPropertyName("user_code")]
-        public string? UserCode { get; set; }
-
-        [JsonPropertyName("name")]
+        public Guid? Id { get; set; }
+        public string? RequesterUserCode { get; set; } //nguoi yeu cau
+        public string? WriteLeaveUserCode { get; set; } //nguoi viet yeu cau
         public string? Name { get; set; }
-
-        [JsonPropertyName("user_code_register")]
-        public string? UserCodeRegister { get; set; }
-
-        [JsonPropertyName("name_register")]
-        public string? NameRegister { get; set; }
-
-        [JsonPropertyName("position")]
+        public string? Department { get; set; }
         public string? Position { get; set; }
-
-        [JsonPropertyName("department")]
-        public string? Deparment { get; set; }
-
-        [JsonPropertyName("from_date")]
         public string? FromDate { get; set; }
-
-        [JsonPropertyName("to_date")]
         public string? ToDate { get; set; }
-
-        [JsonPropertyName("reason")]
+        public int? TypeLeave { get; set; }
+        public int? TimeLeave { get; set; }
         public string? Reason { get; set; }
-
-        [JsonPropertyName("time_leave")]
-        public byte? TimeLeave { get; set; }
-
-        [JsonPropertyName("type_leave")]
-        public byte? TypeLeave { get; set; }
-
-        [JsonPropertyName("status")]
-        public byte? Status { get; set; }
-
-        [JsonPropertyName("image")]
+        public byte? HaveSalary { get; set; }
         public string? Image { get; set; }
-
-        [JsonPropertyName("have_salary")]
-        public bool? HaveSalary { get; set; }
-
-        [JsonPropertyName("note")]
-        public string? Note { get; set; }
-
-        [JsonPropertyName("department_id")]
-        public int? DepartmentId { get; set; }
-
-        [JsonPropertyName("approved_by")]
-        public string? ApprovedBy { get; set; }
-
-        [JsonPropertyName("created_at")]
-        public DateTime? CreatedAt { get; set; }
-
-        [JsonPropertyName("updated_at")]
-        public DateTime? UpdatedAt { get; set; }
-
-        [JsonPropertyName("deleted_at")]
-        public DateTime? DeletedAt { get; set; }
-
-        [JsonPropertyName("url_front_end")]
-        public string? UrlFrontEnd { get; set; }
+        public string? UrlFrontend { get; set; }
+        public DateTimeOffset? CreatedAt { get; set; }
+        public ApprovalAction? ApprovalAction { get; set; }
     }
 }

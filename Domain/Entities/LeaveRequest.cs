@@ -8,11 +8,14 @@ namespace ServicePortal.Domain.Entities
     {
         public Guid Id { get; set; }
         public string? RequesterUserCode { get; set; } //nguoi yeu cau
-        public string? UserCodeWriteLeave { get; set; } //nguoi viet yeu cau
+        public string? WriteLeaveUserCode { get; set; } //nguoi viet yeu cau
+        public string? Name { get; set; }
+        public string? Department { get; set; }
+        public string? Position { get; set; }
         public DateTimeOffset? FromDate { get; set; }
         public DateTimeOffset? ToDate { get; set; }
-        public string? TypeLeave { get; set; }
-        public string? TimeLeave { get; set; }
+        public int? TypeLeave { get; set; }
+        public int? TimeLeave { get; set; }
         public string? Reason { get; set; }
         public byte? HaveSalary { get; set; }
         public string? Image { get; set; }

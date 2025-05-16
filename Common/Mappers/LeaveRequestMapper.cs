@@ -6,30 +6,25 @@ namespace ServicePortal.Common.Mappers
 {
     public class LeaveRequestMapper
     {
-        public static LeaveRequestDto ToDto(LeaveRequest entity)
+        public static LeaveRequestDto ToDto(LeaveRequest entity, ApprovalAction? approvalAction = null)
         {
             return new LeaveRequestDto
             {
                 Id = entity.Id,
-                //UserCode = entity.UserCode,
-                //Name = entity.Name,
-                //UserCodeRegister = entity.UserCodeRegister,
-                //NameRegister = entity.NameRegister,
-                //Deparment = entity.Deparment,
-                //Position = entity.Position,
-                //FromDate = entity.FromDate.ToString(),
-                //ToDate = entity.ToDate.ToString(),
-                //Reason = entity.Reason,
-                //TimeLeave = entity.TimeLeave,
-                //TypeLeave = entity.TypeLeave,
-                //Image = entity.Image,
-                //HaveSalary = entity.HaveSalary,
-                //Status = entity.Status,
-                //Note = entity.Note,
-                //DepartmentId = entity.DepartmentId,
-                //CreatedAt = entity.CreatedAt,
-                //UpdatedAt = entity.UpdatedAt,
-                //DeletedAt = entity.DeletedAt,
+                WriteLeaveUserCode = entity.WriteLeaveUserCode,
+                RequesterUserCode = entity.RequesterUserCode,
+                Name = entity.Name,
+                FromDate = entity.FromDate.ToString(),
+                ToDate = entity.ToDate.ToString(),
+                TypeLeave = entity?.TypeLeave,
+                TimeLeave = entity?.TimeLeave,
+                Reason = entity?.Reason,
+                Department = entity?.Department,
+                Position = entity?.Position,
+                HaveSalary = entity?.HaveSalary,
+                Image = entity?.Image,
+                CreatedAt = entity?.CreatedAt,
+                ApprovalAction = approvalAction
             };
         }
 
@@ -37,32 +32,25 @@ namespace ServicePortal.Common.Mappers
         {
             return new LeaveRequest
             {
-                Id = dto.Id,
-                //UserCode = dto.UserCode,
-                //Name = dto.Name,
-                //UserCodeRegister = dto.UserCodeRegister,
-                //NameRegister = dto.NameRegister,
-                //Deparment = dto.Deparment,
-                //Position = dto.Position,
-                //FromDate = DateTime.ParseExact(dto?.FromDate ?? "", "yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture),
-                //ToDate = DateTime.ParseExact(dto?.ToDate ?? "", "yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture),
-                //Reason = dto?.Reason ?? "",
-                //TimeLeave = dto?.TimeLeave,
-                //TypeLeave = dto?.TypeLeave,
-                //Image = dto?.Image,
-                //HaveSalary = dto?.HaveSalary,
-                //Status = dto?.Status,
-                //Note = dto?.Note ?? "",
-                //DepartmentId = dto?.DepartmentId,
-                //CreatedAt = dto?.CreatedAt,
-                //UpdatedAt = dto?.UpdatedAt,
-                //DeletedAt = dto?.DeletedAt,
+                WriteLeaveUserCode = dto.WriteLeaveUserCode,
+                RequesterUserCode = dto.RequesterUserCode,
+                Name = dto.Name,
+                FromDate = DateTimeOffset.ParseExact(dto?.FromDate ?? "", "yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture),
+                ToDate = DateTimeOffset.ParseExact(dto?.ToDate ?? "", "yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture),
+                TypeLeave = dto?.TypeLeave,
+                TimeLeave = dto?.TimeLeave,
+                Reason = dto?.Reason,
+                Department = dto?.Department,
+                Position = dto?.Position,
+                HaveSalary = dto?.HaveSalary,
+                Image = dto?.Image,
+                CreatedAt = DateTimeOffset.Now
             };
         }
 
-        public static List<LeaveRequestDto> ToDtoList(List<LeaveRequest> entities)
+        public static List<LeaveRequestDto> ToDtoList(List<(LeaveRequest, ApprovalAction?)> list)
         {
-            return entities.Select(ToDto).ToList();
+            return list.Select(x => ToDto(x.Item1, x.Item2)).ToList();
         }
 
         public static List<LeaveRequest> ToEntityList(List<LeaveRequestDto> dtos)

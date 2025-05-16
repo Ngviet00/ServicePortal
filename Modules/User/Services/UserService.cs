@@ -6,7 +6,6 @@ using ServicePortal.Common.Mappers;
 using ServicePortal.Domain.Entities;
 using ServicePortal.Infrastructure.Data;
 using ServicePortal.Infrastructure.Hubs;
-using ServicePortal.Modules.User.DTO;
 using ServicePortal.Modules.User.DTO.Requests;
 using ServicePortal.Modules.User.DTO.Responses;
 using ServicePortal.Modules.User.Services.Interfaces;
@@ -199,31 +198,6 @@ namespace ServicePortal.Modules.User.Services
             }
 
             return user;
-        }
-
-        private List<OrgChartChildNode> BuildTreeRecursive(string parentLevelCode, List<OrgChartUserDto> users)
-        {
-            var groupedChildren = users
-                .Where(x => x.LevelParent == parentLevelCode)
-                .GroupBy(x => x.Level);
-
-            var children = new List<OrgChartChildNode>();
-
-            foreach (var group in groupedChildren)
-            {
-                var levelCode = group.Key;
-
-                var childNode = new OrgChartChildNode
-                {
-                    Level = levelCode ?? "",
-                    People = group.ToList(),
-                    Children = BuildTreeRecursive(levelCode ?? "", users)
-                };
-
-                children.Add(childNode);
-            }
-
-            return children;
         }
 
         public async Task<bool> UpdateUserRole(UpdateUserRoleDto dto)
