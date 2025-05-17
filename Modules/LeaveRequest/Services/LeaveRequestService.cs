@@ -1,4 +1,5 @@
-﻿using Hangfire;
+﻿using System.Security.Claims;
+using Hangfire;
 using Microsoft.EntityFrameworkCore;
 using ServicePortal.Common;
 using ServicePortal.Common.Mappers;
@@ -7,6 +8,7 @@ using ServicePortal.Infrastructure.Data;
 using ServicePortal.Infrastructure.Email;
 using ServicePortal.Modules.LeaveRequest.DTO;
 using ServicePortal.Modules.LeaveRequest.DTO.Requests;
+using ServicePortal.Modules.LeaveRequest.DTO.Responses;
 using ServicePortal.Modules.LeaveRequest.Services.Interfaces;
 
 namespace ServicePortal.Modules.LeaveRequest.Services
@@ -49,12 +51,14 @@ namespace ServicePortal.Modules.LeaveRequest.Services
                     (left_approval_rq, actions) => new
                     {
                         LeaveRequest = left_approval_rq.leave_rq,
+                        ApprovalRq = left_approval_rq.approval_rq,
                         LastAction = actions.OrderByDescending(a => a.CreatedAt).FirstOrDefault()
                     }
                 )
                 .Select(x => new
                 {
                     LeaveRequest = x.LeaveRequest,
+                    ApprovalRq = x.ApprovalRq,
                     LatestApprovalAction = x.LastAction
                 });
 
@@ -67,15 +71,35 @@ namespace ServicePortal.Modules.LeaveRequest.Services
                 .Take(pageSize)
                 .ToListAsync();
 
-            var tuples = pagedResult.Select(x => (x.LeaveRequest, x.LatestApprovalAction)).ToList();
+            var tuples = pagedResult.Select(x => (x.LeaveRequest, x.ApprovalRq, x.LatestApprovalAction)).ToList();
 
             var dtos = LeaveRequestMapper.ToDtoList(tuples);
+
+            var countPending = await _context
+                .ApprovalRequests
+                .Where(e =>
+                    e.RequesterUserCode == UserCode &&
+                    e.RequestType == "LEAVE_REQUEST" && 
+                    e.Status == "PENDING"
+                )
+                .CountAsync();
+
+            var countInProcess = await _context
+                .ApprovalRequests
+                .Where(e => 
+                    e.RequesterUserCode == UserCode &&
+                    e.RequestType == "LEAVE_REQUEST" && 
+                    e.Status == "IN_PROCESS"
+                )
+                .CountAsync();
 
             return new PagedResults<LeaveRequestDto>
             {
                 Data = dtos,
                 TotalItems = totalItems,
-                TotalPages = totalPages
+                TotalPages = totalPages,
+                CountPending = countPending,
+                CountInProcess = countInProcess,
             };
         }
 
@@ -141,8 +165,8 @@ namespace ServicePortal.Modules.LeaveRequest.Services
             var userConfigReceiveEmail = await _context.UserConfigs
                 .FirstOrDefaultAsync(e => e.UserCode == userRequester.UserCode && e.ConfigKey == "RECEIVE_MAIL_LEAVE_REQUEST");
 
-            //1 -> meaning receive mail 
-            if (userConfigReceiveEmail == null || (userConfigReceiveEmail != null && userConfigReceiveEmail.ConfigValue == "1"))
+            //true -> meaning receive mail 
+            if (userConfigReceiveEmail == null || (userConfigReceiveEmail != null && userConfigReceiveEmail.ConfigValue == "true"))
             {
                 //after get data email from viclock, now fake
                 BackgroundJob.Enqueue<EmailService>(job => job.SendEmaiLeaveRequestMySelf("nguyenviet@vsvn.com.vn", leaveRequest, dto.UrlFrontend));
@@ -183,55 +207,25 @@ namespace ServicePortal.Modules.LeaveRequest.Services
             return LeaveRequestMapper.ToDto(leaveRequest);
         }
 
-        public async Task<PagedResults<LeaveRequestDto>> GetAllWaitApproval(GetAllLeaveRequestWaitApprovalDto request)
+        public async Task<PagedResults<LeaveRequestDto>> GetAllWaitApproval(GetAllLeaveRequestWaitApprovalDto request, ClaimsPrincipal userClaim)
         {
             int pageSize = request.PageSize;
 
             int page = request.Page;
 
-            int? PositionId = request.PositionId;
+            var roleClaims = userClaim.Claims.Where(c => c.Type == ClaimTypes.Role).Select(c => c.Value).ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-            var user = await _context.Users
-                .Include(ur => ur.UserRoles)
-                    .ThenInclude(r => r.Role)
-                    .FirstOrDefaultAsync(e => e.PositionId == PositionId);
+            var baseQuery = GetBaseLeaveRequestApprovalQuery(request, roleClaims);
 
-            //check is hr or not
-
-            var query1 = _context.LeaveRequests
-        .Join(
-            _context.ApprovalRequests,
-            leave_rq => leave_rq.Id,
-            approval_rq => approval_rq.RequestId,
-            (leave_rq, approval_rq) => new { leave_rq, approval_rq }
-        );
-
-            // Áp dụng điều kiện lọc theo vai trò
-            if (user.UserRoles.Any(e => e.Role != null &&
-                (e.Role.Code == "hr" || e.Role.Code == "HR_Manager")))
-            {
-                query1 = query1.Where(x =>
-                    x.approval_rq.CurrentPositionId == (int)StatusLeaveRequestEnum.WAIT_HR &&
-                    x.approval_rq.RequestType == "LEAVE_REQUEST");
-            }
-            else
-            {
-                query1 = query1.Where(x =>
-                    x.approval_rq.CurrentPositionId == PositionId &&
-                    (x.approval_rq.Status == StatusLeaveRequestEnum.IN_PROCESS.ToString() ||
-                     x.approval_rq.Status == StatusLeaveRequestEnum.PENDING.ToString()) &&
-                    x.approval_rq.RequestType == "LEAVE_REQUEST");
-            }
-
-
-            var finalQuery = query1
+            var finalQuery = baseQuery
                 .GroupJoin(
                     _context.ApprovalActions,
-                    left => left.approval_rq.Id,
+                    left => left.ApprovalRequest != null ? left.ApprovalRequest.Id : Guid.NewGuid(),
                     right => right.ApprovalRequestId,
                     (left, actions) => new
                     {
-                        LeaveRequest = left.leave_rq,
+                        LeaveRequest = left.LeaveRequest,
+                        ApprovalRq = left.ApprovalRequest,
                         LastAction = actions
                             .OrderByDescending(a => a.CreatedAt)
                             .FirstOrDefault()
@@ -240,48 +234,20 @@ namespace ServicePortal.Modules.LeaveRequest.Services
                 .Select(x => new
                 {
                     LeaveRequest = x.LeaveRequest,
+                    ApprovalRq = x.ApprovalRq,
                     LatestApprovalAction = x.LastAction
                 });
 
-
-            var query = _context.LeaveRequests
-                .Join(
-                    _context.ApprovalRequests,
-                    leave_rq => leave_rq.Id,
-                    approval_rq => approval_rq.RequestId,
-                    (leave_rq, approval_rq) => new { leave_rq, approval_rq }
-                    )
-                .Where(x =>
-                    x.approval_rq.CurrentPositionId == PositionId &&
-                    (x.approval_rq.Status == StatusLeaveRequestEnum.IN_PROCESS.ToString() || x.approval_rq.Status == StatusLeaveRequestEnum.PENDING.ToString()) &&
-                    x.approval_rq.RequestType == "LEAVE_REQUEST"
-                )
-                .GroupJoin(
-                    _context.ApprovalActions,
-                    left_approval_rq => left_approval_rq.approval_rq.Id,
-                    approval_act => approval_act.ApprovalRequestId,
-                    (left_approval_rq, actions) => new
-                    {
-                        LeaveRequest = left_approval_rq.leave_rq,
-                        LastAction = actions.OrderByDescending(a => a.CreatedAt).FirstOrDefault()
-                    }
-                )
-                .Select(x => new
-                {
-                    LeaveRequest = x.LeaveRequest,
-                    LatestApprovalAction = x.LastAction
-                });
-
-            var totalItems = await query.CountAsync();
+            var totalItems = await finalQuery.CountAsync();
 
             var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
 
-            var pagedResult = await query
+            var pagedResult = await finalQuery
                 .Skip(((page - 1) * pageSize))
                 .Take(pageSize)
                 .ToListAsync();
 
-            var tuples = pagedResult.Select(x => (x.LeaveRequest, x.LatestApprovalAction)).ToList();
+            var tuples = pagedResult != null ? pagedResult.Select(x => (x.LeaveRequest, x.ApprovalRq, x.LatestApprovalAction)).ToList() : [];
 
             var dtos = LeaveRequestMapper.ToDtoList(tuples);
 
@@ -293,22 +259,13 @@ namespace ServicePortal.Modules.LeaveRequest.Services
             };
         }
 
-        public async Task<int> CountWaitApproval(GetAllLeaveRequestWaitApprovalDto request)
+        public async Task<int> CountWaitApproval(GetAllLeaveRequestWaitApprovalDto request, ClaimsPrincipal userClaim)
         {
-            var query = _context.LeaveRequests
-                .Join(
-                    _context.ApprovalRequests,
-                    leave_rq => leave_rq.Id,
-                    approval_rq => approval_rq.RequestId,
-                    (leave_rq, approval_rq) => new { leave_rq, approval_rq }
-                 )
-                .Where(x =>
-                    x.approval_rq.CurrentPositionId == request.PositionId &&
-                    (x.approval_rq.Status == StatusLeaveRequestEnum.IN_PROCESS.ToString() || x.approval_rq.Status == StatusLeaveRequestEnum.PENDING.ToString()) &&
-                    x.approval_rq.RequestType == "LEAVE_REQUEST")
-                .Select(x => x.leave_rq);
+            var roleClaims = userClaim.Claims.Where(c => c.Type == ClaimTypes.Role).Select(c => c.Value).ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-            return await query.CountAsync();
+            var baseQuery = GetBaseLeaveRequestApprovalQuery(request, roleClaims);
+
+            return await baseQuery.CountAsync();
         }
 
         public async Task<LeaveRequestDto?> Approval(ApprovalDto request, string currentUserCodeInJwt)
@@ -343,7 +300,8 @@ namespace ServicePortal.Modules.LeaveRequest.Services
             var approvalRequest = await _context.ApprovalRequests.FirstOrDefaultAsync(e => e.RequestId == leaveRequest.Id) ?? throw new NotFoundException("Not found data!");
 
             //case hr confirm register leave request
-            if (userApproval.UserRoles.Any(ur => ur.Role != null && ur.Role.Code == "hr") && approvalRequest.CurrentPositionId == (int)StatusLeaveRequestEnum.WAIT_HR)
+            if ((userApproval.UserRoles.Any(ur => ur.Role != null && ur.Role.Code == "HR") && approvalRequest.CurrentPositionId == (int)StatusLeaveRequestEnum.WAIT_HR)
+                || userApproval.UserRoles.Any(ur => ur.Role != null && ur.Role.Code == "HR_Manager"))
             {
                 await HrApproval(request, leaveRequest);
 
@@ -384,284 +342,16 @@ namespace ServicePortal.Modules.LeaveRequest.Services
 
             if (isSendHr)
             {
-                //send email to hr
+                //send email to hr, now fake
                 BackgroundJob.Enqueue<EmailService>(job => job.SendEmailLeaveRequest(new List<string> { "nguyenviet@vsvn.com.vn" }, leaveRequest, request.UrlFrontEnd));
             }
             else
             {
+                //send for next user position approval, now fake
                 BackgroundJob.Enqueue<EmailService>(job => job.SendEmailLeaveRequest(new List<string> { "nguyenviet@vsvn.com.vn" }, leaveRequest, request.UrlFrontEnd));
             }
 
             return null;
-
-            //dont have any user approval
-            //if (nextPosition == null)
-            //{
-            //    approvalRequest.Status = StatusLeaveRequestEnum.IN_PROCESS.ToString();
-            //    approvalRequest.CurrentPositionId = (int?)StatusLeaveRequestEnum.WAIT_HR;
-            //    _context.ApprovalRequests.Update(approvalRequest);
-
-            //    var newApprovalAction = new Domain.Entities.ApprovalAction
-            //    {
-            //        ApprovalRequestId = approvalRequest.Id,
-            //        ApproverUserCode = request.UserCodeApproval,
-            //        ApproverName = request.NameUserApproval,
-            //        Action = StatusLeaveRequestEnum.IN_PROCESS.ToString(),
-            //        Comment = request.Note,
-            //        CreatedAt = DateTimeOffset.Now
-            //    };
-
-            //    _context.ApprovalActions.Add(newApprovalAction);
-
-            //    await _context.SaveChangesAsync();
-
-            //    //send email to hr
-            //    BackgroundJob.Enqueue<EmailService>(job => job.SendEmailLeaveRequest(new List<string> { "nguyenviet@vsvn.com.vn" }, leaveRequest, request.UrlFrontEnd));
-
-            //    return null;
-            //}
-            //else
-            //{
-            //    //update request current position to to_position_id
-            //    approvalRequest.Status = StatusLeaveRequestEnum.IN_PROCESS.ToString();
-            //    approvalRequest.CurrentPositionId = nextPosition.ToPosition;
-            //    _context.ApprovalRequests.Update(approvalRequest);
-
-            //    var newApprovalAction = new Domain.Entities.ApprovalAction
-            //    {
-            //        ApprovalRequestId = approvalRequest.Id,
-            //        ApproverUserCode = request.UserCodeApproval,
-            //        ApproverName = request.NameUserApproval,
-            //        Action = StatusLeaveRequestEnum.IN_PROCESS.ToString(),
-            //        Comment = request.Note,
-            //        CreatedAt = DateTimeOffset.Now
-            //    };
-
-            //    _context.ApprovalActions.Add(newApprovalAction);
-
-            //    await _context.SaveChangesAsync();
-
-            //    //send email to hr
-            //    BackgroundJob.Enqueue<EmailService>(job => job.SendEmailLeaveRequest(new List<string> { "nguyenviet@vsvn.com.vn" }, leaveRequest, request.UrlFrontEnd));
-
-            //    return null;
-
-            //}
-
-
-            //return null;
-
-            //var userApproval = await _context.Users
-            //    .Select(u => new
-            //    {
-            //        u.Id,
-            //        u.Code,
-            //        u.Name,
-            //        u.Level,
-            //        u.LevelParent,
-            //        u.DepartmentId,
-            //        u.Department,
-            //        UserPermission = u.UserPermission
-            //            .Where(up => up.Permission != null)
-            //            .Select(up => up.Permission!.Name).ToList(),
-            //        Roles = u.UserRoles
-            //            .Where(ur => ur.Role != null)
-            //            .Select(ur => ur.Role!.Code).ToList(),
-            //        IsRoleHR = u.UserRoles
-            //            .Any(ur => ur.Role != null && ur.Role.Code == "HR"),
-            //        IsRoleHRManager = u.UserRoles
-            //            .Any(ur => ur.Role != null && ur.Role.Code == "HR_Manager")
-            //    })
-            //    .FirstOrDefaultAsync(e => e.Code == request.UserCodeApproval);
-
-            //if (userApproval == null)
-            //{
-            //    throw new NotFoundException("Not found user approval");
-            //}
-
-            ////check have custom 
-            //var haveCustomApproval = await _context
-            //    .CustomApprovalFlows
-            //    .FirstOrDefaultAsync(e => e.TypeCustomApproval == "LEAVE_REQUEST" && e.DepartmentId == userApproval.DepartmentId && e.From == userApproval.Level);
-
-
-            //Domain.Entities.User? nextUserCustomApproval = null;
-
-            //bool flagHaveCustomApproval = false;
-
-            //if (haveCustomApproval != null)
-            //{
-            //    nextUserCustomApproval = await _context.Users.Where(e => e.DepartmentId == userApproval.DepartmentId && e.Level == haveCustomApproval.To).FirstOrDefaultAsync();
-            //    flagHaveCustomApproval = true;
-            //}
-
-            //var leaveRequest = await _context
-            //    .LeaveRequests
-            //    .FirstOrDefaultAsync(e => e.Id == Guid.Parse(request.LeaveRequestId ?? ""));
-
-            //if (leaveRequest == null)
-            //{
-            //    throw new NotFoundException("Leave request not found!");
-            //}
-
-            //var leaveRequestStep = await _context.LeaveRequestSteps
-            //    .FirstOrDefaultAsync(e =>
-            //        e.StatusStep == (byte)StatusLeaveRequestStepEnum.PENDING &&
-            //        e.LeaveRequestId == Guid.Parse(request.LeaveRequestId ?? "")
-            //    );
-
-            //if (leaveRequestStep == null)
-            //{
-            //    throw new NotFoundException("Leave request step not found!");
-            //}
-
-            ////------- case reject
-
-            //if (request.Status == false)
-            //{
-            //    leaveRequest.Status = (byte)StatusLeaveRequestEnum.REJECT;
-            //    leaveRequest.Note = request.Note;
-            //    _context.LeaveRequests.Update(leaveRequest);
-
-            //    leaveRequestStep.StatusStep = (byte)StatusLeaveRequestStepEnum.REJECT;
-            //    leaveRequestStep.ApprovedBy = userApproval.Name;
-            //    leaveRequestStep.UserCodeApprover = userApproval.Code;
-            //    leaveRequestStep.ApprovedAt = DateTime.Now;
-            //    _context.LeaveRequestSteps.Update(leaveRequestStep);
-
-            //    await _context.SaveChangesAsync();
-
-            //    return LeaveRequestMapper.ToDto(leaveRequest);
-            //}
-
-            ////------- case approval
-
-            ////case hr approval for other member
-            //if ((userApproval.IsRoleHR && leaveRequestStep.LevelApproval == "HR") || userApproval.IsRoleHRManager)
-            //{
-            //    if (!userApproval.IsRoleHRManager)
-            //    {
-            //        if (!userApproval.Roles.Any(r => r != null && r.Contains("leave_request.hr_approval")))
-            //        {
-            //            throw new ForbiddenException("Bạn chưa có quyền, liên hệ team IT");
-            //        }
-            //    }
-
-            //    leaveRequest.Status = (byte)StatusLeaveRequestEnum.COMPLETE;
-            //    leaveRequest.UpdatedAt = DateTime.Now;
-            //    _context.LeaveRequests.Update(leaveRequest);
-
-            //    leaveRequestStep.UserCodeApprover = userApproval.Code;
-            //    leaveRequestStep.StatusStep = (byte)StatusLeaveRequestStepEnum.APPROVAL;
-            //    leaveRequestStep.ApprovedBy = userApproval.Name;
-            //    leaveRequestStep.ApprovedAt = DateTime.Now;
-
-            //    _context.LeaveRequestSteps.Update(leaveRequestStep);
-            //    await _context.SaveChangesAsync();
-
-            //    return LeaveRequestMapper.ToDto(leaveRequest);
-            //}
-
-            ////case hr approval for hr
-            //if (userApproval.IsRoleHR)
-            //{
-            //    var nextUserApproval = await GetNextUserApproval(userApproval.DepartmentId, userApproval.LevelParent);
-
-            //    leaveRequest.Status = nextUserApproval == null ? (byte)StatusLeaveRequestEnum.COMPLETE : (byte)StatusLeaveRequestEnum.IN_PROCESS;
-            //    leaveRequest.UpdatedAt = DateTime.Now;
-            //    _context.LeaveRequests.Update(leaveRequest);
-
-            //    leaveRequestStep.UserCodeApprover = userApproval.Code;
-            //    leaveRequestStep.StatusStep = (byte)StatusLeaveRequestStepEnum.APPROVAL;
-            //    leaveRequestStep.ApprovedBy = userApproval.Name;
-            //    leaveRequestStep.ApprovedAt = DateTime.Now;
-            //    _context.LeaveRequestSteps.Update(leaveRequestStep);
-
-            //    if (nextUserApproval != null)
-            //    {
-            //        Domain.Entities.LeaveRequestStep newStep = new Domain.Entities.LeaveRequestStep
-            //        {
-            //            LeaveRequestId = leaveRequest.Id,
-            //            StatusStep = (byte)StatusLeaveRequestStepEnum.PENDING,
-            //            LevelApproval = nextUserApproval?.Level ?? null
-            //        };
-
-            //        _context.LeaveRequestSteps.Add(newStep);
-
-            //        if (!string.IsNullOrWhiteSpace(nextUserApproval?.Email))
-            //        {
-            //            BackgroundJob.Enqueue<EmailService>(job => job.SendEmailLeaveRequest(new List<string> { nextUserApproval.Email }, leaveRequest, request.UrlFrontEnd));
-            //        }
-            //    }
-
-            //    await _context.SaveChangesAsync();
-
-            //    return LeaveRequestMapper.ToDto(leaveRequest);
-            //}
-
-            //if (userApproval.Roles.Any(role => role != null && role.Contains("leave_request.approval_to_hr")))
-            //{
-            //    Domain.Entities.LeaveRequestStep newStep = new Domain.Entities.LeaveRequestStep
-            //    {
-            //        LeaveRequestId = leaveRequest.Id,
-            //        LevelApproval = "HR",
-            //        StatusStep = (byte)StatusLeaveRequestStepEnum.PENDING,
-            //    };
-            //    _context.LeaveRequestSteps.Add(newStep);
-
-            //    //send email to group hr, now fake 
-            //    BackgroundJob.Enqueue<EmailService>(job => job.SendEmailLeaveRequest(new List<string> { "nguyenviet@vsvn.com.vn" }, leaveRequest, request.UrlFrontEnd));
-            //}
-            //else
-            //{
-            //    leaveRequest.Status = (byte)StatusLeaveRequestEnum.IN_PROCESS;
-
-            //    var nextUserApproval = await _context.Users.FirstOrDefaultAsync(e =>
-            //        e.DepartmentId == userApproval.DepartmentId &&
-            //        e.Level == userApproval.LevelParent
-            //    );
-
-            //    Domain.Entities.LeaveRequestStep newStep = new Domain.Entities.LeaveRequestStep
-            //    {
-            //        LeaveRequestId = leaveRequest.Id,
-            //        StatusStep = (byte)StatusLeaveRequestStepEnum.PENDING,
-            //    };
-
-            //    newStep.LevelApproval = "HR";
-            //    var email = "nguyenviet@vsvn.com.vn"; //email hr
-
-            //    if ((nextUserApproval != null && flagHaveCustomApproval == false) || (flagHaveCustomApproval && nextUserCustomApproval == null))
-            //    {
-            //        newStep.LevelApproval = nextUserApproval?.Level;
-            //        email = nextUserApproval?.Email;
-            //    }
-            //    else if (flagHaveCustomApproval && nextUserCustomApproval != null)
-            //    {
-            //        newStep.LevelApproval = nextUserCustomApproval.Level;
-            //        email = nextUserCustomApproval.Email;
-            //    }
-
-            //    _context.LeaveRequestSteps.Add(newStep);
-
-            //    if (!string.IsNullOrWhiteSpace(nextUserApproval?.Email))
-            //    {
-            //        BackgroundJob.Enqueue<EmailService>(job => job.SendEmailLeaveRequest(new List<string> { email ?? "" }, leaveRequest, request.UrlFrontEnd));
-            //    }
-            //}
-
-            //leaveRequest.Status = (byte)StatusLeaveRequestEnum.IN_PROCESS;
-            //leaveRequest.UpdatedAt = DateTime.Now;
-            //_context.LeaveRequests.Update(leaveRequest);
-
-            //leaveRequestStep.UserCodeApprover = userApproval.Code;
-            //leaveRequestStep.StatusStep = (byte)StatusLeaveRequestStepEnum.APPROVAL;
-            //leaveRequestStep.ApprovedBy = userApproval.Name;
-            //leaveRequestStep.ApprovedAt = DateTime.Now;
-
-            //_context.LeaveRequestSteps.Update(leaveRequestStep);
-            //await _context.SaveChangesAsync();
-
-            //return LeaveRequestMapper.ToDto(leaveRequest);
         }
 
         public async Task RejectLeaveRq(ApprovalDto request, Domain.Entities.LeaveRequest leaveRequest)
@@ -687,9 +377,15 @@ namespace ServicePortal.Modules.LeaveRequest.Services
 
             await _context.SaveChangesAsync();
 
-            //get user and email of user request
-            //var userRequest = await _context.Users.FirstOrDefaultAsync(e => e.UserCode == approvalRequest.RequesterUserCode);
-            BackgroundJob.Enqueue<EmailService>(job => job.SendEmaiLeaveRequestMySelfStatus("nguyenviet@vsvn.com.vn", leaveRequest, request.UrlFrontEnd, request.Note, false));
+            //get user config receive mail
+            var userConfigReceiveEmail = await _context.UserConfigs
+                .FirstOrDefaultAsync(e => e.UserCode == leaveRequest.RequesterUserCode && e.ConfigKey == "RECEIVE_MAIL_LEAVE_REQUEST");
+
+            //true -> meaning receive mail 
+            if (userConfigReceiveEmail == null || (userConfigReceiveEmail != null && userConfigReceiveEmail.ConfigValue == "true"))
+            {
+                BackgroundJob.Enqueue<EmailService>(job => job.SendEmaiLeaveRequestMySelfStatus("nguyenviet@vsvn.com.vn", leaveRequest, request.UrlFrontEnd, request.Note, false));
+            }
         }
 
         public async Task HrApproval(ApprovalDto request, Domain.Entities.LeaveRequest leaveRequest)
@@ -715,47 +411,70 @@ namespace ServicePortal.Modules.LeaveRequest.Services
 
             await _context.SaveChangesAsync();
 
-            //get user and email of user request
-            //var userRequest = await _context.Users.FirstOrDefaultAsync(e => e.UserCode == approvalRequest.RequesterUserCode);
-            BackgroundJob.Enqueue<EmailService>(job => job.SendEmaiLeaveRequestMySelfStatus("nguyenviet@vsvn.com.vn", leaveRequest, request.UrlFrontEnd, request.Note, true));
+            //get user config receive mail
+            var userConfigReceiveEmail = await _context.UserConfigs
+                .FirstOrDefaultAsync(e => e.UserCode == leaveRequest.RequesterUserCode && e.ConfigKey == "RECEIVE_MAIL_LEAVE_REQUEST");
+
+            //true -> meaning receive mail 
+            if (userConfigReceiveEmail == null || (userConfigReceiveEmail != null && userConfigReceiveEmail.ConfigValue == "true"))
+            {
+                BackgroundJob.Enqueue<EmailService>(job => job.SendEmaiLeaveRequestMySelfStatus("nguyenviet@vsvn.com.vn", leaveRequest, request.UrlFrontEnd, request.Note, true));
+            }
         }
 
+        public IQueryable<LeaveRequestWithApprovalResponse> GetBaseLeaveRequestApprovalQuery(GetAllLeaveRequestWaitApprovalDto request, HashSet<string> roleClaims)
+        {
+            int? PositionId = request.PositionId;
 
-        //public IQueryable<Domain.Entities.LeaveRequest> QueryWaitApprovalHR(int? departmentId, string? level)
-        //{
-        //    var query = _context.LeaveRequests
-        //        .Where(o => o.LeaveRequestSteps != null && 
-        //            (o.LeaveRequestSteps.Any(o => o.LevelApproval == "HR" && 
-        //             o.StatusStep == (byte)StatusLeaveRequestStepEnum.PENDING) ||
-        //        ((o.DepartmentId == departmentId) && 
-        //            o.LeaveRequestSteps.Any(e => e.LevelApproval == level && e.StatusStep == (byte)StatusLeaveRequestStepEnum.PENDING))));
+            var query = _context.LeaveRequests
+                .Join(
+                    _context.ApprovalRequests,
+                    leave_rq => leave_rq.Id,
+                    approval_rq => approval_rq.RequestId,
+                    (leave_rq, approval_rq) => new { leave_rq, approval_rq }
+                );
 
-        //    return query;
-        //}
+            var statusList = new[] {
+                StatusLeaveRequestEnum.IN_PROCESS.ToString(),
+                StatusLeaveRequestEnum.PENDING.ToString()
+            };
 
-        //public IQueryable<Domain.Entities.LeaveRequest> QueryWaitApprovalNormalUser(int? departmentId, string? level)
-        //{
-        //    var query = _context.LeaveRequests.Where(e => 
-        //            e.DepartmentId == departmentId && 
-        //            e.LeaveRequestSteps != null &&
-        //            e.LeaveRequestSteps.Any(x =>
-        //                x.LevelApproval == level &&
-        //                x.StatusStep == (byte)StatusLeaveRequestStepEnum.PENDING
-        //            )
-        //        );
+            if (roleClaims.Contains("HR") || roleClaims.Contains("HR_Manager"))
+            {
+                query = query.Where(x =>
+                    x.approval_rq.RequestType == "LEAVE_REQUEST" &&
+                    (
+                        x.approval_rq.CurrentPositionId == (int)StatusLeaveRequestEnum.WAIT_HR &&
+                        (
+                            statusList.Contains(x.approval_rq.Status)
+                        )
+                    ) ||
+                    (
+                        x.approval_rq.CurrentPositionId == PositionId &&
+                        (
+                            statusList.Contains(x.approval_rq.Status)
+                        )
+                    )
+                );
+            }
+            else
+            {
+                query = query.Where(x =>
+                    x.approval_rq.RequestType == "LEAVE_REQUEST" &&
+                    (
+                        x.approval_rq.CurrentPositionId == PositionId &&
+                        (
+                            statusList.Contains(x.approval_rq.Status)
+                        )
+                    )
+                );
+            }
 
-        //    return query;
-        //}
-
-        //public async Task<Domain.Entities.User?> GetNextUserApproval(int? departmentId, string? level)
-        //{
-        //    var nextUserApproval = await _context.Users
-        //        .FirstOrDefaultAsync(e =>
-        //            e.DepartmentId == departmentId &&
-        //            e.Level == level
-        //        );
-
-        //    return nextUserApproval;
-        //}
+            return query.Select(x => new LeaveRequestWithApprovalResponse
+            {
+                LeaveRequest = x.leave_rq,
+                ApprovalRequest = x.approval_rq
+            });
+        }
     }
 }

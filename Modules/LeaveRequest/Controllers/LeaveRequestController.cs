@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ServicePortal.Common;
+using ServicePortal.Common.Filters;
 using ServicePortal.Modules.LeaveRequest.DTO;
 using ServicePortal.Modules.LeaveRequest.DTO.Requests;
 using ServicePortal.Modules.LeaveRequest.Services.Interfaces;
@@ -40,7 +41,9 @@ namespace ServicePortal.Modules.LeaveRequest.Controllers
         [HttpGet("get-leave-request-wait-approval")]
         public async Task<IActionResult> GetWaitApproval(GetAllLeaveRequestWaitApprovalDto request)
         {
-            var results = await _leaveRequestService.GetAllWaitApproval(request);
+            var userClaim = HttpContext.User;
+
+            var results = await _leaveRequestService.GetAllWaitApproval(request, userClaim);
 
             var response = new PageResponse<LeaveRequestDto>
                 (
@@ -89,7 +92,7 @@ namespace ServicePortal.Modules.LeaveRequest.Controllers
         }
 
         [HttpPost("approval")]
-        //[RoleAuthorize("leave_request.approval", "HR", "HR_Manager")]
+        [RoleAuthorize("leave_request.approval", "HR", "HR_Manager")]
         public async Task<IActionResult> Approval(ApprovalDto request)
         {
             var currentUserCode = User.FindFirst("user_code")?.Value;
@@ -102,7 +105,9 @@ namespace ServicePortal.Modules.LeaveRequest.Controllers
         [HttpGet("count-wait-approval")]
         public async Task<IActionResult> CountWaitApproval(GetAllLeaveRequestWaitApprovalDto request)
         {
-            var result = await _leaveRequestService.CountWaitApproval(request);
+            var userClaim = HttpContext.User;
+
+            var result = await _leaveRequestService.CountWaitApproval(request, userClaim);
 
             return Ok(new BaseResponse<long>(200, "success", result));
         }

@@ -19,6 +19,7 @@ namespace ServicePortal.Modules.LeaveRequest.DTO
         public string? Image { get; set; }
         public string? UrlFrontend { get; set; }
         public DateTimeOffset? CreatedAt { get; set; }
+        public ApprovalRequest? ApprovalRequest { get; set; }
         public ApprovalAction? ApprovalAction { get; set; }
     }
 }

@@ -6,7 +6,7 @@ namespace ServicePortal.Common.Mappers
 {
     public class LeaveRequestMapper
     {
-        public static LeaveRequestDto ToDto(LeaveRequest entity, ApprovalAction? approvalAction = null)
+        public static LeaveRequestDto ToDto(LeaveRequest entity, ApprovalRequest? approvalRequest = null, ApprovalAction? approvalAction = null)
         {
             return new LeaveRequestDto
             {
@@ -24,6 +24,7 @@ namespace ServicePortal.Common.Mappers
                 HaveSalary = entity?.HaveSalary,
                 Image = entity?.Image,
                 CreatedAt = entity?.CreatedAt,
+                ApprovalRequest = approvalRequest,
                 ApprovalAction = approvalAction
             };
         }
@@ -48,9 +49,9 @@ namespace ServicePortal.Common.Mappers
             };
         }
 
-        public static List<LeaveRequestDto> ToDtoList(List<(LeaveRequest, ApprovalAction?)> list)
+        public static List<LeaveRequestDto> ToDtoList(List<(LeaveRequest, ApprovalRequest?, ApprovalAction?)> list)
         {
-            return list.Select(x => ToDto(x.Item1, x.Item2)).ToList();
+            return list.Select(x => ToDto(x.Item1, x.Item2, x.Item3)).ToList();
         }
 
         public static List<LeaveRequest> ToEntityList(List<LeaveRequestDto> dtos)

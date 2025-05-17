@@ -10,7 +10,6 @@ using System.Globalization;
 using ServicePortal.Modules.User.Services;
 using ServicePortal.Modules.Auth.Services;
 using ServicePortal.Modules.Role.Services;
-using ServicePortal.Modules.Deparment.Services;
 using ServicePortal.Common.Middleware;
 using Serilog;
 using ServicePortal.Infrastructure.BackgroundServices;
@@ -19,16 +18,15 @@ using ServicePortal.Modules.TypeLeave.Services;
 using ServicePortal.Infrastructure.Email;
 using Hangfire;
 using ServicePortal.Infrastructure.Hubs;
-using ServicePortal.Modules.CustomApprovalFlow.Services;
 using Serilog.Exceptions;
 using Serilog.Events;
 using ServicePortal.Modules.User.Services.Interfaces;
 using ServicePortal.Modules.TypeLeave.Services.Interfaces;
 using ServicePortal.Modules.Role.Services.Interfaces;
 using ServicePortal.Modules.LeaveRequest.Services.Interfaces;
-using ServicePortal.Modules.Department.Services.Interfaces;
-using ServicePortal.Modules.CustomApprovalFlow.Services.Interfaces;
 using ServicePortal.Modules.Auth.Services.Interfaces;
+using ServicePortal.Modules.UserConfig.Services.Interfaces;
+using ServicePortal.Modules.UserConfig.Services;
 
 namespace ServicePortal
 {
@@ -107,13 +105,9 @@ namespace ServicePortal
 
             builder.Services.AddScoped<ITypeLeaveService, TypeLeaveService>();
 
-            //builder.Services.AddScoped<IDepartmentService, DepartmentService>();
-
             builder.Services.AddScoped<ILeaveRequestService, LeaveRequestService>();
 
             builder.Services.AddScoped<IEmailService, EmailService>();
-
-            //builder.Services.AddScoped<ICustomApprovalFlowService, CustomApprovalFlowService>();
 
             builder.Services.AddScoped<JwtService>();
 
@@ -122,6 +116,8 @@ namespace ServicePortal
             builder.Services.AddScoped<NotificationService>();
 
             builder.Services.AddScoped<OrgChartBuilder>();
+
+            builder.Services.AddScoped<IUserConfigService, UserConfigService>();
 
             #endregion
 
@@ -281,7 +277,6 @@ namespace ServicePortal
             //default redirect to swagger
             app.Use(async (context, next) =>
             {
-                
                 if (context.Request.Path == "/")
                 {
                     context.Response.Redirect("/swagger/index.html", permanent: false);

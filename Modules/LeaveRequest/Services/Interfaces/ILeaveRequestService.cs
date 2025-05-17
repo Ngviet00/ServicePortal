@@ -1,4 +1,5 @@
-﻿using ServicePortal.Common;
+﻿using System.Security.Claims;
+using ServicePortal.Common;
 using ServicePortal.Modules.LeaveRequest.DTO;
 using ServicePortal.Modules.LeaveRequest.DTO.Requests;
 
@@ -12,7 +13,7 @@ namespace ServicePortal.Modules.LeaveRequest.Services.Interfaces
         Task<LeaveRequestDto> Create(LeaveRequestDto dto);
         Task<LeaveRequestDto> Update(Guid id, LeaveRequestDto dto);
         Task<LeaveRequestDto> Delete(Guid id);
-        Task<PagedResults<LeaveRequestDto>> GetAllWaitApproval(GetAllLeaveRequestWaitApprovalDto request);
-        Task<int> CountWaitApproval(GetAllLeaveRequestWaitApprovalDto request);
+        Task<PagedResults<LeaveRequestDto>> GetAllWaitApproval(GetAllLeaveRequestWaitApprovalDto request, ClaimsPrincipal userClaim);
+        Task<int> CountWaitApproval(GetAllLeaveRequestWaitApprovalDto request, ClaimsPrincipal userClaim);
     }
 }
