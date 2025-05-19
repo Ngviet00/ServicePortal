@@ -36,34 +36,25 @@ namespace ServicePortal
         {
             #region Config Serilog
 
-            var logDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Logs", DateTimeOffset.UtcNow.ToString("yyyy"), DateTimeOffset.UtcNow.ToString("MM"), DateTimeOffset.UtcNow.ToString("dd"));
+            var logDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Logs", DateTimeOffset.UtcNow.ToString("yyyy"), DateTimeOffset.UtcNow.ToString("MM"));
 
             if (!Directory.Exists(logDir))
             {
                 Directory.CreateDirectory(logDir);
             }
 
-            var logFileInfo = Path.Combine(logDir, "info-.txt");
-            var logFileError = Path.Combine(logDir, "error-.txt");
+            var logFile = Path.Combine(logDir, "log-.txt");
 
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Information()
                 .Enrich.FromLogContext()
                 .Enrich.WithExceptionDetails()
                 .WriteTo.File(
-                    path: logFileInfo,
-                    outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] ======> {Message:lj}{NewLine}{Exception}",
+                    path: logFile,
+                    outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] ===========> {Message:lj}{NewLine}{Exception}",
                     rollingInterval: RollingInterval.Day,
                     retainedFileCountLimit: 90,
                     shared: true
-                )
-                .WriteTo.File(
-                    path: logFileError,
-                    outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] ======> {Message:lj}{NewLine}{Exception}",
-                    rollingInterval: RollingInterval.Day,
-                    retainedFileCountLimit: 90,
-                    shared: true,
-                    restrictedToMinimumLevel: LogEventLevel.Error
                 )
                 .CreateLogger();
 
