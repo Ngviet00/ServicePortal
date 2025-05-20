@@ -1,14 +1,13 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System.Text.Json.Serialization;
 
 namespace ServicePortal.Modules.Auth.DTO.Requests
 {
     public class CreateUserDto
     {
-        [Required, JsonPropertyName("usercode")]
+        [Required]
         public string? UserCode { get; set; }
 
-        [Required, JsonPropertyName("password")]
+        [Required]
         public string? Password { get; set; }
     }
 }
