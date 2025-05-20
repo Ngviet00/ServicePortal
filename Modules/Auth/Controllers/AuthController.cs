@@ -25,23 +25,12 @@ namespace ServicePortal.Modules.Auth.Controllers
         {
             var result = await _authService.Login(request);
 
-            Response.Cookies.Append("access_token", result.AccessToken ?? "", new CookieOptions
+            return Ok(new 
             {
-                HttpOnly = true,
-                Secure = true,
-                SameSite = SameSiteMode.None,
-                Expires = DateTimeOffset.UtcNow.AddMinutes(_config.GetValue<int>("Jwt:AccessTokenExpirationMinutes")),
+                user = result?.UserInfo,
+                accessToken = result?.AccessToken,
+                refreshToken = result?.RefreshToken,
             });
-
-            Response.Cookies.Append("refresh_token", result.RefreshToken ?? "", new CookieOptions
-            {
-                HttpOnly = true,
-                Secure = true,
-                SameSite = SameSiteMode.None,
-                Expires = result.ExpiresAt
-            });
-
-            return Ok(new { accessToken = result?.AccessToken, user = result?.UserInfo });
         }
 
         [HttpPost("register")]
@@ -49,46 +38,20 @@ namespace ServicePortal.Modules.Auth.Controllers
         {
             var result = await _authService.Register(request);
 
-            Response.Cookies.Append("access_token", result.AccessToken ?? "", new CookieOptions
+            return Ok(new
             {
-                HttpOnly = true,
-                Secure = true,
-                SameSite = SameSiteMode.None,
-                Expires = DateTimeOffset.UtcNow.AddMinutes(_config.GetValue<int>("Jwt:AccessTokenExpirationMinutes")),
+                accessToken = result?.AccessToken,
+                refreshToken = result?.RefreshToken,
+                user = result?.UserInfo
             });
-
-            Response.Cookies.Append("refresh_token", result.RefreshToken ?? "", new CookieOptions
-            {
-                HttpOnly = true,
-                Secure = true,
-                SameSite = SameSiteMode.None,
-                Expires = result.ExpiresAt
-            });
-
-            return Ok(new { accessToken = result?.AccessToken, user = result?.UserInfo });
         }
 
         [HttpPost("logout"), Authorize]
-        public async Task<IActionResult> Logout()
+        public async Task<IActionResult> Logout([FromBody] LogoutRequest request)
         {
-            var refreshToken = Request.Cookies["refresh_token"];
-            var accessToken = Request.Cookies["access_token"];
+            var refreshToken = request.RefreshToken;
 
-            Response.Cookies.Delete("access_token", new CookieOptions
-            {
-                HttpOnly = true,
-                Secure = true,
-                SameSite = SameSiteMode.None,
-                Path = "/",
-            });
-
-            Response.Cookies.Delete("refresh_token", new CookieOptions
-            {
-                HttpOnly = true,
-                Secure = true,
-                SameSite = SameSiteMode.None,
-                Path = "/",
-            });
+            var accessToken = Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
 
             if (string.IsNullOrWhiteSpace(refreshToken) || string.IsNullOrWhiteSpace(accessToken))
             {
@@ -116,25 +79,15 @@ namespace ServicePortal.Modules.Auth.Controllers
             return Ok(new BaseResponse<string>(200, "Change password successfully", null));
         }
 
-        [HttpGet("refresh-token")]
-        public async Task<IActionResult> RefreshAccessToken()
+        [HttpPost("refresh-token")]
+        public async Task<IActionResult> RefreshAccessToken([FromBody] RefreshTokenRequest request)
         {
-            var refreshToken = Request.Cookies["refresh_token"] ?? "";
-
-            if (string.IsNullOrWhiteSpace(refreshToken))
+            if (string.IsNullOrWhiteSpace(request.RefreshToken))
             {
                 return Unauthorized(new BaseResponse<string>(401, "No refresh token!", null));
             }
 
-            var newAccessToken = await _authService.RefreshAccessToken(refreshToken);
-
-            Response.Cookies.Append("access_token", newAccessToken, new CookieOptions
-            {
-                HttpOnly = true,
-                Secure = true,
-                SameSite = SameSiteMode.None,
-                Expires = DateTimeOffset.UtcNow.AddMinutes(_config.GetValue<int>("Jwt:AccessTokenExpirationMinutes"))
-            });
+            var newAccessToken = await _authService.RefreshAccessToken(request.RefreshToken);
 
             return Ok(new BaseResponse<string>(200, "success", newAccessToken));
         }

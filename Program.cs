@@ -19,7 +19,6 @@ using ServicePortal.Infrastructure.Email;
 using Hangfire;
 using ServicePortal.Infrastructure.Hubs;
 using Serilog.Exceptions;
-using Serilog.Events;
 using ServicePortal.Modules.User.Services.Interfaces;
 using ServicePortal.Modules.TypeLeave.Services.Interfaces;
 using ServicePortal.Modules.Role.Services.Interfaces;
@@ -146,7 +145,7 @@ namespace ServicePortal
                 options.AddPolicy("AllowPrivate",
                     policy =>
                     {
-                        policy.WithOrigins(allowedOrigins ?? ["http://localhost:5173"])
+                        policy.WithOrigins(allowedOrigins ?? new[] { "http://localhost:5173" })
                               .AllowAnyMethod()
                               .AllowAnyHeader()
                               .AllowCredentials();
@@ -158,38 +157,26 @@ namespace ServicePortal
             #region JWT
 
             builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-            .AddJwtBearer(options =>
-            {
-                options.TokenValidationParameters = new TokenValidationParameters
+                .AddJwtBearer(options =>
                 {
-                    ValidateIssuer = false,
-                    ValidateAudience = false,
-                    ValidateLifetime = true,
-                    ValidateIssuerSigningKey = true,
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] ?? "")),
-                };
-
-                options.Events = new JwtBearerEvents
-                {
-                    OnAuthenticationFailed = context =>
+                    options.TokenValidationParameters = new TokenValidationParameters
                     {
-                        Log.Error($"JWT error: {context.Exception.Message}");
-                        return Task.CompletedTask;
-                    },
+                        ValidateIssuer = false,
+                        ValidateAudience = false,
+                        ValidateLifetime = true,
+                        ValidateIssuerSigningKey = true,
+                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] ?? "")),
+                    };
 
-                    OnMessageReceived = context =>
+                    options.Events = new JwtBearerEvents
                     {
-                        var token = context.HttpContext.Request.Cookies["access_token"];
-
-                        if (!string.IsNullOrEmpty(token))
+                        OnAuthenticationFailed = context =>
                         {
-                            context.Token = token;
-                        }
-
-                        return Task.CompletedTask;
-                    }
-                };
-            });
+                            Log.Error($"JWT error: {context.Exception.Message}");
+                            return Task.CompletedTask;
+                        },
+                    };
+                });
 
             builder.Services.AddAuthorization();
 
