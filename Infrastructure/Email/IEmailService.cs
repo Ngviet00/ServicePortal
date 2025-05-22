@@ -7,5 +7,6 @@ namespace ServicePortal.Infrastructure.Email
         Task SendEmaiLeaveRequestMySelfStatus(string email, LeaveRequest request, string UrlFrontEnd, string? comment, bool status);
         Task SendEmaiLeaveRequestMySelf(string email, LeaveRequest request, string UrlFrontEnd);
         Task SendEmailLeaveRequest(List<string> listEmail, LeaveRequest request, string UrlFrontEnd);
+        Task SendEmailResetPassword(string email, string password);
     }
 }

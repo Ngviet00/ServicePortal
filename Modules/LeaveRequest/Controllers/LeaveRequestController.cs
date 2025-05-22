@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Azure.Core;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ServicePortal.Common;
 using ServicePortal.Common.Filters;
@@ -110,6 +111,14 @@ namespace ServicePortal.Modules.LeaveRequest.Controllers
             var result = await _leaveRequestService.CountWaitApproval(request, userClaim);
 
             return Ok(new BaseResponse<long>(200, "success", result));
+        }
+
+        [HttpPost("hr-register-all-leave-rq")]
+        public async Task<IActionResult> HrRegisterAllLeave([FromBody] HrRegisterAllLeaveRqDto request)
+        {
+            var result = await _leaveRequestService.HrRegisterAllLeave(request?.UserCode ?? "");
+
+            return Ok(new BaseResponse<string>(200, "success", result));
         }
     }
 }

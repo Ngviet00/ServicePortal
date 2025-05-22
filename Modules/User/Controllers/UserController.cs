@@ -95,9 +95,9 @@ namespace ServicePortal.Modules.User.Controllers
         }
 
         [HttpPost("reset-password"), RoleAuthorize("superadmin")]
-        public async Task<IActionResult> ResetPassword([FromBody]string userCode)
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto request)
         {
-            var result = await _userService.ResetPassword(userCode);
+            var result = await _userService.ResetPassword(request);
 
             return Ok(new BaseResponse<UserResponseDto>(200, "Success", result));
         }

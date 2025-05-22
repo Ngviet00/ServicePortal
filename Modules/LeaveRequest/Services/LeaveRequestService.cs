@@ -3,6 +3,7 @@ using Hangfire;
 using Microsoft.EntityFrameworkCore;
 using ServicePortal.Common;
 using ServicePortal.Common.Mappers;
+using ServicePortal.Domain.Entities;
 using ServicePortal.Domain.Enums;
 using ServicePortal.Infrastructure.Data;
 using ServicePortal.Infrastructure.Email;
@@ -131,6 +132,29 @@ namespace ServicePortal.Modules.LeaveRequest.Services
                 })
                 .FirstOrDefaultAsync();
 
+            //insert to table leave request
+            var leaveRequest = LeaveRequestMapper.ToEntity(dto);
+            _context.LeaveRequests.Add(leaveRequest);
+
+
+            //if null -> default send to hr
+            if (approvalFlow == null)
+            {
+                _context.ApprovalRequests.Add(new Domain.Entities.ApprovalRequest
+                {
+                    RequesterUserCode = dto.RequesterUserCode,
+                    RequestType = "LEAVE_REQUEST",
+                    RequestId = leaveRequest.Id,
+                    Status = "IN_PROCESS",
+                    CurrentPositionId = (int)StatusLeaveRequestEnum.WAIT_HR,
+                    CreatedAt = DateTimeOffset.Now
+                });
+
+                await _context.SaveChangesAsync();
+
+                return dto;
+            }
+
             //get list user have position
             var userHaveNextPosition = await _context.Users
                 .Where(e => e.PositionId == approvalFlow.ToPosition)
@@ -140,11 +164,6 @@ namespace ServicePortal.Modules.LeaveRequest.Services
                     //email
                 })
                 .ToListAsync();
-
-            //insert to table leave request
-            var leaveRequest = LeaveRequestMapper.ToEntity(dto);
-
-            _context.LeaveRequests.Add(leaveRequest);
 
             //insert to table approval requet
             var approvalRequest = new Domain.Entities.ApprovalRequest
@@ -475,6 +494,46 @@ namespace ServicePortal.Modules.LeaveRequest.Services
                 LeaveRequest = x.leave_rq,
                 ApprovalRequest = x.approval_rq
             });
+        }
+
+        public async Task<string> HrRegisterAllLeave(string userCode)
+        {
+            var statusList = new[] {
+                StatusLeaveRequestEnum.IN_PROCESS.ToString(),
+                StatusLeaveRequestEnum.PENDING.ToString()
+            };
+
+            var user = await _context.Users.FirstOrDefaultAsync(e => e.UserCode == userCode) ?? throw new NotFoundException("User not found");
+
+            var approvalRequests = await _context.ApprovalRequests
+                .Where(e => 
+                    e.RequestType == "LEAVE_REQUEST" && 
+                    statusList.Contains(e.Status) && e.CurrentPositionId == (int)StatusLeaveRequestEnum.WAIT_HR
+                )
+                .ToListAsync();
+
+            List<ApprovalAction> actions = [];
+
+            foreach (var item in approvalRequests)
+            {
+                item.Status = StatusLeaveRequestEnum.COMPLETED.ToString();
+               
+                actions.Add(new ApprovalAction
+                {
+                    ApprovalRequestId = item.Id,
+                    ApproverUserCode = user?.UserCode,
+                    ApproverName = user?.UserCode?.ToString(),
+                    Action = StatusLeaveRequestEnum.COMPLETED.ToString(),
+                    CreatedAt = DateTimeOffset.Now
+                });
+            }
+
+            _context.ApprovalRequests.UpdateRange(approvalRequests);
+            _context.ApprovalActions.AddRange(actions);
+
+            await _context.SaveChangesAsync();
+
+            return "success" ?? "error";
         }
     }
 }

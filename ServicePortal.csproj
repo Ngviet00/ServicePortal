@@ -42,6 +42,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Modules\TimeKeeping\DTO\Responses\" />
     <Folder Include="Properties\PublishProfiles\" />
   </ItemGroup>
 

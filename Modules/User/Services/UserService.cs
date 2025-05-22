@@ -1,10 +1,12 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Hangfire;
+using Microsoft.EntityFrameworkCore;
 using Serilog;
 using ServicePortal.Common;
 using ServicePortal.Common.Helpers;
 using ServicePortal.Common.Mappers;
 using ServicePortal.Domain.Entities;
 using ServicePortal.Infrastructure.Data;
+using ServicePortal.Infrastructure.Email;
 using ServicePortal.Infrastructure.Hubs;
 using ServicePortal.Modules.User.DTO.Requests;
 using ServicePortal.Modules.User.DTO.Responses;
@@ -236,15 +238,22 @@ namespace ServicePortal.Modules.User.Services
             }
         }
 
-        public async Task<UserResponseDto> ResetPassword(string userCode)
+        public async Task<UserResponseDto> ResetPassword(ResetPasswordDto request)
         {
-            var user = await _context.Users.FirstOrDefaultAsync(e => e.UserCode == userCode) ?? throw new NotFoundException("User not found!");
+            var user = await _context.Users.FirstOrDefaultAsync(e => e.UserCode == request.UserCode) ?? throw new NotFoundException("User not found!");
 
-            user.Password = Helper.HashString(userCode);
+            var password = !string.IsNullOrWhiteSpace(request.Password) ? request.Password : request.UserCode ?? "123456";
+
+            user.Password = Helper.HashString(password);
+
+            user.IsChangePassword = 0;
 
             _context.Users.Update(user);
 
             await _context.SaveChangesAsync();
+
+            //check email exist
+            BackgroundJob.Enqueue<EmailService>(job => job.SendEmailResetPassword("nguyenviet@vsvn.com.vn", password));
 
             return UserMapper.ToDto(user);
         }

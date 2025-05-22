@@ -16,6 +16,6 @@ namespace ServicePortal.Modules.User.Services.Interfaces
         Task<UserResponseDto> GetMe(string code);
         Task<OrgChartNode> BuildTree(int? departmentId);
         Task<bool> UpdateUserRole(UpdateUserRoleDto dto);
-        Task<UserResponseDto> ResetPassword(string userCode);
+        Task<UserResponseDto> ResetPassword(ResetPasswordDto request);
     }
 }

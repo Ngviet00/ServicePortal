@@ -15,5 +15,6 @@ namespace ServicePortal.Modules.LeaveRequest.Services.Interfaces
         Task<LeaveRequestDto> Delete(Guid id);
         Task<PagedResults<LeaveRequestDto>> GetAllWaitApproval(GetAllLeaveRequestWaitApprovalDto request, ClaimsPrincipal userClaim);
         Task<int> CountWaitApproval(GetAllLeaveRequestWaitApprovalDto request, ClaimsPrincipal userClaim);
+        Task<string> HrRegisterAllLeave(string userCode);
     }
 }

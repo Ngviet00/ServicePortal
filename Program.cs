@@ -26,6 +26,8 @@ using ServicePortal.Modules.LeaveRequest.Services.Interfaces;
 using ServicePortal.Modules.Auth.Services.Interfaces;
 using ServicePortal.Modules.UserConfig.Services.Interfaces;
 using ServicePortal.Modules.UserConfig.Services;
+using ServicePortal.Modules.TimeKeeping.Services.Interfaces;
+using ServicePortal.Modules.TimeKeeping.Services;
 
 namespace ServicePortal
 {
@@ -108,6 +110,8 @@ namespace ServicePortal
             builder.Services.AddScoped<OrgChartBuilder>();
 
             builder.Services.AddScoped<IUserConfigService, UserConfigService>();
+
+            builder.Services.AddScoped<ITimeKeepingService, TimeKeepingService>();
 
             #endregion
 

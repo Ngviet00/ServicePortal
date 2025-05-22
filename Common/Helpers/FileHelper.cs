@@ -83,6 +83,19 @@ namespace ServicePortal.Common.Helpers
             {
                 DeleteOldFiles(directory, now, dayDelete);
             }
+
+            if (!Directory.EnumerateFileSystemEntries(path).Any())
+            {
+                try
+                {
+                    Directory.Delete(path);
+                    Log.Information($"Deleted empty directory: {path}");
+                }
+                catch (Exception ex)
+                {
+                    Log.Error($"Error deleting directory {path}, error: {ex.Message}");
+                }
+            }
         }
     }
 }

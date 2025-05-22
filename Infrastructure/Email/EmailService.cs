@@ -4,6 +4,7 @@ using ServicePortal.Domain.Entities;
 using Serilog;
 using ServicePortal.Common.Helpers;
 using ServicePortal.Domain.Enums;
+using Hangfire;
 
 namespace ServicePortal.Infrastructure.Email
 {
@@ -43,6 +44,7 @@ namespace ServicePortal.Infrastructure.Email
             return message;
         }
 
+        [AutomaticRetry(Attempts = 10)]
         public async Task SendEmaiLeaveRequestMySelf(string email, LeaveRequest leaveRequest, string? UrlFrontEnd)
         {
             try
@@ -65,6 +67,7 @@ namespace ServicePortal.Infrastructure.Email
             }
         }
 
+        [AutomaticRetry(Attempts = 10)]
         public async Task SendEmaiLeaveRequestMySelfStatus(string email, LeaveRequest leaveRequest, string? UrlFrontEnd, string? comment, bool status)
         {
             try
@@ -101,6 +104,7 @@ namespace ServicePortal.Infrastructure.Email
             }
         }
 
+        [AutomaticRetry(Attempts = 10)]
         public async Task SendEmailLeaveRequest(List<string> listEmail, LeaveRequest leaveRequest, string? UrlFrontEnd)
         {
             try
@@ -127,6 +131,42 @@ namespace ServicePortal.Infrastructure.Email
                         message.To.Add(email.Trim());
                     }
                 }
+
+                await smtpClient.SendMailAsync(message);
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"Error send mail failed, error: {ex.Message}");
+            }
+        }
+
+
+        [AutomaticRetry(Attempts = 10)]
+        public async Task SendEmailResetPassword(string email, string password)
+        {
+            try
+            {
+                var (smtp, smtpClient) = GetEmailConfig();
+
+                string subject = $"Reset password";
+
+                string content = $@"
+                            <h2>Your Password Has Been Reset</h2>
+                            <div style=""font-size: 18px;"">
+	                            An administrator has reset your password. You can now log in using the password below: <br/>
+                            </div>
+                            <div style=""font-size: 25px;margin-top: 10px; color: #e71a1a;font-family: monospace;letter-spacing: 1px"">
+	                            {password}
+                            </div>
+                            <div style=""font-size: 18px;margin-top: 10px;"">
+	                            For security reasons, please change your password after logging in. <br/> <br/>
+                                Thanks, <br/><br/>
+	                            MIS/IT Team
+                            </div>";
+
+                var message = SetMessageEmail(smtp, subject, content);
+
+                message.To.Add(email.Trim());
 
                 await smtpClient.SendMailAsync(message);
             }
@@ -200,5 +240,6 @@ namespace ServicePortal.Infrastructure.Email
                         </tr>
                     </table>";
         }
+
     }
 }
