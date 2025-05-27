@@ -56,7 +56,7 @@ namespace ServicePortal.Modules.User.Services
                 .Take((int)pageSize)
                 .ToListAsync();
 
-        var result = new PagedResults<UserResponseDto>
+            var result = new PagedResults<UserResponseDto>
             {
                 Data = UserMapper.ToDtoList(usersWithDetails),
                 TotalItems = totalItems,

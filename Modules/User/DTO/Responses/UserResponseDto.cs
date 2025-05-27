@@ -9,5 +9,6 @@
         public byte? IsChangePassword { get; set; }
         public byte? IsActive { get; set; }
         public List<Domain.Entities.Role> Roles { get; set; } = new();
+        public bool? IsCheckedHaveManageUserTimeKeeping { get; set; }
     }
 }

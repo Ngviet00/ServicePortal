@@ -1,4 +1,5 @@
 ﻿using System.Security.Claims;
+using Azure.Core;
 using Hangfire;
 using Microsoft.EntityFrameworkCore;
 using ServicePortal.Common;
@@ -496,39 +497,47 @@ namespace ServicePortal.Modules.LeaveRequest.Services
             });
         }
 
-        public async Task<string> HrRegisterAllLeave(string userCode)
+        public async Task<string> HrRegisterAllLeave(HrRegisterAllLeaveRqDto request)
         {
             var statusList = new[] {
                 StatusLeaveRequestEnum.IN_PROCESS.ToString(),
                 StatusLeaveRequestEnum.PENDING.ToString()
             };
 
-            var user = await _context.Users.FirstOrDefaultAsync(e => e.UserCode == userCode) ?? throw new NotFoundException("User not found");
+            var user = await _context.Users.FirstOrDefaultAsync(e => e.UserCode == request.UserCode) ?? throw new NotFoundException("User not found");
 
-            var approvalRequests = await _context.ApprovalRequests
-                .Where(e => 
-                    e.RequestType == "LEAVE_REQUEST" && 
+            var result = await _context.ApprovalRequests
+                .Where(e =>
+                    e.RequestType == "LEAVE_REQUEST" &&
                     statusList.Contains(e.Status) && e.CurrentPositionId == (int)StatusLeaveRequestEnum.WAIT_HR
                 )
+                .Join(_context.LeaveRequests, approvalRequest => approvalRequest.RequestId, leave => leave.Id, (approvalRequest, leave) => new
+                {
+                    ApprovalRequest = approvalRequest,
+                    LeaveRequest = leave
+                })
                 .ToListAsync();
 
             List<ApprovalAction> actions = [];
 
-            foreach (var item in approvalRequests)
+            foreach (var item in result)
             {
-                item.Status = StatusLeaveRequestEnum.COMPLETED.ToString();
+                item.ApprovalRequest.Status = StatusLeaveRequestEnum.COMPLETED.ToString();
                
                 actions.Add(new ApprovalAction
                 {
-                    ApprovalRequestId = item.Id,
+                    ApprovalRequestId = item.ApprovalRequest.Id,
                     ApproverUserCode = user?.UserCode,
                     ApproverName = user?.UserCode?.ToString(),
                     Action = StatusLeaveRequestEnum.COMPLETED.ToString(),
                     CreatedAt = DateTimeOffset.Now
                 });
+
+                _context.ApprovalRequests.Update(item.ApprovalRequest);
+
+                BackgroundJob.Enqueue<EmailService>(job => job.SendEmaiLeaveRequestMySelfStatus("nguyenviet@vsvn.com.vn", item.LeaveRequest, request.UrlFrontEnd, null, true));
             }
 
-            _context.ApprovalRequests.UpdateRange(approvalRequests);
             _context.ApprovalActions.AddRange(actions);
 
             await _context.SaveChangesAsync();

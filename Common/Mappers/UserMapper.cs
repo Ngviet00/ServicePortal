@@ -24,7 +24,8 @@ namespace ServicePortal.Common.Mappers
                     Code = ur.Role != null ? ur.Role.Code : ""
                 }).ToList()
                 : new List<Role>(),
-            };
+                IsCheckedHaveManageUserTimeKeeping = false
+    };
         }
 
         public static List<UserResponseDto> ToDtoList(List<User> users)

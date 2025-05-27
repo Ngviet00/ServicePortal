@@ -18,6 +18,7 @@ namespace ServicePortal.Infrastructure.Data
         public DbSet<ApprovalAction> ApprovalActions { get; set; }
         public DbSet<ApprovalRequest> ApprovalRequests { get; set; }
         public DbSet<UserConfig> UserConfigs { get; set; }
+        public DbSet<ManageUserTimeKeeping> ManageUserTimeKeepings { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
