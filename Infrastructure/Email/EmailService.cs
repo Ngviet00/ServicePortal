@@ -5,6 +5,7 @@ using Serilog;
 using ServicePortal.Common.Helpers;
 using ServicePortal.Domain.Enums;
 using Hangfire;
+using System.Net.Mime;
 
 namespace ServicePortal.Infrastructure.Email
 {
@@ -31,14 +32,14 @@ namespace ServicePortal.Infrastructure.Email
             return (smtp, smtpClient);
         }
 
-        public MailMessage SetMessageEmail(IConfigurationSection smtp, string? subject, string? content)
+        public MailMessage SetMessageEmail(IConfigurationSection smtp, string? subject, string? content, bool? IsBodyHtml = true)
         {
             var message = new MailMessage
             {
                 From = new MailAddress(smtp["From"] ?? ""),
                 Subject = subject,
                 Body = content,
-                IsBodyHtml = true
+                IsBodyHtml = IsBodyHtml ?? true
             };
 
             return message;
@@ -173,6 +174,33 @@ namespace ServicePortal.Infrastructure.Email
             catch (Exception ex)
             {
                 Log.Error($"Error send mail failed, error: {ex.Message}");
+            }
+        }
+
+        public async Task SendEmailConfirmTimeKeepingToHr(string email, byte[] fileBytes, string fileName)
+        {
+            try
+            {
+                var (smtp, smtpClient) = GetEmailConfig();
+
+                string subject = $"Confirm Timekeeping";
+
+                string content = "Please find the attached attendance sheet";
+
+                var message = SetMessageEmail(smtp, subject, content, false);
+
+                var attachment = new Attachment(new MemoryStream(fileBytes), fileName, MediaTypeNames.Application.Octet);
+
+                message.Attachments.Add(attachment);
+
+                message.To.Add(email.Trim());
+
+                await smtpClient.SendMailAsync(message);
+
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"Error can not send email confirm timekeeping to HR, error: {ex.Message}");
             }
         }
 

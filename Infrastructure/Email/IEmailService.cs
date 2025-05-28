@@ -15,5 +15,8 @@ namespace ServicePortal.Infrastructure.Email
 
         //email reset password
         Task SendEmailResetPassword(string email, string password);
+
+        //email send from user confirm timekeeping of user to HR
+        Task SendEmailConfirmTimeKeepingToHr(string email, byte[] fileBytes, string fileName);
     }
 }

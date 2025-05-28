@@ -28,7 +28,7 @@ using ServicePortal.Modules.UserConfig.Services.Interfaces;
 using ServicePortal.Modules.UserConfig.Services;
 using ServicePortal.Modules.TimeKeeping.Services.Interfaces;
 using ServicePortal.Modules.TimeKeeping.Services;
-using ServicePortal.Common.Helpers;
+using ServicePortal.Infrastructure.Excel;
 
 namespace ServicePortal
 {
@@ -113,6 +113,8 @@ namespace ServicePortal
             builder.Services.AddScoped<IUserConfigService, UserConfigService>();
 
             builder.Services.AddScoped<ITimeKeepingService, TimeKeepingService>();
+
+            builder.Services.AddScoped<ExcelService>();
 
             #endregion
 

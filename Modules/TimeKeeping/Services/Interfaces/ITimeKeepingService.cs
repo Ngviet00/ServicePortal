@@ -12,5 +12,6 @@ namespace ServicePortal.Modules.TimeKeeping.Services.Interfaces
         Task<object> ConfirmTimeKeeping(GetManagementTimeKeepingDto request);
         Task<PagedResults<UserResponseDto>> GetListUserToChooseManageTimeKeeping(GetUserManageTimeKeepingDto request);
         Task<object> SaveManageTimeKeeping(SaveManageTimeKeepingDto request);
+        Task<List<string?>> GetListUserCodeSelected(string userCodeManage);
     }
 }

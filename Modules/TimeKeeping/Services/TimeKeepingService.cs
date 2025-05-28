@@ -1,8 +1,13 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.Dynamic;
+using System.IO.Packaging;
+using Hangfire;
+using Microsoft.EntityFrameworkCore;
 using ServicePortal.Common;
 using ServicePortal.Common.Mappers;
 using ServicePortal.Domain.Entities;
 using ServicePortal.Infrastructure.Data;
+using ServicePortal.Infrastructure.Email;
+using ServicePortal.Infrastructure.Excel;
 using ServicePortal.Modules.TimeKeeping.DTO.Requests;
 using ServicePortal.Modules.TimeKeeping.DTO.Responses;
 using ServicePortal.Modules.TimeKeeping.Services.Interfaces;
@@ -13,10 +18,14 @@ namespace ServicePortal.Modules.TimeKeeping.Services
     public class TimeKeepingService : ITimeKeepingService
     {
         private readonly ApplicationDbContext _context;
+        private readonly ExcelService _excelService;
+        private readonly EmailService _emailService;
 
-        public TimeKeepingService (ApplicationDbContext context)
+        public TimeKeepingService (ApplicationDbContext context, ExcelService excelService, EmailService emailService)
         {
             _context = context;
+            _excelService = excelService;
+            _emailService = emailService;
         }
 
         public async Task<ManagementTimeKeepingResponseDto> GetManagementTimeKeeping(GetManagementTimeKeepingDto request)
@@ -50,18 +59,17 @@ namespace ServicePortal.Modules.TimeKeeping.Services
 
             var userCodeTimeKeeping = await _context.ManageUserTimeKeepings
                 .Where(e => e.UserCodeManage == request.UserCode)
-                .Select(x => x.UserCode)
                 .Distinct()
                 .ToListAsync();
             
             List<UserDataTimeKeeping> userDataTimeKeeping = new List<UserDataTimeKeeping>();
 
-            for (int i = 1; i <= userCodeTimeKeeping.Count(); i++)
+            foreach (var item in userCodeTimeKeeping)
             {
                 var userData = new UserDataTimeKeeping
                 {
-                    UserCode = $"UserCode_{i}",
-                    Name = $"Nguyen_Van_A_{i}"
+                    UserCode = $"UserCode_{item.UserCode}",
+                    Name = $"Nguyen_Van_{item.UserCode}"
                 };
 
                 List<Attendance> attendances = new List<Attendance>();
@@ -72,23 +80,23 @@ namespace ServicePortal.Modules.TimeKeeping.Services
 
                     attendance.Date = $"2025-05-{(j < 10 ? $"0{j}" : j)}";
 
-                    if (i == 2 && j == 14)
+                    if (j == 14)
                     {
                         attendance.Status = "O";
                     }
-                    else if (i == 1 && j == 27)
+                    else if (j == 27)
                     {
                         attendance.Status = "S";
                     }
-                    else if (i == 4 && j == 7)
+                    else if (j == 7)
                     {
                         attendance.Status = "ND";
                     }
-                    else if (i == 2 && j == 1)
+                    else if (j == 1)
                     {
                         attendance.Status = "AL";
                     }
-                    else if (i == 3 && j == 16)
+                    else if (j == 16)
                     {
                         attendance.Status = "SH";
                     }
@@ -144,9 +152,17 @@ namespace ServicePortal.Modules.TimeKeeping.Services
 
         public async Task<object> ConfirmTimeKeeping(GetManagementTimeKeepingDto request)
         {
-            var a = new object();
+            ManagementTimeKeepingResponseDto data = await GetManagementTimeKeeping(request);
 
-            return a;
+            var fileBytes = _excelService.GenerateExcelManagerConfirmToHR(data, request);
+
+            BackgroundJob.Enqueue<EmailService>(job => job.SendEmailConfirmTimeKeepingToHr("nguyenviet@vsvn.com.vn", fileBytes, "Attendance.xlsx"));
+
+            var filePath = "test_timekeeping.xlsx";
+
+            File.WriteAllBytes(filePath, fileBytes);
+
+            return true;
         }
 
         public async Task<PagedResults<UserResponseDto>> GetListUserToChooseManageTimeKeeping(GetUserManageTimeKeepingDto request)
@@ -184,14 +200,14 @@ namespace ServicePortal.Modules.TimeKeeping.Services
 
             query = query.Where(e => e.UserCode != "0");
 
-            query = query.Where(u => u.PositionId != null && positionIds.Contains(u.PositionId.Value));
+            query = query.Where(u => u.PositionId != null && 
+                (positionIds.Contains(u.PositionId.Value) || u.PositionId == position) && 
+                u.UserCode != currentUserCode);
 
             if (!string.IsNullOrEmpty(name))
             {
                 query = query.Where(u => (u.UserCode != null && u.UserCode.Contains(name)));
             }
-
-            var users = query.Where(u => positionIds.Contains(u.PositionId));
 
             var totalItems = await query.CountAsync();
 
@@ -230,7 +246,7 @@ namespace ServicePortal.Modules.TimeKeeping.Services
 
             _context.ManageUserTimeKeepings.RemoveRange(userDataTimeKeeping);
 
-            var newData = request?.UserCodes?.Select(item => new ManageUserTimeKeeping
+            var newData = request?.UserCodes?.Distinct().Select(item => new ManageUserTimeKeeping
             {
                 UserCodeManage = request.UserCodeManage,
                 UserCode = item
@@ -241,6 +257,16 @@ namespace ServicePortal.Modules.TimeKeeping.Services
             await _context.SaveChangesAsync();
 
             return true;
+        }
+
+        public async Task<List<string?>> GetListUserCodeSelected(string userCodeManage)
+        {
+            var result = await _context.ManageUserTimeKeepings
+                .Where(e => e.UserCodeManage == userCodeManage)
+                .Select(x => x.UserCode)
+                .ToListAsync();
+
+            return result;
         }
     }
 }

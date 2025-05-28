@@ -72,5 +72,14 @@ namespace ServicePortal.Modules.TimeKeeping.Controllers
 
             return Ok(response);
         }
+
+        [HttpGet("get-list-usercode-selected")]
+        public async Task<IActionResult> GetListUserCodeSelected([FromQuery] string userCodeManage)
+        {
+            var results = await _timeKeepingService.GetListUserCodeSelected(userCodeManage);
+            var response = new BaseResponse<List<string?>>(200, "Success", results);
+
+            return Ok(response);
+        }
     }
 }
