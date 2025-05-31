@@ -156,7 +156,7 @@ namespace ServicePortal.Modules.TimeKeeping.Services
 
             var fileBytes = _excelService.GenerateExcelManagerConfirmToHR(data, request);
 
-            BackgroundJob.Enqueue<EmailService>(job => job.SendEmailConfirmTimeKeepingToHr("nguyenviet@vsvn.com.vn", fileBytes, "Attendance.xlsx"));
+            BackgroundJob.Enqueue<EmailService>(job => job.SendEmailConfirmTimeKeepingToHr("nguyenviet@vsvn.com.vn", fileBytes, request));
 
             var filePath = "test_timekeeping.xlsx";
 

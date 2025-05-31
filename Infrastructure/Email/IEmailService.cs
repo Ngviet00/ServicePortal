@@ -1,4 +1,5 @@
 ﻿using ServicePortal.Domain.Entities;
+using ServicePortal.Modules.TimeKeeping.DTO.Requests;
 
 namespace ServicePortal.Infrastructure.Email
 {
@@ -17,6 +18,6 @@ namespace ServicePortal.Infrastructure.Email
         Task SendEmailResetPassword(string email, string password);
 
         //email send from user confirm timekeeping of user to HR
-        Task SendEmailConfirmTimeKeepingToHr(string email, byte[] fileBytes, string fileName);
+        Task SendEmailConfirmTimeKeepingToHr(string email, byte[] fileBytes, GetManagementTimeKeepingDto request);
     }
 }

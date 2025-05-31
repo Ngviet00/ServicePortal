@@ -14,7 +14,6 @@ namespace ServicePortal.Infrastructure.Excel
             if (userData == null || userData.Count == 0 || userData[0].Attendances == null)
                 return [];
 
-
             int daysInMonth = userData[0].Attendances.Count;
 
             using var workbook = new XLWorkbook();
@@ -31,7 +30,6 @@ namespace ServicePortal.Infrastructure.Excel
             cellMonthYear.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
             cellMonthYear.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
             worksheet.Row(3).Height = 24;
-
 
             //display color
             int startColumnColor = 3;
@@ -99,6 +97,24 @@ namespace ServicePortal.Infrastructure.Excel
                 {
                     worksheet.Column(colIndex).Width = 6;
                     cell.Value = (colIndex - 2).ToString("D2");
+
+                    //var dayStr = $"{request?.Year}-{request?.Month?.ToString("D2")}-{(colIndex - 2).ToString("D2")}";
+
+                    //var holiday = holidays?.FirstOrDefault(h => h.Date == dayStr);
+
+                    //if (holiday != null)
+                    //{
+                    //    if (holiday.Type == "sunday")
+                    //    {
+                    //        cell.Style.Fill.BackgroundColor = XLColor.Black;
+                    //        cell.Style.Font.FontColor = XLColor.White;
+                    //    }
+                    //    else if (holiday.Type == "special_holiday")
+                    //    {
+                    //        cell.Style.Fill.BackgroundColor = XLColor.FromHtml("#07ee15");
+                    //        cell.Style.Font.FontColor = XLColor.Black;
+                    //    }
+                    //}
                 }
             }
 

@@ -29,6 +29,8 @@ using ServicePortal.Modules.UserConfig.Services;
 using ServicePortal.Modules.TimeKeeping.Services.Interfaces;
 using ServicePortal.Modules.TimeKeeping.Services;
 using ServicePortal.Infrastructure.Excel;
+using ServicePortal.Modules.MemoNotification.Services.Interfaces;
+using ServicePortal.Modules.MemoNotification.Services;
 
 namespace ServicePortal
 {
@@ -115,6 +117,8 @@ namespace ServicePortal
             builder.Services.AddScoped<ITimeKeepingService, TimeKeepingService>();
 
             builder.Services.AddScoped<ExcelService>();
+
+            builder.Services.AddScoped<IMemoNotificationService, MemoNotificationService>();
 
             #endregion
 

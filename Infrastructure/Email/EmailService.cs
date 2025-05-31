@@ -6,6 +6,7 @@ using ServicePortal.Common.Helpers;
 using ServicePortal.Domain.Enums;
 using Hangfire;
 using System.Net.Mime;
+using ServicePortal.Modules.TimeKeeping.DTO.Requests;
 
 namespace ServicePortal.Infrastructure.Email
 {
@@ -141,7 +142,6 @@ namespace ServicePortal.Infrastructure.Email
             }
         }
 
-
         [AutomaticRetry(Attempts = 10)]
         public async Task SendEmailResetPassword(string email, string password)
         {
@@ -177,17 +177,20 @@ namespace ServicePortal.Infrastructure.Email
             }
         }
 
-        public async Task SendEmailConfirmTimeKeepingToHr(string email, byte[] fileBytes, string fileName)
+        [AutomaticRetry(Attempts = 10)]
+        public async Task SendEmailConfirmTimeKeepingToHr(string email, byte[] fileBytes, GetManagementTimeKeepingDto request)
         {
             try
             {
                 var (smtp, smtpClient) = GetEmailConfig();
 
-                string subject = $"Confirm Timekeeping";
+                string subject = $"Production - Confirm Attendance List [{request.Month} - {request.Year}]";
 
-                string content = "Please find the attached attendance sheet";
+                string content = $@"Dear HR Team, Please find attached the excel file containing the staff attendance list [{request.Month} - {request.Year}]";
 
                 var message = SetMessageEmail(smtp, subject, content, false);
+
+                string fileName = $"Production_Confirm_Attendance_T{request.Month} - {request.Year}.xlsx";
 
                 var attachment = new Attachment(new MemoryStream(fileBytes), fileName, MediaTypeNames.Application.Octet);
 
@@ -268,6 +271,5 @@ namespace ServicePortal.Infrastructure.Email
                         </tr>
                     </table>";
         }
-
     }
 }

@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ServicePortal.Infrastructure.Data;
 
@@ -11,9 +12,11 @@ using ServicePortal.Infrastructure.Data;
 namespace ServicePortal.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250530012227_AddColumnStatusMemoNotify")]
+    partial class AddColumnStatusMemoNotify
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -189,9 +192,6 @@ namespace ServicePortal.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<bool?>("ApplyAllDepartment")
-                        .HasColumnType("bit");
-
                     b.Property<string>("Content")
                         .HasColumnType("nvarchar(max)");
 
@@ -204,13 +204,16 @@ namespace ServicePortal.Migrations
                     b.Property<int?>("CreatedByDepartmentId")
                         .HasColumnType("int");
 
+                    b.Property<int?>("DepartmentIdApply")
+                        .HasColumnType("int");
+
                     b.Property<DateTimeOffset?>("FromDate")
                         .HasColumnType("datetimeoffset");
 
-                    b.Property<int?>("Priority")
+                    b.Property<int>("Priority")
                         .HasColumnType("int");
 
-                    b.Property<bool?>("Status")
+                    b.Property<bool>("Status")
                         .HasColumnType("bit");
 
                     b.Property<string>("Title")
@@ -230,28 +233,9 @@ namespace ServicePortal.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("FromDate", "ToDate", "CreatedByDepartmentId", "UserCodeCreated");
+                    b.HasIndex("FromDate", "ToDate", "DepartmentIdApply", "CreatedByDepartmentId", "UserCodeCreated");
 
                     b.ToTable("memo_notifications");
-                });
-
-            modelBuilder.Entity("ServicePortal.Domain.Entities.MemoNotificationDepartment", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<int?>("DepartmentId")
-                        .HasColumnType("int");
-
-                    b.Property<Guid?>("MemoNotificationId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("MemoNotificationId", "DepartmentId");
-
-                    b.ToTable("memo_notification_departments");
                 });
 
             modelBuilder.Entity("ServicePortal.Domain.Entities.Permission", b =>

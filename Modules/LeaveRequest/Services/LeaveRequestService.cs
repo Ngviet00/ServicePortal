@@ -1,5 +1,4 @@
 ﻿using System.Security.Claims;
-using Azure.Core;
 using Hangfire;
 using Microsoft.EntityFrameworkCore;
 using ServicePortal.Common;
@@ -71,6 +70,7 @@ namespace ServicePortal.Modules.LeaveRequest.Services
             var pagedResult = await query
                 .Skip(((page - 1) * pageSize))
                 .Take(pageSize)
+                .OrderByDescending(x => x.LeaveRequest.CreatedAt)
                 .ToListAsync();
 
             var tuples = pagedResult.Select(x => (x.LeaveRequest, x.ApprovalRq, x.LatestApprovalAction)).ToList();
