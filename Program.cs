@@ -2,35 +2,37 @@
 using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using ServicePortal.Application.Services;
 using ServicePortal.Infrastructure.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Localization;
 using System.Globalization;
-using ServicePortal.Modules.User.Services;
-using ServicePortal.Modules.Auth.Services;
-using ServicePortal.Modules.Role.Services;
 using ServicePortal.Common.Middleware;
 using Serilog;
 using ServicePortal.Infrastructure.BackgroundServices;
-using ServicePortal.Modules.LeaveRequest.Services;
-using ServicePortal.Modules.TypeLeave.Services;
 using ServicePortal.Infrastructure.Email;
 using Hangfire;
 using ServicePortal.Infrastructure.Hubs;
 using Serilog.Exceptions;
-using ServicePortal.Modules.User.Services.Interfaces;
-using ServicePortal.Modules.TypeLeave.Services.Interfaces;
-using ServicePortal.Modules.Role.Services.Interfaces;
-using ServicePortal.Modules.LeaveRequest.Services.Interfaces;
-using ServicePortal.Modules.Auth.Services.Interfaces;
-using ServicePortal.Modules.UserConfig.Services.Interfaces;
-using ServicePortal.Modules.UserConfig.Services;
-using ServicePortal.Modules.TimeKeeping.Services.Interfaces;
-using ServicePortal.Modules.TimeKeeping.Services;
 using ServicePortal.Infrastructure.Excel;
-using ServicePortal.Modules.MemoNotification.Services.Interfaces;
-using ServicePortal.Modules.MemoNotification.Services;
+using ServicePortal.Infrastructure.Cache;
+using ServicePortal.Applications.Modules.Auth.Services;
+using ServicePortal.Applications.Modules.LeaveRequest.Services;
+using ServicePortal.Applications.Modules.MemoNotification.Services;
+using ServicePortal.Applications.Modules.Role.Services;
+using ServicePortal.Applications.Modules.TimeKeeping.Services;
+using ServicePortal.Applications.Modules.TypeLeave.Services;
+using ServicePortal.Applications.Modules.User.Services;
+using ServicePortal.Applications.Modules.UserConfig.Services;
+using ServicePortal.Applications.Modules.Auth.Services.Interfaces;
+using ServicePortal.Applications.Modules.LeaveRequest.Services.Interfaces;
+using ServicePortal.Applications.Modules.MemoNotification.Services.Interfaces;
+using ServicePortal.Applications.Modules.Role.Services.Interfaces;
+using ServicePortal.Applications.Modules.TimeKeeping.Services.Interfaces;
+using ServicePortal.Applications.Modules.TypeLeave.Services.Interfaces;
+using ServicePortal.Applications.Modules.User.Services.Interfaces;
+using ServicePortal.Applications.Modules.UserConfig.Services.Interfaces;
+using ServicePortal.Infrastructure.Persistence;
+using ServicePortal.Applications.Viclock.Queries;
 
 namespace ServicePortal
 {
@@ -60,6 +62,7 @@ namespace ServicePortal
                     retainedFileCountLimit: 90,
                     shared: true
                 )
+                .WriteTo.Console()
                 .CreateLogger();
 
             #endregion
@@ -74,6 +77,11 @@ namespace ServicePortal
 
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("StringConnectionDb"))
+                        .LogTo(Console.WriteLine, LogLevel.Information)
+                        .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking));
+
+            builder.Services.AddDbContext<ViclockDbContext>(options =>
+                options.UseSqlServer(builder.Configuration.GetConnectionString("ViclockStringConnectionDb"))
                         .LogTo(Console.WriteLine, LogLevel.Information)
                         .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking));
 
@@ -118,7 +126,15 @@ namespace ServicePortal
 
             builder.Services.AddScoped<ExcelService>();
 
+            builder.Services.AddScoped<IDapperQueryService, DapperQueryService>();
+
             builder.Services.AddScoped<IMemoNotificationService, MemoNotificationService>();
+
+            builder.Services.AddSingleton<ICacheService, CacheService>();
+
+            builder.Services.AddScoped<IViclockUserQuery, ViclockUserQuery>();
+
+            builder.Services.AddScoped<IViClockDepartmentQuery, ViClockDepartmentQuery>();
 
             #endregion
 
@@ -221,6 +237,9 @@ namespace ServicePortal
             builder.Services.AddHostedService<LogCleanupService>();
 
             builder.Services.AddSignalR();
+
+            //memory cache
+            builder.Services.AddMemoryCache();
 
             var app = builder.Build();
 

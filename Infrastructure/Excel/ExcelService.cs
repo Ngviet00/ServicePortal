@@ -1,6 +1,6 @@
 ﻿using ClosedXML.Excel;
-using ServicePortal.Modules.TimeKeeping.DTO.Requests;
-using ServicePortal.Modules.TimeKeeping.DTO.Responses;
+using ServicePortal.Applications.Modules.TimeKeeping.DTO.Requests;
+using ServicePortal.Applications.Modules.TimeKeeping.DTO.Responses;
 
 namespace ServicePortal.Infrastructure.Excel
 {

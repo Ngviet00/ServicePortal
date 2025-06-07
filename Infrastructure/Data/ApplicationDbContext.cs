@@ -21,6 +21,8 @@ namespace ServicePortal.Infrastructure.Data
         public DbSet<ManageUserTimeKeeping> ManageUserTimeKeepings { get; set; }
         public DbSet<MemoNotification> MemoNotifications { get; set; }
         public DbSet<MemoNotificationDepartment> MemoNotificationDepartments { get; set; }
+        public DbSet<AttachFiles> AttachFiles { get; set; }
+        public DbSet<AttachFileRelation> AttachFileRelations {  get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -73,6 +75,12 @@ namespace ServicePortal.Infrastructure.Data
                 .WithMany(p => p.RolePermissions)
                 .HasForeignKey(rp => rp.PermissionId)
                 .HasPrincipalKey(p => p.Id)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<AttachFileRelation>()
+                .HasOne(x => x.AttachFiles)
+                .WithMany(x => x.AttachFileRelations)
+                .HasForeignKey(x => x.AttachFileId)
                 .OnDelete(DeleteBehavior.Cascade);
         }
     }

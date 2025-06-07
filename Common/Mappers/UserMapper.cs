@@ -1,6 +1,6 @@
 ﻿using System.Data;
+using ServicePortal.Applications.Modules.User.DTO.Responses;
 using ServicePortal.Domain.Entities;
-using ServicePortal.Modules.User.DTO.Responses;
 
 namespace ServicePortal.Common.Mappers
 {

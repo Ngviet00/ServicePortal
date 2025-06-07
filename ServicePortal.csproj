@@ -8,13 +8,13 @@
 
   <ItemGroup>
     <Compile Remove="Controllers\**" />
-    <Compile Remove="Modules\User - Copy - Copy %283%29\**" />
+    <Compile Remove="Applications\Modules\User - Copy - Copy %283%29\**" />
     <Content Remove="Controllers\**" />
-    <Content Remove="Modules\User - Copy - Copy %283%29\**" />
+    <Content Remove="Applications\Modules\User - Copy - Copy %283%29\**" />
     <EmbeddedResource Remove="Controllers\**" />
-    <EmbeddedResource Remove="Modules\User - Copy - Copy %283%29\**" />
+    <EmbeddedResource Remove="Applications\Modules\User - Copy - Copy %283%29\**" />
     <None Remove="Controllers\**" />
-    <None Remove="Modules\User - Copy - Copy %283%29\**" />
+    <None Remove="Applications\Modules\User - Copy - Copy %283%29\**" />
     <None Remove="Properties\PublishProfiles\FolderProfile.pubxml" />
     <None Remove="Properties\PublishProfiles\FolderProfile1.pubxml" />
   </ItemGroup>
@@ -22,6 +22,7 @@
   <ItemGroup>
     <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
     <PackageReference Include="ClosedXML" Version="0.105.0" />
+    <PackageReference Include="Dapper" Version="2.1.66" />
     <PackageReference Include="EFCore.BulkExtensions" Version="9.0.1" />
     <PackageReference Include="Hangfire" Version="1.8.18" />
     <PackageReference Include="Hangfire.AspNetCore" Version="1.8.18" />
@@ -47,7 +48,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="Modules\User\DTO\Responses\OrgChartResponseDto.cs" />
+    <None Include="Applications\Modules\User\DTO\Responses\OrgChartResponseDto.cs" />
   </ItemGroup>
 
 	<ItemGroup>

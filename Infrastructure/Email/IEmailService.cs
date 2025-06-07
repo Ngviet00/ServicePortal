@@ -1,5 +1,5 @@
-﻿using ServicePortal.Domain.Entities;
-using ServicePortal.Modules.TimeKeeping.DTO.Requests;
+﻿using ServicePortal.Applications.Modules.TimeKeeping.DTO.Requests;
+using ServicePortal.Domain.Entities;
 
 namespace ServicePortal.Infrastructure.Email
 {

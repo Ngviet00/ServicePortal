@@ -112,6 +112,56 @@ namespace ServicePortal.Migrations
                     b.ToTable("approval_requests");
                 });
 
+            modelBuilder.Entity("ServicePortal.Domain.Entities.AttachFileRelation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("AttachFileId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("RefId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("RefType")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AttachFileId", "RefId", "RefType");
+
+                    b.ToTable("attach_file_relations");
+                });
+
+            modelBuilder.Entity("ServicePortal.Domain.Entities.AttachFiles", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ContentType")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<byte[]>("FileData")
+                        .HasColumnType("varbinary(max)");
+
+                    b.Property<string>("FileName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Id");
+
+                    b.ToTable("attach_files");
+                });
+
             modelBuilder.Entity("ServicePortal.Domain.Entities.LeaveRequest", b =>
                 {
                     b.Property<Guid>("Id")
@@ -541,6 +591,16 @@ namespace ServicePortal.Migrations
                     b.ToTable("user_roles");
                 });
 
+            modelBuilder.Entity("ServicePortal.Domain.Entities.AttachFileRelation", b =>
+                {
+                    b.HasOne("ServicePortal.Domain.Entities.AttachFiles", "AttachFiles")
+                        .WithMany("AttachFileRelations")
+                        .HasForeignKey("AttachFileId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.Navigation("AttachFiles");
+                });
+
             modelBuilder.Entity("ServicePortal.Domain.Entities.RolePermission", b =>
                 {
                     b.HasOne("ServicePortal.Domain.Entities.Permission", "Permission")
@@ -574,6 +634,11 @@ namespace ServicePortal.Migrations
                     b.Navigation("Role");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("ServicePortal.Domain.Entities.AttachFiles", b =>
+                {
+                    b.Navigation("AttachFileRelations");
                 });
 
             modelBuilder.Entity("ServicePortal.Domain.Entities.Permission", b =>

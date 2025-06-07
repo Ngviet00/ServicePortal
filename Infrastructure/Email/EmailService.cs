@@ -6,7 +6,7 @@ using ServicePortal.Common.Helpers;
 using ServicePortal.Domain.Enums;
 using Hangfire;
 using System.Net.Mime;
-using ServicePortal.Modules.TimeKeeping.DTO.Requests;
+using ServicePortal.Applications.Modules.TimeKeeping.DTO.Requests;
 
 namespace ServicePortal.Infrastructure.Email
 {

@@ -1,38 +1,44 @@
-﻿# Đường dẫn dự án
-$projectPath = "E:\Projects\ServicePortal"
+﻿$ProjectFile = "ServicePoral.csproj" 
 
-# Đường dẫn publish (VS 2022 và IIS cùng trỏ vào)
-$publishPath = "$projectPath\bin\Release\net8.0\publish"
+$PublishPath = "./bin/Release/net8.0/publish_temp"
 
-# Tên App Pool
-$appPoolName = "ServicePortal"
+$ServiceName = "service-portal-api-app" 
 
-# Đường dẫn file app_offline
-$appOfflineFile = "$publishPath\app_offline.htm"
+# --- Start Script ---
 
-# Tạo file app_offline.htm
-Write-Host "📴 Putting app offline..."
-Set-Content -Path $appOfflineFile -Value "<html><body><h2>Deploying... Please wait.</h2></body></html>"
+Write-Host "Start publish and docker..." -ForegroundColor Green
 
-# Chờ vài giây để IIS unload ứng dụng
-Start-Sleep -Seconds 3
+# dotnet publish
+Write-Host "Publish .NET..." -ForegroundColor Yellow
+try {
+    dotnet publish -c Release -o $PublishPath
 
-# Build lại project
-Write-Host "🛠️ Publishing project..."
-cd $projectPath
-dotnet publish -c Release -o $publishPath
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "Publish error." -ForegroundColor Red
+        exit 1
+    }
+    Write-Host "Publish success." -ForegroundColor Green
+} catch {
+    Write-Host "Error when running publish: $($_.Exception.Message)" -ForegroundColor Red
+    exit 1
+}
 
-# (Optional) Clean các file cũ nếu cần
-# Write-Host "🧹 Cleaning old files..."
-# Get-ChildItem -Path $publishPath -Exclude "app_offline.htm" | Remove-Item -Force -Recurse
+# docker build
+Write-Host "Start Docker Compose..." -ForegroundColor Yellow
+try {
+    docker compose up -d --build --force-recreate
 
-# (Nếu có dùng thư mục tạm thì copy từ tạm vào $publishPath tại đây)
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "Docker compose up errror." -ForegroundColor Red
+        exit 1
+    }
+    Write-Host "Docker compose up success." -ForegroundColor Green
+} catch {
+    Write-Host "Error when run docker compose up: $($_.Exception.Message)" -ForegroundColor Red
+    exit 1
+}
 
-# Chờ cho chắc chắn sau khi copy xong
-Start-Sleep -Seconds 2
+Write-Host "Deploy success" -ForegroundColor Green
 
-# Xóa app_offline để kích hoạt lại ứng dụng
-Write-Host "✅ Bringing app back online..."
-Remove-Item -Path $appOfflineFile -Force
-
-Write-Host "🚀 Deployment completed successfully with minimal downtime!"
+Write-Host "View status container: docker-compose ps" -ForegroundColor Cyan
+Write-Host "View logs: docker-compose logs $ServiceName" -ForegroundColor Cyan
