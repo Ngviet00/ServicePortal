@@ -162,6 +162,28 @@ namespace ServicePortal.Migrations
                     b.ToTable("attach_files");
                 });
 
+            modelBuilder.Entity("ServicePortal.Domain.Entities.HrManagements", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Type")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UserCode")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UserName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("hr_managements");
+                });
+
             modelBuilder.Entity("ServicePortal.Domain.Entities.LeaveRequest", b =>
                 {
                     b.Property<Guid>("Id")
@@ -204,6 +226,9 @@ namespace ServicePortal.Migrations
                     b.Property<int?>("TypeLeave")
                         .HasColumnType("int");
 
+                    b.Property<string>("WriteLeaveName")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("WriteLeaveUserCode")
                         .HasColumnType("nvarchar(max)");
 
@@ -212,25 +237,6 @@ namespace ServicePortal.Migrations
                     b.HasIndex("Id", "RequesterUserCode");
 
                     b.ToTable("leave_requests");
-                });
-
-            modelBuilder.Entity("ServicePortal.Domain.Entities.ManageUserTimeKeeping", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("UserCode")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("UserCodeManage")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserCodeManage", "UserCode");
-
-                    b.ToTable("manage_user_time_keeping");
                 });
 
             modelBuilder.Entity("ServicePortal.Domain.Entities.MemoNotification", b =>
@@ -522,6 +528,9 @@ namespace ServicePortal.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("Email")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<byte?>("IsActive")
                         .HasColumnType("tinyint");
 
@@ -568,6 +577,44 @@ namespace ServicePortal.Migrations
                     b.HasIndex("UserCode");
 
                     b.ToTable("user_configs");
+                });
+
+            modelBuilder.Entity("ServicePortal.Domain.Entities.UserManageAttendance", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("UserCode")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UserName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("user_manage_attendances");
+                });
+
+            modelBuilder.Entity("ServicePortal.Domain.Entities.UserManageAttendanceUser", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("UserCode")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("UserCodeManage")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserCodeManage", "UserCode");
+
+                    b.ToTable("user_manage_attendance_users");
                 });
 
             modelBuilder.Entity("ServicePortal.Domain.Entities.UserRole", b =>

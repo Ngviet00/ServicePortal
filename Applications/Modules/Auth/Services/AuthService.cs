@@ -9,7 +9,6 @@ using ServicePortal.Applications.Modules.Auth.DTO.Requests;
 using ServicePortal.Applications.Modules.Auth.DTO.Responses;
 using ServicePortal.Applications.Modules.Auth.Services.Interfaces;
 using ServicePortal.Applications.Modules.User.Services.Interfaces;
-using ServicePortal.Applications.Viclock.Queries;
 
 namespace ServicePortal.Applications.Modules.Auth.Services
 {
@@ -19,15 +18,13 @@ namespace ServicePortal.Applications.Modules.Auth.Services
         private readonly JwtService _jwtService;
         private readonly IUserService _userService;
         private readonly IConfiguration _config;
-        private readonly IViclockUserQuery _viclockUserQuery;
 
-        public AuthService(JwtService jwtService, ApplicationDbContext context, IConfiguration config, IUserService userService, IViclockUserQuery viclockUserQuery)
+        public AuthService(JwtService jwtService, ApplicationDbContext context, IConfiguration config, IUserService userService)
         {
             _jwtService = jwtService;
             _context = context;
             _config = config;
             _userService = userService;
-            _viclockUserQuery = viclockUserQuery;
         }
 
         public async Task<LoginResponseDto> Register(CreateUserDto request)
@@ -38,7 +35,7 @@ namespace ServicePortal.Applications.Modules.Auth.Services
             }
 
             //check exist in viclock
-            if (await _viclockUserQuery.CheckUserIsExistsInViClock(request.UserCode ?? "") == false)
+            if (await _userService.CheckUserIsExistsInViClock(request.UserCode ?? "") == false)
             {
                 throw new ValidationException("User is not exists, contact to HR!");
             }

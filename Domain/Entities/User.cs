@@ -12,6 +12,7 @@ namespace ServicePortal.Domain.Entities
         public int? PositionId { get; set; }
         public byte? IsChangePassword { get; set; }
         public byte? IsActive { get; set; }
+        public string? Email { get; set; }
         public ICollection<UserRole> UserRoles { get; set; } = new List<UserRole>();
     }
 }

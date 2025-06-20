@@ -44,6 +44,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Applications\Modules\Department\DTO\Requests\" />
+    <Folder Include="Applications\Modules\HRManagement\DTO\Responses\" />
+    <Folder Include="Applications\Modules\Position\DTO\Requests\" />
     <Folder Include="Properties\PublishProfiles\" />
   </ItemGroup>
 

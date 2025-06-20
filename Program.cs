@@ -32,7 +32,11 @@ using ServicePortal.Applications.Modules.TypeLeave.Services.Interfaces;
 using ServicePortal.Applications.Modules.User.Services.Interfaces;
 using ServicePortal.Applications.Modules.UserConfig.Services.Interfaces;
 using ServicePortal.Infrastructure.Persistence;
-using ServicePortal.Applications.Viclock.Queries;
+using ServicePortal.Applications.Modules.HRManagement.Services;
+using ServicePortal.Applications.Modules.Department.Services.Interfaces;
+using ServicePortal.Applications.Modules.Position.Services;
+using ServicePortal.Applications.Modules.Position.Services.Interfaces;
+using ServicePortal.Applications.Modules.Department.Services;
 
 namespace ServicePortal
 {
@@ -100,6 +104,8 @@ namespace ServicePortal
 
             #region DI
 
+            builder.Services.AddScoped<IDapperQueryService, DapperQueryService>();
+
             builder.Services.AddScoped<IAuthService, AuthService>();
 
             builder.Services.AddScoped<IUserService, UserService>();
@@ -126,15 +132,15 @@ namespace ServicePortal
 
             builder.Services.AddScoped<ExcelService>();
 
-            builder.Services.AddScoped<IDapperQueryService, DapperQueryService>();
-
             builder.Services.AddScoped<IMemoNotificationService, MemoNotificationService>();
 
             builder.Services.AddSingleton<ICacheService, CacheService>();
 
-            builder.Services.AddScoped<IViclockUserQuery, ViclockUserQuery>();
+            builder.Services.AddScoped<IHRManagementService, HRManagementService>();
 
-            builder.Services.AddScoped<IViClockDepartmentQuery, ViClockDepartmentQuery>();
+            builder.Services.AddScoped<IDepartmentService, DepartmentService>();
+
+            builder.Services.AddScoped<IPositionService, PositionService>();
 
             #endregion
 

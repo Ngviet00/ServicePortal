@@ -1,11 +1,14 @@
 ﻿using System.Security.Claims;
 using Hangfire;
 using Microsoft.EntityFrameworkCore;
+using ServicePortal.Applications.Modules.HRManagement.Services;
 using ServicePortal.Applications.Modules.LeaveRequest.DTO;
 using ServicePortal.Applications.Modules.LeaveRequest.DTO.Requests;
 using ServicePortal.Applications.Modules.LeaveRequest.DTO.Responses;
 using ServicePortal.Applications.Modules.LeaveRequest.Services.Interfaces;
+using ServicePortal.Applications.Modules.User.Services.Interfaces;
 using ServicePortal.Common;
+using ServicePortal.Common.Helpers;
 using ServicePortal.Common.Mappers;
 using ServicePortal.Domain.Entities;
 using ServicePortal.Domain.Enums;
@@ -17,10 +20,14 @@ namespace ServicePortal.Applications.Modules.LeaveRequest.Services
     public class LeaveRequestService : ILeaveRequestService
     {
         private readonly ApplicationDbContext _context;
+        private readonly IUserService _userService;
+        private readonly IHRManagementService _hrManagementService;
 
-        public LeaveRequestService(ApplicationDbContext context)
+        public LeaveRequestService(ApplicationDbContext context, IUserService userService, IHRManagementService hrManagementService)
         {
             _context = context;
+            _userService = userService;
+            _hrManagementService = hrManagementService;
         }
 
         public async Task<PagedResults<LeaveRequestDto>> GetAll(GetAllLeaveRequestDto request)
@@ -41,7 +48,7 @@ namespace ServicePortal.Applications.Modules.LeaveRequest.Services
                     (leave_rq, approval_rq) => new { leave_rq, approval_rq }
                  )
                 .Where(x =>
-                    x.approval_rq.RequesterUserCode == UserCode &&
+                    (x.approval_rq.RequesterUserCode == UserCode || x.leave_rq.WriteLeaveUserCode == UserCode) &&
                     x.approval_rq.Status == status &&
                     x.approval_rq.RequestType == "LEAVE_REQUEST"
                 )
@@ -114,17 +121,18 @@ namespace ServicePortal.Applications.Modules.LeaveRequest.Services
 
         public async Task<LeaveRequestDto> Create(LeaveRequestDto dto)
         {
-            //get user request
+            //lấy thông tin người viết đơn
             var userRequester = await _context.Users
                 .Where(e => e.UserCode == dto.RequesterUserCode)
                 .Select(e => new
                 {
                     e.UserCode,
-                    e.PositionId
+                    e.PositionId,
+                    e.Email
                 })
                 .FirstOrDefaultAsync() ?? throw new NotFoundException("User not found!");
 
-            //get flow
+            //luồng xin nghỉ phép
             var approvalFlow = await _context.ApprovalFlows
                 .Where(e => e.FromPosition == userRequester.PositionId)
                 .Select(x => new
@@ -133,14 +141,15 @@ namespace ServicePortal.Applications.Modules.LeaveRequest.Services
                 })
                 .FirstOrDefaultAsync();
 
-            //insert to table leave request
+            //lưu vào db bảng leave_requests
             var leaveRequest = LeaveRequestMapper.ToEntity(dto);
             _context.LeaveRequests.Add(leaveRequest);
 
 
-            //if null -> default send to hr
+            //nếu như luồng k còn ai duyệt tiếp, gửi đến HR
             if (approvalFlow == null)
             {
+                //lưu vào bảng approval_requests, với current_position_id là -10 (HR)
                 _context.ApprovalRequests.Add(new ApprovalRequest
                 {
                     RequesterUserCode = dto.RequesterUserCode,
@@ -156,17 +165,17 @@ namespace ServicePortal.Applications.Modules.LeaveRequest.Services
                 return dto;
             }
 
-            //get list user have position
+            //lấy thông tin người duyệt tiếp theo
             var userHaveNextPosition = await _context.Users
                 .Where(e => e.PositionId == approvalFlow.ToPosition)
                 .Select(x => new
                 {
                     x.PositionId,
-                    //email
+                    x.Email
                 })
                 .ToListAsync();
 
-            //insert to table approval requet
+            //lưu vào bảng approval_requests, với current_position_id là position tiếp theo
             var approvalRequest = new ApprovalRequest
             {
                 RequesterUserCode = dto.RequesterUserCode,
@@ -181,46 +190,60 @@ namespace ServicePortal.Applications.Modules.LeaveRequest.Services
 
             await _context.SaveChangesAsync();
 
-            //get user config receive mail
-            var userConfigReceiveEmail = await _context.UserConfigs
-                .FirstOrDefaultAsync(e => e.UserCode == userRequester.UserCode && e.ConfigKey == "RECEIVE_MAIL_LEAVE_REQUEST");
-
-            //true -> meaning receive mail 
+            //gửi email cho người xin nghỉ, check kiểm tra người dùng có config nhận thông báo email không
+            //nếu như check là k nhận thông báo thì k gửi, ngược lại các trường hợp sẽ gửi
+            var userConfigReceiveEmail = await _context.UserConfigs.FirstOrDefaultAsync(e =>
+                e.UserCode == userRequester.UserCode && 
+                e.ConfigKey == "RECEIVE_MAIL_LEAVE_REQUEST"
+            );
             if (userConfigReceiveEmail == null || userConfigReceiveEmail != null && userConfigReceiveEmail.ConfigValue == "true")
             {
-                //after get data email from viclock, now fake
-                BackgroundJob.Enqueue<EmailService>(job => job.SendEmaiLeaveRequestMySelf("nguyenviet@vsvn.com.vn", leaveRequest, dto.UrlFrontend));
+                BackgroundJob.Enqueue<EmailService>(job => job.SendEmaiLeaveRequestMySelf(!string.IsNullOrWhiteSpace(userRequester.Email) ? userRequester.Email : Global.EmailDefault, leaveRequest, dto.UrlFrontend));
             }
 
-            //send email list same position
+            //gửi email cho người duyệt tiếp theo
+            var toEmails = new List<string>();
             foreach (var item in userHaveNextPosition)
             {
-                BackgroundJob.Enqueue<EmailService>(job => job.SendEmailLeaveRequest(new List<string> { "nguyenviet@vsvn.com.vn" }, leaveRequest, dto.UrlFrontend));
+                toEmails.Add(!string.IsNullOrWhiteSpace(item.Email) ? item.Email : Global.EmailDefault);
             }
+            BackgroundJob.Enqueue<EmailService>(job => job.SendEmailLeaveRequest(toEmails, new List<string>() { }, new List<Domain.Entities.LeaveRequest> { leaveRequest }, dto.UrlFrontend));
 
             return dto;
         }
 
-        //fix
         public async Task<LeaveRequestDto> Update(Guid id, LeaveRequestDto dto)
         {
             var leaveRequest = await _context.LeaveRequests.FirstOrDefaultAsync(e => e.Id == id) ?? throw new NotFoundException("Leave request not found!");
 
-            var updateEntity = LeaveRequestMapper.ToEntity(dto);
+            leaveRequest.RequesterUserCode = dto.RequesterUserCode;
+            leaveRequest.Name = dto.Name;
+            leaveRequest.Department = dto.Department;
+            leaveRequest.Position = dto.Position;
 
-            _context.LeaveRequests.Update(updateEntity);
+            leaveRequest.FromDate = DateTimeOffset.Parse(dto.FromDate ?? "");
+            leaveRequest.ToDate = DateTimeOffset.Parse(dto.ToDate ?? "");
+
+            leaveRequest.TypeLeave = dto.TypeLeave;
+            leaveRequest.TimeLeave = dto.TimeLeave;
+            leaveRequest.Reason = dto.Reason;
+
+            _context.LeaveRequests.Update(leaveRequest);
 
             await _context.SaveChangesAsync();
 
             return LeaveRequestMapper.ToDto(leaveRequest);
         }
 
-        //fix
         public async Task<LeaveRequestDto> Delete(Guid id)
         {
             var leaveRequest = await _context.LeaveRequests.FirstOrDefaultAsync(e => e.Id == id) ?? throw new NotFoundException("Leave request not found!");
 
             _context.LeaveRequests.Remove(leaveRequest);
+
+            var requestOfLeave = await _context.ApprovalRequests.FirstOrDefaultAsync(e => e.RequestId == id) ?? throw new NotFoundException("Leave request not found!");
+
+            _context.ApprovalRequests.Remove(requestOfLeave);
 
             await _context.SaveChangesAsync();
 
@@ -308,7 +331,7 @@ namespace ServicePortal.Applications.Modules.LeaveRequest.Services
 
             var leaveRequest = await _context.LeaveRequests
                 .FirstOrDefaultAsync(e => e.Id == Guid.Parse(request.LeaveRequestId ?? ""))
-                ?? throw new NotFoundException("User not found!");
+                ?? throw new NotFoundException("Leave request not found!");
 
             //case reject
             if (request.Status == false)
@@ -362,13 +385,33 @@ namespace ServicePortal.Applications.Modules.LeaveRequest.Services
 
             if (isSendHr)
             {
-                //send email to hr, now fake
-                BackgroundJob.Enqueue<EmailService>(job => job.SendEmailLeaveRequest(new List<string> { "nguyenviet@vsvn.com.vn" }, leaveRequest, request.UrlFrontEnd));
+                var emailHR = await _hrManagementService.GetEmailHRByType("MANAGE_TIMEKEEPING");
+                var listEmailHRs = new List<string>();
+
+                foreach (var item in emailHR)
+                {
+                    listEmailHRs.Add(!string.IsNullOrWhiteSpace(item) ? item : Global.EmailDefault);
+                }
+
+               BackgroundJob.Enqueue<EmailService>(job => job.SendEmailLeaveRequest(listEmailHRs, new List<string> { userApproval.Email ?? Global.EmailDefault } , new List<Domain.Entities.LeaveRequest> { leaveRequest }, request.UrlFrontEnd));
             }
             else
             {
-                //send for next user position approval, now fake
-                BackgroundJob.Enqueue<EmailService>(job => job.SendEmailLeaveRequest(new List<string> { "nguyenviet@vsvn.com.vn" }, leaveRequest, request.UrlFrontEnd));
+                var emailNextPosition = await _userService.GetUserByPosition(nextPosition?.ToPosition);
+
+                var listToEmails = new List<string>();
+
+                foreach (var item in emailNextPosition)
+                {
+                    string email = Global.EmailDefault;
+                    if (item != null && !string.IsNullOrWhiteSpace(item.Email))
+                    {
+                        email = item.Email;
+                    }
+                    listToEmails.Add(email);
+                }
+
+                BackgroundJob.Enqueue<EmailService>(job => job.SendEmailLeaveRequest(listToEmails, new List<string> { userApproval.Email ?? Global.EmailDefault } , new List<Domain.Entities.LeaveRequest> { leaveRequest }, request.UrlFrontEnd));
             }
 
             return null;
@@ -395,17 +438,15 @@ namespace ServicePortal.Applications.Modules.LeaveRequest.Services
 
             _context.ApprovalActions.Add(newApprovalAction);
 
+            var checkEmail = await _userService.GetEmailByUserCodeAndUserConfig(new List<string> { leaveRequest?.RequesterUserCode ?? "" });
+
+            var firstEmail = checkEmail.FirstOrDefault();
+
+            var email = firstEmail != null && !string.IsNullOrWhiteSpace(firstEmail.Email) ? firstEmail.Email : Global.EmailDefault;
+
+            BackgroundJob.Enqueue<EmailService>(job => job.SendEmaiLeaveRequestMySelfStatus(email, leaveRequest, request.UrlFrontEnd, request.Note, false));
+
             await _context.SaveChangesAsync();
-
-            //get user config receive mail
-            var userConfigReceiveEmail = await _context.UserConfigs
-                .FirstOrDefaultAsync(e => e.UserCode == leaveRequest.RequesterUserCode && e.ConfigKey == "RECEIVE_MAIL_LEAVE_REQUEST");
-
-            //true -> meaning receive mail 
-            if (userConfigReceiveEmail == null || userConfigReceiveEmail != null && userConfigReceiveEmail.ConfigValue == "true")
-            {
-                BackgroundJob.Enqueue<EmailService>(job => job.SendEmaiLeaveRequestMySelfStatus("nguyenviet@vsvn.com.vn", leaveRequest, request.UrlFrontEnd, request.Note, false));
-            }
         }
 
         public async Task HrApproval(ApprovalDto request, Domain.Entities.LeaveRequest leaveRequest)
@@ -431,15 +472,13 @@ namespace ServicePortal.Applications.Modules.LeaveRequest.Services
 
             await _context.SaveChangesAsync();
 
-            //get user config receive mail
-            var userConfigReceiveEmail = await _context.UserConfigs
-                .FirstOrDefaultAsync(e => e.UserCode == leaveRequest.RequesterUserCode && e.ConfigKey == "RECEIVE_MAIL_LEAVE_REQUEST");
+            var checkEmail = await _userService.GetEmailByUserCodeAndUserConfig(new List<string> { leaveRequest?.RequesterUserCode ?? "" });
 
-            //true -> meaning receive mail 
-            if (userConfigReceiveEmail == null || userConfigReceiveEmail != null && userConfigReceiveEmail.ConfigValue == "true")
-            {
-                BackgroundJob.Enqueue<EmailService>(job => job.SendEmaiLeaveRequestMySelfStatus("nguyenviet@vsvn.com.vn", leaveRequest, request.UrlFrontEnd, request.Note, true));
-            }
+            var firstEmail = checkEmail.FirstOrDefault();
+
+            var email = firstEmail != null && !string.IsNullOrWhiteSpace(firstEmail?.Email) ? firstEmail.Email : Global.EmailDefault;
+
+            BackgroundJob.Enqueue<EmailService>(job => job.SendEmaiLeaveRequestMySelfStatus(email, leaveRequest, request.UrlFrontEnd, request.Note, true));
         }
 
         public IQueryable<LeaveRequestWithApprovalResponse> GetBaseLeaveRequestApprovalQuery(GetAllLeaveRequestWaitApprovalDto request, HashSet<string> roleClaims)
@@ -527,20 +566,25 @@ namespace ServicePortal.Applications.Modules.LeaveRequest.Services
                 actions.Add(new ApprovalAction
                 {
                     ApprovalRequestId = item.ApprovalRequest.Id,
-                    ApproverUserCode = user?.UserCode,
-                    ApproverName = user?.UserCode?.ToString(),
+                    ApproverUserCode = request?.UserCode,
+                    ApproverName = request?.UserName,
                     Action = StatusLeaveRequestEnum.COMPLETED.ToString(),
                     CreatedAt = DateTimeOffset.Now
                 });
 
                 _context.ApprovalRequests.Update(item.ApprovalRequest);
 
-                BackgroundJob.Enqueue<EmailService>(job => job.SendEmaiLeaveRequestMySelfStatus("nguyenviet@vsvn.com.vn", item.LeaveRequest, request.UrlFrontEnd, null, true));
+                var checkEmail = await _userService.GetEmailByUserCodeAndUserConfig(new List<string> { item.ApprovalRequest.RequesterUserCode ?? Global.EmailDefault });
+                var firstEmail = checkEmail.FirstOrDefault();
+                var email = firstEmail != null && !string.IsNullOrWhiteSpace(firstEmail.Email) ? firstEmail.Email : Global.EmailDefault;
+
+                BackgroundJob.Enqueue<EmailService>(job => job.SendEmaiLeaveRequestMySelfStatus(email, item.LeaveRequest, null, null, true));
             }
 
             _context.ApprovalActions.AddRange(actions);
 
             await _context.SaveChangesAsync();
+
             return "success" ?? "error";
         }
 
@@ -602,6 +646,112 @@ namespace ServicePortal.Applications.Modules.LeaveRequest.Services
             };
 
             return data;
+        }
+
+        public async Task<object> CreateLeaveForManyPeople(CreateLeaveRequestForManyPeopleRequest request)
+        {
+            if (request.Leaves != null && request.Leaves.Count > 0)
+            {
+                var userCodeWriteRequester = request.Leaves.First().WriteLeaveUserCode;
+
+                //lấy thông tin người viết đơn cho người khác
+                var userWriteRequester = await _context.Users
+                    .Where(e => e.UserCode == userCodeWriteRequester)
+                    .Select(e => new
+                    {
+                        e.UserCode,
+                        e.PositionId,
+                        e.Email
+                    })
+                    .FirstOrDefaultAsync() ?? throw new NotFoundException("User not found!");
+
+                //luồng duyệt
+                var approvalFlow = await _context.ApprovalFlows
+                    .Where(e => e.FromPosition == userWriteRequester.PositionId)
+                    .Select(x => new
+                    {
+                        x.ToPosition
+                    })
+                    .FirstOrDefaultAsync();
+
+                //nếu hết người duyệt, gửi đến HR
+                if (approvalFlow == null)
+                {
+                    foreach (var itemLeave in request.Leaves)
+                    {
+                        //lưu bảng leave_requests và approval_requests
+                        var newLeave = LeaveRequestMapper.ToEntity(itemLeave);
+                        _context.LeaveRequests.Add(newLeave);
+
+                        _context.ApprovalRequests.Add(new ApprovalRequest
+                        {
+                            RequesterUserCode = itemLeave.RequesterUserCode,
+                            RequestType = "LEAVE_REQUEST",
+                            RequestId = newLeave.Id,
+                            Status = "IN_PROCESS",
+                            CurrentPositionId = (int)StatusLeaveRequestEnum.WAIT_HR,
+                            CreatedAt = DateTimeOffset.Now
+                        });
+
+                        await _context.SaveChangesAsync();
+                    }
+
+                    return true;
+                }
+
+                //lấy những người duyệt tiếp theo
+                var userHaveNextPosition = await _context.Users
+                    .Where(e => e.PositionId == approvalFlow.ToPosition)
+                    .Select(x => new
+                    {
+                        x.PositionId,
+                        x.Email
+                    })
+                    .ToListAsync();
+
+                foreach (var itemLeave in request.Leaves)
+                {
+                    var newLeave = LeaveRequestMapper.ToEntity(itemLeave);
+                    _context.LeaveRequests.Add(newLeave);
+
+                    _context.ApprovalRequests.Add(new ApprovalRequest
+                    {
+                        RequesterUserCode = itemLeave.RequesterUserCode,
+                        RequestType = "LEAVE_REQUEST",
+                        RequestId = newLeave.Id,
+                        Status = "PENDING",
+                        CurrentPositionId = approvalFlow.ToPosition,
+                        CreatedAt = DateTimeOffset.Now
+                    });
+                }
+
+                //gửi email đến người duyệt tiếp theo
+                var toEmails = new List<string>();
+                foreach (var item in userHaveNextPosition)
+                {
+                    toEmails.Add(!string.IsNullOrWhiteSpace(item.Email) ? item.Email : Global.EmailDefault);
+                }
+
+                //gửi email cho người xin nghỉ, check kiểm tra người dùng có config nhận thông báo email không
+                //nếu như check là k nhận thông báo thì k gửi, ngược lại các trường hợp sẽ gửi
+                var ccEmails = new List<string>();
+                var getEmailByUserCodeAndUserConfig = await _userService.GetEmailByUserCodeAndUserConfig([.. request.Leaves.Select(x => x.RequesterUserCode)]);
+                
+                foreach (var item in getEmailByUserCodeAndUserConfig)
+                {
+                    ccEmails.Add(!string.IsNullOrWhiteSpace(item.Email) ? item.Email : Global.EmailDefault);
+                }
+
+                ccEmails.Add(!string.IsNullOrWhiteSpace(userWriteRequester.Email) ? userWriteRequester.Email : Global.EmailDefault);
+
+                BackgroundJob.Enqueue<EmailService>(job => job.SendEmailLeaveRequest(toEmails, ccEmails, LeaveRequestMapper.ToEntityList(request.Leaves), request.Leaves[0].UrlFrontend));
+
+                await _context.SaveChangesAsync();
+
+                return true;
+            }
+
+            throw new Exception("Không có người nào xin nghỉ phép");
         }
     }
 }

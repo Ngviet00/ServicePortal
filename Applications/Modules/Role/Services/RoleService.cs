@@ -53,6 +53,13 @@ namespace ServicePortal.Applications.Modules.Role.Services
             return role;
         }
 
+        public async Task<Domain.Entities.Role> GetByCode(string code)
+        {
+            var role = await _context.Roles.FirstOrDefaultAsync(e => e.Code == code) ?? throw new NotFoundException("Role not found!");
+
+            return role;
+        }
+
         public async Task<Domain.Entities.Role> Create(CreateRoleDto request)
         {
             if (string.IsNullOrWhiteSpace(request.Name))

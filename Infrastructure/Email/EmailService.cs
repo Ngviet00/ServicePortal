@@ -7,16 +7,19 @@ using ServicePortal.Domain.Enums;
 using Hangfire;
 using System.Net.Mime;
 using ServicePortal.Applications.Modules.TimeKeeping.DTO.Requests;
+using ServicePortal.Applications.Modules.HRManagement.Services;
 
 namespace ServicePortal.Infrastructure.Email
 {
     public class EmailService : IEmailService
     {
         private readonly IConfiguration _config;
+        private readonly IHRManagementService _hrManagementService;
 
-        public EmailService(IConfiguration config)
+        public EmailService(IConfiguration config, IHRManagementService hrManagementService)
         {
             _config = config;
+            _hrManagementService = hrManagementService;
         }
 
         public (IConfigurationSection smtpSection, SmtpClient smtpClient) GetEmailConfig()
@@ -55,7 +58,7 @@ namespace ServicePortal.Infrastructure.Email
 
                 string subject = $"Đơn xin nghỉ phép của bạn đã được gửi!";
 
-                string content = FormatContentMailLeaveRequest(leaveRequest, UrlFrontEnd ?? "http://localhost:5173");
+                string content = FormatContentMailLeaveRequest(leaveRequest);
 
                 var message = SetMessageEmail(smtp, subject, content);
 
@@ -82,7 +85,7 @@ namespace ServicePortal.Infrastructure.Email
                 if (status)
                 {
                     subject = $"Đơn xin nghỉ phép của bạn đã đăng ký thành công!";
-                    content = FormatContentMailLeaveRequest(leaveRequest, UrlFrontEnd ?? "http://localhost:5173");
+                    content = FormatContentMailLeaveRequest(leaveRequest);
                 }
                 else
                 {
@@ -91,7 +94,7 @@ namespace ServicePortal.Infrastructure.Email
                     content = $@"<h4>
                         <span style=""color:red"">Lý do từ chối: {comment}</span>
                     </h4>"
-                    + FormatContentMailLeaveRequest(leaveRequest, UrlFrontEnd ?? "http://localhost:5173");
+                    + FormatContentMailLeaveRequest(leaveRequest);
                 }
 
                 var message = SetMessageEmail(smtp, subject, content);
@@ -107,30 +110,52 @@ namespace ServicePortal.Infrastructure.Email
         }
 
         [AutomaticRetry(Attempts = 10)]
-        public async Task SendEmailLeaveRequest(List<string> listEmail, LeaveRequest leaveRequest, string? UrlFrontEnd)
+        public async Task SendEmailLeaveRequest(List<string>? toEmails, List<string>? ccEmails, List<LeaveRequest>? leaveRequest, string? UrlFrontEnd)
         {
             try
             {
                 var (smtp, smtpClient) = GetEmailConfig();
 
-                string subject = $"Đơn xin nghỉ phép - {leaveRequest.RequesterUserCode}";
+                string? requester = leaveRequest?.Count == 1 ? leaveRequest?.FirstOrDefault()?.RequesterUserCode : $"{leaveRequest?.Count} người";
 
+                string subject = $"Đơn xin nghỉ phép - {requester}";
                 string urlWaitApproval = $"{UrlFrontEnd}/leave/wait-approval";
 
                 string content = $@"
                     <h4>
                         <span>Duyệt đơn: </span>
                         <a href={urlWaitApproval}>{urlWaitApproval}</a>
-                    </h4>"
-                    + FormatContentMailLeaveRequest(leaveRequest, UrlFrontEnd ?? "http://localhost:5173");
+                    </h4>";
+
+                if (leaveRequest != null && leaveRequest.Count > 0)
+                {
+                    foreach (var request in leaveRequest)
+                    {
+                        content += FormatContentMailLeaveRequest(request) + "<br/>";
+                    }
+                }
 
                 var message = SetMessageEmail(smtp, subject, content);
 
-                foreach (var email in listEmail)
+                if (toEmails != null && toEmails.Count > 0)
                 {
-                    if (!string.IsNullOrWhiteSpace(email))
+                    foreach (var email in toEmails)
                     {
-                        message.To.Add(email.Trim());
+                        if (!string.IsNullOrWhiteSpace(email))
+                        {
+                            message.To.Add(email.Trim());
+                        }
+                    }
+                }
+
+                if (ccEmails != null && ccEmails.Count > 0)
+                {
+                    foreach (var email in ccEmails)
+                    {
+                        if (!string.IsNullOrWhiteSpace(email))
+                        {
+                            message.CC.Add(email.Trim());
+                        }
                     }
                 }
 
@@ -178,7 +203,7 @@ namespace ServicePortal.Infrastructure.Email
         }
 
         [AutomaticRetry(Attempts = 10)]
-        public async Task SendEmailConfirmTimeKeepingToHr(string email, byte[] fileBytes, GetManagementTimeKeepingDto request)
+        public async Task SendEmailConfirmTimeKeepingToHr(byte[] fileBytes, GetManagementTimeKeepingRequest request)
         {
             try
             {
@@ -196,7 +221,14 @@ namespace ServicePortal.Infrastructure.Email
 
                 message.Attachments.Add(attachment);
 
-                message.To.Add(email.Trim());
+                var hrMngTimekeeping = await _hrManagementService.GetHrManagementsByType("MANAGE_TIMEKEEPING");
+
+                foreach (var hr in hrMngTimekeeping)
+                {
+                    message.To.Add(Global.EmailDefault);
+                }
+
+                message.CC.Add(request?.EmailSender?.Trim() ?? Global.EmailDefault);
 
                 await smtpClient.SendMailAsync(message);
 
@@ -207,7 +239,7 @@ namespace ServicePortal.Infrastructure.Email
             }
         }
 
-        public string FormatContentMailLeaveRequest(LeaveRequest leaveRequest, string UrlFrontEnd)
+        public string FormatContentMailLeaveRequest(LeaveRequest leaveRequest)
         {
             string typeLeaveDescription = leaveRequest.TypeLeave != null
                 ? Helper.GetDescriptionFromValue<TypeLeaveEnum>((int)leaveRequest.TypeLeave)
@@ -270,6 +302,6 @@ namespace ServicePortal.Infrastructure.Email
                             <td>{leaveRequest.Reason}</td>
                         </tr>
                     </table>";
-        }
+        }   
     }
 }

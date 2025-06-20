@@ -1,69 +1,180 @@
-﻿using Hangfire;
+﻿using System.Data;
+using System.Text;
+using Hangfire;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 using ServicePortal.Applications.Modules.User.DTO.Requests;
 using ServicePortal.Applications.Modules.User.DTO.Responses;
 using ServicePortal.Applications.Modules.User.Services.Interfaces;
+using ServicePortal.Applications.Viclock.DTO.User;
 using ServicePortal.Common;
 using ServicePortal.Common.Helpers;
 using ServicePortal.Common.Mappers;
 using ServicePortal.Domain.Entities;
+using ServicePortal.Infrastructure.Cache;
 using ServicePortal.Infrastructure.Data;
 using ServicePortal.Infrastructure.Email;
 using ServicePortal.Infrastructure.Hubs;
+using ServicePortal.Infrastructure.Persistence;
 
 namespace ServicePortal.Applications.Modules.User.Services
 {
     public class UserService : IUserService
     {
         private readonly ApplicationDbContext _context;
-
         private readonly NotificationService _notificationService;
-
         private readonly OrgChartBuilder _orgChartBuilder;
+        private readonly IDapperQueryService _dapperQueryService;
+        private readonly ICacheService _cacheService;
 
-        public UserService(ApplicationDbContext context, NotificationService notificationService, OrgChartBuilder orgChartBuilder)
+        public UserService(
+            ApplicationDbContext context,
+            NotificationService notificationService,
+            OrgChartBuilder orgChartBuilder,
+            IDapperQueryService dapperQueryService,
+            ICacheService cacheService
+        )
         {
             _context = context;
             _notificationService = notificationService;
             _orgChartBuilder = orgChartBuilder;
+            _dapperQueryService = dapperQueryService;
+            _cacheService = cacheService;
         }
 
-        public async Task<PagedResults<UserResponseDto>> GetAll(GetAllUserRequestDto request)
+        public async Task<PagedResults<GetAllUserResponseDto>> GetAll(GetAllUserRequestDto request)
         {
             string name = request.Name ?? "";
             double pageSize = request.PageSize;
             double page = request.Page;
+            int? DepartmentId = request.DepartmentId;
+            int? Sex = request.Sex;
+            int? PositionId = request.PositionId;
 
-            var query = _context.Users
-                .Include(e => e.UserRoles)
-                    .ThenInclude(ur => ur.Role)
-                .AsQueryable();
-
-            query = query.Where(e => e.UserCode != "0");
-
-            if (!string.IsNullOrEmpty(name))
+            var param = new
             {
-                query = query.Where(u => u.UserCode != null && u.UserCode.Contains(name));
+                SearchName = name,
+                SearchDept = DepartmentId,
+                SearchSex = Sex,
+                SearchPosition = PositionId,
+                PageNumber = (int)page,
+                PageSize = (int)pageSize
+            };
+
+            var whereSql = new StringBuilder();
+
+            whereSql.AppendLine(" WHERE 1=1 AND nv.NVNgayRa > GETDATE()");
+
+            if (!string.IsNullOrWhiteSpace(name))
+            {
+                whereSql.AppendLine($" AND nv.NVHoTen LIKE '%' + @SearchName + '%' ");
+                whereSql.AppendLine($" OR u.UserCode LIKE '%' + @SearchName + '%' ");
+                whereSql.AppendLine($" OR nv.NVDienThoai LIKE '%' + @SearchName + '%' ");
+                whereSql.AppendLine($" OR nv.NVEmail LIKE '%' + @SearchName + '%' ");
             }
 
-            var totalItems = await query.CountAsync();
-
-            var totalPages = (int)Math.Ceiling(totalItems / pageSize);
-
-            var usersWithDetails = await query
-                .Skip((int)((page - 1) * pageSize))
-                .Take((int)pageSize)
-                .ToListAsync();
-
-            var result = new PagedResults<UserResponseDto>
+            if (DepartmentId != null)
             {
-                Data = UserMapper.ToDtoList(usersWithDetails),
+                whereSql.AppendLine($" AND nv.NVMaBP = @SearchDept ");
+            }
+
+            if (Sex != null)
+            {
+                whereSql.AppendLine($" AND nv.NVGioiTinh = @SearchSex ");
+            }
+
+            if (PositionId != null)
+            {
+                whereSql.AppendLine($" AND nv.NVMaCV = @SearchPosition ");
+            }
+
+            var countSql = new StringBuilder();
+            countSql.AppendLine($@"
+                SELECT COUNT(*) 
+                FROM [{Global.DbWeb}].dbo.users u 
+                INNER JOIN[{Global.DbViClock}].dbo.tblNhanVien nv ON u.UserCode = nv.NVMaNV 
+                {whereSql}
+            ");
+
+            int totalItems = await _dapperQueryService.QueryFirstOrDefaultAsync<int>(countSql.ToString(), param);
+            int totalPages = (int)Math.Ceiling(totalItems / pageSize);
+
+            var dataSql = new StringBuilder();
+            dataSql.AppendLine($@"
+                WITH PagedUsers AS (
+                    SELECT
+                        u.Id,
+                        u.UserCode,
+                        [{Global.DbViClock}].dbo.funTCVN2Unicode(NV.NVHoTen) AS NVHoTen,
+                        nv.NVMaBP,
+                        bp.BPTen,
+                        cv.CVTen,
+                        nv.NVMaCV,
+                        nv.NVGioiTinh,
+                        nv.NVDienThoai,
+                        nv.NVEmail,
+                        nv.NVNgayVao
+                    FROM [{Global.DbWeb}].dbo.users u
+                    INNER JOIN [{Global.DbViClock}].dbo.tblNhanVien nv ON u.UserCode = nv.NVMaNV
+                    LEFT JOIN [{Global.DbViClock}].dbo.tblBoPhan bp ON nv.NVMaBP = bp.BPMa
+                    LEFT JOIN [{Global.DbViClock}].dbo.tblChucVu cv ON nv.NVMaCV = cv.CVMa
+                    {whereSql}
+                    ORDER BY u.Id
+                    OFFSET (@PageNumber - 1) * @PageSize ROWS FETCH NEXT @PageSize ROWS ONLY
+                )
+                SELECT 
+                    pu.Id,
+                    pu.UserCode,
+                    pu.NVHoTen,
+                    pu.NVMaBP,
+                    pu.BPTen,
+                    pu.CVTen,
+                    pu.NVMaCV,
+                    pu.NVGioiTinh,
+                    pu.NVDienThoai,
+                    pu.NVEmail,
+                    pu.NVNgayVao,
+                    r.Id AS RoleId,
+                    r.Name AS RoleName
+                FROM PagedUsers pu
+                LEFT JOIN [{Global.DbWeb}].dbo.user_roles ur ON pu.UserCode = ur.UserCode
+                LEFT JOIN [{Global.DbWeb}].dbo.roles r ON ur.RoleId = r.Id
+            ");
+
+            var users = await _dapperQueryService.QueryAsync<GetAllUserResponseDto>(dataSql.ToString(), param);
+
+            var results = users
+                .GroupBy(x => x.Id)
+                .Select(g => new GetAllUserResponseDto
+                {
+                    Id = g.First().Id,
+                    UserCode = g.First().UserCode,
+                    NVHoTen = g.First().NVHoTen,
+                    NVMaBP = g.First().NVMaBP,
+                    BPTen = g.First().BPTen,
+                    CVTen = g.First().CVTen,
+                    NVMaCV = g.First().NVMaCV,
+                    NVGioiTinh = g.First().NVGioiTinh,
+                    NVDienThoai = g.First().NVDienThoai,
+                    NVEmail = g.First().NVEmail,
+                    NVNgayVao = g.First().NVNgayVao,
+                    Roles = g
+                        .Where(r => r.RoleId.HasValue)
+                        .Select(r => new Domain.Entities.Role
+                        {
+                            Id = r.RoleId.Value,
+                            Name = r.RoleName
+                        }).ToList()
+                })
+                .ToList();
+
+            return new PagedResults<GetAllUserResponseDto>
+            {
+                Data = results,
                 TotalItems = totalItems,
                 TotalPages = totalPages
             };
-
-            return result;
         }
 
         public async Task<UserResponseDto> GetByCode(string code)
@@ -120,76 +231,6 @@ namespace ServicePortal.Applications.Modules.User.Services
             await _context.SaveChangesAsync();
 
             return UserMapper.ToDto(user);
-        }
-
-        public IQueryable<UserResponseDto> GetUserQueryLogin()
-        {
-            //var query = _context.Users
-            //    .Where(u => u.DeletedAt == null)
-            //    .Select(u => new UserResponseDto
-            //    {
-            //        Id = u.Id,
-            //        Code = u.Code,
-            //        Name = u.Name,
-            //        Email = u.Email,
-            //        Password = u.Password,
-            //        IsActive = u.IsActive,
-            //        DateJoinCompany = u.DateJoinCompany,
-            //        Phone = u.Phone,
-            //        Sex = u.Sex,
-            //        Position = u.Position,
-            //        Level = u.Level,
-            //        LevelParent = u.LevelParent,
-            //        DepartmentId = u.DepartmentId,
-            //        Department = u.Department == null ? null : new DepartmentDTO
-            //        {
-            //            Id = u.Department.Id,
-            //            Name = u.Department.Name,
-            //        },
-
-            //        Roles = u.UserRoles
-            //            .Where(ur => ur.Role != null)
-            //            .Select(ur => new Domain.Entities.Role
-            //            {
-            //                Id = ur.Role!.Id,
-            //                Name = ur.Role.Name,
-            //                Code = ur.Role.Code
-            //            })
-            //            .Distinct()
-            //            .ToList(),
-            //        UserPermissions = new List<string?>(),
-
-            //        //UserPermissions = u.UserPermission
-            //        //    .Where(up => up.Permission != null)
-            //        //    .Select(up => up.Permission!.Name)
-            //        //    .Distinct()
-            //        //    .ToList(),
-            //        Permissions = new List<string?>(),
-
-            //        //Permissions = u.UserRoles
-            //        //    .Where(ur => ur.Role != null)
-            //        //    .SelectMany(ur => ur.Role!.RolePermissions
-            //        //        .Where(rp => rp.Permission != null)
-            //        //        .Select(rp => rp.Permission!.Name)
-            //        //    )
-            //        //    .Distinct()
-            //        //    .ToList()
-            //    });
-
-            //return query;
-            return null;
-        }
-
-        public async Task<long> CountUser()
-        {
-            return await _context.Users.CountAsync();
-        }
-
-        public async Task<object> GetMe(string code)
-        {
-            code = "22757";
-
-            return null;
         }
 
         public async Task<bool> UpdateUserRole(UpdateUserRoleDto dto)
@@ -251,6 +292,60 @@ namespace ServicePortal.Applications.Modules.User.Services
         public async Task<OrgChartNode> BuildTree(int? departmentId)
         {
             return await _orgChartBuilder.BuildTree(departmentId);
+        }
+
+        public async Task<GetUserPersonalInfoResponse?> GetMe(string UserCode)
+        {
+            var result = await _cacheService.GetOrCreateAsync($"user_info_{UserCode}", async () =>
+            {
+                return await _dapperQueryService.QueryFirstOrDefaultAsync<GetUserPersonalInfoResponse>(
+                    "dbo.usp_GetNhanVienByUserCode",
+                    new { UserCode },
+                    CommandType.StoredProcedure
+                );
+            }, expireMinutes: 30);
+
+            return result;
+        }
+
+        public async Task<bool> CheckUserIsExistsInViClock(string UserCode)
+        {
+            var result = await _dapperQueryService.QueryFirstOrDefaultAsync<int>("SELECT 1 FROM tblNhanVien WHERE NVMaNV = @UserCode", new { UserCode });
+
+            return result == 1;
+        }
+
+        public async Task<List<GetEmailByUserCodeAndUserConfigResponse>> GetEmailByUserCodeAndUserConfig(List<string> userCodes)
+        {
+            if (userCodes == null || userCodes.Count == 0)
+            {
+                return new List<GetEmailByUserCodeAndUserConfigResponse>();
+            }
+
+            var result = await _context.Users
+                .Where(u => userCodes.Contains(u.UserCode ?? ""))
+                .GroupJoin(
+                    _context.UserConfigs.Where(c => c.ConfigKey == "RECEIVE_MAIL_LEAVE_REQUEST"),
+                    u => u.UserCode,
+                    uc => uc.UserCode,
+                    (u, ucs) => new { u, uc = ucs.FirstOrDefault() }
+                )
+                .Where(x => x.uc == null || x.uc.ConfigValue == "true")
+                .Select(x => new GetEmailByUserCodeAndUserConfigResponse
+                {
+                    UserCode = x.u.UserCode,
+                    Email = x.u.Email,
+                    ConfigKey = x.uc != null ? x.uc.ConfigKey : null,
+                    ConfigValue = x.uc != null ? x.uc.ConfigValue : null
+                })
+                .ToListAsync();
+
+            return result;
+        }
+
+        public async Task<List<UserResponseDto>> GetUserByPosition(int? position)
+        {
+            return UserMapper.ToDtoList(await _context.Users.Where(e => e.PositionId == position).ToListAsync());
         }
     }
 }

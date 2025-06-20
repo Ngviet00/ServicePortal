@@ -18,5 +18,6 @@ namespace ServicePortal.Applications.Modules.LeaveRequest.Services.Interfaces
         Task<int> CountWaitApproval(GetAllLeaveRequestWaitApprovalDto request, ClaimsPrincipal userClaim);
         Task<string> HrRegisterAllLeave(HrRegisterAllLeaveRqDto request);
         Task<PagedResults<HistoryLeaveRequestApprovalResponse>> GetHistoryLeaveRequestApproval(GetAllLeaveRequestDto request);
+        Task<object> CreateLeaveForManyPeople(CreateLeaveRequestForManyPeopleRequest request);
     }
 }

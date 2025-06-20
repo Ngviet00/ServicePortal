@@ -4,6 +4,10 @@ namespace ServicePortal.Applications.Modules.User.DTO.Requests
 {
     public class GetAllUserRequestDto
     {
+        public int? DepartmentId { get; set; }
+        public int? PositionId { get; set; }
+        public int? Sex { get; set; }
+
         [FromQuery(Name = "name")]
         public string? Name { get; set; } //search by name
 

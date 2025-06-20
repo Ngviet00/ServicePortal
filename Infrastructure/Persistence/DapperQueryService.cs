@@ -30,6 +30,9 @@ namespace ServicePortal.Infrastructure.Persistence
         {
             try
             {
+                //var sw = Stopwatch.StartNew();
+                //sw.Stop();
+                //Console.WriteLine($"Mo ket noi connection > Open took: {sw.ElapsedMilliseconds} ms");
                 using var connection = CreateConnection();
                 return await connection.QueryAsync<T>(sql, parameters, commandType: commandType);
             }

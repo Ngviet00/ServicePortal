@@ -2,8 +2,9 @@
 {
     public class ManagementTimeKeepingResponseDto
     {
-        public List<Holiday>? Holidays { get; set; }
-        public List<UserDataTimeKeeping>? UserData { get; set; }
+        public object? Data { get; set; }
+        //public List<Holiday>? Holidays { get; set; }
+        //public List<UserDataTimeKeeping>? UserData { get; set; }
     }
 
     public class UserDataTimeKeeping

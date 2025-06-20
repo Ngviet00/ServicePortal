@@ -16,6 +16,7 @@ namespace ServicePortal.Common.Mappers
                 Password = entity.Password,
                 IsActive = entity.IsActive,
                 IsChangePassword = entity.IsChangePassword,
+                Email = entity.Email,
                 Roles = entity?.UserRoles != null && entity.UserRoles.All(ur => ur.Role != null)
                 ? entity.UserRoles.Select(ur => new Role
                 {

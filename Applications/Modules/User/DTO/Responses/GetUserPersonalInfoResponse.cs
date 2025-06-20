@@ -1,6 +1,6 @@
 ﻿namespace ServicePortal.Applications.Viclock.DTO.User
 {
-    public class GetUserPersonalInfoResponseDto
+    public class GetUserPersonalInfoResponse
     {
         public string? NVMaNV { get; set; }
         public int? NVMaBP { get; set; }

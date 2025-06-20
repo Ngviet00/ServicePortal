@@ -12,6 +12,7 @@ namespace ServicePortal.Common.Mappers
             {
                 Id = entity.Id,
                 WriteLeaveUserCode = entity.WriteLeaveUserCode,
+                WriteLeaveName = entity.WriteLeaveName,
                 RequesterUserCode = entity.RequesterUserCode,
                 Name = entity.Name,
                 FromDate = entity.FromDate.ToString(),
@@ -34,6 +35,7 @@ namespace ServicePortal.Common.Mappers
             return new LeaveRequest
             {
                 WriteLeaveUserCode = dto.WriteLeaveUserCode,
+                WriteLeaveName = dto.WriteLeaveName,
                 RequesterUserCode = dto.RequesterUserCode,
                 Name = dto.Name,
                 FromDate = DateTimeOffset.ParseExact(dto?.FromDate ?? "", "yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture),

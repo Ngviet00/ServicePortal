@@ -138,5 +138,13 @@ namespace ServicePortal.Applications.Modules.LeaveRequest.Controllers
 
             return Ok(response);
         }
+
+        [HttpPost("create-leave-for-others")]
+        public async Task<IActionResult> CreateLeaveForOther([FromBody] CreateLeaveRequestForManyPeopleRequest request)
+        {
+            var result = await _leaveRequestService.CreateLeaveForManyPeople(request);
+
+            return Ok(new BaseResponse<object>(200, "success", result));
+        }
     }
 }

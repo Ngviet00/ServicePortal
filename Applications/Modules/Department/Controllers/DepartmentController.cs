@@ -1,27 +1,27 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using ServicePortal.Common;
-using ServicePortal.Applications.Viclock.Queries;
-using ServicePortal.Applications.Viclock.DTO.Department;
 using Microsoft.AspNetCore.Authorization;
+using ServicePortal.Applications.Modules.Department.Services.Interfaces;
+using ServicePortal.Applications.Modules.Department.DTO.Responses;
 
 namespace ServicePortal.Applications.Modules.Department.Controllers
 {
     [ApiController, Route("api/department"), Authorize]
     public class DepartmentController : ControllerBase
     {
-        private readonly IViClockDepartmentQuery _viClockDepartmentQuery;
+        private readonly IDepartmentService _departmentService;
 
-        public DepartmentController(IViClockDepartmentQuery viClockDepartmentQuery)
+        public DepartmentController(IDepartmentService departmentService)
         {
-            _viClockDepartmentQuery = viClockDepartmentQuery;
+            _departmentService = departmentService;
         }
 
         [HttpGet("get-all")]
         public async Task<IActionResult> GetAll()
         {
-            var result = await _viClockDepartmentQuery.GetAll();
+            var result = await _departmentService.GetAll();
 
-            return Ok(new BaseResponse<List<DepartmentViclockDtos>>(200, "success", result));
+            return Ok(new BaseResponse<List<GetAllDepartmentResponse>>(200, "success", result));
         }
     }
 }

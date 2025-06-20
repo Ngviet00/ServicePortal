@@ -5,7 +5,6 @@ using ServicePortal.Applications.Modules.User.DTO.Responses;
 using ServicePortal.Applications.Modules.User.Services;
 using ServicePortal.Applications.Modules.User.Services.Interfaces;
 using ServicePortal.Applications.Viclock.DTO.User;
-using ServicePortal.Applications.Viclock.Queries;
 using ServicePortal.Common;
 using ServicePortal.Common.Filters;
 
@@ -17,12 +16,9 @@ namespace ServicePortal.Applications.Modules.User.Controllers
     {
         private readonly IUserService _userService;
 
-        private readonly IViclockUserQuery _viclockUserQuery;
-
-        public UserController(IUserService userService, IViclockUserQuery viclockUserQuery)
+        public UserController(IUserService userService)
         {
             _userService = userService;
-            _viclockUserQuery = viclockUserQuery;
         }
 
         [HttpGet("me")]
@@ -30,9 +26,9 @@ namespace ServicePortal.Applications.Modules.User.Controllers
         {
             var Usercode = User.FindFirst("user_code")?.Value;
 
-            var results = await _viclockUserQuery.GetMe(Usercode ?? "");
+            var results = await _userService.GetMe(Usercode ?? "");
 
-            var response = new BaseResponse<GetUserPersonalInfoResponseDto>(200, "Success", results);
+            var response = new BaseResponse<GetUserPersonalInfoResponse>(200, "Success", results);
 
             return Ok(response);
         }
@@ -42,7 +38,7 @@ namespace ServicePortal.Applications.Modules.User.Controllers
         {
             var results = await _userService.GetAll(request);
 
-            var response = new PageResponse<UserResponseDto>(
+            var response = new PageResponse<GetAllUserResponseDto>(
                 200,
                 "Success",
                 results.Data,
@@ -109,6 +105,15 @@ namespace ServicePortal.Applications.Modules.User.Controllers
             var result = await _userService.BuildTree(departmentId);
 
             return Ok(new BaseResponse<OrgChartNode>(200, "Success", result));
+        }
+
+        [HttpGet("test"), AllowAnonymous]
+        public async Task<IActionResult> Test()
+        {
+            return Ok();
+            //var result = await _userService.GetEmailByUserCodeAndUserConfig(new List<string> { "22757" });
+
+            //return Ok(new BaseResponse<List<GetEmailByUserCodeAndUserConfigResponse>>(200, "Success", result));
         }
     }
 }

@@ -7,6 +7,7 @@ namespace ServicePortal.Applications.Modules.LeaveRequest.DTO
         public Guid? Id { get; set; }
         public string? RequesterUserCode { get; set; } //nguoi yeu cau
         public string? WriteLeaveUserCode { get; set; } //nguoi viet yeu cau
+        public string? WriteLeaveName { get; set; } //ten nguoi viet phep
         public string? Name { get; set; }
         public string? Department { get; set; }
         public string? Position { get; set; }
@@ -21,5 +22,10 @@ namespace ServicePortal.Applications.Modules.LeaveRequest.DTO
         public DateTimeOffset? CreatedAt { get; set; }
         public ApprovalRequest? ApprovalRequest { get; set; }
         public ApprovalAction? ApprovalAction { get; set; }
+    }
+
+    public class CreateLeaveRequestForManyPeopleRequest
+    {
+        public List<LeaveRequestDto>? Leaves { get; set; }
     }
 }

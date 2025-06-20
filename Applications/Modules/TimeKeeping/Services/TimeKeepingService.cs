@@ -1,272 +1,111 @@
-﻿using System.Dynamic;
-using System.IO.Packaging;
+﻿using System.Data;
+using Dapper;
 using Hangfire;
 using Microsoft.EntityFrameworkCore;
 using ServicePortal.Applications.Modules.TimeKeeping.DTO.Requests;
-using ServicePortal.Applications.Modules.TimeKeeping.DTO.Responses;
 using ServicePortal.Applications.Modules.TimeKeeping.Services.Interfaces;
-using ServicePortal.Applications.Modules.User.DTO.Responses;
-using ServicePortal.Common;
-using ServicePortal.Common.Mappers;
-using ServicePortal.Domain.Entities;
 using ServicePortal.Infrastructure.Data;
 using ServicePortal.Infrastructure.Email;
-using ServicePortal.Infrastructure.Excel;
+using ServicePortal.Infrastructure.Persistence;
 
 namespace ServicePortal.Applications.Modules.TimeKeeping.Services
 {
     public class TimeKeepingService : ITimeKeepingService
     {
         private readonly ApplicationDbContext _context;
-        private readonly ExcelService _excelService;
-        private readonly EmailService _emailService;
+        private readonly IDapperQueryService _dapperQueryService;
+        private readonly IEmailService _emailService;
 
-        public TimeKeepingService (ApplicationDbContext context, ExcelService excelService, EmailService emailService)
+        public TimeKeepingService (IDapperQueryService dapperQueryService, IEmailService emailService, ApplicationDbContext context)
         {
-            _context = context;
-            _excelService = excelService;
+            _dapperQueryService = dapperQueryService;
             _emailService = emailService;
+            _context = context;
         }
 
-        public async Task<ManagementTimeKeepingResponseDto> GetManagementTimeKeeping(GetManagementTimeKeepingDto request)
+        public async Task<IEnumerable<object>> GetPersonalTimeKeeping(GetPersonalTimeKeepingDto request)
         {
-            ManagementTimeKeepingResponseDto results = new ManagementTimeKeepingResponseDto();
-
-            List<Holiday> holidays = new List<Holiday>
+            var param = new
             {
-                new Holiday {
-                    Date = $"2025-05-04",
-                    Type = "sunday"
-                },
-                new Holiday {
-                    Date = $"2025-05-11",
-                    Type = "sunday"
-                },
-                new Holiday {
-                    Date = $"2025-05-18",
-                    Type = "sunday"
-                },
-                new Holiday {
-                    Date = $"2025-05-25",
-                    Type = "sunday"
-                },
-
-                new Holiday {
-                    Date = $"2025-05-16",
-                    Type = "special_holiday"
-                }
+                request.FromDate,
+                request.ToDate,
+                StaffCode = request.UserCode
             };
 
-            var userCodeTimeKeeping = await _context.ManageUserTimeKeepings
-                .Where(e => e.UserCodeManage == request.UserCode)
-                .Distinct()
-                .ToListAsync();
-            
-            List<UserDataTimeKeeping> userDataTimeKeeping = new List<UserDataTimeKeeping>();
+            var result = await _dapperQueryService.QueryAsync<object>(
+                "[dbo].[cp_get_table_timekeeping]",
+                param,
+                CommandType.StoredProcedure
+            );
 
-            foreach (var item in userCodeTimeKeeping)
+            return result;
+        }
+
+        public async Task<IEnumerable<dynamic>> GetManagementTimeKeeping(GetManagementTimeKeepingRequest request)
+        {
+            int month = request.Month ?? DateTime.UtcNow.Month;
+            int year = request.Year ?? DateTime.UtcNow.Year;
+            int dayInMonth = DateTime.DaysInMonth(year, month);
+
+            var fromDate = $"{year}-{month:D2}-01";
+            var toDate = $"{year}-{month:D2}-{dayInMonth}";
+
+            var connection = _context.Database.GetDbConnection();
+
+            if (connection.State != ConnectionState.Open)
             {
-                var userData = new UserDataTimeKeeping
-                {
-                    UserCode = $"UserCode_{item.UserCode}",
-                    Name = $"Nguyen_Van_{item.UserCode}"
-                };
-
-                List<Attendance> attendances = new List<Attendance>();
-
-                for (int j = 1; j <= 31; j++)
-                {
-                    var attendance = new Attendance();
-
-                    attendance.Date = $"2025-05-{(j < 10 ? $"0{j}" : j)}";
-
-                    if (j == 14)
-                    {
-                        attendance.Status = "O";
-                    }
-                    else if (j == 27)
-                    {
-                        attendance.Status = "S";
-                    }
-                    else if (j == 7)
-                    {
-                        attendance.Status = "ND";
-                    }
-                    else if (j == 1)
-                    {
-                        attendance.Status = "AL";
-                    }
-                    else if (j == 16)
-                    {
-                        attendance.Status = "SH";
-                    }
-                    else
-                    {
-                        attendance.Status = "X";
-                    }
-
-                    if (j == 4 || j == 11 || j == 18 || j == 25)
-                    {
-                        attendance.Status = "CN";
-                    }
-
-                    attendances.Add(attendance);
-                }
-
-                userData.Attendances = attendances;
-
-                userDataTimeKeeping.Add(userData);
+                await connection.OpenAsync();
             }
 
-            results.Holidays = holidays;
-            results.UserData = userDataTimeKeeping;
-
-            return results;
-        }
-
-        public async Task<List<object>> GetPersonalTimeKeeping(GetPersonalTimeKeepingDto request)
-        {
-            List<object> list = new List<object>();
-
-            for (int i = 1; i < 5; i++)
-            {
-                list.Add(new
+            var rows = await connection.QueryAsync(
+                "sp_GetUserAttendanceTimeKeeping", //store proceduce in database service portal
+                new
                 {
-                    Date = $"1{i}/05/2025",
-                    Day = $"{i+1}",
-                    From = "08:00:00",
-                    To = "17:25:05",
-                    DayTimeWork = "480",
-                    NightTimeWork = "--",
-                    DayOTWork = "90",
-                    NightOTWork = "0",
-                    Late = "0",
-                    Early = "0",
-                    GoOut = "0",
-                    Note = "NPL",
-                });
-            }
+                    UserCodeManage = request.UserCode,
+                    FromDate = fromDate,
+                    ToDate = toDate,
+                    PageNumber = request.Page,
+                    request.PageSize
+                },
+                commandType: CommandType.StoredProcedure
+            );
 
-            return list;
-        }
-
-        public async Task<object> ConfirmTimeKeeping(GetManagementTimeKeepingDto request)
-        {
-            ManagementTimeKeepingResponseDto data = await GetManagementTimeKeeping(request);
-
-            var fileBytes = _excelService.GenerateExcelManagerConfirmToHR(data, request);
-
-            BackgroundJob.Enqueue<EmailService>(job => job.SendEmailConfirmTimeKeepingToHr("nguyenviet@vsvn.com.vn", fileBytes, request));
-
-            var filePath = "test_timekeeping.xlsx";
-
-            File.WriteAllBytes(filePath, fileBytes);
-
-            return true;
-        }
-
-        public async Task<PagedResults<UserResponseDto>> GetListUserToChooseManageTimeKeeping(GetUserManageTimeKeepingDto request)
-        {
-            int? position = request.Position;
-
-            string currentUserCode = request?.UserCode ?? "";
-
-            double pageSize = request.PageSize;
-            double page = request.Page;
-
-            string name = request.Name ?? "";
-
-            var approvalFlows = await _context.ApprovalFlows
-                .FromSqlRaw(@"
-                     WITH RecursiveCTE AS (
-                        SELECT * FROM approval_flows WHERE ToPosition = {0}
-
-                        UNION ALL
-
-                        SELECT af.* FROM approval_flows af
-                        JOIN RecursiveCTE cte ON af.ToPosition = cte.FromPosition
-                        WHERE af.DepartmentId = cte.DepartmentId
-                      )
-                      SELECT * FROM RecursiveCTE
-                ", position)
-                .ToListAsync();
-
-            var positionIds = approvalFlows
-                .Select(x => x.FromPosition)
-                .Distinct()
+            var records = rows
+                .GroupBy(r => r.NVMaNV)
+                .Select(g => new
+                {
+                    NVMaNV = g.Key,
+                    g.First().NVHoTen,
+                    g.First().BPTen,
+                    DataTimeKeeping = g.Select(r => new
+                    {
+                        r.BCNgay,
+                        r.Thu,
+                        r.CVietTat,
+                        r.BCTGDen,
+                        r.BCTGVe,
+                        r.BCTGLamNgay,
+                        r.BCTGLamToi,
+                        r.BCGhiChu,
+                        r.result
+                    }).OrderBy(r => r.BCNgay).ToList()
+                })
+                .OrderBy(r => r.NVMaNV)
                 .ToList();
 
-            var query = _context.Users.AsQueryable();
-
-            query = query.Where(e => e.UserCode != "0");
-
-            query = query.Where(u => u.PositionId != null && 
-                (positionIds.Contains(u.PositionId.Value) || u.PositionId == position) && 
-                u.UserCode != currentUserCode);
-
-            if (!string.IsNullOrEmpty(name))
-            {
-                query = query.Where(u => u.UserCode != null && u.UserCode.Contains(name));
-            }
-
-            var totalItems = await query.CountAsync();
-
-            var totalPages = (int)Math.Ceiling(totalItems / pageSize);
-
-            var usersWithDetails = await query
-                .Skip((int)((page - 1) * pageSize))
-                .Take((int)pageSize)
-                .ToListAsync();
-
-            var selectedUserCodes = await _context.ManageUserTimeKeepings
-                .Where(x => x.UserCodeManage == currentUserCode)
-                .Select(x => x.UserCode)
-                .ToListAsync();
-
-            var resultData = UserMapper.ToDtoList(usersWithDetails);
-
-            foreach (var user in resultData)
-            {
-                user.IsCheckedHaveManageUserTimeKeeping = selectedUserCodes.Contains(user.UserCode);
-            }
-
-            var result = new PagedResults<UserResponseDto>
-            {
-                Data = resultData,
-                TotalItems = totalItems,
-                TotalPages = totalPages
-            };
-
-            return result;
+            return records;
         }
 
-        public async Task<object> SaveManageTimeKeeping(SaveManageTimeKeepingDto request)
+        public async Task<object> ConfirmTimeKeepingToHr(GetManagementTimeKeepingRequest request)
         {
-            var userDataTimeKeeping = await _context.ManageUserTimeKeepings.Where(e => e.UserCodeManage == request.UserCodeManage).ToListAsync();
+            //ManagementTimeKeepingResponseDto data = await GetManagementTimeKeeping(request);
 
-            _context.ManageUserTimeKeepings.RemoveRange(userDataTimeKeeping);
+            using var stream = new MemoryStream();
+            var fileBytes = stream.ToArray(); // _excelService.GenerateExcelManagerConfirmToHR(data, request);
 
-            var newData = request?.UserCodes?.Distinct().Select(item => new ManageUserTimeKeeping
-            {
-                UserCodeManage = request.UserCodeManage,
-                UserCode = item
-            }).ToList();
-
-            _context.ManageUserTimeKeepings.AddRange(newData ?? []);
-
-            await _context.SaveChangesAsync();
+            BackgroundJob.Enqueue<EmailService>(job => job.SendEmailConfirmTimeKeepingToHr(fileBytes, request));
 
             return true;
-        }
-
-        public async Task<List<string?>> GetListUserCodeSelected(string userCodeManage)
-        {
-            var result = await _context.ManageUserTimeKeepings
-                .Where(e => e.UserCodeManage == userCodeManage)
-                .Select(x => x.UserCode)
-                .ToListAsync();
-
-            return result;
         }
     }
 }

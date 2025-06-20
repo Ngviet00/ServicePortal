@@ -1,4 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.Data;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using ServicePortal.Domain.Entities;
 
 namespace ServicePortal.Infrastructure.Data
@@ -18,11 +20,13 @@ namespace ServicePortal.Infrastructure.Data
         public DbSet<ApprovalAction> ApprovalActions { get; set; }
         public DbSet<ApprovalRequest> ApprovalRequests { get; set; }
         public DbSet<UserConfig> UserConfigs { get; set; }
-        public DbSet<ManageUserTimeKeeping> ManageUserTimeKeepings { get; set; }
         public DbSet<MemoNotification> MemoNotifications { get; set; }
         public DbSet<MemoNotificationDepartment> MemoNotificationDepartments { get; set; }
         public DbSet<AttachFiles> AttachFiles { get; set; }
         public DbSet<AttachFileRelation> AttachFileRelations {  get; set; }
+        public DbSet<UserManageAttendance> UserManageAttendances { get; set; }
+        public DbSet<UserManageAttendanceUser> UserManageAttendanceUsers { get; set; }
+        public DbSet<HrManagements> HrManagements { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
