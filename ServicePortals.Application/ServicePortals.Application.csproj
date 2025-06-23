@@ -1,0 +1,32 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Dtos\User\Responses\OrgChartResponse.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Dtos\Department\Requests\" />
+    <Folder Include="Dtos\HRManagement\Responses\" />
+    <Folder Include="Dtos\Position\Requests\" />
+    <Folder Include="Dtos\TimeKeeping\Responses\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="Dtos\User\Responses\OrgChartResponse.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.3.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ServicePortals.Domain\ServicePortals.Domain.csproj" />
+  </ItemGroup>
+
+</Project>
