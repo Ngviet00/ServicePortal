@@ -95,7 +95,7 @@ namespace ServicePortals.Infrastructure.Services.Auth
             {
                 Token = refreshToken,
                 UserCode = createdUser?.UserCode ?? "",
-                ExpiresAt = DateTime.Now.AddMinutes(double.Parse(_config["Jwt:AccessTokenExpirationMinutes"] ?? "0")),
+                ExpiresAt = DateTimeOffset.UtcNow.AddDays(double.Parse(_config["Jwt:RefreshTokenExpirationDays"] ?? "7")),
                 IsRevoked = false,
                 CreatedAt = DateTimeOffset.UtcNow
             };
@@ -147,7 +147,7 @@ namespace ServicePortals.Infrastructure.Services.Auth
             {
                 Token = refreshToken,
                 UserCode = user?.UserCode ?? "",
-                ExpiresAt = DateTime.Now.AddMinutes(double.Parse(_config["Jwt:AccessTokenExpirationMinutes"] ?? "0")),
+                ExpiresAt = DateTimeOffset.UtcNow.AddDays(double.Parse(_config["Jwt:RefreshTokenExpirationDays"] ?? "7")),
                 IsRevoked = false,
                 CreatedAt = DateTimeOffset.UtcNow
             };

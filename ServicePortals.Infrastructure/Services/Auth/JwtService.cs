@@ -32,7 +32,7 @@ namespace ServicePortals.Infrastructure.Services.Auth
                 issuer: _config["Jwt:Issuer"],
                 audience: _config["Jwt:Audience"],
                 claims: identity.Claims,
-                expires: DateTime.Now.AddMinutes(double.Parse(_config["Jwt:AccessTokenExpirationMinutes"] ?? "0")),
+                expires: DateTime.Now.AddMinutes(double.Parse(_config["Jwt:AccessTokenExpirationMinutes"] ?? "15")),
                 signingCredentials: creds
             );
 

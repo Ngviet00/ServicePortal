@@ -108,7 +108,7 @@ namespace ServicePortal.Controllers.User
         [HttpGet("test"), AllowAnonymous]
         public IActionResult Test()
         {
-            return Ok(232);
+            return Ok(38);
             //var result = await _userService.GetEmailByUserCodeAndUserConfig(new List<string> { "22757" });
 
             //return Ok(new BaseResponse<List<GetEmailByUserCodeAndUserConfigResponse>>(200, "Success", result));
