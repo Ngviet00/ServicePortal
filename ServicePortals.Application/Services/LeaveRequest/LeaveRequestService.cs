@@ -1,4 +1,5 @@
 ﻿using System.Security.Claims;
+using Azure.Core;
 using Hangfire;
 using Microsoft.EntityFrameworkCore;
 using ServicePortal.Applications.Modules.LeaveRequest.DTO.Requests;
@@ -200,7 +201,16 @@ namespace ServicePortals.Infrastructure.Services.LeaveRequest
             );
             if (userConfigReceiveEmail == null || userConfigReceiveEmail != null && userConfigReceiveEmail.ConfigValue == "true")
             {
-                BackgroundJob.Enqueue<EmailService>(job => job.SendEmaiLeaveRequestMySelf(!string.IsNullOrWhiteSpace(userRequester.Email) ? userRequester.Email : Global.EmailDefault, leaveRequest, dto.UrlFrontend));
+                BackgroundJob.Enqueue<IEmailService>(job => 
+                    job.SendEmailAsync(
+                        new List<string> { userRequester.Email ?? "" },
+                        null,
+                        "Đơn xin nghỉ phép của bạn đã được gửi!",
+                        FormatContentMailLeaveRequest(leaveRequest),
+                        null,
+                        true
+                    )
+                );
             }
 
             //gửi email cho người duyệt tiếp theo
@@ -209,7 +219,24 @@ namespace ServicePortals.Infrastructure.Services.LeaveRequest
             {
                 toEmails.Add(!string.IsNullOrWhiteSpace(item.Email) ? item.Email : Global.EmailDefault);
             }
-            BackgroundJob.Enqueue<EmailService>(job => job.SendEmailLeaveRequest(toEmails, new List<string>() { }, new List<Domain.Entities.LeaveRequest> { leaveRequest }, dto.UrlFrontend));
+
+            string urlWaitApproval = $"{dto.UrlFrontend}/leave/wait-approval";
+            string bodyMail = $@"
+                <h4>
+                    <span>Duyệt đơn: </span>
+                    <a href={urlWaitApproval}>{urlWaitApproval}</a>
+                </h4>" + FormatContentMailLeaveRequest(leaveRequest) + "<br/>";
+
+            BackgroundJob.Enqueue<IEmailService>(job =>
+                job.SendEmailAsync(
+                    toEmails,
+                    null,
+                    $"Đơn xin nghỉ phép - {leaveRequest.RequesterUserCode}",
+                    bodyMail,
+                    null,
+                    true
+                )
+            );
 
             return dto;
         }
@@ -385,6 +412,13 @@ namespace ServicePortals.Infrastructure.Services.LeaveRequest
 
             await _context.SaveChangesAsync();
 
+            string urlWaitApproval = $"{request.UrlFrontEnd}/leave/wait-approval";
+            string bodyMail = $@"
+                <h4>
+                    <span>Duyệt đơn: </span>
+                    <a href={urlWaitApproval}>{urlWaitApproval}</a>
+                </h4>" + FormatContentMailLeaveRequest(leaveRequest) + "<br/>";
+
             if (isSendHr)
             {
                 var emailHR = await _hrManagementService.GetEmailHRByType("MANAGE_TIMEKEEPING");
@@ -395,7 +429,16 @@ namespace ServicePortals.Infrastructure.Services.LeaveRequest
                     listEmailHRs.Add(!string.IsNullOrWhiteSpace(item) ? item : Global.EmailDefault);
                 }
 
-               BackgroundJob.Enqueue<EmailService>(job => job.SendEmailLeaveRequest(listEmailHRs, new List<string> { userApproval.Email ?? Global.EmailDefault } , new List<Domain.Entities.LeaveRequest> { leaveRequest }, request.UrlFrontEnd));
+                BackgroundJob.Enqueue<IEmailService>(job => 
+                    job.SendEmailAsync(
+                        listEmailHRs, 
+                        new List<string> { userApproval.Email ?? ""},
+                        $"Đơn xin nghỉ phép - {leaveRequest.RequesterUserCode}",
+                        bodyMail,
+                        null,
+                        true
+                    )
+                );
             }
             else
             {
@@ -413,7 +456,16 @@ namespace ServicePortals.Infrastructure.Services.LeaveRequest
                     listToEmails.Add(email);
                 }
 
-                BackgroundJob.Enqueue<EmailService>(job => job.SendEmailLeaveRequest(listToEmails, new List<string> { userApproval.Email ?? Global.EmailDefault } , new List<Domain.Entities.LeaveRequest> { leaveRequest }, request.UrlFrontEnd));
+                BackgroundJob.Enqueue<IEmailService>(job =>
+                    job.SendEmailAsync(
+                        listToEmails,
+                        new List<string> { userApproval.Email ?? "" },
+                        $"Đơn xin nghỉ phép - {leaveRequest.RequesterUserCode}",
+                        bodyMail,
+                        null,
+                        true
+                    )
+                );
             }
 
             return null;
@@ -446,7 +498,22 @@ namespace ServicePortals.Infrastructure.Services.LeaveRequest
 
             var email = firstEmail != null && !string.IsNullOrWhiteSpace(firstEmail.Email) ? firstEmail.Email : Global.EmailDefault;
 
-            BackgroundJob.Enqueue<EmailService>(job => job.SendEmaiLeaveRequestMySelfStatus(email, leaveRequest, request.UrlFrontEnd, request.Note, false));
+            string bodyMail = $@"
+                <h4>
+                    <span style=""color:red"">Lý do từ chối: {request.Note}</span>
+                </h4>"+
+                FormatContentMailLeaveRequest(leaveRequest);
+
+            BackgroundJob.Enqueue<IEmailService>(job => 
+                job.SendEmailAsync(
+                    new List<string> { email },
+                    null,
+                    "Đơn xin nghỉ phép của bạn đã bị từ chối!",
+                    bodyMail,
+                    null,
+                    true
+                )
+            );
 
             await _context.SaveChangesAsync();
         }
@@ -479,8 +546,17 @@ namespace ServicePortals.Infrastructure.Services.LeaveRequest
             var firstEmail = checkEmail.FirstOrDefault();
 
             var email = firstEmail != null && !string.IsNullOrWhiteSpace(firstEmail?.Email) ? firstEmail.Email : Global.EmailDefault;
-
-            BackgroundJob.Enqueue<EmailService>(job => job.SendEmaiLeaveRequestMySelfStatus(email, leaveRequest, request.UrlFrontEnd, request.Note, true));
+            
+            BackgroundJob.Enqueue<IEmailService>(job =>
+                job.SendEmailAsync(
+                    new List<string> { email }, 
+                    null,
+                    "Đơn xin nghỉ phép của bạn đã đăng ký thành công!",
+                    FormatContentMailLeaveRequest(leaveRequest),
+                    null,
+                    true
+                )
+            );
         }
 
         public IQueryable<LeaveRequestWithApprovalResponse> GetBaseLeaveRequestApprovalQuery(GetAllLeaveRequestWaitApprovalRequest request, HashSet<string> roleClaims)
@@ -580,7 +656,16 @@ namespace ServicePortals.Infrastructure.Services.LeaveRequest
                 var firstEmail = checkEmail.FirstOrDefault();
                 var email = firstEmail != null && !string.IsNullOrWhiteSpace(firstEmail.Email) ? firstEmail.Email : Global.EmailDefault;
 
-                BackgroundJob.Enqueue<EmailService>(job => job.SendEmaiLeaveRequestMySelfStatus(email, item.LeaveRequest, null, null, true));
+                BackgroundJob.Enqueue<IEmailService>(job =>
+                    job.SendEmailAsync(
+                        new List<string> { email },
+                        null,
+                        "Đơn xin nghỉ phép của bạn đã đăng ký thành công!",
+                        FormatContentMailLeaveRequest(item.LeaveRequest),
+                        null,
+                        true
+                    )
+                );
             }
 
             _context.ApprovalActions.AddRange(actions);
@@ -746,7 +831,36 @@ namespace ServicePortals.Infrastructure.Services.LeaveRequest
 
                 ccEmails.Add(!string.IsNullOrWhiteSpace(userWriteRequester.Email) ? userWriteRequester.Email : Global.EmailDefault);
 
-                BackgroundJob.Enqueue<EmailService>(job => job.SendEmailLeaveRequest(toEmails, ccEmails, LeaveRequestMapper.ToEntityList(request.Leaves), request.Leaves[0].UrlFrontend));
+                string? requester = request.Leaves?.Count == 1 ? request.Leaves?.FirstOrDefault()?.RequesterUserCode : $"{request.Leaves?.Count} người";
+
+                string subject = $"Đơn xin nghỉ phép - {requester}";
+
+                string urlWaitApproval = $"{request.Leaves?.FirstOrDefault()?.UrlFrontend}/leave/wait-approval";
+                
+                string bodyMail = $@"
+                    <h4>
+                        <span>Duyệt đơn: </span>
+                        <a href={urlWaitApproval}>{urlWaitApproval}</a>
+                    </h4>";
+
+                if (request.Leaves != null && request.Leaves.Count > 0)
+                {
+                    foreach (var itemLeave in request.Leaves)
+                    {
+                        bodyMail += FormatContentMailLeaveRequest(LeaveRequestMapper.ToEntity(itemLeave)) + "<br/>";
+                    }
+                }
+
+                BackgroundJob.Enqueue<IEmailService>(job => 
+                    job.SendEmailAsync(
+                        toEmails, 
+                        ccEmails,
+                        subject,
+                        bodyMail,
+                        null,
+                        true
+                    )
+                );
 
                 await _context.SaveChangesAsync();
 
@@ -754,6 +868,71 @@ namespace ServicePortals.Infrastructure.Services.LeaveRequest
             }
 
             throw new Exception("Không có người nào xin nghỉ phép");
+        }
+
+        private string FormatContentMailLeaveRequest(Domain.Entities.LeaveRequest? leaveRequest)
+        {
+            string typeLeaveDescription = leaveRequest?.TypeLeave != null
+                ? Helper.GetDescriptionFromValue<TypeLeaveEnum>((int)leaveRequest.TypeLeave)
+                : "";
+
+            string timeLeaveDescription = leaveRequest?.TimeLeave != null
+                ? Helper.GetDescriptionFromValue<TimeLeaveEnum>((int)leaveRequest.TimeLeave)
+                : "";
+
+            return $@"
+                <table cellpadding=""10"" cellspacing=""0"" style=""border-collapse: collapse; width: 100%; font-family: Arial, sans-serif; border: 1px solid #ccc;"">
+                    <tr>
+                        <th colspan=""2"" style=""background-color: #f2f2f2; font-size: 20px; padding: 12px; text-align: center; border-bottom: 2px solid #ccc;"">
+                            ĐƠN XIN NGHỈ PHÉP
+                        </th>
+                    </tr>
+
+                    <tr style=""border-bottom: 1px solid #ddd;"">
+                        <td style=""background-color: #f9f9f9;""><strong>Tên nhân viên:</strong></td>
+                        <td>{leaveRequest?.Name}</td>
+                    </tr>
+
+                    <tr style=""border-bottom: 1px solid #ddd;"">
+                        <td style=""background-color: #f9f9f9;""><strong>Mã nhân viên:</strong></td>
+                        <td>{leaveRequest?.RequesterUserCode}</td>
+                    </tr>
+
+                    <tr style=""border-bottom: 1px solid #ddd;"">
+                        <td style=""background-color: #f9f9f9;""><strong>Phòng ban:</strong></td>
+                        <td>{leaveRequest?.Department}</td>
+                    </tr>
+
+                    <tr style=""border-bottom: 1px solid #ddd;"">
+                        <td style=""background-color: #f9f9f9;""><strong>Chức vụ:</strong></td>
+                        <td>{leaveRequest?.Position}</td>
+                    </tr>
+
+                    <tr style=""border-bottom: 1px solid #ddd;"">
+                        <td style=""background-color: #f9f9f9;""><strong>Ngày nghỉ từ:</strong></td>
+                        <td>{leaveRequest?.FromDate}</td>
+                    </tr>
+
+                    <tr style=""border-bottom: 1px solid #ddd;"">
+                        <td style=""background-color: #f9f9f9;""><strong>Đến ngày:</strong></td>
+                        <td>{leaveRequest?.ToDate}</td>
+                    </tr>
+
+                    <tr style=""border-bottom: 1px solid #ddd;"">
+                        <td style=""background-color: #f9f9f9;""><strong>Loại phép:</strong></td>
+                        <td>{typeLeaveDescription}</td>
+                    </tr>
+
+                    <tr style=""border-bottom: 1px solid #ddd;"">
+                        <td style=""background-color: #f9f9f9;""><strong>Thời gian nghỉ:</strong></td>
+                        <td>{timeLeaveDescription}</td>
+                    </tr>
+
+                    <tr style=""border-bottom: 1px solid #ddd;"">
+                        <td style=""background-color: #f9f9f9;""><strong>Lý do nghỉ:</strong></td>
+                        <td>{leaveRequest?.Reason}</td>
+                    </tr>
+                </table>";
         }
     }
 }

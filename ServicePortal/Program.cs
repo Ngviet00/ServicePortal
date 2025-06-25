@@ -36,8 +36,7 @@ using ServicePortal.Infrastructure.Cache;
 using ServicePortals.Infrastructure.Excel;
 using ServicePortals.Application.Interfaces.TimeKeeping;
 using ServicePortals.Application.Interfaces.UserConfig;
-using ServicePortals.Infrastructure.Helpers;
-using ServicePortals.Infrastructure.Jobs;
+using ServicePortals.Application.ScheduleJob;
 
 namespace ServicePortal
 {
@@ -98,6 +97,8 @@ namespace ServicePortal
 
             #endregion
 
+            builder.Services.Configure<SmtpOptions>(builder.Configuration.GetSection("SmtpSettings"));
+
             #region DI
 
             builder.Services.AddScoped<IViclockDapperContext, ViclockDapperContext>();
@@ -112,21 +113,7 @@ namespace ServicePortal
 
             builder.Services.AddScoped<ILeaveRequestService, LeaveRequestService>();
 
-            builder.Services.AddScoped<IEmailService, EmailService>();
-
-            builder.Services.AddScoped<JwtService>();
-
-            builder.Services.AddScoped<EmailService>();
-
-            builder.Services.AddScoped<NotificationService>();
-
-            builder.Services.AddScoped<OrgChartService>();
-
-            builder.Services.AddScoped<IUserConfigService, UserConfigService>();
-
-            builder.Services.AddScoped<ITimeKeepingService, TimeKeepingService>();
-
-            builder.Services.AddScoped<ExcelService>();
+            builder.Services.AddScoped<IEmailService, SmtpEmailService>();
 
             builder.Services.AddScoped<IMemoNotificationService, MemoNotificationService>();
 
@@ -137,6 +124,18 @@ namespace ServicePortal
             builder.Services.AddScoped<IDepartmentService, DepartmentService>();
 
             builder.Services.AddScoped<IPositionService, PositionService>();
+
+            builder.Services.AddScoped<IUserConfigService, UserConfigService>();
+
+            builder.Services.AddScoped<ITimeKeepingService, TimeKeepingService>();
+
+            builder.Services.AddScoped<JwtService>();
+
+            builder.Services.AddScoped<NotificationService>();
+
+            builder.Services.AddScoped<OrgChartService>();
+
+            builder.Services.AddScoped<ExcelService>();
 
             #endregion
 
