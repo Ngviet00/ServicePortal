@@ -24,7 +24,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ServicePortals.Application\ServicePortals.Application.csproj" />
     <ProjectReference Include="..\ServicePortals.Domain\ServicePortals.Domain.csproj" />
     <ProjectReference Include="..\Shared\ServicePortals.Shared.csproj" />
   </ItemGroup>

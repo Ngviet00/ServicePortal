@@ -2,13 +2,13 @@
 using ServicePortals.Infrastructure.Helpers;
 using ServicePortals.Infrastructure.Services.Auth;
 
-namespace ServicePortals.Infrastructure.Jobs
+namespace ServicePortals.Application.ScheduleJob
 {
     public static class JobScheduleConfig
     {
         public static void Configure()
         {
-            //job auto delete token every weekly
+            //job auto delete token every week
             RecurringJob.AddOrUpdate<JwtService>(
                 "DeleteOldRefreshTokensDaily",
                 (job) => job.DeleteOldRefreshToken(),

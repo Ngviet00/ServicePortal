@@ -281,8 +281,30 @@ namespace ServicePortals.Infrastructure.Services.User
 
             await _context.SaveChangesAsync();
 
-            //check email exist
-            BackgroundJob.Enqueue<EmailService>(job => job.SendEmailResetPassword("nguyenviet@vsvn.com.vn", password));
+            string bodyMail = $@"
+                <h2>Your Password Has Been Reset</h2>
+                <div style=""font-size: 18px;"">
+                    An administrator has reset your password. You can now log in using the password below: <br/>
+                </div>
+                <div style=""font-size: 25px;margin-top: 10px; color: #e71a1a;font-family: monospace;letter-spacing: 1px"">
+                    {password}
+                </div>
+                <div style=""font-size: 18px;margin-top: 10px;"">
+                    For security reasons, please change your password after logging in. <br/> <br/>
+                    Thanks, <br/><br/>
+                    MIS/IT Team
+                </div>";
+
+            BackgroundJob.Enqueue<IEmailService>(job => 
+                job.SendEmailAsync(
+                    new List<string> { user.Email ?? "" },
+                    null,
+                    "Reset password",
+                    bodyMail,
+                    null,
+                    true
+                )
+            );
 
             return UserMapper.ToDto(user);
         }

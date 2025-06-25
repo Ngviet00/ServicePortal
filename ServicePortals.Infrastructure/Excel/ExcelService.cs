@@ -1,10 +1,8 @@
-﻿using ServicePortals.Application.Dtos.TimeKeeping.Requests;
-
-namespace ServicePortals.Infrastructure.Excel
+﻿namespace ServicePortals.Infrastructure.Excel
 {
     public class ExcelService
     {
-        public byte[] GenerateExcelManagerConfirmToHR(GetManagementTimeKeepingRequest request)
+        public byte[] GenerateExcelManagerConfirmToHR()
         {
             //var holidays = data.Holidays;
             //var userData = data.UserData;
