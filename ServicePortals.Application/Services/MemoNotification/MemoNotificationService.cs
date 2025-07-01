@@ -114,7 +114,7 @@ namespace ServicePortals.Infrastructure.Services.MemoNotification
                 .Join(_context.AttachFiles,
                     afr => afr.AttachFileId,
                     af => af.Id,
-                    (afr, af) => new AttachFiles
+                    (afr, af) => new File
                     {
                         Id = af.Id,
                         FileName =  af.FileName,
@@ -182,15 +182,15 @@ namespace ServicePortals.Infrastructure.Services.MemoNotification
             //memo file
             if (files.Length > 0)
             {
-                List<AttachFiles> attachFiles = [];
-                List<AttachFileRelation> attachFileRelations = [];
+                List<Domain.Entities.File> attachFiles = [];
+                List<FileAttachment> attachFileRelations = [];
 
                 foreach (var file in files)
                 {
                     using var ms = new MemoryStream();
                     await file.CopyToAsync(ms);
 
-                    var attach = new AttachFiles
+                    var attach = new Domain.Entities.File
                     {
                         Id = Guid.NewGuid(),
                         FileName = file.FileName,
@@ -200,7 +200,7 @@ namespace ServicePortals.Infrastructure.Services.MemoNotification
                     };
                     attachFiles.Add(attach);
 
-                    var attachfileRelation = new AttachFileRelation
+                    var attachfileRelation = new FileAttachment
                     {
                         AttachFileId = attach.Id,
                         RefId = memoNotify.Id,
@@ -247,15 +247,15 @@ namespace ServicePortals.Infrastructure.Services.MemoNotification
             //memo file
             if (files.Length > 0)
             {
-                List<AttachFiles> attachFiles = [];
-                List<AttachFileRelation> attachFileRelations = [];
+                List<Domain.Entities.File> attachFiles = [];
+                List<FileAttachment> attachFileRelations = [];
 
                 foreach (var file in files)
                 {
                     using var ms = new MemoryStream();
                     await file.CopyToAsync(ms);
 
-                    var attach = new AttachFiles
+                    var attach = new Domain.Entities.File
                     {
                         Id = Guid.NewGuid(),
                         FileName = file.FileName,
@@ -265,7 +265,7 @@ namespace ServicePortals.Infrastructure.Services.MemoNotification
                     };
                     attachFiles.Add(attach);
 
-                    var attachfileRelation = new AttachFileRelation
+                    var attachfileRelation = new FileAttachment
                     {
                         AttachFileId = attach.Id,
                         RefId = memoNotify.Id,
@@ -346,7 +346,7 @@ namespace ServicePortals.Infrastructure.Services.MemoNotification
             return result;
         }
 
-        public async Task<AttachFiles> GetFileDownload(Guid id)
+        public async Task<Domain.Entities.File> GetFileDownload(Guid id)
         {
             var file = await _context.AttachFiles.FirstOrDefaultAsync(e => e.Id == id) ?? throw new NotFoundException("Memo Notification not found!");
 

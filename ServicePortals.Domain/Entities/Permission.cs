@@ -9,6 +9,9 @@ namespace ServicePortals.Domain.Entities
         public int? Id { get; set; }
         public string? Name { get; set; }
         public string? Description { get; set; }
-        public ICollection<RolePermission> RolePermissions { get; set; } = new List<RolePermission>();
+        public int? PermissionGroupId { get; set; }
+        public PermissionGroup? PermissionGroup { get; set; }
+        public ICollection<RolePermission>? RolePermissions { get; set; } = [];
+        public ICollection<UserPermission>? UserPermissions { get; set; } = [];
     }
 }

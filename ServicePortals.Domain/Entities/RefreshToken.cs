@@ -3,7 +3,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ServicePortals.Domain.Entities
 {
-    [Table("refresh_tokens"), Index(nameof(Token), nameof(UserCode), nameof(ExpiresAt), nameof(IsRevoked))]
+    [Table("refresh_tokens")]
+    [Index(nameof(Token))]
+    [Index(nameof(UserCode))]
+    [Index(nameof(ExpiresAt))]
     public class RefreshToken
     {
         public Guid Id { get; set; }
@@ -11,6 +14,6 @@ namespace ServicePortals.Domain.Entities
         public string? UserCode { get; set; }
         public DateTimeOffset? ExpiresAt { get; set; }
         public bool? IsRevoked { get; set; }
-        public DateTimeOffset? CreatedAt { get; set; }
+        public DateTimeOffset? CreatedAt { get; set; } = DateTimeOffset.UtcNow;
     }
 }

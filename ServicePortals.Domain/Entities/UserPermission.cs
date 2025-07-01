@@ -3,13 +3,12 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ServicePortals.Domain.Entities
 {
-    [Table("user_configs"), Index(nameof(UserCode))]
-    public class UserConfig
+    [Table("user_permissions"), Index(nameof(UserCode), nameof(PermissionId))]
+    public class UserPermission
     {
-        public Guid Id { get; set; }
         public string? UserCode { get; set; }
-        public string? Key { get; set; }
-        public string? Value { get; set; }
+        public int? PermissionId { get; set; }
         public User? User { get; set; }
+        public Permission? Permission { get; set; }
     }
 }

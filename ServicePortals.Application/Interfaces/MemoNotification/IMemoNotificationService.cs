@@ -12,6 +12,6 @@ namespace ServicePortals.Application.Interfaces.MemoNotification
         Task<Domain.Entities.MemoNotification> Update(Guid id, CreateMemoNotiRequest dto, IFormFile[] files);
         Task<Domain.Entities.MemoNotification> Delete(Guid id);
         Task<List<Domain.Entities.MemoNotification>> GetAllInHomePage(int? DepartmentId);
-        Task<Domain.Entities.AttachFiles> GetFileDownload(Guid id);
+        Task<Domain.Entities.File> GetFileDownload(Guid id);
     }
 }

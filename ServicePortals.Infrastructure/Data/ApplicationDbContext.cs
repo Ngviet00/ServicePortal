@@ -19,8 +19,8 @@ namespace ServicePortals.Infrastructure.Data
         public DbSet<UserConfig> UserConfigs { get; set; }
         public DbSet<MemoNotification> MemoNotifications { get; set; }
         public DbSet<MemoNotificationDepartment> MemoNotificationDepartments { get; set; }
-        public DbSet<AttachFiles> AttachFiles { get; set; }
-        public DbSet<AttachFileRelation> AttachFileRelations {  get; set; }
+        public DbSet<Domain.Entities.File> AttachFiles { get; set; }
+        public DbSet<FileAttachment> AttachFileRelations {  get; set; }
         public DbSet<UserManageAttendance> UserManageAttendances { get; set; }
         public DbSet<UserManageAttendanceUser> UserManageAttendanceUsers { get; set; }
         public DbSet<HrManagements> HrManagements { get; set; }
@@ -78,7 +78,7 @@ namespace ServicePortals.Infrastructure.Data
                 .HasPrincipalKey(p => p.Id)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            modelBuilder.Entity<AttachFileRelation>()
+            modelBuilder.Entity<FileAttachment>()
                 .HasOne(x => x.AttachFiles)
                 .WithMany(x => x.AttachFileRelations)
                 .HasForeignKey(x => x.AttachFileId)

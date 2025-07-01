@@ -19,7 +19,7 @@ namespace ServicePortals.Application.Dtos.MemoNotification
         public DateTimeOffset? UpdatedAt { get; set; }
         public int? Priority { get; set; } = 3; //1 normal, 2 medium, 3 high
         public List<int?> DepartmentIdApply { get; set; } = new List<int?>();
-        public List<AttachFiles> Files { get; set; } = new List<AttachFiles>();
+        public List<Domain.Entities.File> Files { get; set; } = new List<Domain.Entities.File>();
         public string? DepartmentNames { get; set; }
     }
 }
