@@ -12,7 +12,8 @@ namespace ServicePortals.Domain.Entities
         public int? FromOrgUnitId { get; set; }
         public string? ToOrgUnitContext { get; set; }
         public int? ToSpecificOrgUnitId { get; set; }
-        public int? SpecificDeptId { get; set; }
+        public int? ToSpecificDeptId { get; set; }
+        public string? ToSpecificUserCode { get; set; }
         public bool? IsFinal { get; set; }
     }
 }

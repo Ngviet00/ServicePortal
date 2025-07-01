@@ -14,8 +14,8 @@ namespace ServicePortals.Infrastructure.Data
         public DbSet<UserRole> UserRoles { get; set; }
         public DbSet<Permission> Permissions { get; set; }
         public DbSet<ApprovalFlow> ApprovalFlows { get; set; }
-        public DbSet<ApprovalAction> ApprovalActions { get; set; }
-        public DbSet<ApprovalRequest> ApprovalRequests { get; set; }
+        public DbSet<HistoryApplicationForm> ApprovalActions { get; set; }
+        public DbSet<ApplicationForm> ApprovalRequests { get; set; }
         public DbSet<UserConfig> UserConfigs { get; set; }
         public DbSet<MemoNotification> MemoNotifications { get; set; }
         public DbSet<MemoNotificationDepartment> MemoNotificationDepartments { get; set; }

@@ -3,13 +3,12 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ServicePortals.Domain.Entities
 {
-    [Table("permission_groups")]
-    public class PermissionGroup
+    [Table("time_leaves")]
+    public class TimeLeave
     {
         public int? Id { get; set; }
-        [StringLength(50)]
-        public string? GroupName { get; set; }
+
+        [StringLength(30)]
         public string? Description { get; set; }
-        public ICollection<Permission>? Permissions { get; set; } = [];
     }
 }

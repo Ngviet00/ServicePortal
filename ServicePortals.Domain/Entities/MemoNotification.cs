@@ -1,9 +1,8 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
-using Microsoft.EntityFrameworkCore;
 
 namespace ServicePortals.Domain.Entities
 {
-    [Table("memo_notifications"), Index(nameof(FromDate), nameof(ToDate), nameof(CreatedByDepartmentId), nameof(UserCodeCreated))]
+    [Table("memo_notifications")]
     public class MemoNotification
     {
         public Guid? Id { get; set; }

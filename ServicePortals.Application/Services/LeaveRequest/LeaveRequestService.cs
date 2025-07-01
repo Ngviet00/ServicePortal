@@ -153,7 +153,7 @@ namespace ServicePortals.Infrastructure.Services.LeaveRequest
             if (approvalFlow == null)
             {
                 //lưu vào bảng approval_requests, với current_position_id là -10 (HR)
-                _context.ApprovalRequests.Add(new Domain.Entities.ApprovalRequest
+                _context.ApprovalRequests.Add(new Domain.Entities.ApplicationForm
                 {
                     RequesterUserCode = dto.RequesterUserCode,
                     RequestType = "LEAVE_REQUEST",
@@ -179,7 +179,7 @@ namespace ServicePortals.Infrastructure.Services.LeaveRequest
                 .ToListAsync();
 
             //lưu vào bảng approval_requests, với current_position_id là position tiếp theo
-            var approvalRequest = new Domain.Entities.ApprovalRequest
+            var approvalRequest = new Domain.Entities.ApplicationForm
             {
                 RequesterUserCode = dto.RequesterUserCode,
                 RequestType = "LEAVE_REQUEST",
@@ -398,7 +398,7 @@ namespace ServicePortals.Infrastructure.Services.LeaveRequest
             approvalRequest.Status = StatusLeaveRequestEnum.IN_PROCESS.ToString();
             _context.ApprovalRequests.Update(approvalRequest);
 
-            var newApprovalAction = new ApprovalAction
+            var newApprovalAction = new HistoryApplicationForm
             {
                 ApprovalRequestId = approvalRequest.Id,
                 ApproverUserCode = request.UserCodeApproval,
@@ -480,7 +480,7 @@ namespace ServicePortals.Infrastructure.Services.LeaveRequest
             approvalRequest.Status = StatusLeaveRequestEnum.REJECT.ToString();
             _context.ApprovalRequests.Update(approvalRequest);
 
-            var newApprovalAction = new ApprovalAction
+            var newApprovalAction = new HistoryApplicationForm
             {
                 ApprovalRequestId = approvalRequest.Id,
                 ApproverUserCode = request.UserCodeApproval,
@@ -527,7 +527,7 @@ namespace ServicePortals.Infrastructure.Services.LeaveRequest
             approvalRequest.Status = StatusLeaveRequestEnum.COMPLETED.ToString();
             _context.ApprovalRequests.Update(approvalRequest);
 
-            var newApprovalAction = new ApprovalAction
+            var newApprovalAction = new HistoryApplicationForm
             {
                 ApprovalRequestId = approvalRequest.Id,
                 ApproverUserCode = request.UserCodeApproval,
@@ -635,13 +635,13 @@ namespace ServicePortals.Infrastructure.Services.LeaveRequest
                 })
                 .ToListAsync();
 
-            List<ApprovalAction> actions = [];
+            List<HistoryApplicationForm> actions = [];
 
             foreach (var item in result)
             {
                 item.ApprovalRequest.Status = StatusLeaveRequestEnum.COMPLETED.ToString();
                
-                actions.Add(new ApprovalAction
+                actions.Add(new HistoryApplicationForm
                 {
                     ApprovalRequestId = item.ApprovalRequest.Id,
                     ApproverUserCode = request?.UserCode,
@@ -770,7 +770,7 @@ namespace ServicePortals.Infrastructure.Services.LeaveRequest
                         var newLeave = LeaveRequestMapper.ToEntity(itemLeave);
                         _context.LeaveRequests.Add(newLeave);
 
-                        _context.ApprovalRequests.Add(new Domain.Entities.ApprovalRequest
+                        _context.ApprovalRequests.Add(new Domain.Entities.ApplicationForm
                         {
                             RequesterUserCode = itemLeave.RequesterUserCode,
                             RequestType = "LEAVE_REQUEST",
@@ -801,7 +801,7 @@ namespace ServicePortals.Infrastructure.Services.LeaveRequest
                     var newLeave = LeaveRequestMapper.ToEntity(itemLeave);
                     _context.LeaveRequests.Add(newLeave);
 
-                    _context.ApprovalRequests.Add(new Domain.Entities.ApprovalRequest
+                    _context.ApprovalRequests.Add(new Domain.Entities.ApplicationForm
                     {
                         RequesterUserCode = itemLeave.RequesterUserCode,
                         RequestType = "LEAVE_REQUEST",

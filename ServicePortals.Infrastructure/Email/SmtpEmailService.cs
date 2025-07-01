@@ -16,8 +16,12 @@ namespace ServicePortals.Infrastructure.Email
             _settings = settings.Value;
         }
 
-        [AutomaticRetry(Attempts = 10)]
         public async Task SendEmailAsync(List<string>? to, List<string>? cc, string subject, string? body, List<(string, byte[])>? attachments, bool isHtml = true)
+        {
+            await SendAsync(to, cc, subject, body, attachments, isHtml);
+        }
+
+        public async Task SendEmailForgotPassword(List<string>? to, List<string>? cc, string subject, string? body, List<(string, byte[])>? attachments, bool isHtml = true)
         {
             await SendAsync(to, cc, subject, body, attachments, isHtml);
         }

@@ -6,7 +6,7 @@ namespace ServicePortals.Infrastructure.Mappers
 {
     public class LeaveRequestMapper
     {
-        public static LeaveRequestDto ToDto(LeaveRequest entity, ApprovalRequest? approvalRequest = null, ApprovalAction? approvalAction = null)
+        public static LeaveRequestDto ToDto(LeaveRequest entity, ApplicationForm? approvalRequest = null, HistoryApplicationForm? approvalAction = null)
         {
             return new LeaveRequestDto
             {
@@ -51,7 +51,7 @@ namespace ServicePortals.Infrastructure.Mappers
             };
         }
 
-        public static List<LeaveRequestDto> ToDtoList(List<(LeaveRequest, ApprovalRequest?, ApprovalAction?)> list)
+        public static List<LeaveRequestDto> ToDtoList(List<(LeaveRequest, ApplicationForm?, HistoryApplicationForm?)> list)
         {
             return list.Select(x => ToDto(x.Item1, x.Item2, x.Item3)).ToList();
         }
