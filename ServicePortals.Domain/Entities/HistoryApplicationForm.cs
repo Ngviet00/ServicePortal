@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ServicePortals.Domain.Entities
 {
-    [Table("approval_actions"), Index(nameof(ApplicationFormId), nameof(UserApproval))]
+    [Table("history_application_forms"), Index(nameof(ApplicationFormId), nameof(UserApproval))]
     public class HistoryApplicationForm
     {
         public Guid Id { get; set; }

@@ -14,7 +14,9 @@ namespace ServicePortals.Domain.Entities
         public string? Email { get; set; }
         public string? Phone { get; set; }
         public DateTimeOffset? DateOfBirth { get; set; }
-        public ICollection<UserRole>? UserRoles { get; set; } = [];
-        public ICollection<UserPermission>? UserPermissions { get; set; } = [];
+        public DateTimeOffset? DeletedAt { get; set; }
+        public ICollection<UserRole> UserRoles { get; set; } = [];
+        public ICollection<UserPermission> UserPermissions { get; set; } = [];
+        public ICollection<UserConfig> UserConfigs { get; set; } = [];
     }
 }

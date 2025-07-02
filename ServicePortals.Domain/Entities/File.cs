@@ -10,6 +10,6 @@ namespace ServicePortals.Domain.Entities
         public string? FileName { get; set; }
         public string? ContentType { get; set; }
         public byte[]? FileData { get; set; }
-        public DateTimeOffset? CreatedAt { get; set; } = DateTimeOffset.Now;
+        public DateTimeOffset? CreatedAt { get; set; }
     }
 }

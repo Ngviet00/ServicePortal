@@ -12,21 +12,12 @@ namespace ServicePortals.Infrastructure.Mappers
             {
                 Id = entity.Id,
                 UserCode = entity.UserCode,
-                PositionId = entity.PositionId,
                 Password = entity.Password,
                 IsActive = entity.IsActive,
                 IsChangePassword = entity.IsChangePassword,
                 Email = entity.Email,
-                Roles = entity?.UserRoles != null && entity.UserRoles.All(ur => ur.Role != null)
-                ? [.. entity.UserRoles.Select(ur => new Role
-                {
-                    Id = ur.Role != null ? ur.Role.Id : null,
-                    Name = ur.Role != null ? ur.Role.Name : "",
-                    Code = ur.Role != null ? ur.Role.Code : ""
-                })]
-                : [],
-                IsCheckedHaveManageUserTimeKeeping = false
-    };
+                DateOfBirth = entity.DateOfBirth,
+            };
         }
 
         public static List<UserResponse> ToDtoList(List<User> users)

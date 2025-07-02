@@ -5,7 +5,7 @@ namespace ServicePortals.Domain.Entities
     [Table("memo_notifications")]
     public class MemoNotification
     {
-        public Guid? Id { get; set; }
+        public int? Id { get; set; }
         public string? Title { get; set; }
         public string? Content { get; set; }
         public int? CreatedByDepartmentId { get; set; }
@@ -19,5 +19,6 @@ namespace ServicePortals.Domain.Entities
         public int? Priority { get; set; } = 3; //1 normal, 2 medium, 3 high
         public bool? Status { get; set; }
         public bool? ApplyAllDepartment { get; set; }
+        public ICollection<MemoNotificationDepartment> MemoNotificationDepartments { get; set; } = [];
     }
 }

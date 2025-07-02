@@ -8,47 +8,49 @@ namespace ServicePortals.Infrastructure.Mappers
     {
         public static LeaveRequestDto ToDto(LeaveRequest entity, ApplicationForm? approvalRequest = null, HistoryApplicationForm? approvalAction = null)
         {
-            return new LeaveRequestDto
-            {
-                Id = entity.Id,
-                WriteLeaveUserCode = entity.WriteLeaveUserCode,
-                WriteLeaveName = entity.WriteLeaveName,
-                RequesterUserCode = entity.RequesterUserCode,
-                Name = entity.Name,
-                FromDate = entity.FromDate.ToString(),
-                ToDate = entity.ToDate.ToString(),
-                TypeLeave = entity?.TypeLeave,
-                TimeLeave = entity?.TimeLeave,
-                Reason = entity?.Reason,
-                Department = entity?.Department,
-                Position = entity?.Position,
-                HaveSalary = entity?.HaveSalary,
-                Image = entity?.Image,
-                CreatedAt = entity?.CreatedAt,
-                ApprovalRequest = approvalRequest,
-                ApprovalAction = approvalAction
-            };
+            return null;
+            //return new LeaveRequestDto
+            //{
+            //    Id = entity.Id,
+            //    WriteLeaveUserCode = entity.WriteLeaveUserCode,
+            //    WriteLeaveName = entity.WriteLeaveName,
+            //    RequesterUserCode = entity.RequesterUserCode,
+            //    Name = entity.Name,
+            //    FromDate = entity.FromDate.ToString(),
+            //    ToDate = entity.ToDate.ToString(),
+            //    TypeLeave = entity?.TypeLeave,
+            //    TimeLeave = entity?.TimeLeave,
+            //    Reason = entity?.Reason,
+            //    Department = entity?.Department,
+            //    Position = entity?.Position,
+            //    HaveSalary = entity?.HaveSalary,
+            //    Image = entity?.Image,
+            //    CreatedAt = entity?.CreatedAt,
+            //    ApprovalRequest = approvalRequest,
+            //    ApprovalAction = approvalAction
+            //};
         }
 
         public static LeaveRequest ToEntity(LeaveRequestDto dto)
         {
-            return new LeaveRequest
-            {
-                WriteLeaveUserCode = dto.WriteLeaveUserCode,
-                WriteLeaveName = dto.WriteLeaveName,
-                RequesterUserCode = dto.RequesterUserCode,
-                Name = dto.Name,
-                FromDate = DateTimeOffset.ParseExact(dto?.FromDate ?? "", "yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture),
-                ToDate = DateTimeOffset.ParseExact(dto?.ToDate ?? "", "yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture),
-                TypeLeave = dto?.TypeLeave,
-                TimeLeave = dto?.TimeLeave,
-                Reason = dto?.Reason,
-                Department = dto?.Department,
-                Position = dto?.Position,
-                HaveSalary = dto?.HaveSalary,
-                Image = dto?.Image,
-                CreatedAt = DateTimeOffset.Now
-            };
+            return null;
+            //return new LeaveRequest
+            //{
+            //    WriteLeaveUserCode = dto.WriteLeaveUserCode,
+            //    WriteLeaveName = dto.WriteLeaveName,
+            //    RequesterUserCode = dto.RequesterUserCode,
+            //    Name = dto.Name,
+            //    FromDate = DateTimeOffset.ParseExact(dto?.FromDate ?? "", "yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture),
+            //    ToDate = DateTimeOffset.ParseExact(dto?.ToDate ?? "", "yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture),
+            //    TypeLeave = dto?.TypeLeave,
+            //    TimeLeave = dto?.TimeLeave,
+            //    Reason = dto?.Reason,
+            //    Department = dto?.Department,
+            //    Position = dto?.Position,
+            //    HaveSalary = dto?.HaveSalary,
+            //    Image = dto?.Image,
+            //    CreatedAt = DateTimeOffset.Now
+            //};
         }
 
         public static List<LeaveRequestDto> ToDtoList(List<(LeaveRequest, ApplicationForm?, HistoryApplicationForm?)> list)

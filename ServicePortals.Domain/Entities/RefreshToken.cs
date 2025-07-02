@@ -14,6 +14,6 @@ namespace ServicePortals.Domain.Entities
         public string? UserCode { get; set; }
         public DateTimeOffset? ExpiresAt { get; set; }
         public bool? IsRevoked { get; set; }
-        public DateTimeOffset? CreatedAt { get; set; } = DateTimeOffset.UtcNow;
+        public DateTimeOffset? CreatedAt { get; set; }
     }
 }

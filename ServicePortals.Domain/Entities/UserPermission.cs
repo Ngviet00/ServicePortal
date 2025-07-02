@@ -6,6 +6,7 @@ namespace ServicePortals.Domain.Entities
     [Table("user_permissions"), Index(nameof(UserCode), nameof(PermissionId))]
     public class UserPermission
     {
+        public int? Id { get; set; }
         public string? UserCode { get; set; }
         public int? PermissionId { get; set; }
         public User? User { get; set; }

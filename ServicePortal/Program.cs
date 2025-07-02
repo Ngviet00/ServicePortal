@@ -253,13 +253,6 @@ namespace ServicePortal
             //check app is running
             app.MapHealthChecks("/health");
 
-            //run class seeder
-            using (var scope = app.Services.CreateScope())
-            {
-                var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-                DbSeeder.SeedAsync(dbContext).GetAwaiter().GetResult();
-            }
-
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();

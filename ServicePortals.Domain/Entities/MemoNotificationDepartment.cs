@@ -7,7 +7,8 @@ namespace ServicePortals.Domain.Entities
     public class MemoNotificationDepartment
     {
         public Guid? Id { get; set; }
-        public Guid? MemoNotificationId { get; set; }
+        public int? MemoNotificationId { get; set; }
         public int? DepartmentId { get; set; }
+        public MemoNotification? MemoNotifications { get; set; }
     }
 }

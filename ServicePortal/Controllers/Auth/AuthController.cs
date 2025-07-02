@@ -11,12 +11,10 @@ namespace ServicePortal.Controllers.Auth
     public class AuthController : ControllerBase
     {
         private readonly IAuthService _authService;
-        private readonly IConfiguration _config;
 
-        public AuthController(IAuthService authService, IConfiguration config)
+        public AuthController(IAuthService authService)
         {
             _authService = authService;
-            _config = config;
         }
 
         [HttpPost("login")]

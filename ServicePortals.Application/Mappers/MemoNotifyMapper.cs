@@ -9,7 +9,7 @@ namespace ServicePortals.Infrastructure.Mappers
         {
             return new MemoNotificationDto
             {
-                Id = entity?.Id,
+                //Id = entity?.Id,
                 Title = entity?.Title,
                 Content = entity?.Content,
                 CreatedByDepartmentId = entity?.CreatedByDepartmentId,

@@ -311,7 +311,9 @@ namespace ServicePortals.Infrastructure.Services.User
 
         public async Task<OrgChartRequest> BuildTree(int? departmentId)
         {
-            return await _orgChartBuilder.BuildTree(departmentId);
+
+            return null;
+            //return await _orgChartBuilder.BuildTree(departmentId);
         }
 
         public async Task<GetUserPersonalInfoResponse?> GetMe(string UserCode)
@@ -337,35 +339,128 @@ namespace ServicePortals.Infrastructure.Services.User
 
         public async Task<List<GetEmailByUserCodeAndUserConfigResponse>> GetEmailByUserCodeAndUserConfig(List<string> userCodes)
         {
-            if (userCodes == null || userCodes.Count == 0)
+            return null;
+            //if (userCodes == null || userCodes.Count == 0)
+            //{
+            //    return new List<GetEmailByUserCodeAndUserConfigResponse>();
+            //}
+
+            //var result = await _context.Users
+            //    .Where(u => userCodes.Contains(u.UserCode ?? ""))
+            //    .GroupJoin(
+            //        _context.UserConfigs.Where(c => c.ConfigKey == "RECEIVE_MAIL_LEAVE_REQUEST"),
+            //        u => u.UserCode,
+            //        uc => uc.UserCode,
+            //        (u, ucs) => new { u, uc = ucs.FirstOrDefault() }
+            //    )
+            //    .Where(x => x.uc == null || x.uc.ConfigValue == "true")
+            //    .Select(x => new GetEmailByUserCodeAndUserConfigResponse
+            //    {
+            //        UserCode = x.u.UserCode,
+            //        Email = x.u.Email,
+            //        ConfigKey = x.uc != null ? x.uc.ConfigKey : null,
+            //        ConfigValue = x.uc != null ? x.uc.ConfigValue : null
+            //    })
+            //    .ToListAsync();
+
+            //return result;
+        }
+
+        public async Task<object?> GetCustomColumnUserViclockByUserCode(string userCode, string columns)
+        {
+            var sql = $@"SELECT
+                            [{Global.DbViClock}].dbo.funTCVN2Unicode(NVHoTen) AS NVHoTen,
+                            {columns}
+                        FROM [{Global.DbViClock}].[dbo].[tblNhanVien]
+                        WHERE
+                            NVMaNV = @UserCode";
+
+            return await _viclockDapperContext.QueryFirstOrDefaultAsync<object?>(sql, new { UserCode = userCode });
+        }
+        public async Task<GetDetailInfoUserResponse> GetDetailUserWithRoleAndPermission(string userCode)
+        {
+            GetDetailInfoUserResponse result = new();
+
+            var infoFromViclock = await GetCustomColumnUserViclockByUserCode(userCode, "NVMaBP, OrgUnitID, NVNgayVao, NVGioiTinh, NVEmail, NVDienThoai, NVNgaySinh");
+
+            var user = await GetRoleAndPermissionByUser(userCode);
+
+            if (user == null)
             {
-                return new List<GetEmailByUserCodeAndUserConfigResponse>();
+                return result;
             }
 
-            var result = await _context.Users
-                .Where(u => userCodes.Contains(u.UserCode ?? ""))
-                .GroupJoin(
-                    _context.UserConfigs.Where(c => c.ConfigKey == "RECEIVE_MAIL_LEAVE_REQUEST"),
-                    u => u.UserCode,
-                    uc => uc.UserCode,
-                    (u, ucs) => new { u, uc = ucs.FirstOrDefault() }
-                )
-                .Where(x => x.uc == null || x.uc.ConfigValue == "true")
-                .Select(x => new GetEmailByUserCodeAndUserConfigResponse
-                {
-                    UserCode = x.u.UserCode,
-                    Email = x.u.Email,
-                    ConfigKey = x.uc != null ? x.uc.ConfigKey : null,
-                    ConfigValue = x.uc != null ? x.uc.ConfigValue : null
-                })
-                .ToListAsync();
+            var userRoleAndPermissions = FormatRoleAndPermissionByUser(user);
+
+            result.InfoFromViclock = infoFromViclock;
+            result.User = user != null ? UserMapper.ToDto(user) : null;
+            result.Roles = userRoleAndPermissions.Roles;
+            result.Permissions = userRoleAndPermissions.Permissions;
 
             return result;
         }
-
-        public async Task<List<UserResponse>> GetUserByPosition(int? position)
+        public async Task<Domain.Entities.User?> GetRoleAndPermissionByUser(string userCode)
         {
-            return UserMapper.ToDtoList(await _context.Users.Where(e => e.PositionId == position).ToListAsync());
+            var user = await _context.Users
+                .Include(u => u.UserRoles)
+                    .ThenInclude(ur => ur.Role)
+                        .ThenInclude(r => r.RolePermissions)
+                            .ThenInclude(rp => rp.Permission)
+                .Include(u => u.UserPermissions)
+                    .ThenInclude(up => up.Permission)
+                .Where(e => e.UserCode == userCode)
+                .FirstOrDefaultAsync();
+
+            return user;
+        }
+        public UserRolesAndPermissionsResponse FormatRoleAndPermissionByUser(Domain.Entities.User user)
+        {
+            if (user == null)
+            {
+                return new UserRolesAndPermissionsResponse();
+            }
+
+            var result = new UserRolesAndPermissionsResponse();
+
+            if (user.UserRoles != null)
+            {
+                foreach (var userRole in user.UserRoles)
+                {
+                    var role = userRole.Role;
+
+                    if (role != null)
+                    {
+                        if (!string.IsNullOrWhiteSpace(role.Name))
+                        {
+                            result.Roles.Add(role.Name);
+                        }
+
+                        if (role.RolePermissions != null)
+                        {
+                            foreach (var rolePermission in role.RolePermissions)
+                            {
+                                if (!string.IsNullOrWhiteSpace(rolePermission.Permission?.Name))
+                                {
+                                    result.Permissions.Add(rolePermission.Permission.Name);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (user.UserPermissions != null)
+            {
+                foreach (var userPermission in user.UserPermissions)
+                {
+                    if (!string.IsNullOrWhiteSpace(userPermission.Permission?.Name))
+                    {
+                        result.Permissions.Add(userPermission.Permission.Name);
+                    }
+                }
+            }
+
+            return result;
         }
     }
 }

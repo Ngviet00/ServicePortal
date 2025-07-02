@@ -14,35 +14,37 @@ namespace ServicePortals.Infrastructure.Services.UserConfig
 
         public async Task<Domain.Entities.UserConfig?> GetConfigByUserCodeAndkey(string userCode, string key)
         {
-            return await _context.UserConfigs.FirstOrDefaultAsync(e => e.UserCode == userCode && e.ConfigKey == key) ?? null;
+            return null;
+            //return await _context.UserConfigs.FirstOrDefaultAsync(e => e.UserCode == userCode && e.ConfigKey == key) ?? null;
         }
 
         public async Task<Domain.Entities.UserConfig> SaveOrUpdate(Domain.Entities.UserConfig request)
         {
-            var config = await _context.UserConfigs.Where(e => e.ConfigKey == request.ConfigKey && e.UserCode == request.UserCode).FirstOrDefaultAsync();
+            return null;
+            //var config = await _context.UserConfigs.Where(e => e.ConfigKey == request.ConfigKey && e.UserCode == request.UserCode).FirstOrDefaultAsync();
 
-            if (config == null)
-            {
-                var newConfig = new Domain.Entities.UserConfig
-                {
-                    UserCode = request.UserCode,
-                    ConfigKey = request.ConfigKey,
-                    ConfigValue = request.ConfigValue,
-                    CreatedAt = DateTimeOffset.Now,
-                };
+            //if (config == null)
+            //{
+            //    var newConfig = new Domain.Entities.UserConfig
+            //    {
+            //        UserCode = request.UserCode,
+            //        ConfigKey = request.ConfigKey,
+            //        ConfigValue = request.ConfigValue,
+            //        CreatedAt = DateTimeOffset.Now,
+            //    };
 
-                _context.UserConfigs.Add(newConfig);
-                await _context.SaveChangesAsync();
+            //    _context.UserConfigs.Add(newConfig);
+            //    await _context.SaveChangesAsync();
 
-                return newConfig;
-            }
+            //    return newConfig;
+            //}
 
-            config.ConfigValue = request.ConfigValue;
+            //config.ConfigValue = request.ConfigValue;
 
-            _context.UserConfigs.Update(config);
-            await _context.SaveChangesAsync();
+            //_context.UserConfigs.Update(config);
+            //await _context.SaveChangesAsync();
 
-            return config;
+            //return config;
         }
     }
 }

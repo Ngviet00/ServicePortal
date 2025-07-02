@@ -9,10 +9,10 @@ namespace ServicePortals.Domain.Entities
         public Guid Id { get; set; }
         public Guid? ApplicationFormId { get; set; }
         public string? RequesterUserCode { get; set; }
-        public string? UserCodeWriteLeaveRequest { get; set; }
         public string? Name { get; set; }
         public string? Department { get; set; }
         public string? Position { get; set; }
+        public string? UserNameWriteLeaveRequest { get; set; }
         public DateTimeOffset? FromDate { get; set; }
         public DateTimeOffset? ToDate { get; set; }
         public int? TypeLeaveId { get; set; }
@@ -24,5 +24,7 @@ namespace ServicePortals.Domain.Entities
         public ApplicationForm? ApplicationForm { get; set; }
         public TimeLeave? TimeLeave { get; set; }
         public TypeLeave? TypeLeave{ get; set; }
+        public DateTimeOffset? UpdateAt { get; set; }
+        public DateTimeOffset? DeletedAt { get; set; }
     }
 }

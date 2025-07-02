@@ -106,28 +106,28 @@ namespace ServicePortals.Infrastructure.Services.TimeKeeping
 
         public async Task<object> ConfirmTimeKeepingToHr(GetManagementTimeKeepingRequest request)
         {
-            using var stream = new MemoryStream();
-            var fileBytes = stream.ToArray();
+            //using var stream = new MemoryStream();
+            //var fileBytes = stream.ToArray();
 
-            string subject = $"Production - Confirm Attendance List [{request.Month} - {request.Year}]";
-            string bodyMail = $@"Dear HR Team, Please find attached the excel file containing the staff attendance list [{request.Month} - {request.Year}]";
-            var emailHrMngTimeKeeping = await _hrManagementService.GetEmailHRByType("MANAGE_TIMEKEEPING");
+            //string subject = $"Production - Confirm Attendance List [{request.Month} - {request.Year}]";
+            //string bodyMail = $@"Dear HR Team, Please find attached the excel file containing the staff attendance list [{request.Month} - {request.Year}]";
+            //var emailHrMngTimeKeeping = await _hrManagementService.GetEmailHRByType("MANAGE_TIMEKEEPING");
 
-            var attachments = new List<(string, byte[])>
-            {
-                ($"Confirm_Attendance_T{request.Month} - {request.Year}.xlsx", fileBytes)
-            };
+            //var attachments = new List<(string, byte[])>
+            //{
+            //    ($"Confirm_Attendance_T{request.Month} - {request.Year}.xlsx", fileBytes)
+            //};
 
-            BackgroundJob.Enqueue<IEmailService>(job =>
-                job.SendEmailAsync(
-                    new List<string> { Global.EmailDefault },
-                    new List<string> { Global.EmailDefault },
-                    subject,
-                    bodyMail,
-                    attachments,
-                    false
-                )
-            );
+            //BackgroundJob.Enqueue<IEmailService>(job =>
+            //    job.SendEmailAsync(
+            //        new List<string> { Global.EmailDefault },
+            //        new List<string> { Global.EmailDefault },
+            //        subject,
+            //        bodyMail,
+            //        attachments,
+            //        false
+            //    )
+            //);
 
             return true;
         }

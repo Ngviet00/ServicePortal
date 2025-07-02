@@ -2,12 +2,12 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using ServicePortals.Application.Dtos.Auth.Requests;
+using ServicePortals.Application.Dtos.User.Responses;
 using ServicePortals.Application.Interfaces.Auth;
 using ServicePortals.Application.Interfaces.User;
 using ServicePortals.Domain.Entities;
 using ServicePortals.Infrastructure.Data;
 using ServicePortals.Infrastructure.Helpers;
-using ServicePortals.Infrastructure.Mappers;
 using ServicePortals.Shared.Exceptions;
 
 namespace ServicePortals.Infrastructure.Services.Auth
@@ -29,88 +29,72 @@ namespace ServicePortals.Infrastructure.Services.Auth
 
         public async Task<LoginResponse> Register(CreateUserRequest request)
         {
-            if (string.IsNullOrWhiteSpace(request.UserCode))
-            {
-                throw new ValidationException("Usercode is required");
-            }
-
-            //check exist in viclock
-            if (await _userService.CheckUserIsExistsInViClock(request.UserCode ?? "") == false)
+            GetDetailInfoUserResponse detailUser = await _userService.GetDetailUserWithRoleAndPermission(request.UserCode ?? "");
+            
+            if (detailUser.InfoFromViclock == null)
             {
                 throw new ValidationException("User is not exists, contact to HR!");
             }
 
-            var currentUser = await _context.Users
-                .Where(e => e.UserCode == request.UserCode)
-                .FirstOrDefaultAsync();
-
-            if (currentUser != null)
+            if (detailUser.User != null)
             {
                 throw new ValidationException("User is exists!");
             }
 
-            var newUser = new ServicePortals.Domain.Entities.User
+            var newUser = new Domain.Entities.User
             {
                 UserCode = request.UserCode,
                 Password = Helper.HashString(request.Password),
-                IsActive = 1, //true
-                IsChangePassword = 0, //false
+                IsActive = 1,
+                IsChangePassword = 0,
+                Email = !string.IsNullOrWhiteSpace(detailUser.InfoFromViclock.NVEmail) ? detailUser.InfoFromViclock.NVEmail : null,
+                Phone = !string.IsNullOrWhiteSpace(detailUser.InfoFromViclock.NVDienThoai) ? detailUser.InfoFromViclock.NVDienThoai : null,
+                DateOfBirth = detailUser.InfoFromViclock.NVNgaySinh != null ? detailUser.InfoFromViclock.NVNgaySinh : null
             };
 
             _context.Users.Add(newUser);
 
-            //role default user
-            var roleUser = await _context.Roles.FirstOrDefaultAsync(e => e.Code == "user");
+            var role = await _context.Roles.FirstOrDefaultAsync(e => e.Code == "USER");
 
             _context.UserRoles.Add(new UserRole
             {
                 UserCode = request.UserCode,
-                RoleId = roleUser?.Id,
+                RoleId = role?.Id,
             });
 
             await _context.SaveChangesAsync();
 
-            var createdUser = await _context.Users
-                .Include(u => u.UserRoles)
-                    .ThenInclude(ur => ur.Role)
-                .FirstOrDefaultAsync(u => u.UserCode == request.UserCode);
+            var claims = new List<Claim> { new("user_code", request?.UserCode ?? "") };
 
-            var claims = new List<Claim> { new("user_code", createdUser?.UserCode ?? "") };
-
-
-            if (createdUser != null)
-            {
-                claims.AddRange(
-                    createdUser.UserRoles.Select(ur =>
-                        new Claim(ClaimTypes.Role, ur.Role?.Code ?? "")
-                    )
-                );
-            }
+            claims.AddRange(detailUser.Roles.Select(roleName => new Claim(ClaimTypes.Role, roleName)));
+            claims.AddRange(detailUser.Permissions.Select(permissionName => new Claim("permission", permissionName)));
 
             var accessToken = _jwtService.GenerateAccessToken(claims);
-
             var refreshToken = _jwtService.GenerateRefreshToken();
 
             var refreshTokenEntity = new RefreshToken
             {
                 Token = refreshToken,
-                UserCode = createdUser?.UserCode ?? "",
-                ExpiresAt = DateTimeOffset.UtcNow.AddDays(double.Parse(_config["Jwt:RefreshTokenExpirationDays"] ?? "7")),
+                UserCode = newUser?.UserCode ?? "",
+                ExpiresAt = DateTimeOffset.UtcNow.AddDays(double.Parse(_config["Jwt:RefreshTokenExpirationDays"] ?? Global.DefaultExpirationDaysRefreshToken)),
                 IsRevoked = false,
                 CreatedAt = DateTimeOffset.UtcNow
             };
 
             _context.RefreshTokens.Add(refreshTokenEntity);
 
-            createdUser!.Password = null;
-
             await _context.SaveChangesAsync();
+
+            if (detailUser.User != null)
+            {
+                detailUser.User.Password = null;
+            }
 
             var result = new LoginResponse
             {
                 AccessToken = accessToken,
                 RefreshToken = refreshToken,
-                UserInfo = UserMapper.ToDto(createdUser),
+                UserInfo = detailUser,
                 ExpiresAt = refreshTokenEntity.ExpiresAt
             };
 
@@ -119,16 +103,16 @@ namespace ServicePortals.Infrastructure.Services.Auth
 
         public async Task<LoginResponse> Login(LoginRequest request)
         {
-            var user = await _context.Users
-                .Include(ur => ur.UserRoles)
-                    .ThenInclude(r => r.Role)
-                .Where(e => e.UserCode == request.UserCode)
-                .FirstOrDefaultAsync();
+            GetDetailInfoUserResponse detailInfoUser = new();
 
-            if (user == null)
+            detailInfoUser = await _userService.GetDetailUserWithRoleAndPermission(request.UserCode ?? "");
+
+            if (detailInfoUser.User == null)
             {
                 throw new ValidationException("User not found!");
             }
+
+            var user = detailInfoUser.User;
 
             if (!Helper.VerifyString(user?.Password ?? "", request?.Password ?? ""))
             {
@@ -137,17 +121,17 @@ namespace ServicePortals.Infrastructure.Services.Auth
 
             var claims = new List<Claim> { new("user_code", user?.UserCode ?? "") };
 
-            claims.AddRange(user!.UserRoles.Select(ur => new Claim(ClaimTypes.Role, ur.Role?.Code ?? "")));
+            claims.AddRange(detailInfoUser.Roles.Select(roleName => new Claim(ClaimTypes.Role, roleName)));
+            claims.AddRange(detailInfoUser.Permissions.Select(permissionName => new Claim("permission", permissionName)));
 
             var accessToken = _jwtService.GenerateAccessToken(claims);
-
             var refreshToken = _jwtService.GenerateRefreshToken();
 
             var refreshTokenEntity = new RefreshToken
             {
                 Token = refreshToken,
                 UserCode = user?.UserCode ?? "",
-                ExpiresAt = DateTimeOffset.UtcNow.AddDays(double.Parse(_config["Jwt:RefreshTokenExpirationDays"] ?? "7")),
+                ExpiresAt = DateTimeOffset.UtcNow.AddDays(double.Parse(_config["Jwt:RefreshTokenExpirationDays"] ?? Global.DefaultExpirationDaysRefreshToken)),
                 IsRevoked = false,
                 CreatedAt = DateTimeOffset.UtcNow
             };
@@ -155,13 +139,13 @@ namespace ServicePortals.Infrastructure.Services.Auth
             await _context.RefreshTokens.AddAsync(refreshTokenEntity);
             await _context.SaveChangesAsync();
 
-            user!.Password = null;
+            detailInfoUser.User.Password = null;
 
             var result = new LoginResponse
             {
                 AccessToken = accessToken,
                 RefreshToken = refreshToken,
-                UserInfo = UserMapper.ToDto(user),
+                UserInfo = detailInfoUser,
                 ExpiresAt = refreshTokenEntity.ExpiresAt
             };
 
@@ -177,15 +161,21 @@ namespace ServicePortals.Infrastructure.Services.Auth
                 throw new UnauthorizedException("Invalid refresh token");
             }
 
-            var user = await _context.Users
-                .Include(ur => ur.UserRoles)
-                    .ThenInclude(r => r.Role)
-                .Where(e => e.UserCode == token.UserCode)
-                .FirstOrDefaultAsync();
+            var user = await _userService.GetRoleAndPermissionByUser(token.UserCode ?? "");
+
+            if (user == null)
+            {
+                return "";
+            }
+
+            var userRoleAndPermissions = _userService.FormatRoleAndPermissionByUser(user);
+
+            user!.Password = null;
 
             var claims = new List<Claim> {new("user_code", user?.UserCode ?? "")};
 
-            claims.AddRange(user!.UserRoles.Select(r => new Claim(ClaimTypes.Role, r.Role?.Code ?? "")));
+            claims.AddRange(userRoleAndPermissions.Roles.Select(roleName => new Claim(ClaimTypes.Role, roleName)));
+            claims.AddRange(userRoleAndPermissions.Permissions.Select(permissionName => new Claim("permission", permissionName)));
 
             var newAccessToken = _jwtService.GenerateAccessToken(claims);
 
