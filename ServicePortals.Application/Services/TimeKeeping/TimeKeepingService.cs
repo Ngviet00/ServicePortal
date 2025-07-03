@@ -1,13 +1,10 @@
 ﻿using System.Data;
 using Dapper;
-using Hangfire;
 using Microsoft.EntityFrameworkCore;
 using ServicePortals.Application.Dtos.TimeKeeping.Requests;
-using ServicePortals.Application.Interfaces.HRManagement;
 using ServicePortals.Application.Interfaces.TimeKeeping;
 using ServicePortals.Infrastructure.Data;
 using ServicePortals.Infrastructure.Email;
-using ServicePortals.Infrastructure.Helpers;
 
 namespace ServicePortals.Infrastructure.Services.TimeKeeping
 {
@@ -16,19 +13,16 @@ namespace ServicePortals.Infrastructure.Services.TimeKeeping
         private readonly ApplicationDbContext _context;
         private readonly IViclockDapperContext _viclockDapperContext;
         private readonly IEmailService _emailService;
-        private readonly IHRManagementService _hrManagementService;
 
         public TimeKeepingService (
             IViclockDapperContext viclockDapperContext, 
             IEmailService emailService, 
-            ApplicationDbContext context,
-            IHRManagementService hrManagementService
+            ApplicationDbContext context
         )
         {
             _viclockDapperContext = viclockDapperContext;
             _emailService = emailService;
             _context = context;
-            _hrManagementService = hrManagementService;
         }
 
         public async Task<IEnumerable<object>> GetPersonalTimeKeeping(GetPersonalTimeKeepingRequest request)

@@ -9,5 +9,6 @@ namespace ServicePortals.Application.Dtos.Auth.Requests
 
         [Required, Compare("NewPassword", ErrorMessage = "Passwords do not match")]
         public string? ConfirmPassword { get; set; }
+        public string? Email { get; set; }
     }
 }

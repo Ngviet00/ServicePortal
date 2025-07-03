@@ -8,6 +8,6 @@ namespace ServicePortals.Infrastructure.Email
         Task SendEmailAsync(List<string>? to, List<string>? cc, string subject, string? body, List<(string, byte[])>? attachments, bool isHtml = true);
 
         [AutomaticRetry(Attempts = 10)]
-        Task SendEmailForgotPassword(List<string>? to, List<string>? cc, string subject, string? body, List<(string, byte[])>? attachments, bool isHtml = true);
+        Task SendEmailResetPassword(List<string>? to, List<string>? cc, string subject, string? body, List<(string, byte[])>? attachments, bool isHtml = true);
     }
 }

@@ -8,6 +8,11 @@ namespace ServicePortals.Infrastructure.Mappers
     {
         public static UserResponse ToDto(User entity)
         {
+            if (entity == null)
+            {
+                return new UserResponse();
+            }
+
             return new UserResponse
             {
                 Id = entity.Id,
@@ -17,6 +22,7 @@ namespace ServicePortals.Infrastructure.Mappers
                 IsChangePassword = entity.IsChangePassword,
                 Email = entity.Email,
                 DateOfBirth = entity.DateOfBirth,
+                Phone = entity.Phone
             };
         }
 

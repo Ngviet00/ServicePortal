@@ -7,7 +7,6 @@ using ServicePortals.Application;
 using ServicePortals.Application.Dtos.LeaveRequest;
 using ServicePortals.Application.Dtos.LeaveRequest.Requests;
 using ServicePortals.Application.Dtos.LeaveRequest.Responses;
-using ServicePortals.Application.Interfaces.HRManagement;
 using ServicePortals.Application.Interfaces.LeaveRequest;
 using ServicePortals.Application.Interfaces.User;
 using ServicePortals.Domain.Entities;

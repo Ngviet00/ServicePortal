@@ -26,7 +26,7 @@ namespace ServicePortal.Controllers.User
 
             var results = await _userService.GetMe(Usercode ?? "");
 
-            var response = new BaseResponse<GetUserPersonalInfoResponse>(200, "Success", results);
+            var response = new BaseResponse<PersonalInfoResponse>(200, "Success", results);
 
             return Ok(response);
         }
@@ -58,9 +58,9 @@ namespace ServicePortal.Controllers.User
         }
 
         [HttpGet("get-by-code/{code}"), RoleAuthorize("HR", "HR_Manager")]
-        public async Task<IActionResult> GetByCode(string code)
+        public async Task<IActionResult> GetByUserCode(string code)
         {
-            UserResponse? userDto = await _userService.GetByCode(code);
+            UserResponse? userDto = await _userService.GetByUserCode(code);
 
             return Ok(new BaseResponse<UserResponse>(200, "success", userDto));
         }
@@ -97,13 +97,21 @@ namespace ServicePortal.Controllers.User
             return Ok(new BaseResponse<UserResponse>(200, "Success", result));
         }
 
-        [HttpGet("org-chart"), RoleAuthorize("HR", "HR_Manager")]
-        public async Task<IActionResult> GetUsersOrgChart([FromQuery(Name = "department_id")] int? departmentId)
+        [HttpPut("update/{userCode}")]
+        public async Task<IActionResult> Update(string userCode, [FromBody] UpdatePersonalInfoRequest request)
         {
-            var result = await _userService.BuildTree(departmentId);
+            var result = await _userService.Update(userCode, request);
 
-            return Ok(new BaseResponse<OrgChartRequest>(200, "Success", result));
+            return Ok(new BaseResponse<UserResponse>(200, "Success", result));
         }
+
+        //[HttpGet("org-chart"), RoleAuthorize("HR", "HR_Manager")]
+        //public async Task<IActionResult> GetUsersOrgChart([FromQuery(Name = "department_id")] int? departmentId)
+        //{
+        //    var result = await _userService.BuildTree(departmentId);
+
+        //    return Ok(new BaseResponse<OrgChartRequest>(200, "Success", result));
+        //}
 
         [HttpGet("test"), AllowAnonymous]
         public IActionResult Test()

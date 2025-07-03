@@ -29,5 +29,18 @@ namespace ServicePortals.Infrastructure.Services.Department
 
             return (List<GetAllDepartmentResponse>)items;
         }
+
+        public async Task<List<string>> GetAllWithDistinctName()
+        {
+            var items = await _cacheService.GetOrCreateAsync(Global.CacheKeyGetAllDepartmentDistinctName, async () =>
+            {
+                var sql = $@"SELECT DISTINCT BpTen FROM tblBoPhan ORDER BY BPTen";
+
+                return (List<string>)await _viclockDapperContext.QueryAsync<string>(sql);
+
+            }, expireMinutes: 1440);
+
+            return items;
+        }
     }
 }

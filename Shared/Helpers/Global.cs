@@ -12,6 +12,7 @@
         public const string CacheKeyGetAllMemoNotifyInHomePage = "get_all_memo_notify_in_homepage";
 
         public const string CacheKeyGetAllDepartment = "get_all_department";
+        public const string CacheKeyGetAllDepartmentDistinctName = "get_all_department_distinct_name";
 
         public const string CacheKeyGetAllPosition = "get_all_position";
 

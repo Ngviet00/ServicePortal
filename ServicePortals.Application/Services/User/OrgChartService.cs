@@ -14,6 +14,13 @@ namespace ServicePortals.Infrastructure.Services.User
         //    _context = context;
         //}
 
+        public async Task<OrgChartRequest> BuildTree(int? departmentId)
+        {
+
+            return null;
+            //return await _orgChartBuilder.BuildTree(departmentId);
+        }
+
         //public async Task<OrgChartRequest> BuildTree(int? departmentId)
         //{
         //    var rules = await _context.ApprovalFlows.Where(r => r.DepartmentId == departmentId).ToListAsync();

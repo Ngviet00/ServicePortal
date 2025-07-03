@@ -3,7 +3,6 @@ using System.Net;
 using Serilog;
 using ServicePortals.Infrastructure.Helpers;
 using Microsoft.Extensions.Options;
-using Hangfire;
 
 namespace ServicePortals.Infrastructure.Email
 {
@@ -21,7 +20,7 @@ namespace ServicePortals.Infrastructure.Email
             await SendAsync(to, cc, subject, body, attachments, isHtml);
         }
 
-        public async Task SendEmailForgotPassword(List<string>? to, List<string>? cc, string subject, string? body, List<(string, byte[])>? attachments, bool isHtml = true)
+        public async Task SendEmailResetPassword(List<string>? to, List<string>? cc, string subject, string? body, List<(string, byte[])>? attachments, bool isHtml = true)
         {
             await SendAsync(to, cc, subject, body, attachments, isHtml);
         }
@@ -78,8 +77,7 @@ namespace ServicePortals.Infrastructure.Email
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "Failed to send email to {Recipients}", string.Join(", ", to));
-                throw;
+                Log.Error($@"Send email error, message: {ex}, info: {to}, {cc}, {subject}, {body}");
             }
         }
     }

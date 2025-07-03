@@ -4,7 +4,7 @@ namespace ServicePortals.Application.Dtos.User.Requests
 {
     public class GetAllUserRequest
     {
-        public int? DepartmentId { get; set; }
+        public string? DepartmentName { get; set; }
         public int? PositionId { get; set; }
         public int? Sex { get; set; }
 

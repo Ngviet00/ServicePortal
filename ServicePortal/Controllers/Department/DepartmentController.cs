@@ -23,5 +23,13 @@ namespace ServicePortal.Controllers.Department
 
             return Ok(new BaseResponse<List<GetAllDepartmentResponse>>(200, "success", result));
         }
+
+        [HttpGet("get-all-with-distinct-name")]
+        public async Task<IActionResult> GetAllWithDistinctName()
+        {
+            var result = await _departmentService.GetAllWithDistinctName();
+
+            return Ok(new BaseResponse<List<string>>(200, "success", result));
+        }
     }
 }

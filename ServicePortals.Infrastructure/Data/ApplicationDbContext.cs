@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.Data;
+using Microsoft.EntityFrameworkCore;
 using ServicePortals.Domain.Entities;
 
 namespace ServicePortals.Infrastructure.Data
@@ -26,6 +27,8 @@ namespace ServicePortals.Infrastructure.Data
         public DbSet<RequestType> RequestTypes {  get; set; }
         public DbSet<RequestStatus> RequestStatuses {  get; set; }
         public DbSet<WorkFlowStep> WorkFlowSteps {  get; set; }
+
+        public IDbConnection CreateConnection() => Database.GetDbConnection();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

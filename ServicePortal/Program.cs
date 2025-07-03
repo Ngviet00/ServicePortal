@@ -17,7 +17,6 @@ using ServicePortals.Application.Interfaces.LeaveRequest;
 using ServicePortals.Application.Interfaces.MemoNotification;
 using ServicePortals.Application.Interfaces.Position;
 using ServicePortals.Application.Interfaces.Department;
-using ServicePortals.Application.Interfaces.HRManagement;
 using ServicePortals.Infrastructure.Data;
 using ServicePortals.Infrastructure.Services.Auth;
 using ServicePortals.Infrastructure.Services.User;
@@ -29,7 +28,6 @@ using ServicePortals.Infrastructure.Hubs;
 using ServicePortals.Infrastructure.Services.UserConfig;
 using ServicePortals.Infrastructure.Services.TimeKeeping;
 using ServicePortals.Infrastructure.Services.MemoNotification;
-using ServicePortals.Infrastructure.Services.HRManagement;
 using ServicePortals.Infrastructure.Services.Department;
 using ServicePortals.Infrastructure.Services.Position;
 using ServicePortal.Infrastructure.Cache;
@@ -118,8 +116,6 @@ namespace ServicePortal
             builder.Services.AddScoped<IMemoNotificationService, MemoNotificationService>();
 
             builder.Services.AddSingleton<ICacheService, CacheService>();
-
-            builder.Services.AddScoped<IHRManagementService, HRManagementService>();
 
             builder.Services.AddScoped<IDepartmentService, DepartmentService>();
 
