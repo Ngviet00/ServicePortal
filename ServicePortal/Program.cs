@@ -35,6 +35,10 @@ using ServicePortals.Infrastructure.Excel;
 using ServicePortals.Application.Interfaces.TimeKeeping;
 using ServicePortals.Application.Interfaces.UserConfig;
 using ServicePortals.Application.ScheduleJob;
+using ServicePortals.Application.Interfaces.OrgUnit;
+using ServicePortals.Application.Services.OrgUnit;
+using ServicePortals.Application.Interfaces.WorkFlowStep;
+using ServicePortals.Application.Services.WorkFlowStep;
 
 namespace ServicePortal
 {
@@ -132,6 +136,10 @@ namespace ServicePortal
             builder.Services.AddScoped<OrgChartService>();
 
             builder.Services.AddScoped<ExcelService>();
+
+            builder.Services.AddScoped<IOrgUnitService, OrgUnitService>();
+
+            builder.Services.AddScoped<IWorkFlowStepService, WorkFlowStepService>();
 
             #endregion
 

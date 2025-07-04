@@ -5,10 +5,10 @@ namespace ServicePortals.Domain.Entities
     [Table("memo_notifications")]
     public class MemoNotification
     {
-        public int? Id { get; set; }
+        public Guid? Id { get; set; }
         public string? Title { get; set; }
         public string? Content { get; set; }
-        public int? CreatedByDepartmentId { get; set; }
+        public int? CreatedByRoleId { get; set; }
         public DateTimeOffset? FromDate {  get; set; }
         public DateTimeOffset? ToDate { get; set; }
         public string? UserCodeCreated { get; set; }

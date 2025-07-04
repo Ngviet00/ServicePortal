@@ -49,7 +49,7 @@ namespace ServicePortal.Controllers.User
             return Ok(response);
         }
 
-        [HttpGet("get-by-id/{id}"), RoleAuthorize("HR", "HR_Manager")]
+        [HttpGet("get-by-id/{id}")]
         public async Task<IActionResult> GetById(Guid id)
         {
             UserResponse? userDto = await _userService.GetById(id);
@@ -57,7 +57,7 @@ namespace ServicePortal.Controllers.User
             return Ok(new BaseResponse<UserResponse>(200, "success", userDto));
         }
 
-        [HttpGet("get-by-code/{code}"), RoleAuthorize("HR", "HR_Manager")]
+        [HttpGet("get-by-code/{code}")]
         public async Task<IActionResult> GetByUserCode(string code)
         {
             UserResponse? userDto = await _userService.GetByUserCode(code);
@@ -104,14 +104,6 @@ namespace ServicePortal.Controllers.User
 
             return Ok(new BaseResponse<UserResponse>(200, "Success", result));
         }
-
-        //[HttpGet("org-chart"), RoleAuthorize("HR", "HR_Manager")]
-        //public async Task<IActionResult> GetUsersOrgChart([FromQuery(Name = "department_id")] int? departmentId)
-        //{
-        //    var result = await _userService.BuildTree(departmentId);
-
-        //    return Ok(new BaseResponse<OrgChartRequest>(200, "Success", result));
-        //}
 
         [HttpGet("test"), AllowAnonymous]
         public IActionResult Test()

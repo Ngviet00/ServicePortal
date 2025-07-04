@@ -7,7 +7,7 @@ namespace ServicePortals.Application.Dtos.MemoNotification
         public Guid? Id { get; set; }
         public string? Title { get; set; }
         public string? Content { get; set; }
-        public int? CreatedByDepartmentId { get; set; }
+        public int? CreatedByRoleId { get; set; }
         public bool? Status { get; set; }
         public bool? ApplyAllDepartment { get; set; }
         public DateTimeOffset? FromDate { get; set; }

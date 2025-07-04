@@ -9,9 +9,9 @@ namespace ServicePortals.Application.Interfaces.LeaveRequest
     public interface ILeaveRequestService
     {
         //Task<PagedResults<LeaveRequestDto>> GetAll(GetAllLeaveRequest request);
-        //Task<LeaveRequestDto> GetById(Guid id);
+        Task<LeaveRequestDto> GetById(Guid id);
         //Task<LeaveRequestDto?> Approval(ServicePortals.Application.Dtos.LeaveRequest.Requests.ApprovalRequests request, string currentUserCode);
-        //Task<LeaveRequestDto> Create(LeaveRequestDto dto);
+        Task<LeaveRequestDto> Create(CreateLeaveRequest request);
         //Task<LeaveRequestDto> Update(Guid id, LeaveRequestDto dto);
         //Task<LeaveRequestDto> Delete(Guid id);
         //Task<PagedResults<LeaveRequestDto>> GetAllWaitApproval(GetAllLeaveRequestWaitApprovalRequest request, ClaimsPrincipal userClaim);

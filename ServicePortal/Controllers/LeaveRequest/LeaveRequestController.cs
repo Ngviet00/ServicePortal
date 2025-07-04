@@ -13,12 +13,12 @@ namespace ServicePortal.Controllers.LeaveRequest
     [ApiController, Route("api/leave-request"), Authorize]
     public class LeaveRequestController : ControllerBase
     {
-        //private readonly ILeaveRequestService _leaveRequestService;
+        private readonly ILeaveRequestService _leaveRequestService;
 
-        //public LeaveRequestController(ILeaveRequestService leaveRequestService)
-        //{
-        //    _leaveRequestService = leaveRequestService;
-        //}
+        public LeaveRequestController(ILeaveRequestService leaveRequestService)
+        {
+            _leaveRequestService = leaveRequestService;
+        }
 
         //[HttpGet("get-all")]
         //public async Task<IActionResult> GetAll(GetAllLeaveRequest request)
@@ -61,21 +61,21 @@ namespace ServicePortal.Controllers.LeaveRequest
         //    return Ok(response);
         //}
 
-        //[HttpGet("get-by-id/{id}")]
-        //public async Task<IActionResult> GetById(Guid id)
-        //{
-        //    var result = await _leaveRequestService.GetById(id);
+        [HttpGet("get-by-id/{id}")]
+        public async Task<IActionResult> GetById(Guid id)
+        {
+            var result = await _leaveRequestService.GetById(id);
 
-        //    return Ok(new BaseResponse<LeaveRequestDto>(200, "success", result));
-        //}
+            return Ok(new BaseResponse<LeaveRequestDto>(200, "success", result));
+        }
 
-        //[HttpPost("create")]
-        //public async Task<IActionResult> Create([FromBody] LeaveRequestDto dto)
-        //{
-        //    var result = await _leaveRequestService.Create(dto);
+        [HttpPost("create")]
+        public async Task<IActionResult> Create([FromBody] CreateLeaveRequest request)
+        {
+            var result = await _leaveRequestService.Create(request);
 
-        //    return Ok(new BaseResponse<LeaveRequestDto>(200, "success", result));
-        //}
+            return Ok(new BaseResponse<LeaveRequestDto>(200, "success", result));
+        }
 
         //[HttpPut("update/{id}")]
         //public async Task<IActionResult> Update(Guid id, LeaveRequestDto dto)

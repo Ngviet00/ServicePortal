@@ -9,7 +9,7 @@ namespace ServicePortals.Application.Dtos.MemoNotification.Requests
         public string? Title { get; set; }
         [Required]
         public string? Content { get; set; }
-        public int? CreatedByDepartmentId { get; set; }
+        public string? RoleNameCreated { get; set; }
         public int[]? DepartmentIdApply { get; set; }
         public bool? Status { get; set; }
         public bool? ApplyAllDepartment { get; set; }

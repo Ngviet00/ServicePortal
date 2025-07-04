@@ -54,9 +54,9 @@ namespace ServicePortals.Infrastructure.Services.Role
             return role;
         }
 
-        public async Task<Domain.Entities.Role> GetByCode(string code)
+        public async Task<Domain.Entities.Role> GetByCodeOrName(string input)
         {
-            var role = await _context.Roles.FirstOrDefaultAsync(e => e.Code == code) ?? throw new NotFoundException("Role not found!");
+            var role = await _context.Roles.FirstOrDefaultAsync(e => e.Code == input || e.Name == input) ?? throw new NotFoundException("Role not found!");
 
             return role;
         }

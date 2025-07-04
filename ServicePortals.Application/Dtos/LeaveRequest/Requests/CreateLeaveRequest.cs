@@ -1,8 +1,6 @@
-﻿using ServicePortals.Domain.Entities;
-
-namespace ServicePortals.Application.Dtos.LeaveRequest
+﻿namespace ServicePortals.Application.Dtos.LeaveRequest.Requests
 {
-    public class LeaveRequestDto
+    public class CreateLeaveRequest
     {
         public Guid? Id { get; set; }
         public string? RequesterUserCode { get; set; } //nguoi yeu cau
@@ -20,14 +18,5 @@ namespace ServicePortals.Application.Dtos.LeaveRequest
         public string? Image { get; set; }
         public string? UrlFrontend { get; set; }
         public DateTimeOffset? CreatedAt { get; set; }
-        public TimeLeave? TimeLeave { get; set; }
-        public Domain.Entities.TypeLeave? TypeLeave { get; set; }
-        public ApplicationForm? ApprovalRequest { get; set; }
-        public HistoryApplicationForm? ApprovalAction { get; set; }
-    }
-
-    public class CreateLeaveRequestForManyPeopleRequest
-    {
-        public List<LeaveRequestDto>? Leaves { get; set; }
     }
 }
