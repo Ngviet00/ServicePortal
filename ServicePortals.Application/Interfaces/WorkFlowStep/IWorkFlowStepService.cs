@@ -8,6 +8,6 @@ namespace ServicePortals.Application.Interfaces.WorkFlowStep
 {
     public interface IWorkFlowStepService
     {
-
+        Task<Domain.Entities.WorkFlowStep?> GetWorkFlowByFromOrgUnitIdAndRequestType(int? fromOrgUnitId, int? requestTypeId);
     }
 }

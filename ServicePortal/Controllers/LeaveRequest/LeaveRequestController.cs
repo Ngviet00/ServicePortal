@@ -20,25 +20,25 @@ namespace ServicePortal.Controllers.LeaveRequest
             _leaveRequestService = leaveRequestService;
         }
 
-        //[HttpGet("get-all")]
-        //public async Task<IActionResult> GetAll(GetAllLeaveRequest request)
-        //{
-        //    var results = await _leaveRequestService.GetAll(request);
+        [HttpGet("get-all")]
+        public async Task<IActionResult> GetAll(GetAllLeaveRequest request)
+        {
+            var results = await _leaveRequestService.GetAll(request);
 
-        //    var response = new PageResponse<LeaveRequestDto>(
-        //        200,
-        //        "Success",
-        //        results.Data,
-        //        results.TotalPages,
-        //        request.Page,
-        //        request.PageSize,
-        //        results.TotalItems,
-        //        results.CountPending,
-        //        results.CountInProcess
-        //    );
+            var response = new PageResponse<LeaveRequestDto>(
+                200,
+                "Success",
+                results.Data,
+                results.TotalPages,
+                request.Page,
+                request.PageSize,
+                results.TotalItems,
+                results.CountPending,
+                results.CountInProcess
+            );
 
-        //    return Ok(response);
-        //}
+            return Ok(response);
+        }
 
         //[HttpGet("get-leave-request-wait-approval")]
         //public async Task<IActionResult> GetWaitApproval(GetAllLeaveRequestWaitApprovalRequest request)
@@ -85,13 +85,13 @@ namespace ServicePortal.Controllers.LeaveRequest
         //    return Ok(new BaseResponse<LeaveRequestDto>(200, "success", result));
         //}
 
-        //[HttpDelete("delete/{id}")]
-        //public async Task<IActionResult> Delete(Guid id)
-        //{
-        //    var result = await _leaveRequestService.Delete(id);
+        [HttpDelete("delete/{id}")]
+        public async Task<IActionResult> Delete(Guid id)
+        {
+            var result = await _leaveRequestService.Delete(id);
 
-        //    return Ok(new BaseResponse<LeaveRequestDto>(200, "success", result));
-        //}
+            return Ok(new BaseResponse<LeaveRequestDto>(200, "success", result));
+        }
 
         //[HttpPost("approval")]
         //[RoleAuthorize("leave_request.approval", "HR", "HR_Manager")]

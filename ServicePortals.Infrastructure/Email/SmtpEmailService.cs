@@ -20,6 +20,11 @@ namespace ServicePortals.Infrastructure.Email
             await SendAsync(to, cc, subject, body, attachments, isHtml);
         }
 
+        public async Task SendEmailRequestHasBeenSent(List<string>? to, List<string>? cc, string subject, string? body, List<(string, byte[])>? attachments, bool isHtml = true)
+        {
+            await SendAsync(to, cc, subject, body, attachments, isHtml);
+        }
+
         public async Task SendEmailResetPassword(List<string>? to, List<string>? cc, string subject, string? body, List<(string, byte[])>? attachments, bool isHtml = true)
         {
             await SendAsync(to, cc, subject, body, attachments, isHtml);

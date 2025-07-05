@@ -95,10 +95,10 @@ namespace ServicePortals.Infrastructure.Data
 
             //user → user_config
             modelBuilder.Entity<UserConfig>()
-                .HasOne(u => u.User)
-                .WithMany()
-                .HasForeignKey(x => x.UserCode)
-                .HasPrincipalKey(x => x.UserCode)
+                .HasOne(uc => uc.User)
+                .WithMany(u => u.UserConfigs)
+                .HasForeignKey(uc => uc.UserCode)
+                .HasPrincipalKey(u => u.UserCode)
                 .OnDelete(DeleteBehavior.Cascade);
 
             //User → UserRole

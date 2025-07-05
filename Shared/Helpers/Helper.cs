@@ -48,10 +48,10 @@ namespace ServicePortals.Infrastructure.Helpers
                 .ToList();
         }
 
-        public static string GetDescriptionFromValue<TEnum>(int value) where TEnum : Enum
+        public static string? GetDescriptionFromValue<TEnum>(int? value) where TEnum : Enum
         {
             if (!Enum.IsDefined(typeof(TEnum), value))
-                return value.ToString();
+                return value?.ToString();
 
             var enumValue = (TEnum)Enum.ToObject(typeof(TEnum), value);
             return GetDescriptionEnum(enumValue);

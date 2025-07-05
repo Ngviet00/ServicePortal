@@ -8,7 +8,7 @@ namespace ServicePortal.Applications.Modules.LeaveRequest.DTO.Requests
         public string? UserCode { get; set; }
 
         [FromQuery(Name = "Status")]
-        public string? Status { get; set; } = "PENDING"; //default pending
+        public int? Status { get; set; } = 1; //default pending
 
         [FromQuery(Name = "Page")]
         public int Page { get; set; } = 1;

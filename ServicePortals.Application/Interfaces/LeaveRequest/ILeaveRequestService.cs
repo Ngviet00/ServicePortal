@@ -8,12 +8,12 @@ namespace ServicePortals.Application.Interfaces.LeaveRequest
 {
     public interface ILeaveRequestService
     {
-        //Task<PagedResults<LeaveRequestDto>> GetAll(GetAllLeaveRequest request);
+        Task<PagedResults<LeaveRequestDto>> GetAll(GetAllLeaveRequest request);
         Task<LeaveRequestDto> GetById(Guid id);
         //Task<LeaveRequestDto?> Approval(ServicePortals.Application.Dtos.LeaveRequest.Requests.ApprovalRequests request, string currentUserCode);
         Task<LeaveRequestDto> Create(CreateLeaveRequest request);
         //Task<LeaveRequestDto> Update(Guid id, LeaveRequestDto dto);
-        //Task<LeaveRequestDto> Delete(Guid id);
+        Task<LeaveRequestDto> Delete(Guid id);
         //Task<PagedResults<LeaveRequestDto>> GetAllWaitApproval(GetAllLeaveRequestWaitApprovalRequest request, ClaimsPrincipal userClaim);
         //Task<int> CountWaitApproval(GetAllLeaveRequestWaitApprovalRequest request, ClaimsPrincipal userClaim);
         //Task<string> HrRegisterAllLeave(HrRegisterAllLeaveRequest request);

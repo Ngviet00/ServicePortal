@@ -39,6 +39,8 @@ using ServicePortals.Application.Interfaces.OrgUnit;
 using ServicePortals.Application.Services.OrgUnit;
 using ServicePortals.Application.Interfaces.WorkFlowStep;
 using ServicePortals.Application.Services.WorkFlowStep;
+using ServicePortals.Application.Interfaces;
+using ServicePortals.Application.Services;
 
 namespace ServicePortal
 {
@@ -140,6 +142,8 @@ namespace ServicePortal
             builder.Services.AddScoped<IOrgUnitService, OrgUnitService>();
 
             builder.Services.AddScoped<IWorkFlowStepService, WorkFlowStepService>();
+
+            builder.Services.AddScoped<ICommonDataService, CommonDataService>();
 
             #endregion
 

@@ -7,7 +7,7 @@ namespace ServicePortals.Application.Dtos.LeaveRequest
         public Guid? Id { get; set; }
         public string? RequesterUserCode { get; set; } //nguoi yeu cau
         public string? WriteLeaveUserCode { get; set; } //nguoi viet yeu cau
-        public string? WriteLeaveName { get; set; } //ten nguoi viet phep
+        public string? UserNameWriteLeaveRequest { get; set; } //ten nguoi viet phep
         public string? Name { get; set; }
         public string? Department { get; set; }
         public string? Position { get; set; }
@@ -22,8 +22,8 @@ namespace ServicePortals.Application.Dtos.LeaveRequest
         public DateTimeOffset? CreatedAt { get; set; }
         public TimeLeave? TimeLeave { get; set; }
         public Domain.Entities.TypeLeave? TypeLeave { get; set; }
-        public ApplicationForm? ApprovalRequest { get; set; }
-        public HistoryApplicationForm? ApprovalAction { get; set; }
+        public ApplicationForm? ApplicationForm { get; set; }
+        public HistoryApplicationForm? HistoryApplicationForm { get; set; }
     }
 
     public class CreateLeaveRequestForManyPeopleRequest
