@@ -1,12 +1,12 @@
 ﻿namespace ServicePortals.Domain.Enums
 {
-    public enum StatusLeaveRequestEnum
+    public enum StatusApplicationFormEnum
     {
-        PENDING,
-        IN_PROCESS,
-        COMPLETED,
-        REJECT,
-        WAIT_HR = -10
+        PENDING = 1,
+        IN_PROCESS = 2,
+        COMPLETE = 3,
+        WAIT_HR = 4,
+        REJECT = 5
     }
 
     public enum StatusLeaveRequestStepEnum

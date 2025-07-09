@@ -27,5 +27,34 @@ namespace ServicePortals.Application.Services.OrgUnit
 
             return data;
         }
+
+        public async Task<dynamic?> GetAllDepartmentInOrgUnit()
+        {
+            string sql = $@"SELECT Id, DeptId, Name FROM [{Global.DbViClock}].[dbo].OrgUnits WHERE UnitId = @Id";
+
+            var param = new
+            {
+                Id = 3, //3 là bộ phận
+            };
+
+            var data = await _viclockDapperContext.QueryAsync<dynamic>(sql, param);
+
+            return data;
+        }
+
+        public async Task<dynamic?> GetOrgUnitByDept(int deptId)
+        {
+            string sql = $@"SELECT Id, DeptId, Name FROM [{Global.DbViClock}].[dbo].OrgUnits WHERE UnitId = @UnitId AND ParentOrgUnitId = @deptId";
+
+            var param = new
+            {
+                UnitId = 4,
+                deptId,
+            };
+
+            var data = await _viclockDapperContext.QueryAsync<dynamic>(sql, param);
+
+            return data;
+        }
     }
 }

@@ -41,6 +41,7 @@ using ServicePortals.Application.Interfaces.WorkFlowStep;
 using ServicePortals.Application.Services.WorkFlowStep;
 using ServicePortals.Application.Interfaces;
 using ServicePortals.Application.Services;
+using Microsoft.OpenApi.Models;
 
 namespace ServicePortal
 {
@@ -135,8 +136,6 @@ namespace ServicePortal
 
             builder.Services.AddScoped<NotificationService>();
 
-            builder.Services.AddScoped<OrgChartService>();
-
             builder.Services.AddScoped<ExcelService>();
 
             builder.Services.AddScoped<IOrgUnitService, OrgUnitService>();
@@ -170,7 +169,33 @@ namespace ServicePortal
             #endregion
 
             builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen();
+            builder.Services.AddSwaggerGen(option =>
+            {
+                option.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+                {
+                    In = ParameterLocation.Header,
+                    Description = "Please enter a valid token",
+                    Name = "Authorization",
+                    Type = SecuritySchemeType.Http,
+                    BearerFormat = "JWT",
+                    Scheme = "Bearer"
+                });
+
+                option.AddSecurityRequirement(new OpenApiSecurityRequirement
+                {
+                    {
+                        new OpenApiSecurityScheme
+                        {
+                            Reference = new OpenApiReference
+                            {
+                                Type = ReferenceType.SecurityScheme,
+                                Id = "Bearer"
+                            }
+                        },
+                        new string[] { }
+                    }
+                });
+            });
 
             #region Cors
 

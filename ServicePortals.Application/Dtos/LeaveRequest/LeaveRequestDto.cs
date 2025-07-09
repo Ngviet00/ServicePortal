@@ -1,4 +1,6 @@
-﻿using ServicePortals.Domain.Entities;
+﻿using Newtonsoft.Json;
+using ServicePortals.Application.Dtos.ApplicationForm;
+using ServicePortals.Domain.Entities;
 
 namespace ServicePortals.Application.Dtos.LeaveRequest
 {
@@ -22,7 +24,7 @@ namespace ServicePortals.Application.Dtos.LeaveRequest
         public DateTimeOffset? CreatedAt { get; set; }
         public TimeLeave? TimeLeave { get; set; }
         public Domain.Entities.TypeLeave? TypeLeave { get; set; }
-        public ApplicationForm? ApplicationForm { get; set; }
+        public ApplicationFormDto? ApplicationFormDto { get; set; }
         public HistoryApplicationForm? HistoryApplicationForm { get; set; }
     }
 

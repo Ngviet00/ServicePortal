@@ -40,26 +40,26 @@ namespace ServicePortal.Controllers.LeaveRequest
             return Ok(response);
         }
 
-        //[HttpGet("get-leave-request-wait-approval")]
-        //public async Task<IActionResult> GetWaitApproval(GetAllLeaveRequestWaitApprovalRequest request)
-        //{
-        //    var userClaim = HttpContext.User;
+        [HttpGet("get-leave-request-wait-approval")]
+        public async Task<IActionResult> GetWaitApproval(GetAllLeaveRequestWaitApprovalRequest request)
+        {
+            var userClaim = HttpContext.User;
 
-        //    var results = await _leaveRequestService.GetAllWaitApproval(request, userClaim);
+            var results = await _leaveRequestService.GetAllWaitApproval(request, userClaim);
 
-        //    var response = new PageResponse<LeaveRequestDto>
-        //        (
-        //            200,
-        //            "Success",
-        //            results.Data,
-        //            results.TotalPages,
-        //            request.Page,
-        //            request.PageSize,
-        //            results.TotalItems
-        //        );
+            var response = new PageResponse<LeaveRequestDto>
+                (
+                    200,
+                    "Success",
+                    results.Data,
+                    results.TotalPages,
+                    request.Page,
+                    request.PageSize,
+                    results.TotalItems
+                );
 
-        //    return Ok(response);
-        //}
+            return Ok(response);
+        }
 
         [HttpGet("get-by-id/{id}")]
         public async Task<IActionResult> GetById(Guid id)
@@ -77,13 +77,13 @@ namespace ServicePortal.Controllers.LeaveRequest
             return Ok(new BaseResponse<LeaveRequestDto>(200, "success", result));
         }
 
-        //[HttpPut("update/{id}")]
-        //public async Task<IActionResult> Update(Guid id, LeaveRequestDto dto)
-        //{
-        //    var result = await _leaveRequestService.Update(id, dto);
+        [HttpPut("update/{id}")]
+        public async Task<IActionResult> Update(Guid id, LeaveRequestDto dto)
+        {
+            var result = await _leaveRequestService.Update(id, dto);
 
-        //    return Ok(new BaseResponse<LeaveRequestDto>(200, "success", result));
-        //}
+            return Ok(new BaseResponse<LeaveRequestDto>(200, "success", result));
+        }
 
         [HttpDelete("delete/{id}")]
         public async Task<IActionResult> Delete(Guid id)
@@ -93,26 +93,27 @@ namespace ServicePortal.Controllers.LeaveRequest
             return Ok(new BaseResponse<LeaveRequestDto>(200, "success", result));
         }
 
-        //[HttpPost("approval")]
-        //[RoleAuthorize("leave_request.approval", "HR", "HR_Manager")]
-        //public async Task<IActionResult> Approval(ServicePortals.Application.Dtos.LeaveRequest.Requests.ApprovalRequests request)
-        //{
-        //    var currentUserCode = User.FindFirst("user_code")?.Value;
+        [HttpPost("approval")]
+        public async Task<IActionResult> Approval(ApprovalRequests request)
+        {
+            var userClaim = HttpContext.User;
 
-        //    var result = await _leaveRequestService.Approval(request, currentUserCode ?? "");
+            var currentUserCode = User.FindFirst("user_code")?.Value;
 
-        //    return Ok(new BaseResponse<LeaveRequestDto>(200, "success", result));
-        //}
+            var result = await _leaveRequestService.Approval(request, currentUserCode ?? "", userClaim);
 
-        //[HttpGet("count-wait-approval")]
-        //public async Task<IActionResult> CountWaitApproval(GetAllLeaveRequestWaitApprovalRequest request)
-        //{
-        //    var userClaim = HttpContext.User;
+            return Ok(new BaseResponse<LeaveRequestDto>(200, "success", result));
+        }
 
-        //    var result = await _leaveRequestService.CountWaitApproval(request, userClaim);
+        [HttpGet("count-wait-approval")]
+        public async Task<IActionResult> CountWaitApproval(GetAllLeaveRequestWaitApprovalRequest request)
+        {
+            var userClaim = HttpContext.User;
 
-        //    return Ok(new BaseResponse<long>(200, "success", result));
-        //}
+            var result = await _leaveRequestService.CountWaitApproval(request, userClaim);
+
+            return Ok(new BaseResponse<long>(200, "success", result));
+        }
 
         //[HttpPost("hr-register-all-leave-rq")]
         //public async Task<IActionResult> HrRegisterAllLeave([FromBody] HrRegisterAllLeaveRequest request)
@@ -122,23 +123,23 @@ namespace ServicePortal.Controllers.LeaveRequest
         //    return Ok(new BaseResponse<string>(200, "success", result));
         //}
 
-        //[HttpGet("history-approval"), RoleAuthorize("HR", "HR_Manager")]
-        //public async Task<IActionResult> GetHistoryLeaveRequestApproval([FromQuery] GetAllLeaveRequest request)
-        //{
-        //    var result = await _leaveRequestService.GetHistoryLeaveRequestApproval(request);
+        [HttpGet("history-approval"), RoleAuthorize("HR", "HR_Manager")]
+        public async Task<IActionResult> GetHistoryLeaveRequestApproval([FromQuery] GetAllLeaveRequest request)
+        {
+            var result = await _leaveRequestService.GetHistoryLeaveRequestApproval(request);
 
-        //    var response = new PageResponse<HistoryLeaveRequestApprovalResponse>(
-        //        200,
-        //        "Success",
-        //        result.Data,
-        //        result.TotalPages,
-        //        request.Page,
-        //        request.PageSize,
-        //        result.TotalItems
-        //    );
+            var response = new PageResponse<LeaveRequestDto>(
+                200,
+                "Success",
+                result.Data,
+                result.TotalPages,
+                request.Page,
+                request.PageSize,
+                result.TotalItems
+            );
 
-        //    return Ok(response);
-        //}
+            return Ok(response);
+        }
 
         //[HttpPost("create-leave-for-others")]
         //public async Task<IActionResult> CreateLeaveForOther([FromBody] CreateLeaveRequestForManyPeopleRequest request)

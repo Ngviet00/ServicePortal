@@ -8,7 +8,7 @@ using ServicePortals.Application.Interfaces.User;
 
 namespace ServicePortal.Controllers.User
 {
-    [Authorize]
+    //[Authorize]
     [ApiController, Route("api/user")]
     public class UserController : ControllerBase
     {
@@ -105,13 +105,66 @@ namespace ServicePortal.Controllers.User
             return Ok(new BaseResponse<UserResponse>(200, "Success", result));
         }
 
-        [HttpGet("test"), AllowAnonymous]
-        public IActionResult Test()
+        [HttpGet("org-chart"), AllowAnonymous]
+        public async Task<IActionResult> BuildOrgChart(int departmentId)
         {
-            return Ok(38);
-            //var result = await _userService.GetEmailByUserCodeAndUserConfig(new List<string> { "22757" });
+            var result = await _userService.BuildOrgTree(departmentId);
 
-            //return Ok(new BaseResponse<List<GetEmailByUserCodeAndUserConfigResponse>>(200, "Success", result));
+            return Ok(new BaseResponse<List<OrgUnitNode>>(200, "Success", result));
+        }
+
+        [HttpGet("get-user-by-parent-org-unit-id")]
+        public async Task<IActionResult> GetUserByParentOrgUnit(int orgUnitId)
+        {
+            var results = await _userService.GetUserByParentOrgUnit(orgUnitId);
+
+            return Ok(new BaseResponse<List<object>>(200, "success", results));
+        }
+
+        [HttpGet("search-all-user-from-viclock")]
+        public async Task<IActionResult> SearchAllUserFromViClock([FromQuery] SearchAllUserFromViclockRequest request)
+        {
+            var results = await _userService.SearchAllUserFromViClock(request);
+
+            return Ok(new PageResponse<object>(
+                200,
+                "Success",
+                results.Data,
+                results.TotalPages,
+                request.Page,
+                request.PageSize,
+                results.TotalItems
+            ));
+        }
+
+        [HttpPost("update-user-have-permission-mng-timekeeping")]
+        public async Task<IActionResult> UpdateUserHavePermissionMngTimeKeeping([FromBody] List<string> userCodes)
+        {
+            var results = await _userService.UpdateUserHavePermissionMngTimeKeeping(userCodes);
+
+            return Ok(new BaseResponse<object>(200, "success", results));
+        }
+
+        [HttpGet("get-user-have-permission-mng-timekeeping")]
+        public async Task<IActionResult> GetUserHavePermissionMngTimeKeeping()
+        {
+            var results = await _userService.GetUserHavePermissionMngTimeKeeping();
+
+            return Ok(new BaseResponse<object>(200, "success", results));
+        }
+
+        [HttpPost("update-user-mng-timekeeping")]
+        public async Task<IActionResult> UpdateUserMngTimeKeeping()
+        {
+            var results = await _userService.UpdateUserMngTimeKeeping();
+
+            return Ok(new BaseResponse<object>(200, "success", results));
+        }
+
+        [HttpGet("test"), AllowAnonymous]
+        public async Task<IActionResult> Test()
+        {
+            return Ok("OK");
         }
     }
 }

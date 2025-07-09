@@ -9,6 +9,7 @@ namespace ServicePortals.Domain.Entities
         public Guid Id { get; set; }
         public Guid? ApplicationFormId { get; set; }
         public string? UserApproval { get; set; }
+        public string? UserCodeApproval { get; set; }
         public string? ActionType { get; set; } //APPROVED, REJECT
         public string? Comment { get; set; } //ghi chú
         public DateTimeOffset? CreatedAt { get; set; }

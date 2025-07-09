@@ -2,6 +2,7 @@
 using System.Text;
 using Dapper;
 using Hangfire;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 using ServicePortal.Infrastructure.Cache;
@@ -29,7 +30,6 @@ namespace ServicePortals.Infrastructure.Services.User
         public UserService(
             ApplicationDbContext context,
             NotificationService notificationService,
-            OrgChartService orgChartBuilder,
             IViclockDapperContext viclockDapperContext,
             ICacheService cacheService
         )
@@ -222,7 +222,7 @@ namespace ServicePortals.Infrastructure.Services.User
 
             string bodyMail = TemplateEmail.EmailResetPassword(password);
 
-            BackgroundJob.Enqueue<IEmailService>(job => 
+            BackgroundJob.Enqueue<IEmailService>(job =>
                 job.SendEmailResetPassword(
                     new List<string> { user.Email ?? "" },
                     null,
@@ -289,18 +289,12 @@ namespace ServicePortals.Infrastructure.Services.User
         }
         public async Task<PersonalInfoResponse?> GetMe(string UserCode)
         {
-            var result = await _cacheService.GetOrCreateAsync($"user_info_{UserCode}", async () =>
-            {
-                return await _context.Database.GetDbConnection()
+            return await _context.Database.GetDbConnection()
                     .QueryFirstOrDefaultAsync<PersonalInfoResponse>(
                         "dbo.GetUserInfoBetweenWebSystemAndViclock",
                         new { UserCode },
                         commandType: CommandType.StoredProcedure
                     );
-
-            }, expireMinutes: 10);
-
-            return result;
         }
         public async Task<object?> GetCustomColumnUserViclockByUserCode(string userCode, string columns)
         {
@@ -393,35 +387,275 @@ namespace ServicePortals.Infrastructure.Services.User
 
             return UserMapper.ToDto(user);
         }
-
-
-        public async Task<List<GetEmailByUserCodeAndUserConfigResponse>> GetEmailByUserCodeAndUserConfig(List<string> userCodes)
+        public async Task<object?> GetMultipleUserViclockByOrgUnitId(int OrgUnitId)
         {
-            return null;
-            //if (userCodes == null || userCodes.Count == 0)
-            //{
-            //    return new List<GetEmailByUserCodeAndUserConfigResponse>();
-            //}
+            var sql = $@"SELECT
+                            NVMa,
+                            NVMaNV,
+                            NVEmail,
+                            {Global.DbViClock}.dbo.funTCVN2Unicode(NVHoTen) AS NVHoTen,
+                            OrgUnitID,
+	                        Email
+                        FROM {Global.DbViClock}.[dbo].[tblNhanVien] AS NV
+                        RIGHT JOIN {Global.DbWeb}.dbo.users as U
+	                        ON NV.NVMaNV = U.UserCode
+                        WHERE
+                            NV.OrgUnitID = @OrgUnitId";
 
-            //var result = await _context.Users
-            //    .Where(u => userCodes.Contains(u.UserCode ?? ""))
-            //    .GroupJoin(
-            //        _context.UserConfigs.Where(c => c.ConfigKey == "RECEIVE_MAIL_LEAVE_REQUEST"),
-            //        u => u.UserCode,
-            //        uc => uc.UserCode,
-            //        (u, ucs) => new { u, uc = ucs.FirstOrDefault() }
-            //    )
-            //    .Where(x => x.uc == null || x.uc.ConfigValue == "true")
-            //    .Select(x => new GetEmailByUserCodeAndUserConfigResponse
-            //    {
-            //        UserCode = x.u.UserCode,
-            //        Email = x.u.Email,
-            //        ConfigKey = x.uc != null ? x.uc.ConfigKey : null,
-            //        ConfigValue = x.uc != null ? x.uc.ConfigValue : null
-            //    })
-            //    .ToListAsync();
+            return await _viclockDapperContext.QueryAsync<object?>(sql, new { OrgUnitID = OrgUnitId });
+        }
+        public async Task<List<OrgUnitNode>> BuildOrgTree(int departmentId)
+        {
+            var connection = (SqlConnection)_context.CreateConnection();
 
-            //return result;
+            if (connection.State != ConnectionState.Open)
+            {
+                await connection.OpenAsync();
+            }
+
+            var sql = $@"
+                DECLARE @departmentId_param int = @departmentId;
+
+                WITH OrgTree AS (
+                    SELECT *
+                    FROM {Global.DbViClock}.dbo.OrgUnits
+                    WHERE DeptId = @departmentId_param
+                    UNION ALL
+                    SELECT child.*
+                    FROM {Global.DbViClock}.dbo.OrgUnits child
+                    JOIN OrgTree parent ON child.ParentOrgUnitId = parent.Id
+                ),
+                MainUsers AS (
+                    SELECT
+                        ou.Id AS OrgUnitId,
+                        ou.Name AS OrgUnitName,
+                        ou.ParentJobTitleId,
+                        u.NVMaNV AS NVMaNV,
+                        u.NVHoTen
+                    FROM OrgTree ou
+                    LEFT JOIN {Global.DbViClock}.dbo.tblNhanVien u ON u.OrgUnitId = ou.Id
+                    WHERE ou.UnitId = 5 AND u.NVMaNV IS NOT NULL
+                ),
+                AddMoreUser AS (
+                    SELECT DISTINCT
+                        ou.Id AS OrgUnitId,
+                        ou.Name AS OrgUnitName,
+                        CAST(NULL AS INT) AS ParentJobTitleId, -- CAST NULL thành kiểu INT để khớp với ParentJobTitleId (int?)
+                        u.NVMaNV AS NVMaNV,
+                        u.NVHoTen
+                    FROM {Global.DbViClock}.dbo.tblNhanVien u -- Có vẻ bảng tblNhanVien và OrgUnits nằm chung vs_new
+                    JOIN {Global.DbViClock}.dbo.OrgUnits ou ON ou.Id = u.OrgUnitId
+                    WHERE ou.Id IN (
+                        SELECT DISTINCT ParentJobTitleId FROM OrgTree WHERE UnitId = 5
+                    )
+                    AND u.NVMaNV NOT IN (SELECT NVMaNV FROM MainUsers WHERE NVMaNV IS NOT NULL) AND u.NVMaNV IS NOT NULL
+                ),
+                CombinedUsers AS (
+	                SELECT 
+		                OrgUnitId,
+		                OrgUnitName,
+		                ParentJobTitleId,
+		                NVMaNV,
+		                vs_new.dbo.funTCVN2Unicode(NVHoTen) AS NVHoTen
+	                FROM MainUsers
+	                UNION ALL
+	                SELECT 
+		                OrgUnitId,
+		                OrgUnitName,
+		                ParentJobTitleId,
+		                NVMaNV,
+		                vs_new.dbo.funTCVN2Unicode(NVHoTen) AS NVHoTen
+	                FROM AddMoreUser
+                )
+                SELECT CU.* FROM CombinedUsers AS CU
+                LEFT JOIN ServicePortal.dbo.users AS U
+                on CU.NVMaNV = u.UserCode
+                ORDER BY CU.OrgUnitId ASC
+            ";
+
+            var result = await connection.QueryAsync<OrgUnitNode>(sql, new { departmentId = departmentId });
+            var orgUnits = result.ToList();
+
+            var groupedByOrgUnitId = orgUnits?.GroupBy(x => x.OrgUnitId)?.ToDictionary(g => g.Key, g => g.ToList());
+            var dict = orgUnits?.GroupBy(x => x.OrgUnitId)?.ToDictionary(g => g.Key, g => g.First());
+
+            List<OrgUnitNode> roots = new List<OrgUnitNode>();
+
+            foreach (var node in orgUnits)
+            {
+                if (node.ParentJobTitleId.HasValue)
+                {
+                    if (dict.TryGetValue(node.ParentJobTitleId.Value, out var parent))
+                    {
+                        parent.Children.Add(node);
+                        node.ParentName = parent.OrgUnitName;
+                    }
+                    else
+                    {
+                        node.ParentName = "Không có cha";
+                        roots.Add(node);
+                    }
+                }
+                else
+                {
+                    node.ParentName = "Không có cha";
+                    roots.Add(node);
+                }
+            }
+
+            return roots;
+        }
+        public async Task<dynamic?> GetUserByParentOrgUnit(int parentOrgUnitId)
+        {
+            string sql = $@"
+                SELECT NV.NVMaNV, [{Global.DbViClock}].dbo.funTCVN2Unicode(NV.NVHoTen) as NVHoTen
+
+                FROM [{Global.DbViClock}].dbo.OrgUnits AS OG
+
+                INNER JOIN [{Global.DbViClock}].dbo.tblNhanVien AS NV On OG.Id = NV.OrgUnitID
+
+                WHERE
+
+                 OG.UnitId = @UnitId AND OG.ParentOrgUnitId = @ParentOrgUnitId
+            ";
+
+            var param = new
+            {
+                UnitId = 5,
+                ParentOrgUnitId = parentOrgUnitId,
+            };
+
+            var data = await _viclockDapperContext.QueryAsync<dynamic>(sql, param);
+
+            return data;
+        }
+        public async Task<PagedResults<object>> SearchAllUserFromViClock(SearchAllUserFromViclockRequest request)
+        {
+            double pageSize = request.PageSize;
+            double page = request.Page;
+
+            var param = new
+            {
+                Key = Helper.UnicodeToTCVN(request.Keysearch ?? ""),
+                request.Page,
+                request.PageSize,
+            };
+
+            StringBuilder sbWhere = new();
+
+            sbWhere.AppendLine(" WHERE 1=1 AND NV.NVNgayRa > GETDATE()");
+
+            if (!string.IsNullOrWhiteSpace(request.Keysearch))
+            {
+                sbWhere.AppendLine(" AND (NV.NVHoTen like '%' + @Key + '%' OR NV.NVMaNV = @Key)");
+            }
+
+            StringBuilder sb = new StringBuilder();
+            sb.AppendLine(" SELECT");
+            sb.AppendLine("     NV.NVMaNV,");
+            sb.AppendLine("     dbo.funTCVN2Unicode(NV.NVHoTen) as NVHoTen,");
+            sb.AppendLine("     BP.BPMa,");
+            sb.AppendLine("     dbo.funTCVN2Unicode(BP.BPTen) as BPTen,");
+            sb.AppendLine("     NV.NVNgayVao");
+            sb.AppendLine(" FROM tblNhanVien as NV");
+
+            sb.AppendLine(" INNER JOIN tblBoPhan as BP");
+            sb.AppendLine(" ON NV.NVMaBP = BP.BPMa");
+
+            sb.AppendLine($@" {sbWhere}");
+
+            sb.AppendLine($@" GROUP BY
+                NV.NVMaNV,
+                NV.NVHoTen,
+                BP.BPMa,
+                BP.BPTen,
+                NV.NVNgayVao"
+            );
+
+            sb.AppendLine(" ORDER BY NV.NVHoTen ASC");
+            sb.AppendLine(" OFFSET (@Page - 1) * @PageSize ROWS FETCH NEXT @PageSize ROWS ONLY");
+
+            var countSql = new StringBuilder();
+            countSql.AppendLine(" SELECT COUNT(*)");
+            countSql.AppendLine(" FROM tblNhanVien AS NV");
+            countSql.AppendLine(" INNER JOIN tblBoPhan as BP ON NV.NVMaBP = BP.BPMa");
+            countSql.AppendLine($"{sbWhere}");
+
+            int totalItems = await _viclockDapperContext.QueryFirstOrDefaultAsync<int>(countSql.ToString(), param);
+
+            int totalPages = (int)Math.Ceiling(totalItems / pageSize);
+
+            var data = await _viclockDapperContext.QueryAsync<object>(sb.ToString(), param);
+
+            return new PagedResults<object>
+            {
+                Data = (List<object>)data,
+                TotalItems = totalItems,
+                TotalPages = totalPages
+            };
+        }
+
+        public async Task<object> UpdateUserHavePermissionMngTimeKeeping(List<string> userCodes)
+        {
+            var permissionMngTimekeeping = await _context.Permissions.FirstOrDefaultAsync(e => e.Name == "time_keeping.mng_time_keeping");
+
+            if (permissionMngTimekeeping == null)
+            {
+                throw new Exception("Chưa có quyền quản lý chấm công!");
+            }
+
+            var oldUserPermissionsMngTKeeping = await _context.UserPermissions.Where(e => e.PermissionId == permissionMngTimekeeping.Id).ToListAsync();
+
+            _context.UserPermissions.RemoveRange(oldUserPermissionsMngTKeeping);
+
+            List<UserPermission> newUserPermissions = new List<UserPermission>();
+
+            foreach (var code in userCodes)
+            {
+                newUserPermissions.Add(new UserPermission
+                {
+                    UserCode = code,
+                    PermissionId = permissionMngTimekeeping.Id
+                });
+            }
+
+            _context.UserPermissions.AddRange(newUserPermissions);
+
+            await _context.SaveChangesAsync();
+
+            return true;
+        }
+
+        public async Task<object> UpdateUserMngTimeKeeping(UpdateUserMngTimeKeepingRequest request)
+        {
+            return true;
+        }
+
+        public async Task<object> GetUserHavePermissionMngTimeKeeping()
+        {
+            var connection = (SqlConnection)_context.CreateConnection();
+
+            if (connection.State != ConnectionState.Open)
+            {
+                await connection.OpenAsync();
+            }
+
+            var sql = $@"
+                SELECT
+                     NV.NVMaNV,
+                     {Global.DbViClock}.dbo.funTCVN2Unicode(NV.NVHoTen) as NVHoTen,
+                     BP.BPMa,
+                     {Global.DbViClock}.dbo.funTCVN2Unicode(BP.BPTen) as BPTen
+                FROM user_permissions AS UP
+                INNER JOIN {Global.DbViClock}.dbo.tblNhanVien AS NV
+                INNER JOIN {Global.DbViClock}.dbo.tblBoPhan as BP
+                ON NV.NVMaBP = BP.BPMa
+                On UP.UserCode = NV.NVMaNV
+            ";
+
+            var result = await connection.QueryAsync<object>(sql);
+
+            return result;
         }
     }
 }

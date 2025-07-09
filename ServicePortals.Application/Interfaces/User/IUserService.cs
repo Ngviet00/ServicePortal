@@ -17,9 +17,12 @@ namespace ServicePortals.Application.Interfaces.User
         Task<bool> UpdateUserRole(UpdateUserRoleRequest request);
         Task<UserResponse> ResetPassword(ResetPasswordRequest request);
         Task<UserResponse> Update(string userCode, UpdatePersonalInfoRequest request);
-
-
-        //---------------------------------------------
-        Task<List<GetEmailByUserCodeAndUserConfigResponse>> GetEmailByUserCodeAndUserConfig(List<string> UserCodes);
+        Task<object?> GetMultipleUserViclockByOrgUnitId(int OrgUnitId);
+        Task<List<OrgUnitNode>> BuildOrgTree(int departmentId);
+        Task<dynamic?> GetUserByParentOrgUnit(int unitId);
+        Task<PagedResults<object>> SearchAllUserFromViClock(SearchAllUserFromViclockRequest request);
+        Task<object> UpdateUserHavePermissionMngTimeKeeping(List<string> userCodes);
+        Task<object> UpdateUserMngTimeKeeping();
+        Task<object> GetUserHavePermissionMngTimeKeeping(UpdateUserMngTimeKeepingRequest request);
     }
 }

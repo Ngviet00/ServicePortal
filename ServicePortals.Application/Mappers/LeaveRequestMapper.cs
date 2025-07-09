@@ -1,20 +1,36 @@
-﻿using ServicePortals.Application.Dtos.LeaveRequest;
+﻿using ServicePortals.Application.Dtos.ApplicationForm;
+using ServicePortals.Application.Dtos.LeaveRequest;
 using ServicePortals.Domain.Entities;
 
 namespace ServicePortals.Infrastructure.Mappers
 {
     public class LeaveRequestMapper
     {
-        public static LeaveRequestDto ToDto(LeaveRequest entity, ApplicationForm? applicationForm = null, HistoryApplicationForm? historyApplicationForm = null)
+        public static LeaveRequestDto ToDto(LeaveRequest entity)
         {
+            ApplicationFormDto? applicationFormDto = null;
+
+            if (entity.ApplicationForm != null)
+            {
+                applicationFormDto = new ApplicationFormDto
+                {
+                    Id = entity?.ApplicationForm?.Id,
+                    RequesterUserCode = entity?.ApplicationForm?.RequesterUserCode,
+                    RequestTypeId = entity?.ApplicationForm?.RequestTypeId,
+                    RequestStatusId = entity?.ApplicationForm?.RequestStatusId,
+                    CurrentOrgUnitId = entity?.ApplicationForm?.CurrentOrgUnitId,
+                    CreatedAt = entity?.ApplicationForm?.CreatedAt
+                };
+            }
+
             return new LeaveRequestDto
             {
-                Id = entity.Id,
-                RequesterUserCode = entity.RequesterUserCode,
-                UserNameWriteLeaveRequest = entity.UserNameWriteLeaveRequest,
-                Name = entity.Name,
-                FromDate = entity.FromDate,
-                ToDate = entity.ToDate,
+                Id = entity?.Id,
+                RequesterUserCode = entity?.RequesterUserCode,
+                UserNameWriteLeaveRequest = entity?.UserNameWriteLeaveRequest,
+                Name = entity?.Name,
+                FromDate = entity?.FromDate,
+                ToDate = entity?.ToDate,
                 TypeLeave = entity?.TypeLeave,
                 TimeLeave = entity?.TimeLeave,
                 Reason = entity?.Reason,
@@ -23,14 +39,25 @@ namespace ServicePortals.Infrastructure.Mappers
                 HaveSalary = entity?.HaveSalary,
                 Image = null,
                 CreatedAt = entity?.CreatedAt,
-                ApplicationForm = applicationForm,
-                HistoryApplicationForm = historyApplicationForm
+                ApplicationFormDto = applicationFormDto,
+                HistoryApplicationForm = entity?.ApplicationForm?.HistoryApplicationForms
+                    .Select(h => new HistoryApplicationForm
+                    {
+                        Id = h.Id,
+                        ApplicationFormId = h.ApplicationFormId,
+                        UserApproval = h.UserApproval,
+                        ActionType = h.ActionType,
+                        Comment = h.Comment,
+                        CreatedAt = h.CreatedAt
+                    })
+                    ?.OrderByDescending(x => x.CreatedAt)
+                    .FirstOrDefault()
             };
         }
 
-        public static List<LeaveRequestDto> ToDtoList(List<(LeaveRequest LeaveRequest, ApplicationForm? ApplicationForm, HistoryApplicationForm? HistoryApplicationForm)> list)
+        public static List<LeaveRequestDto> ToDtoList(List<LeaveRequest> list)
         {
-            return list.Select(x => ToDto(x.LeaveRequest, x.ApplicationForm, x.HistoryApplicationForm)).ToList();
+            return list.Select(ToDto).ToList();
         }
     }
 }

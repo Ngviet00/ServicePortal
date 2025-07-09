@@ -4,6 +4,8 @@ namespace ServicePortal.Applications.Modules.LeaveRequest.DTO.Requests
 {
     public class GetAllLeaveRequest
     {
+        public string? Keyword { get; set; }
+
         [FromQuery(Name = "UserCode")]
         public string? UserCode { get; set; }
 

@@ -134,12 +134,12 @@ namespace ServicePortals.Infrastructure.Data
                 .OnDelete(DeleteBehavior.Cascade);
 
             // User → UserPermission
-            modelBuilder.Entity<UserPermission>()
-                .HasOne(up => up.User)
-                .WithMany(u => u.UserPermissions)
-                .HasForeignKey(up => up.UserCode)
-                .HasPrincipalKey(u => u.UserCode)
-                .OnDelete(DeleteBehavior.Cascade);
+            //modelBuilder.Entity<UserPermission>()
+            //    .HasOne(up => up.User)
+            //    .WithMany(u => u.UserPermissions)
+            //    .HasForeignKey(up => up.UserCode)
+            //    .HasPrincipalKey(u => u.UserCode)
+            //    .OnDelete(DeleteBehavior.Cascade);
 
             // Permission → UserPermission
             modelBuilder.Entity<UserPermission>()
@@ -152,7 +152,7 @@ namespace ServicePortals.Infrastructure.Data
             //application_from - history_application_form
             modelBuilder.Entity<HistoryApplicationForm>()
                 .HasOne(h => h.ApplicationForm)
-                .WithMany()
+                .WithMany(a => a.HistoryApplicationForms)
                 .HasForeignKey(h => h.ApplicationFormId)
                 .OnDelete(DeleteBehavior.Cascade);
 
@@ -170,7 +170,7 @@ namespace ServicePortals.Infrastructure.Data
                 .HasForeignKey(lr => lr.TypeLeaveId)
                 .IsRequired(false);
 
-            //leave_request - time_leave
+            //leave_request - time_leavecls
             modelBuilder.Entity<LeaveRequest>()
                 .HasOne(lr => lr.TimeLeave)
                 .WithMany()

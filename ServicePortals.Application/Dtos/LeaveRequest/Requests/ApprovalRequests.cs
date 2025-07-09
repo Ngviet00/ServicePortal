@@ -2,7 +2,6 @@
 {
     public class ApprovalRequests
     {
-        public int? PositionId { get; set; }
         public string? UserCodeApproval { get; set; }
         public string? NameUserApproval { get; set; }
         public string? LeaveRequestId { get; set; }
