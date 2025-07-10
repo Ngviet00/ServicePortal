@@ -9,6 +9,6 @@ namespace ServicePortals.Application.Dtos.User.Requests
     public class UpdateUserMngTimeKeepingRequest
     {
         public string? UserCode { get; set; }
-        public List<int> UnitId { get; set; } = []; 
+        public List<int> OrgUnitId { get; set; } = []; 
     }
 }

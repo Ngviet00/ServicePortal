@@ -2,9 +2,11 @@
 using Dapper;
 using Microsoft.EntityFrameworkCore;
 using ServicePortals.Application.Dtos.TimeKeeping.Requests;
+using ServicePortals.Application.Dtos.User.Requests;
 using ServicePortals.Application.Interfaces.TimeKeeping;
 using ServicePortals.Infrastructure.Data;
 using ServicePortals.Infrastructure.Email;
+using ServicePortals.Infrastructure.Helpers;
 
 namespace ServicePortals.Infrastructure.Services.TimeKeeping
 {
@@ -59,43 +61,71 @@ namespace ServicePortals.Infrastructure.Services.TimeKeeping
                 await connection.OpenAsync();
             }
 
-            var rows = await connection.QueryAsync(
-                "sp_GetUserAttendanceTimeKeeping", //store proceduce in database service portal
-                new
-                {
-                    UserCodeManage = request.UserCode,
-                    FromDate = fromDate,
-                    ToDate = toDate,
-                    PageNumber = request.Page,
-                    request.PageSize
-                },
-                commandType: CommandType.StoredProcedure
-            );
+            var orgUnitIdQuery = $@"
+                WITH RecursiveOrg AS (
+                    SELECT o.id
+                    FROM user_mng_org_unit_time_keeping as um
+                    INNER JOIN [{Global.DbViClock}].dbo.OrgUnits as o
+                        ON um.OrgUnitId = o.id
+                    WHERE um.UserCode = {request.UserCode}
 
-            var records = rows
-                .GroupBy(r => r.NVMaNV)
-                .Select(g => new
-                {
-                    NVMaNV = g.Key,
-                    g.First().NVHoTen,
-                    g.First().BPTen,
-                    DataTimeKeeping = g.Select(r => new
-                    {
-                        r.BCNgay,
-                        r.Thu,
-                        r.CVietTat,
-                        r.BCTGDen,
-                        r.BCTGVe,
-                        r.BCTGLamNgay,
-                        r.BCTGLamToi,
-                        r.BCGhiChu,
-                        r.result
-                    }).OrderBy(r => r.BCNgay).ToList()
-                })
-                .OrderBy(r => r.NVMaNV)
-                .ToList();
+                    UNION ALL
 
-            return records;
+                    SELECT o.id
+                    FROM vs_new.dbo.OrgUnits o
+                    INNER JOIN RecursiveOrg ro ON o.ParentOrgUnitId = ro.id
+                )
+                SELECT DISTINCT id FROM RecursiveOrg
+            ";
+
+            var orgUnitIds = await connection.QueryAsync<int>(orgUnitIdQuery);
+
+            var employeeQuery = @"
+                SELECT NV.NVMaNV, vs_new.dbo.funTCVN2Unicode(NV.NVHoTen) AS NVHoTen
+                FROM vs_new.dbo.tblNhanVien AS NV
+                WHERE NV.OrgUnitId IN @ids";
+
+            var result = await connection.QueryAsync<object>(employeeQuery, new { ids = orgUnitIds });
+
+            return result;
+
+            //var rows = await connection.QueryAsync(
+            //    "sp_GetUserAttendanceTimeKeeping", //store proceduce in database service portal
+            //    new
+            //    {
+            //        UserCodeManage = request.UserCode,
+            //        FromDate = fromDate,
+            //        ToDate = toDate,
+            //        PageNumber = request.Page,
+            //        request.PageSize
+            //    },
+            //    commandType: CommandType.StoredProcedure
+            //);
+
+            //var records = rows
+            //    .GroupBy(r => r.NVMaNV)
+            //    .Select(g => new
+            //    {
+            //        NVMaNV = g.Key,
+            //        g.First().NVHoTen,
+            //        g.First().BPTen,
+            //        DataTimeKeeping = g.Select(r => new
+            //        {
+            //            r.BCNgay,
+            //            r.Thu,
+            //            r.CVietTat,
+            //            r.BCTGDen,
+            //            r.BCTGVe,
+            //            r.BCTGLamNgay,
+            //            r.BCTGLamToi,
+            //            r.BCGhiChu,
+            //            r.result
+            //        }).OrderBy(r => r.BCNgay).ToList()
+            //    })
+            //    .OrderBy(r => r.NVMaNV)
+            //    .ToList();
+
+            //return records;
         }
 
         public async Task<object> ConfirmTimeKeepingToHr(GetManagementTimeKeepingRequest request)

@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ServicePortals.Infrastructure.Data;
 
@@ -11,9 +12,11 @@ using ServicePortals.Infrastructure.Data;
 namespace ServicePortals.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250710025807_ReCreateTbleUserMngOrgUnitTimeKeeping")]
+    partial class ReCreateTbleUserMngOrgUnitTimeKeeping
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -672,14 +675,14 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                     b.Property<string>("UserCode")
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<string>("UserCode1")
-                        .HasColumnType("nvarchar(450)");
+                    b.Property<Guid?>("UserId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
 
                     b.HasIndex("PermissionId");
 
-                    b.HasIndex("UserCode1");
+                    b.HasIndex("UserId");
 
                     b.HasIndex("UserCode", "PermissionId");
 
@@ -878,8 +881,7 @@ namespace ServicePortals.Infrastructure.Data.Migrations
 
                     b.HasOne("ServicePortals.Domain.Entities.User", "User")
                         .WithMany("UserPermissions")
-                        .HasForeignKey("UserCode1")
-                        .HasPrincipalKey("UserCode");
+                        .HasForeignKey("UserId");
 
                     b.Navigation("Permission");
 

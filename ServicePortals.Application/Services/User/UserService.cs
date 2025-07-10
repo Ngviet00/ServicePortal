@@ -316,9 +316,14 @@ namespace ServicePortals.Infrastructure.Services.User
                     .ThenInclude(ur => ur.Role)
                         .ThenInclude(r => r.RolePermissions)
                             .ThenInclude(rp => rp.Permission)
-                .Include(u => u.UserPermissions)
-                    .ThenInclude(up => up.Permission)
                 .FirstOrDefaultAsync(e => e.UserCode == userCode);
+
+            var userPermissions = await _context.UserPermissions
+                .Where(up => up.UserCode == userCode)
+                .Include(up => up.Permission)
+                .ToListAsync();
+
+            user!.UserPermissions = userPermissions;
 
             return user;
         }
@@ -594,7 +599,6 @@ namespace ServicePortals.Infrastructure.Services.User
                 TotalPages = totalPages
             };
         }
-
         public async Task<object> UpdateUserHavePermissionMngTimeKeeping(List<string> userCodes)
         {
             var permissionMngTimekeeping = await _context.Permissions.FirstOrDefaultAsync(e => e.Name == "time_keeping.mng_time_keeping");
@@ -625,12 +629,29 @@ namespace ServicePortals.Infrastructure.Services.User
 
             return true;
         }
-
         public async Task<object> UpdateUserMngTimeKeeping(UpdateUserMngTimeKeepingRequest request)
         {
+            var oldData = await _context.UserMngOrgUnitTimekeepings.Where(e => e.UserCode == request.UserCode).ToListAsync();
+
+            _context.UserMngOrgUnitTimekeepings.RemoveRange(oldData);
+
+            List<UserMngOrgUnitTimekeeping> umt = [];
+
+            foreach (var orgUnitId in request.OrgUnitId)
+            {
+                umt.Add(new UserMngOrgUnitTimekeeping
+                {
+                    UserCode = request.UserCode,
+                    OrgUnitId = orgUnitId
+                });
+            }
+
+            _context.UserMngOrgUnitTimekeepings.AddRange(umt);
+
+            await _context.SaveChangesAsync();
+
             return true;
         }
-
         public async Task<object> GetUserHavePermissionMngTimeKeeping()
         {
             var connection = (SqlConnection)_context.CreateConnection();
@@ -656,6 +677,10 @@ namespace ServicePortals.Infrastructure.Services.User
             var result = await connection.QueryAsync<object>(sql);
 
             return result;
+        }
+        public async Task<dynamic> Test()
+        {
+            return 1;
         }
     }
 }

@@ -27,6 +27,7 @@ namespace ServicePortals.Infrastructure.Data
         public DbSet<RequestType> RequestTypes {  get; set; }
         public DbSet<RequestStatus> RequestStatuses {  get; set; }
         public DbSet<WorkFlowStep> WorkFlowSteps {  get; set; }
+        public DbSet<UserMngOrgUnitTimekeeping> UserMngOrgUnitTimekeepings { get; set; }
 
         public IDbConnection CreateConnection() => Database.GetDbConnection();
 
@@ -134,12 +135,10 @@ namespace ServicePortals.Infrastructure.Data
                 .OnDelete(DeleteBehavior.Cascade);
 
             // User → UserPermission
-            //modelBuilder.Entity<UserPermission>()
-            //    .HasOne(up => up.User)
-            //    .WithMany(u => u.UserPermissions)
-            //    .HasForeignKey(up => up.UserCode)
-            //    .HasPrincipalKey(u => u.UserCode)
-            //    .OnDelete(DeleteBehavior.Cascade);
+            modelBuilder.Entity<UserPermission>()
+                .HasOne(up => up.User)
+                .WithMany(u => u.UserPermissions)
+                .HasPrincipalKey(u => u.UserCode);
 
             // Permission → UserPermission
             modelBuilder.Entity<UserPermission>()

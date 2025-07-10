@@ -1,16 +1,21 @@
-﻿using ServicePortals.Application.Dtos.OrgUnit;
+﻿using Microsoft.Data.SqlClient;
+using System.Data;
+using Microsoft.EntityFrameworkCore;
 using ServicePortals.Application.Interfaces.OrgUnit;
 using ServicePortals.Infrastructure.Data;
 using ServicePortals.Infrastructure.Helpers;
+using Dapper;
 
 namespace ServicePortals.Application.Services.OrgUnit
 {
     public class OrgUnitService : IOrgUnitService
     {
+        private readonly ApplicationDbContext _context;
         private readonly IViclockDapperContext _viclockDapperContext;
 
-        public OrgUnitService (IViclockDapperContext viclockDapperContext)
+        public OrgUnitService (ApplicationDbContext context, IViclockDapperContext viclockDapperContext)
         {
+            _context = context;
             _viclockDapperContext = viclockDapperContext;
         }
 
@@ -28,33 +33,55 @@ namespace ServicePortals.Application.Services.OrgUnit
             return data;
         }
 
-        public async Task<dynamic?> GetAllDepartmentInOrgUnit()
+        public async Task<dynamic?> GetAllDepartmentAndFirstOrgUnit()
         {
-            string sql = $@"SELECT Id, DeptId, Name FROM [{Global.DbViClock}].[dbo].OrgUnits WHERE UnitId = @Id";
+            var connection = (SqlConnection)_context.CreateConnection();
 
-            var param = new
+            if (connection.State != ConnectionState.Open)
             {
-                Id = 3, //3 là bộ phận
-            };
+                await connection.OpenAsync();
+            }
 
-            var data = await _viclockDapperContext.QueryAsync<dynamic>(sql, param);
+            var sql = $@"
+                SELECT 
+                    pb.Id AS DepartmentId,
+                    pb.DeptId,
+                    pb.Name AS DepartmentName,
+                    org.Id AS OrgUnitId,
+                    org.Name AS OrgUnitName
+                FROM [{Global.DbViClock}].dbo.OrgUnits pb
+                LEFT JOIN [{Global.DbViClock}].dbo.OrgUnits org
+                    ON org.ParentOrgUnitId = pb.Id
+                WHERE pb.DeptId IS NOT NULL
+                ORDER BY pb.Id, org.Id
+            ";
 
-            return data;
+            var rawData = await connection.QueryAsync<dynamic>(sql);
+
+            var result = rawData
+                .GroupBy(x => new { x.DepartmentId, x.DepartmentName })
+                .Select(group => new
+                {
+                    id = group.Key.DepartmentId.ToString(),
+                    label = group.Key.DepartmentName,
+                    type = "department",
+                    children = group.Select(x => new
+                    {
+                        id = x.OrgUnitId.ToString(),
+                        label = x.OrgUnitName,
+                        type = "jobtitle"
+                    }).ToList()
+                })
+                .ToList();
+
+            return result;
         }
 
-        public async Task<dynamic?> GetOrgUnitByDept(int deptId)
+        public async Task<List<int?>?> GetOrgUnitBeingMngTimeKeepingByUser(string userCode)
         {
-            string sql = $@"SELECT Id, DeptId, Name FROM [{Global.DbViClock}].[dbo].OrgUnits WHERE UnitId = @UnitId AND ParentOrgUnitId = @deptId";
+            var result = await _context.UserMngOrgUnitTimekeepings.Where(e => e.UserCode == userCode).Select(x => x.OrgUnitId).ToListAsync();
 
-            var param = new
-            {
-                UnitId = 4,
-                deptId,
-            };
-
-            var data = await _viclockDapperContext.QueryAsync<dynamic>(sql, param);
-
-            return data;
+            return result;
         }
     }
 }

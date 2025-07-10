@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using ServicePortal.Filters;
 using ServicePortals.Application;
 using ServicePortals.Application.Dtos.User.Requests;
@@ -154,9 +155,9 @@ namespace ServicePortal.Controllers.User
         }
 
         [HttpPost("update-user-mng-timekeeping")]
-        public async Task<IActionResult> UpdateUserMngTimeKeeping()
+        public async Task<IActionResult> UpdateUserMngTimeKeeping(UpdateUserMngTimeKeepingRequest request)
         {
-            var results = await _userService.UpdateUserMngTimeKeeping();
+            var results = await _userService.UpdateUserMngTimeKeeping(request);
 
             return Ok(new BaseResponse<object>(200, "success", results));
         }
@@ -164,7 +165,7 @@ namespace ServicePortal.Controllers.User
         [HttpGet("test"), AllowAnonymous]
         public async Task<IActionResult> Test()
         {
-            return Ok("OK");
+            return Ok(await _userService.Test());
         }
     }
 }

@@ -5,7 +5,8 @@ using ServicePortals.Application.Interfaces.OrgUnit;
 
 namespace ServicePortal.Controllers.OrgUnit
 {
-    [ApiController, Route("api/org-unit"), Authorize]
+    [Authorize]
+    [ApiController, Route("api/org-unit")]
     public class OrgUnitController : ControllerBase
     {
         private readonly IOrgUnitService _orgUnitService;
@@ -14,20 +15,20 @@ namespace ServicePortal.Controllers.OrgUnit
             _orgUnitService = orgUnitService;
         }
 
-        [HttpGet("get-all-dept-in-org-unit")]
-        public async Task<IActionResult> GetAllDepartmentInOrgUnit()
+        [HttpGet("get-all-dept-and-first-org-unit")]
+        public async Task<IActionResult> GetAllDepartmentAndFirstOrgUnit()
         {
-            var results = await _orgUnitService.GetAllDepartmentInOrgUnit();
+            var results = await _orgUnitService.GetAllDepartmentAndFirstOrgUnit();
 
-            return Ok(new BaseResponse<List<object>>(200, "success", results));
+            return Ok(new BaseResponse<dynamic>(200, "success", results));
         }
 
-        [HttpGet("get-org-unit-by-dept")]
-        public async Task<IActionResult> GetOrgUnitByDept(int departmentId)
+        [HttpGet("get-org-unit-being-mng-timekeeping-by-user")]
+        public async Task<IActionResult> GetOrgUnitBeingMngTimeKeepingByUser([FromQuery] string userCode)
         {
-            var results = await _orgUnitService.GetOrgUnitByDept(departmentId);
+            var results = await _orgUnitService.GetOrgUnitBeingMngTimeKeepingByUser(userCode);
 
-            return Ok(new BaseResponse<List<object>>(200, "success", results));
+            return Ok(new BaseResponse<List<int?>?>(200, "success", results));
         }
     }
 }
