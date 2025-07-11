@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ServicePortal.Filters;
 using ServicePortals.Application;
+using ServicePortals.Application.Dtos.TimeKeeping.Requests;
 using ServicePortals.Application.Dtos.User.Requests;
 using ServicePortals.Application.Dtos.User.Responses;
 using ServicePortals.Application.Interfaces.User;
@@ -136,30 +137,6 @@ namespace ServicePortal.Controllers.User
                 request.PageSize,
                 results.TotalItems
             ));
-        }
-
-        [HttpPost("update-user-have-permission-mng-timekeeping")]
-        public async Task<IActionResult> UpdateUserHavePermissionMngTimeKeeping([FromBody] List<string> userCodes)
-        {
-            var results = await _userService.UpdateUserHavePermissionMngTimeKeeping(userCodes);
-
-            return Ok(new BaseResponse<object>(200, "success", results));
-        }
-
-        [HttpGet("get-user-have-permission-mng-timekeeping")]
-        public async Task<IActionResult> GetUserHavePermissionMngTimeKeeping()
-        {
-            var results = await _userService.GetUserHavePermissionMngTimeKeeping();
-
-            return Ok(new BaseResponse<object>(200, "success", results));
-        }
-
-        [HttpPost("update-user-mng-timekeeping")]
-        public async Task<IActionResult> UpdateUserMngTimeKeeping(UpdateUserMngTimeKeepingRequest request)
-        {
-            var results = await _userService.UpdateUserMngTimeKeeping(request);
-
-            return Ok(new BaseResponse<object>(200, "success", results));
         }
 
         [HttpGet("test"), AllowAnonymous]

@@ -5,12 +5,12 @@ using ServicePortal.Filters;
 using ServicePortals.Application;
 using ServicePortals.Application.Dtos.LeaveRequest;
 using ServicePortals.Application.Dtos.LeaveRequest.Requests;
-using ServicePortals.Application.Dtos.LeaveRequest.Responses;
 using ServicePortals.Application.Interfaces.LeaveRequest;
 
 namespace ServicePortal.Controllers.LeaveRequest
 {
-    [ApiController, Route("api/leave-request"), Authorize]
+    [Authorize]
+    [ApiController, Route("api/leave-request")]
     public class LeaveRequestController : ControllerBase
     {
         private readonly ILeaveRequestService _leaveRequestService;
@@ -141,12 +141,28 @@ namespace ServicePortal.Controllers.LeaveRequest
             return Ok(response);
         }
 
-        //[HttpPost("create-leave-for-others")]
-        //public async Task<IActionResult> CreateLeaveForOther([FromBody] CreateLeaveRequestForManyPeopleRequest request)
-        //{
-        //    var result = await _leaveRequestService.CreateLeaveForManyPeople(request);
+        [HttpPost("update-user-have-permission-create-multiple-leave-request")]
+        public async Task<IActionResult> UpdateUserHavePermissionCreateMultipleLeaveRequest([FromBody] List<string> UserCodes)
+        {
+            var result = await _leaveRequestService.UpdateUserHavePermissionCreateMultipleLeaveRequest(UserCodes);
 
-        //    return Ok(new BaseResponse<object>(200, "success", result));
-        //}
+            return Ok(new BaseResponse<object>(200, "success", result));
+        }
+
+        [HttpGet("get-usercode-have-permission-create-multiple-leave-request")]
+        public async Task<IActionResult> GetUserCodeHavePermissionCreateMultipleLeaveRequest()
+        {
+            var result = await _leaveRequestService.GetUserCodeHavePermissionCreateMultipleLeaveRequest();
+
+            return Ok(new BaseResponse<object>(200, "success", result));
+        }
+
+        [HttpPost("create-leave-for-others")]
+        public async Task<IActionResult> CreateLeaveForOther([FromBody] CreateLeaveRequestForManyPeopleRequest request)
+        {
+            var result = await _leaveRequestService.CreateLeaveForManyPeople(request);
+
+            return Ok(new BaseResponse<object>(200, "success", result));
+        }
     }
 }

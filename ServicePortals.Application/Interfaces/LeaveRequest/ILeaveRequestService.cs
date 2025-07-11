@@ -17,7 +17,10 @@ namespace ServicePortals.Application.Interfaces.LeaveRequest
         Task<PagedResults<LeaveRequestDto>> GetAllWaitApproval(GetAllLeaveRequestWaitApprovalRequest request, ClaimsPrincipal userClaim);
         Task<int> CountWaitApproval(GetAllLeaveRequestWaitApprovalRequest request, ClaimsPrincipal userClaim);
         Task<PagedResults<LeaveRequestDto>> GetHistoryLeaveRequestApproval(GetAllLeaveRequest request);
+        Task<object> UpdateUserHavePermissionCreateMultipleLeaveRequest(List<string> UserCodes);
+        Task<object> GetUserCodeHavePermissionCreateMultipleLeaveRequest();
+        Task<object> CreateLeaveForManyPeople(CreateLeaveRequestForManyPeopleRequest request);
+
         //Task<string> HrRegisterAllLeave(HrRegisterAllLeaveRequest request);
-        //Task<object> CreateLeaveForManyPeople(CreateLeaveRequestForManyPeopleRequest request);
     }
 }

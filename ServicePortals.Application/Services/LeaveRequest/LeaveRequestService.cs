@@ -613,6 +613,184 @@ namespace ServicePortals.Infrastructure.Services.LeaveRequest
             return data;
         }
 
+        public async Task<object> UpdateUserHavePermissionCreateMultipleLeaveRequest(List<string> UserCodes)
+        {
+            var permission = await _context.Permissions.FirstOrDefaultAsync(e => e.Name == "leave_request.create_multiple_leave_request");
+
+            if (permission == null)
+            {
+                throw new NotFoundException("Permission not found");
+            }
+
+            var permissions = await _context.UserPermissions.Where(e => e.PermissionId == permission.Id).ToListAsync();
+            _context.UserPermissions.RemoveRange(permissions);
+
+            List<UserPermission> up = [];
+
+            foreach (var item in UserCodes)
+            {
+                up.Add(new UserPermission
+                {
+                    PermissionId = permission.Id,    
+                    UserCode = item
+                });
+            }
+
+            _context.UserPermissions.AddRange(up);
+
+            await _context.SaveChangesAsync();
+
+            return true;
+        }
+
+        public async Task<object> GetUserCodeHavePermissionCreateMultipleLeaveRequest()
+        {
+            var permission = await _context.Permissions.FirstOrDefaultAsync(e => e.Name == "leave_request.create_multiple_leave_request");
+
+            if (permission == null)
+            {
+                throw new NotFoundException("Permission not found");
+            }
+
+            return await _context.UserPermissions.Where(e => e.PermissionId == permission.Id).Select(e => e.UserCode).ToListAsync();
+        }
+
+        public async Task<object> CreateLeaveForManyPeople(CreateLeaveRequestForManyPeopleRequest request)
+        {
+            return null;
+            //if (request.Leaves != null && request.Leaves.Count > 0)
+            //{
+            //    var userCodeWriteRequester = request.Leaves.First().WriteLeaveUserCode;
+
+            //    //lấy thông tin người viết đơn cho người khác
+            //    var userWriteRequester = await _context.Users
+            //        .Where(e => e.UserCode == userCodeWriteRequester)
+            //        .Select(e => new
+            //        {
+            //            e.UserCode,
+            //            e.PositionId,
+            //            e.Email
+            //        })
+            //        .FirstOrDefaultAsync() ?? throw new NotFoundException("User not found!");
+
+            //    //luồng duyệt
+            //    var approvalFlow = await _context.ApprovalFlows
+            //        .Where(e => e.FromPosition == userWriteRequester.PositionId)
+            //        .Select(x => new
+            //        {
+            //            x.ToPosition
+            //        })
+            //        .FirstOrDefaultAsync();
+
+            //    //nếu hết người duyệt, gửi đến HR
+            //    if (approvalFlow == null)
+            //    {
+            //        foreach (var itemLeave in request.Leaves)
+            //        {
+            //            //lưu bảng leave_requests và approval_requests
+            //            var newLeave = LeaveRequestMapper.ToEntity(itemLeave);
+            //            _context.LeaveRequests.Add(newLeave);
+
+            //            _context.ApprovalRequests.Add(new Domain.Entities.ApplicationForm
+            //            {
+            //                RequesterUserCode = itemLeave.RequesterUserCode,
+            //                RequestType = "LEAVE_REQUEST",
+            //                RequestId = newLeave.Id,
+            //                Status = "IN_PROCESS",
+            //                CurrentPositionId = (int)StatusLeaveRequestEnum.WAIT_HR,
+            //                CreatedAt = DateTimeOffset.Now
+            //            });
+
+            //            await _context.SaveChangesAsync();
+            //        }
+
+            //        return true;
+            //    }
+
+            //    //lấy những người duyệt tiếp theo
+            //    var userHaveNextPosition = await _context.Users
+            //        .Where(e => e.PositionId == approvalFlow.ToPosition)
+            //        .Select(x => new
+            //        {
+            //            x.PositionId,
+            //            x.Email
+            //        })
+            //        .ToListAsync();
+
+            //    foreach (var itemLeave in request.Leaves)
+            //    {
+            //        var newLeave = LeaveRequestMapper.ToEntity(itemLeave);
+            //        _context.LeaveRequests.Add(newLeave);
+
+            //        _context.ApprovalRequests.Add(new Domain.Entities.ApplicationForm
+            //        {
+            //            RequesterUserCode = itemLeave.RequesterUserCode,
+            //            RequestType = "LEAVE_REQUEST",
+            //            RequestId = newLeave.Id,
+            //            Status = "PENDING",
+            //            CurrentPositionId = approvalFlow.ToPosition,
+            //            CreatedAt = DateTimeOffset.Now
+            //        });
+            //    }
+
+            //    //gửi email đến người duyệt tiếp theo
+            //    var toEmails = new List<string>();
+            //    foreach (var item in userHaveNextPosition)
+            //    {
+            //        toEmails.Add(!string.IsNullOrWhiteSpace(item.Email) ? item.Email : Global.EmailDefault);
+            //    }
+
+            //    //gửi email cho người xin nghỉ, check kiểm tra người dùng có config nhận thông báo email không
+            //    //nếu như check là k nhận thông báo thì k gửi, ngược lại các trường hợp sẽ gửi
+            //    var ccEmails = new List<string>();
+            //    var getEmailByUserCodeAndUserConfig = await _userService.GetEmailByUserCodeAndUserConfig([.. request.Leaves.Select(x => x.RequesterUserCode)]);
+
+            //    foreach (var item in getEmailByUserCodeAndUserConfig)
+            //    {
+            //        ccEmails.Add(!string.IsNullOrWhiteSpace(item.Email) ? item.Email : Global.EmailDefault);
+            //    }
+
+            //    ccEmails.Add(!string.IsNullOrWhiteSpace(userWriteRequester.Email) ? userWriteRequester.Email : Global.EmailDefault);
+
+            //    string? requester = request.Leaves?.Count == 1 ? request.Leaves?.FirstOrDefault()?.RequesterUserCode : $"{request.Leaves?.Count} người";
+
+            //    string subject = $"Đơn xin nghỉ phép - {requester}";
+
+            //    string urlWaitApproval = $"{request.Leaves?.FirstOrDefault()?.UrlFrontend}/leave/wait-approval";
+
+            //    string bodyMail = $@"
+            //        <h4>
+            //            <span>Duyệt đơn: </span>
+            //            <a href={urlWaitApproval}>{urlWaitApproval}</a>
+            //        </h4>";
+
+            //    if (request.Leaves != null && request.Leaves.Count > 0)
+            //    {
+            //        foreach (var itemLeave in request.Leaves)
+            //        {
+            //            bodyMail += FormatContentMailLeaveRequest(LeaveRequestMapper.ToEntity(itemLeave)) + "<br/>";
+            //        }
+            //    }
+
+            //    BackgroundJob.Enqueue<IEmailService>(job =>
+            //        job.SendEmailAsync(
+            //            toEmails,
+            //            ccEmails,
+            //            subject,
+            //            bodyMail,
+            //            null,
+            //            true
+            //        )
+            //    );
+
+            //    await _context.SaveChangesAsync();
+
+            //    return true;
+            //}
+
+            //throw new Exception("Không có người nào xin nghỉ phép");
+        }
+
         //public async Task<string> HrRegisterAllLeave(HrRegisterAllLeaveRequest request)
         //{
         //    var statusList = new[] {
@@ -672,141 +850,6 @@ namespace ServicePortals.Infrastructure.Services.LeaveRequest
         //    await _context.SaveChangesAsync();
 
         //    return "success" ?? "error";
-        //}
-
-        //public async Task<object> CreateLeaveForManyPeople(CreateLeaveRequestForManyPeopleRequest request)
-        //{
-        //    if (request.Leaves != null && request.Leaves.Count > 0)
-        //    {
-        //        var userCodeWriteRequester = request.Leaves.First().WriteLeaveUserCode;
-
-        //        //lấy thông tin người viết đơn cho người khác
-        //        var userWriteRequester = await _context.Users
-        //            .Where(e => e.UserCode == userCodeWriteRequester)
-        //            .Select(e => new
-        //            {
-        //                e.UserCode,
-        //                e.PositionId,
-        //                e.Email
-        //            })
-        //            .FirstOrDefaultAsync() ?? throw new NotFoundException("User not found!");
-
-        //        //luồng duyệt
-        //        var approvalFlow = await _context.ApprovalFlows
-        //            .Where(e => e.FromPosition == userWriteRequester.PositionId)
-        //            .Select(x => new
-        //            {
-        //                x.ToPosition
-        //            })
-        //            .FirstOrDefaultAsync();
-
-        //        //nếu hết người duyệt, gửi đến HR
-        //        if (approvalFlow == null)
-        //        {
-        //            foreach (var itemLeave in request.Leaves)
-        //            {
-        //                //lưu bảng leave_requests và approval_requests
-        //                var newLeave = LeaveRequestMapper.ToEntity(itemLeave);
-        //                _context.LeaveRequests.Add(newLeave);
-
-        //                _context.ApprovalRequests.Add(new Domain.Entities.ApplicationForm
-        //                {
-        //                    RequesterUserCode = itemLeave.RequesterUserCode,
-        //                    RequestType = "LEAVE_REQUEST",
-        //                    RequestId = newLeave.Id,
-        //                    Status = "IN_PROCESS",
-        //                    CurrentPositionId = (int)StatusLeaveRequestEnum.WAIT_HR,
-        //                    CreatedAt = DateTimeOffset.Now
-        //                });
-
-        //                await _context.SaveChangesAsync();
-        //            }
-
-        //            return true;
-        //        }
-
-        //        //lấy những người duyệt tiếp theo
-        //        var userHaveNextPosition = await _context.Users
-        //            .Where(e => e.PositionId == approvalFlow.ToPosition)
-        //            .Select(x => new
-        //            {
-        //                x.PositionId,
-        //                x.Email
-        //            })
-        //            .ToListAsync();
-
-        //        foreach (var itemLeave in request.Leaves)
-        //        {
-        //            var newLeave = LeaveRequestMapper.ToEntity(itemLeave);
-        //            _context.LeaveRequests.Add(newLeave);
-
-        //            _context.ApprovalRequests.Add(new Domain.Entities.ApplicationForm
-        //            {
-        //                RequesterUserCode = itemLeave.RequesterUserCode,
-        //                RequestType = "LEAVE_REQUEST",
-        //                RequestId = newLeave.Id,
-        //                Status = "PENDING",
-        //                CurrentPositionId = approvalFlow.ToPosition,
-        //                CreatedAt = DateTimeOffset.Now
-        //            });
-        //        }
-
-        //        //gửi email đến người duyệt tiếp theo
-        //        var toEmails = new List<string>();
-        //        foreach (var item in userHaveNextPosition)
-        //        {
-        //            toEmails.Add(!string.IsNullOrWhiteSpace(item.Email) ? item.Email : Global.EmailDefault);
-        //        }
-
-        //        //gửi email cho người xin nghỉ, check kiểm tra người dùng có config nhận thông báo email không
-        //        //nếu như check là k nhận thông báo thì k gửi, ngược lại các trường hợp sẽ gửi
-        //        var ccEmails = new List<string>();
-        //        var getEmailByUserCodeAndUserConfig = await _userService.GetEmailByUserCodeAndUserConfig([.. request.Leaves.Select(x => x.RequesterUserCode)]);
-
-        //        foreach (var item in getEmailByUserCodeAndUserConfig)
-        //        {
-        //            ccEmails.Add(!string.IsNullOrWhiteSpace(item.Email) ? item.Email : Global.EmailDefault);
-        //        }
-
-        //        ccEmails.Add(!string.IsNullOrWhiteSpace(userWriteRequester.Email) ? userWriteRequester.Email : Global.EmailDefault);
-
-        //        string? requester = request.Leaves?.Count == 1 ? request.Leaves?.FirstOrDefault()?.RequesterUserCode : $"{request.Leaves?.Count} người";
-
-        //        string subject = $"Đơn xin nghỉ phép - {requester}";
-
-        //        string urlWaitApproval = $"{request.Leaves?.FirstOrDefault()?.UrlFrontend}/leave/wait-approval";
-
-        //        string bodyMail = $@"
-        //            <h4>
-        //                <span>Duyệt đơn: </span>
-        //                <a href={urlWaitApproval}>{urlWaitApproval}</a>
-        //            </h4>";
-
-        //        if (request.Leaves != null && request.Leaves.Count > 0)
-        //        {
-        //            foreach (var itemLeave in request.Leaves)
-        //            {
-        //                bodyMail += FormatContentMailLeaveRequest(LeaveRequestMapper.ToEntity(itemLeave)) + "<br/>";
-        //            }
-        //        }
-
-        //        BackgroundJob.Enqueue<IEmailService>(job => 
-        //            job.SendEmailAsync(
-        //                toEmails, 
-        //                ccEmails,
-        //                subject,
-        //                bodyMail,
-        //                null,
-        //                true
-        //            )
-        //        );
-
-        //        await _context.SaveChangesAsync();
-
-        //        return true;
-        //    }
-
-        //    throw new Exception("Không có người nào xin nghỉ phép");
         //}
     }
 }

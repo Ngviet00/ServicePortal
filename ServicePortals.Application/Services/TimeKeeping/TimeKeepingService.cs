@@ -1,12 +1,14 @@
 ﻿using System.Data;
 using Dapper;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using ServicePortals.Application.Dtos.TimeKeeping.Requests;
-using ServicePortals.Application.Dtos.User.Requests;
 using ServicePortals.Application.Interfaces.TimeKeeping;
+using ServicePortals.Domain.Entities;
 using ServicePortals.Infrastructure.Data;
 using ServicePortals.Infrastructure.Email;
 using ServicePortals.Infrastructure.Helpers;
+using ServicePortals.Shared.Exceptions;
 
 namespace ServicePortals.Infrastructure.Services.TimeKeeping
 {
@@ -152,6 +154,114 @@ namespace ServicePortals.Infrastructure.Services.TimeKeeping
             //        false
             //    )
             //);
+
+            return true;
+        }
+
+        public async Task<object> UpdateUserHavePermissionMngTimeKeeping(List<string> userCodes)
+        {
+            var permissionMngTimekeeping = await _context.Permissions.FirstOrDefaultAsync(e => e.Name == "time_keeping.mng_time_keeping");
+
+            if (permissionMngTimekeeping == null)
+            {
+                throw new Exception("Chưa có quyền quản lý chấm công!");
+            }
+
+            var oldUserPermissionsMngTKeeping = await _context.UserPermissions.Where(e => e.PermissionId == permissionMngTimekeeping.Id).ToListAsync();
+
+            _context.UserPermissions.RemoveRange(oldUserPermissionsMngTKeeping);
+
+            List<UserPermission> newUserPermissions = new List<UserPermission>();
+
+            foreach (var code in userCodes)
+            {
+                newUserPermissions.Add(new UserPermission
+                {
+                    UserCode = code,
+                    PermissionId = permissionMngTimekeeping.Id
+                });
+            }
+
+            _context.UserPermissions.AddRange(newUserPermissions);
+
+            await _context.SaveChangesAsync();
+
+            return true;
+        }
+        public async Task<object> UpdateUserMngTimeKeeping(UpdateUserMngTimeKeepingRequest request)
+        {
+            var oldData = await _context.UserMngOrgUnitTimekeepings.Where(e => e.UserCode == request.UserCode).ToListAsync();
+
+            _context.UserMngOrgUnitTimekeepings.RemoveRange(oldData);
+
+            List<UserMngOrgUnitTimekeeping> umt = [];
+
+            foreach (var orgUnitId in request.OrgUnitId)
+            {
+                umt.Add(new UserMngOrgUnitTimekeeping
+                {
+                    UserCode = request.UserCode,
+                    OrgUnitId = orgUnitId
+                });
+            }
+
+            _context.UserMngOrgUnitTimekeepings.AddRange(umt);
+
+            await _context.SaveChangesAsync();
+
+            return true;
+        }
+        public async Task<object> GetUserHavePermissionMngTimeKeeping()
+        {
+            var permissionMngTimeKeeping = await _context.Permissions.FirstOrDefaultAsync(e => e.Name == "time_keeping.mng_time_keeping");
+
+            if (permissionMngTimeKeeping == null)
+            {
+                throw new NotFoundException("Permission manage time keeping not found");
+            }
+
+            var connection = (SqlConnection)_context.CreateConnection();
+
+            if (connection.State != ConnectionState.Open)
+            {
+                await connection.OpenAsync();
+            }
+
+            var sql = $@"
+                SELECT
+                     NV.NVMaNV,
+                     {Global.DbViClock}.dbo.funTCVN2Unicode(NV.NVHoTen) as NVHoTen,
+                     BP.BPMa,
+                     {Global.DbViClock}.dbo.funTCVN2Unicode(BP.BPTen) as BPTen
+                FROM user_permissions AS UP
+                INNER JOIN {Global.DbViClock}.dbo.tblNhanVien AS NV
+                INNER JOIN {Global.DbViClock}.dbo.tblBoPhan as BP
+                ON NV.NVMaBP = BP.BPMa
+                On UP.UserCode = NV.NVMaNV
+                WHERE UP.PermissionId = @PermissionId
+            ";
+
+            var param = new
+            {
+                PermissionId = permissionMngTimeKeeping.Id
+            };
+
+            var result = await connection.QueryAsync<object>(sql, param);
+
+            return result;
+        }
+        public async Task<object> ChangeUserMngTimeKeeping(ChangeUserMngTimeKeepingRequest request)
+        {
+            var old = await _context.UserMngOrgUnitTimekeepings.Where(e => e.UserCode == request.OldUserCode).ToListAsync();
+
+            foreach (var item in old)
+            {
+                item.UserCode = request.NewUserCode;
+            }
+
+            _context.UserMngOrgUnitTimekeepings.UpdateRange(old);
+
+            await _context.SaveChangesAsync();
 
             return true;
         }

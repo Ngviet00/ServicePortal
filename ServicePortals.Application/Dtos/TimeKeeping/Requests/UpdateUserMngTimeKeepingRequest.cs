@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ServicePortals.Application.Dtos.User.Requests
+namespace ServicePortals.Application.Dtos.TimeKeeping.Requests
 {
     public class UpdateUserMngTimeKeepingRequest
     {

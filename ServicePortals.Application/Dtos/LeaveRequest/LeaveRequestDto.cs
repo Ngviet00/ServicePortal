@@ -1,5 +1,4 @@
-﻿using Newtonsoft.Json;
-using ServicePortals.Application.Dtos.ApplicationForm;
+﻿using ServicePortals.Application.Dtos.ApplicationForm;
 using ServicePortals.Domain.Entities;
 
 namespace ServicePortals.Application.Dtos.LeaveRequest

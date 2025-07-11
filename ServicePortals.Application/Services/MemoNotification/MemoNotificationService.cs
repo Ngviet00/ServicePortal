@@ -225,7 +225,7 @@ namespace ServicePortals.Infrastructure.Services.MemoNotification
                         FileName = file.FileName,
                         ContentType = file.ContentType,
                         FileData = ms.ToArray(),
-                        CreatedAt = DateTimeOffset.UtcNow
+                        CreatedAt = DateTimeOffset.Now
                     };
                     listEntityFiles.Add(attach);
 
@@ -288,7 +288,7 @@ namespace ServicePortals.Infrastructure.Services.MemoNotification
                         FileName = file.FileName,
                         ContentType = file.ContentType,
                         FileData = ms.ToArray(),
-                        CreatedAt = DateTimeOffset.UtcNow
+                        CreatedAt = DateTimeOffset.Now
                     };
                     listEntityFiles.Add(attach);
 

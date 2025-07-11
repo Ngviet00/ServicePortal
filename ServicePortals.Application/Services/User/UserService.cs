@@ -8,6 +8,7 @@ using Serilog;
 using ServicePortal.Infrastructure.Cache;
 using ServicePortals.Application;
 using ServicePortals.Application.Common;
+using ServicePortals.Application.Dtos.TimeKeeping.Requests;
 using ServicePortals.Application.Dtos.User.Requests;
 using ServicePortals.Application.Dtos.User.Responses;
 using ServicePortals.Application.Interfaces.User;
@@ -599,85 +600,7 @@ namespace ServicePortals.Infrastructure.Services.User
                 TotalPages = totalPages
             };
         }
-        public async Task<object> UpdateUserHavePermissionMngTimeKeeping(List<string> userCodes)
-        {
-            var permissionMngTimekeeping = await _context.Permissions.FirstOrDefaultAsync(e => e.Name == "time_keeping.mng_time_keeping");
 
-            if (permissionMngTimekeeping == null)
-            {
-                throw new Exception("Chưa có quyền quản lý chấm công!");
-            }
-
-            var oldUserPermissionsMngTKeeping = await _context.UserPermissions.Where(e => e.PermissionId == permissionMngTimekeeping.Id).ToListAsync();
-
-            _context.UserPermissions.RemoveRange(oldUserPermissionsMngTKeeping);
-
-            List<UserPermission> newUserPermissions = new List<UserPermission>();
-
-            foreach (var code in userCodes)
-            {
-                newUserPermissions.Add(new UserPermission
-                {
-                    UserCode = code,
-                    PermissionId = permissionMngTimekeeping.Id
-                });
-            }
-
-            _context.UserPermissions.AddRange(newUserPermissions);
-
-            await _context.SaveChangesAsync();
-
-            return true;
-        }
-        public async Task<object> UpdateUserMngTimeKeeping(UpdateUserMngTimeKeepingRequest request)
-        {
-            var oldData = await _context.UserMngOrgUnitTimekeepings.Where(e => e.UserCode == request.UserCode).ToListAsync();
-
-            _context.UserMngOrgUnitTimekeepings.RemoveRange(oldData);
-
-            List<UserMngOrgUnitTimekeeping> umt = [];
-
-            foreach (var orgUnitId in request.OrgUnitId)
-            {
-                umt.Add(new UserMngOrgUnitTimekeeping
-                {
-                    UserCode = request.UserCode,
-                    OrgUnitId = orgUnitId
-                });
-            }
-
-            _context.UserMngOrgUnitTimekeepings.AddRange(umt);
-
-            await _context.SaveChangesAsync();
-
-            return true;
-        }
-        public async Task<object> GetUserHavePermissionMngTimeKeeping()
-        {
-            var connection = (SqlConnection)_context.CreateConnection();
-
-            if (connection.State != ConnectionState.Open)
-            {
-                await connection.OpenAsync();
-            }
-
-            var sql = $@"
-                SELECT
-                     NV.NVMaNV,
-                     {Global.DbViClock}.dbo.funTCVN2Unicode(NV.NVHoTen) as NVHoTen,
-                     BP.BPMa,
-                     {Global.DbViClock}.dbo.funTCVN2Unicode(BP.BPTen) as BPTen
-                FROM user_permissions AS UP
-                INNER JOIN {Global.DbViClock}.dbo.tblNhanVien AS NV
-                INNER JOIN {Global.DbViClock}.dbo.tblBoPhan as BP
-                ON NV.NVMaBP = BP.BPMa
-                On UP.UserCode = NV.NVMaNV
-            ";
-
-            var result = await connection.QueryAsync<object>(sql);
-
-            return result;
-        }
         public async Task<dynamic> Test()
         {
             return 1;

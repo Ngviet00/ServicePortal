@@ -37,5 +37,37 @@ namespace ServicePortal.Controllers.TimeKeeping
             var results = await _timeKeepingService.ConfirmTimeKeepingToHr(request);
             return Ok(new BaseResponse<object>(200, "Success", results));
         }
+
+        [HttpPost("update-user-have-permission-mng-timekeeping")]
+        public async Task<IActionResult> UpdateUserHavePermissionMngTimeKeeping([FromBody] List<string> userCodes)
+        {
+            var results = await _timeKeepingService.UpdateUserHavePermissionMngTimeKeeping(userCodes);
+
+            return Ok(new BaseResponse<object>(200, "success", results));
+        }
+
+        [HttpGet("get-user-have-permission-mng-timekeeping")]
+        public async Task<IActionResult> GetUserHavePermissionMngTimeKeeping()
+        {
+            var results = await _timeKeepingService.GetUserHavePermissionMngTimeKeeping();
+
+            return Ok(new BaseResponse<object>(200, "success", results));
+        }
+
+        [HttpPost("update-user-mng-timekeeping")]
+        public async Task<IActionResult> UpdateUserMngTimeKeeping(UpdateUserMngTimeKeepingRequest request)
+        {
+            var results = await _timeKeepingService.UpdateUserMngTimeKeeping(request);
+
+            return Ok(new BaseResponse<object>(200, "success", results));
+        }
+
+        [HttpPost("change-user-mng-timekeeping")]
+        public async Task<IActionResult> ChangeUserMngTimeKeeping(ChangeUserMngTimeKeepingRequest request)
+        {
+            var results = await _timeKeepingService.ChangeUserMngTimeKeeping(request);
+
+            return Ok(new BaseResponse<object>(200, "success", results));
+        }
     }
 }
