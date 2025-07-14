@@ -32,11 +32,10 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                 name: "memo_notifications",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     Title = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Content = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    CreatedByDepartmentId = table.Column<int>(type: "int", nullable: true),
+                    CreatedByRoleId = table.Column<int>(type: "int", nullable: true),
                     FromDate = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
                     ToDate = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
                     UserCodeCreated = table.Column<string>(type: "nvarchar(max)", nullable: true),
@@ -143,11 +142,27 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Name = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Note = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                    Note = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    NameE = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_type_leaves", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "user_mng_org_unit_id",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    UserCode = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    OrgUnitId = table.Column<int>(type: "int", nullable: true),
+                    ManagementType = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_user_mng_org_unit_id", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -215,7 +230,7 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    MemoNotificationId = table.Column<int>(type: "int", nullable: true),
+                    MemoNotificationId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     DepartmentId = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
@@ -225,8 +240,7 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                         name: "FK_memo_notification_departments_memo_notifications_MemoNotificationId",
                         column: x => x.MemoNotificationId,
                         principalTable: "memo_notifications",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -241,18 +255,6 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_role_permissions", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_role_permissions_permissions_PermissionId",
-                        column: x => x.PermissionId,
-                        principalTable: "permissions",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_role_permissions_roles_RoleId",
-                        column: x => x.RoleId,
-                        principalTable: "roles",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -271,21 +273,6 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_application_forms", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_application_forms_request_statuses_RequestStatusId",
-                        column: x => x.RequestStatusId,
-                        principalTable: "request_statuses",
-                        principalColumn: "Id");
-                    table.ForeignKey(
-                        name: "FK_application_forms_request_types_RequestTypeId",
-                        column: x => x.RequestTypeId,
-                        principalTable: "request_types",
-                        principalColumn: "Id");
-                    table.ForeignKey(
-                        name: "FK_application_forms_users_UserId",
-                        column: x => x.UserId,
-                        principalTable: "users",
-                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -295,23 +282,11 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     UserCode = table.Column<string>(type: "nvarchar(450)", nullable: true),
                     Key = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Value = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
+                    Value = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_user_configs", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_user_configs_users_UserCode",
-                        column: x => x.UserCode,
-                        principalTable: "users",
-                        principalColumn: "UserCode",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_user_configs_users_UserId",
-                        column: x => x.UserId,
-                        principalTable: "users",
-                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -326,18 +301,6 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_user_permissions", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_user_permissions_permissions_PermissionId",
-                        column: x => x.PermissionId,
-                        principalTable: "permissions",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_user_permissions_users_UserCode",
-                        column: x => x.UserCode,
-                        principalTable: "users",
-                        principalColumn: "UserCode",
-                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -352,52 +315,24 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_user_roles", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_user_roles_roles_RoleId",
-                        column: x => x.RoleId,
-                        principalTable: "roles",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_user_roles_users_UserCode",
-                        column: x => x.UserCode,
-                        principalTable: "users",
-                        principalColumn: "UserCode",
-                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
-                name: "approval_actions",
+                name: "history_application_forms",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     ApplicationFormId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     UserApproval = table.Column<string>(type: "nvarchar(450)", nullable: true),
+                    UserCodeApproval = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     ActionType = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Comment = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     CreatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
-                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    ApplicationFormId1 = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
+                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_approval_actions", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_approval_actions_application_forms_ApplicationFormId",
-                        column: x => x.ApplicationFormId,
-                        principalTable: "application_forms",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_approval_actions_application_forms_ApplicationFormId1",
-                        column: x => x.ApplicationFormId1,
-                        principalTable: "application_forms",
-                        principalColumn: "Id");
-                    table.ForeignKey(
-                        name: "FK_approval_actions_users_UserId",
-                        column: x => x.UserId,
-                        principalTable: "users",
-                        principalColumn: "Id");
+                    table.PrimaryKey("PK_history_application_forms", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -410,6 +345,7 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                     Name = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Department = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Position = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    UserCodeWriteLeaveRequest = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     UserNameWriteLeaveRequest = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     FromDate = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
                     ToDate = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
@@ -418,32 +354,13 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                     Reason = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     HaveSalary = table.Column<byte>(type: "tinyint", nullable: true),
                     CreatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
+                    UserCode = table.Column<string>(type: "nvarchar(450)", nullable: true),
                     UpdateAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
                     DeletedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_leave_requests", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_leave_requests_application_forms_ApplicationFormId",
-                        column: x => x.ApplicationFormId,
-                        principalTable: "application_forms",
-                        principalColumn: "Id");
-                    table.ForeignKey(
-                        name: "FK_leave_requests_time_leaves_TimeLeaveId",
-                        column: x => x.TimeLeaveId,
-                        principalTable: "time_leaves",
-                        principalColumn: "Id");
-                    table.ForeignKey(
-                        name: "FK_leave_requests_type_leaves_TypeLeaveId",
-                        column: x => x.TypeLeaveId,
-                        principalTable: "type_leaves",
-                        principalColumn: "Id");
-                    table.ForeignKey(
-                        name: "FK_leave_requests_users_RequesterUserCode",
-                        column: x => x.RequesterUserCode,
-                        principalTable: "users",
-                        principalColumn: "UserCode");
                 });
 
             migrationBuilder.InsertData(
@@ -452,7 +369,9 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                 values: new object[,]
                 {
                     { 1, "LEAVE_REQUEST", "leave_request.create_leave_request" },
-                    { 2, "LEAVE_REQUEST", "leave_request.send_to_hr" }
+                    { 2, "LEAVE_REQUEST", "leave_request.send_to_hr" },
+                    { 3, "TIME_KEEPING", "time_keeping.mng_time_keeping" },
+                    { 4, "LEAVE_REQUEST", "leave_request.create_multiple_leave_request" }
                 });
 
             migrationBuilder.InsertData(
@@ -469,15 +388,15 @@ namespace ServicePortals.Infrastructure.Data.Migrations
 
             migrationBuilder.InsertData(
                 table: "type_leaves",
-                columns: new[] { "Id", "Name", "Note" },
+                columns: new[] { "Id", "Name", "NameE", "Note" },
                 values: new object[,]
                 {
-                    { 1, "Annual", "type_leave.annual" },
-                    { 2, "Personal", "type_leave.personal" },
-                    { 3, "Sick", "type_leave.sick" },
-                    { 4, "Wedding", "type_leave.wedding" },
-                    { 5, "Accident", "type_leave.accident" },
-                    { 6, "Other", "type_leave.other" }
+                    { 1, "Annual", null, "type_leave.annual" },
+                    { 2, "Personal", null, "type_leave.personal" },
+                    { 3, "Sick", null, "type_leave.sick" },
+                    { 4, "Wedding", null, "type_leave.wedding" },
+                    { 5, "Accident", null, "type_leave.accident" },
+                    { 6, "Other", null, "type_leave.other" }
                 });
 
             migrationBuilder.InsertData(
@@ -523,21 +442,6 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_approval_actions_ApplicationFormId_UserApproval",
-                table: "approval_actions",
-                columns: new[] { "ApplicationFormId", "UserApproval" });
-
-            migrationBuilder.CreateIndex(
-                name: "IX_approval_actions_ApplicationFormId1",
-                table: "approval_actions",
-                column: "ApplicationFormId1");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_approval_actions_UserId",
-                table: "approval_actions",
-                column: "UserId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_attach_files_EntityType_EntityId",
                 table: "attach_files",
                 columns: new[] { "EntityType", "EntityId" });
@@ -553,6 +457,16 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                 column: "Id");
 
             migrationBuilder.CreateIndex(
+                name: "IX_history_application_forms_ApplicationFormId_UserApproval",
+                table: "history_application_forms",
+                columns: new[] { "ApplicationFormId", "UserApproval" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_history_application_forms_UserId",
+                table: "history_application_forms",
+                column: "UserId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_leave_requests_ApplicationFormId",
                 table: "leave_requests",
                 column: "ApplicationFormId");
@@ -563,11 +477,6 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                 columns: new[] { "Id", "RequesterUserCode" });
 
             migrationBuilder.CreateIndex(
-                name: "IX_leave_requests_RequesterUserCode",
-                table: "leave_requests",
-                column: "RequesterUserCode");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_leave_requests_TimeLeaveId",
                 table: "leave_requests",
                 column: "TimeLeaveId");
@@ -576,6 +485,11 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                 name: "IX_leave_requests_TypeLeaveId",
                 table: "leave_requests",
                 column: "TypeLeaveId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_leave_requests_UserCode",
+                table: "leave_requests",
+                column: "UserCode");
 
             migrationBuilder.CreateIndex(
                 name: "IX_memo_notification_departments_MemoNotificationId_DepartmentId",
@@ -623,11 +537,6 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                 column: "UserCode");
 
             migrationBuilder.CreateIndex(
-                name: "IX_user_configs_UserId",
-                table: "user_configs",
-                column: "UserId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_user_permissions_PermissionId",
                 table: "user_permissions",
                 column: "PermissionId");
@@ -662,10 +571,10 @@ namespace ServicePortals.Infrastructure.Data.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "approval_actions");
+                name: "attach_files");
 
             migrationBuilder.DropTable(
-                name: "attach_files");
+                name: "history_application_forms");
 
             migrationBuilder.DropTable(
                 name: "leave_requests");
@@ -681,6 +590,9 @@ namespace ServicePortals.Infrastructure.Data.Migrations
 
             migrationBuilder.DropTable(
                 name: "user_configs");
+
+            migrationBuilder.DropTable(
+                name: "user_mng_org_unit_id");
 
             migrationBuilder.DropTable(
                 name: "user_permissions");

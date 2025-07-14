@@ -4,6 +4,5 @@
     {
         Task<dynamic?> GetOrgUnitById(int id);
         Task<dynamic?> GetAllDepartmentAndFirstOrgUnit();
-        Task<List<int?>?> GetOrgUnitBeingMngTimeKeepingByUser(string userCode);
     }
 }

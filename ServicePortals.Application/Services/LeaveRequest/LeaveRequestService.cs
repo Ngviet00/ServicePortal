@@ -1,11 +1,16 @@
-﻿using System.Security.Claims;
+﻿using System.Data;
+using System.Security.Claims;
+using Dapper;
 using Hangfire;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using ServicePortal.Applications.Modules.LeaveRequest.DTO.Requests;
 using ServicePortals.Application;
 using ServicePortals.Application.Common;
 using ServicePortals.Application.Dtos.LeaveRequest;
 using ServicePortals.Application.Dtos.LeaveRequest.Requests;
+using ServicePortals.Application.Dtos.LeaveRequest.Responses;
+using ServicePortals.Application.Dtos.User.Requests;
 using ServicePortals.Application.Interfaces;
 using ServicePortals.Application.Interfaces.LeaveRequest;
 using ServicePortals.Application.Interfaces.OrgUnit;
@@ -179,6 +184,7 @@ namespace ServicePortals.Infrastructure.Services.LeaveRequest
                 Name = request.Name,
                 Department = request.Department,
                 Position = request.Position,
+                UserCodeWriteLeaveRequest = request.WriteLeaveUserCode,
                 UserNameWriteLeaveRequest = request.UserNameWriteLeaveRequest,
                 FromDate = request.FromDate,
                 ToDate = request.ToDate,
@@ -615,28 +621,18 @@ namespace ServicePortals.Infrastructure.Services.LeaveRequest
 
         public async Task<object> UpdateUserHavePermissionCreateMultipleLeaveRequest(List<string> UserCodes)
         {
-            var permission = await _context.Permissions.FirstOrDefaultAsync(e => e.Name == "leave_request.create_multiple_leave_request");
+            var permission = await _context.Permissions.FirstOrDefaultAsync(e => e.Name == "leave_request.create_multiple_leave_request")
+                ?? throw new NotFoundException("Permission not found");
 
-            if (permission == null)
-            {
-                throw new NotFoundException("Permission not found");
-            }
+            var userPermissions = await _context.UserPermissions.Where(e => e.PermissionId == permission.Id).ToListAsync();
 
-            var permissions = await _context.UserPermissions.Where(e => e.PermissionId == permission.Id).ToListAsync();
-            _context.UserPermissions.RemoveRange(permissions);
+            var currentUserCodes = userPermissions.Select(e => e.UserCode).ToHashSet();
+            var newUserCodesSet = UserCodes.ToHashSet();
+            var toRemove = userPermissions.Where(e => !newUserCodesSet.Contains(e?.UserCode ?? "")).ToList();
+            var toAdd = UserCodes.Where(code => !currentUserCodes.Contains(code)).Select(code => new UserPermission { PermissionId = permission.Id, UserCode = code });
 
-            List<UserPermission> up = [];
-
-            foreach (var item in UserCodes)
-            {
-                up.Add(new UserPermission
-                {
-                    PermissionId = permission.Id,    
-                    UserCode = item
-                });
-            }
-
-            _context.UserPermissions.AddRange(up);
+            _context.UserPermissions.RemoveRange(toRemove);
+            _context.UserPermissions.AddRange(toAdd);
 
             await _context.SaveChangesAsync();
 
@@ -655,140 +651,235 @@ namespace ServicePortals.Infrastructure.Services.LeaveRequest
             return await _context.UserPermissions.Where(e => e.PermissionId == permission.Id).Select(e => e.UserCode).ToListAsync();
         }
 
+        public async Task<object> AttachUserManageOrgUnit(AttachUserManageOrgUnitRequest request)
+        {
+            var userMngOrgUnitIds = await _context.UserMngOrgUnits
+                .Where(e => e.UserCode == request.UserCode && e.ManagementType == "MNG_LEAVE_REQUEST")
+                .ToListAsync();
+
+            var existingIds = userMngOrgUnitIds.Select(e => e.OrgUnitId).ToHashSet();
+            var newIds = request.OrgUnitIds.ToHashSet();
+
+            _context.UserMngOrgUnits.RemoveRange(userMngOrgUnitIds.Where(e => !newIds.Contains((int)(e?.OrgUnitId))));
+
+            _context.UserMngOrgUnits.AddRange(request.OrgUnitIds
+                .Where(id => !existingIds.Contains(id))
+                .Select(id => new UserMngOrgUnitId
+                {
+                    UserCode = request.UserCode,
+                    OrgUnitId = id,
+                    ManagementType = "MNG_LEAVE_REQUEST"
+                })
+            );
+
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<object> GetOrgUnitIdAttachedByUserCode(string userCode)
+        {
+            var results = await _context.UserMngOrgUnits
+                .Where(e => e.UserCode == userCode && e.ManagementType == "MNG_LEAVE_REQUEST")
+                .Select(e => e.OrgUnitId)
+                .ToListAsync();
+
+            return results;
+        }
+
+        public async Task<object> SearchUserRegisterLeaveRequest(SearchUserRegisterLeaveRequest request)
+        {
+            var connection = (SqlConnection)_context.CreateConnection();
+
+            if (connection.State != ConnectionState.Open)
+            {
+                await connection.OpenAsync();
+            }
+
+            var sql = $@"
+                SELECT
+	                NV.NVMaNV,
+	                {Global.DbViClock}.dbo.funTCVN2Unicode(NV.NVHoTen) AS NVHoTen,
+	                {Global.DbViClock}.dbo.funTCVN2Unicode(BP.BPTen) AS BPTen,
+	                {Global.DbViClock}.dbo.funTCVN2Unicode(ISNULL(NULLIF(CV.CVTen, ''), 'Staff')) AS CVTen,
+	                NV.OrgUnitID,
+	                UM.OrgUnitId AS OrgUnitIdMngLeaveRequest,
+	                OU.ParentOrgUnitId
+                FROM vs_new.dbo.tblNhanVien AS NV
+                LEFT JOIN {Global.DbViClock}.dbo.tblBoPhan AS BP ON NV.NVMaBP = BP.BPMa
+                LEFT JOIN {Global.DbViClock}.dbo.tblChucVu AS CV ON NV.NVMaCV = CV.CVMa
+                LEFT JOIN {Global.DbViClock}.dbo.OrgUnits AS OU ON OU.Id = NV.OrgUnitID
+                LEFT JOIN {Global.DbWeb}.dbo.user_mng_org_unit_id AS UM ON NV.NVMaNV = UM.UserCode AND UM.ManagementType = 'MNG_LEAVE_REQUEST'
+                WHERE NVMaNV IN (@UserCodeRegister, @UserCode)
+            ";
+
+            var result = await connection.QueryAsync<SearchUserRegisterLeaveRequestResponse>(sql, new
+            {
+                request.UserCodeRegister,
+                request.UserCode
+            });
+
+            var userRegister = result.Where(e => e.NVMaNV == request.UserCodeRegister).ToList();
+            var user = result.FirstOrDefault(e => e.NVMaNV == request.UserCode);
+
+            if (userRegister == null)
+            {
+                throw new ValidationException("Không tìm thấy người đăng ký");
+            }
+
+            if (user == null)
+            {
+                throw new ValidationException("Không tìm thấy người dùng");
+            }
+
+            bool checkExist = userRegister.Any(x => x.OrgUnitIdMngLeaveRequest == user.ParentOrgUnitId);
+
+            if (checkExist)
+            {
+                return user;
+            }
+            else
+            {
+                throw new ValidationException("Bạn chưa có quyền đăng ký nghỉ phép cho người này, liên hệ team IT");
+            }
+        }
+
         public async Task<object> CreateLeaveForManyPeople(CreateLeaveRequestForManyPeopleRequest request)
         {
-            return null;
-            //if (request.Leaves != null && request.Leaves.Count > 0)
-            //{
-            //    var userCodeWriteRequester = request.Leaves.First().WriteLeaveUserCode;
+            if (request.Leaves == null || (request.Leaves != null && request.Leaves.Count == 0))
+            {
+                throw new ValidationException("Không có người nào xin nghỉ phép, vui lòng check lại!");
+            }
 
-            //    //lấy thông tin người viết đơn cho người khác
-            //    var userWriteRequester = await _context.Users
-            //        .Where(e => e.UserCode == userCodeWriteRequester)
-            //        .Select(e => new
-            //        {
-            //            e.UserCode,
-            //            e.PositionId,
-            //            e.Email
-            //        })
-            //        .FirstOrDefaultAsync() ?? throw new NotFoundException("User not found!");
+            var timeLeaves = await _context.TimeLeaves.ToListAsync();
+            var typeLeaves = await _context.TypeLeaves.ToListAsync();
 
-            //    //luồng duyệt
-            //    var approvalFlow = await _context.ApprovalFlows
-            //        .Where(e => e.FromPosition == userWriteRequester.PositionId)
-            //        .Select(x => new
-            //        {
-            //            x.ToPosition
-            //        })
-            //        .FirstOrDefaultAsync();
+            //thông tin người viết các đơn nghỉ phép
+            var userCodeWriteLeave = request?.Leaves[0].WriteLeaveUserCode;
 
-            //    //nếu hết người duyệt, gửi đến HR
-            //    if (approvalFlow == null)
-            //    {
-            //        foreach (var itemLeave in request.Leaves)
-            //        {
-            //            //lưu bảng leave_requests và approval_requests
-            //            var newLeave = LeaveRequestMapper.ToEntity(itemLeave);
-            //            _context.LeaveRequests.Add(newLeave);
+            List<ApplicationForm> applicationForms = [];
+            List<Domain.Entities.LeaveRequest> leaveRequests = [];
+            List<HistoryApplicationForm> historyApplicationForms = [];
 
-            //            _context.ApprovalRequests.Add(new Domain.Entities.ApplicationForm
-            //            {
-            //                RequesterUserCode = itemLeave.RequesterUserCode,
-            //                RequestType = "LEAVE_REQUEST",
-            //                RequestId = newLeave.Id,
-            //                Status = "IN_PROCESS",
-            //                CurrentPositionId = (int)StatusLeaveRequestEnum.WAIT_HR,
-            //                CreatedAt = DateTimeOffset.Now
-            //            });
+            bool isHr = false;
+            List<string> toEmail = [];
+            List<string> ccEmail = [];
+            List<string> userCodeCCEmail = [];
+            userCodeCCEmail.Add(userCodeWriteLeave ?? "");
 
-            //            await _context.SaveChangesAsync();
-            //        }
+            var userCodeFromRequest = request.Leaves.Select(x => x.RequesterUserCode).Distinct();
 
-            //        return true;
-            //    }
+            foreach (var uCode in userCodeFromRequest)
+            {
+                userCodeCCEmail.Add(uCode ?? "");
+            }
 
-            //    //lấy những người duyệt tiếp theo
-            //    var userHaveNextPosition = await _context.Users
-            //        .Where(e => e.PositionId == approvalFlow.ToPosition)
-            //        .Select(x => new
-            //        {
-            //            x.PositionId,
-            //            x.Email
-            //        })
-            //        .ToListAsync();
+            var connection = (SqlConnection)_context.CreateConnection();
 
-            //    foreach (var itemLeave in request.Leaves)
-            //    {
-            //        var newLeave = LeaveRequestMapper.ToEntity(itemLeave);
-            //        _context.LeaveRequests.Add(newLeave);
+            if (connection.State != ConnectionState.Open)
+            {
+                await connection.OpenAsync();
+            }
 
-            //        _context.ApprovalRequests.Add(new Domain.Entities.ApplicationForm
-            //        {
-            //            RequesterUserCode = itemLeave.RequesterUserCode,
-            //            RequestType = "LEAVE_REQUEST",
-            //            RequestId = newLeave.Id,
-            //            Status = "PENDING",
-            //            CurrentPositionId = approvalFlow.ToPosition,
-            //            CreatedAt = DateTimeOffset.Now
-            //        });
-            //    }
+            var sqlGetCCEmail = $@"SELECT COALESCE(U.Email, NV.NVEmail, '') AS Email FROM vs_new.dbo.tblNhanVien AS NV
+                    INNER JOIN ServicePortal.dbo.users AS U ON NV.NVMaNV = U.UserCode
+                    WHERE NV.NVMaNV IN @userCodeCCEmail";
 
-            //    //gửi email đến người duyệt tiếp theo
-            //    var toEmails = new List<string>();
-            //    foreach (var item in userHaveNextPosition)
-            //    {
-            //        toEmails.Add(!string.IsNullOrWhiteSpace(item.Email) ? item.Email : Global.EmailDefault);
-            //    }
+            var resultGetCCEmail = await connection.QueryAsync<dynamic>(sqlGetCCEmail, new { userCodeCCEmail = userCodeCCEmail });
 
-            //    //gửi email cho người xin nghỉ, check kiểm tra người dùng có config nhận thông báo email không
-            //    //nếu như check là k nhận thông báo thì k gửi, ngược lại các trường hợp sẽ gửi
-            //    var ccEmails = new List<string>();
-            //    var getEmailByUserCodeAndUserConfig = await _userService.GetEmailByUserCodeAndUserConfig([.. request.Leaves.Select(x => x.RequesterUserCode)]);
+            foreach (var emailCC in resultGetCCEmail)
+            {
+                ccEmail.Add(emailCC.Email);
+            }
 
-            //    foreach (var item in getEmailByUserCodeAndUserConfig)
-            //    {
-            //        ccEmails.Add(!string.IsNullOrWhiteSpace(item.Email) ? item.Email : Global.EmailDefault);
-            //    }
+            List<NextUserInfoApprovalResponse> nextUserInfoApproval = await _userService.GetNextUserInfoApprovalByCurrentUserCode(userCodeWriteLeave ?? "");
+            //check tiep la co custom approval hay khong, work flow step
 
-            //    ccEmails.Add(!string.IsNullOrWhiteSpace(userWriteRequester.Email) ? userWriteRequester.Email : Global.EmailDefault);
+            if (nextUserInfoApproval != null && nextUserInfoApproval.Any())
+            {
+                foreach (var item in nextUserInfoApproval)
+                {
+                    toEmail.Add(item?.Email ?? "");
+                }
+            }
+            else
+            {
+                isHr = true;
+                toEmail.Add(Global.EmailHRReceiveLeaveRequest);
+            }
 
-            //    string? requester = request.Leaves?.Count == 1 ? request.Leaves?.FirstOrDefault()?.RequesterUserCode : $"{request.Leaves?.Count} người";
+            string urlWaitApproval = $"{request.Leaves[0].UrlFrontend}/leave/wait-approval";
 
-            //    string subject = $"Đơn xin nghỉ phép - {requester}";
+            string bodyMail = $@"
+                <h4>
+                    <span>Duyệt đơn: </span>
+                    <a href={urlWaitApproval}>{urlWaitApproval}</a>
+                </h4>";
 
-            //    string urlWaitApproval = $"{request.Leaves?.FirstOrDefault()?.UrlFrontend}/leave/wait-approval";
+            foreach (var itemLeave in request.Leaves)
+            {
+                var applicationForm = new ApplicationForm
+                {
+                    Id = Guid.NewGuid(),
+                    RequesterUserCode = itemLeave.RequesterUserCode,
+                    RequestTypeId = 1, //nghi phep
+                    RequestStatusId = isHr ? (int)StatusApplicationFormEnum.WAIT_HR : (int)StatusApplicationFormEnum.PENDING,
+                    CurrentOrgUnitId = isHr ? (int)StatusApplicationFormEnum.ORG_UNIT_ID_HR_LEAVE_RQ : nextUserInfoApproval?.FirstOrDefault()?.OrgUnitID,
+                    CreatedAt = DateTimeOffset.Now
+                };
+                
+                var newLeave = new Domain.Entities.LeaveRequest
+                {
+                    Id = Guid.NewGuid(),
+                    ApplicationFormId = applicationForm.Id,
+                    RequesterUserCode = itemLeave.RequesterUserCode,
+                    Name = itemLeave.Name,
+                    Department = itemLeave.Department,
+                    Position = itemLeave.Position,
+                    UserCodeWriteLeaveRequest = itemLeave.WriteLeaveUserCode,
+                    UserNameWriteLeaveRequest = itemLeave.UserNameWriteLeaveRequest,
+                    FromDate = itemLeave.FromDate,
+                    ToDate = itemLeave.ToDate,
+                    TypeLeaveId = itemLeave.TypeLeaveId,
+                    TimeLeaveId = itemLeave.TimeLeaveId,
+                    Reason = itemLeave.Reason,
+                    CreatedAt = DateTimeOffset.Now
+                };
+                
+                var historyApplicationForm = new HistoryApplicationForm
+                {
+                    Id = Guid.NewGuid(),
+                    ApplicationFormId = applicationForm.Id,
+                    UserApproval = itemLeave.UserNameWriteLeaveRequest,
+                    UserCodeApproval = itemLeave.WriteLeaveUserCode,
+                    ActionType = "APPROVAL",
+                    CreatedAt = DateTimeOffset.Now,
+                };
 
-            //    string bodyMail = $@"
-            //        <h4>
-            //            <span>Duyệt đơn: </span>
-            //            <a href={urlWaitApproval}>{urlWaitApproval}</a>
-            //        </h4>";
+                applicationForms.Add(applicationForm);
+                leaveRequests.Add(newLeave);
+                historyApplicationForms.Add(historyApplicationForm);
 
-            //    if (request.Leaves != null && request.Leaves.Count > 0)
-            //    {
-            //        foreach (var itemLeave in request.Leaves)
-            //        {
-            //            bodyMail += FormatContentMailLeaveRequest(LeaveRequestMapper.ToEntity(itemLeave)) + "<br/>";
-            //        }
-            //    }
+                bodyMail += TemplateEmail.EmailContentLeaveRequest(newLeave, typeLeaves.FirstOrDefault(e => e.Id == itemLeave.TypeLeaveId), timeLeaves.FirstOrDefault(e => e.Id == itemLeave.TimeLeaveId)) + "<br/>";
+            }
 
-            //    BackgroundJob.Enqueue<IEmailService>(job =>
-            //        job.SendEmailAsync(
-            //            toEmails,
-            //            ccEmails,
-            //            subject,
-            //            bodyMail,
-            //            null,
-            //            true
-            //        )
-            //    );
+            _context.ApplicationForms.AddRange(applicationForms);
+            _context.LeaveRequests.AddRange(leaveRequests);
+            _context.HistoryApplicationForms.AddRange(historyApplicationForms);
 
-            //    await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync();
 
-            //    return true;
-            //}
+            BackgroundJob.Enqueue<IEmailService>(job =>
+                job.SendEmailManyPeopleLeaveRequest(
+                    toEmail,
+                    ccEmail,
+                    "Đơn xin nghỉ phép",
+                    bodyMail,
+                    null,
+                    true
+                )
+            );
 
-            //throw new Exception("Không có người nào xin nghỉ phép");
+            return true;
         }
 
         //public async Task<string> HrRegisterAllLeave(HrRegisterAllLeaveRequest request)

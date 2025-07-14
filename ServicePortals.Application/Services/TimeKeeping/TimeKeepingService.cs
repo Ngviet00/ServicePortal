@@ -2,6 +2,7 @@
 using Dapper;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using ServicePortals.Application.Dtos.LeaveRequest.Requests;
 using ServicePortals.Application.Dtos.TimeKeeping.Requests;
 using ServicePortals.Application.Interfaces.TimeKeeping;
 using ServicePortals.Domain.Entities;
@@ -66,7 +67,7 @@ namespace ServicePortals.Infrastructure.Services.TimeKeeping
             var orgUnitIdQuery = $@"
                 WITH RecursiveOrg AS (
                     SELECT o.id
-                    FROM user_mng_org_unit_time_keeping as um
+                    FROM user_mng_org_unit_id as um
                     INNER JOIN [{Global.DbViClock}].dbo.OrgUnits as o
                         ON um.OrgUnitId = o.id
                     WHERE um.UserCode = {request.UserCode}
@@ -190,22 +191,22 @@ namespace ServicePortals.Infrastructure.Services.TimeKeeping
         }
         public async Task<object> UpdateUserMngTimeKeeping(UpdateUserMngTimeKeepingRequest request)
         {
-            var oldData = await _context.UserMngOrgUnitTimekeepings.Where(e => e.UserCode == request.UserCode).ToListAsync();
+            var oldData = await _context.UserMngOrgUnits.Where(e => e.UserCode == request.UserCode).ToListAsync();
 
-            _context.UserMngOrgUnitTimekeepings.RemoveRange(oldData);
+            _context.UserMngOrgUnits.RemoveRange(oldData);
 
-            List<UserMngOrgUnitTimekeeping> umt = [];
+            List<UserMngOrgUnitId> umt = [];
 
             foreach (var orgUnitId in request.OrgUnitId)
             {
-                umt.Add(new UserMngOrgUnitTimekeeping
+                umt.Add(new UserMngOrgUnitId
                 {
                     UserCode = request.UserCode,
                     OrgUnitId = orgUnitId
                 });
             }
 
-            _context.UserMngOrgUnitTimekeepings.AddRange(umt);
+            _context.UserMngOrgUnits.AddRange(umt);
 
             await _context.SaveChangesAsync();
 
@@ -250,16 +251,52 @@ namespace ServicePortals.Infrastructure.Services.TimeKeeping
 
             return result;
         }
+
+        public async Task<object> AttachUserManageOrgUnit(AttachUserManageOrgUnitRequest request)
+        {
+            var userMngOrgUnitIds = await _context.UserMngOrgUnits
+                .Where(e => e.UserCode == request.UserCode && e.ManagementType == "MNG_TIME_KEEPING")
+                .ToListAsync();
+
+            var existingIds = userMngOrgUnitIds.Select(e => e.OrgUnitId).ToHashSet();
+            var newIds = request.OrgUnitIds.ToHashSet();
+
+            _context.UserMngOrgUnits.RemoveRange(userMngOrgUnitIds.Where(e => !newIds.Contains((int)(e?.OrgUnitId))));
+
+            _context.UserMngOrgUnits.AddRange(request.OrgUnitIds
+                .Where(id => !existingIds.Contains(id))
+                .Select(id => new UserMngOrgUnitId
+                {
+                    UserCode = request.UserCode,
+                    OrgUnitId = id,
+                    ManagementType = "MNG_TIME_KEEPING"
+                })
+            );
+
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<object> GetOrgUnitIdAttachedByUserCode(string userCode)
+        {
+            var results = await _context.UserMngOrgUnits
+                .Where(e => e.UserCode == userCode && e.ManagementType == "MNG_TIME_KEEPING")
+                .Select(e => e.OrgUnitId)
+                .ToListAsync();
+
+            return results;
+        }
+
         public async Task<object> ChangeUserMngTimeKeeping(ChangeUserMngTimeKeepingRequest request)
         {
-            var old = await _context.UserMngOrgUnitTimekeepings.Where(e => e.UserCode == request.OldUserCode).ToListAsync();
+            var old = await _context.UserMngOrgUnits.Where(e => e.UserCode == request.OldUserCode).ToListAsync();
 
             foreach (var item in old)
             {
                 item.UserCode = request.NewUserCode;
             }
 
-            _context.UserMngOrgUnitTimekeepings.UpdateRange(old);
+            _context.UserMngOrgUnits.UpdateRange(old);
 
             await _context.SaveChangesAsync();
 

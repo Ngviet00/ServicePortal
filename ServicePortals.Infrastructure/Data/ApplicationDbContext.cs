@@ -27,7 +27,7 @@ namespace ServicePortals.Infrastructure.Data
         public DbSet<RequestType> RequestTypes {  get; set; }
         public DbSet<RequestStatus> RequestStatuses {  get; set; }
         public DbSet<WorkFlowStep> WorkFlowSteps {  get; set; }
-        public DbSet<UserMngOrgUnitTimekeeping> UserMngOrgUnitTimekeepings { get; set; }
+        public DbSet<UserMngOrgUnitId> UserMngOrgUnits { get; set; }
 
         public IDbConnection CreateConnection() => Database.GetDbConnection();
 
@@ -45,7 +45,9 @@ namespace ServicePortals.Infrastructure.Data
 
             modelBuilder.Entity<Permission>().HasData(
                 new Permission { Id = 1, Name = "leave_request.create_leave_request", Description = "LEAVE_REQUEST" },
-                new Permission { Id = 2, Name = "leave_request.send_to_hr", Description = "LEAVE_REQUEST" }
+                new Permission { Id = 2, Name = "leave_request.send_to_hr", Description = "LEAVE_REQUEST" },
+                new Permission { Id = 3, Name = "time_keeping.mng_time_keeping", Description = "TIME_KEEPING" },
+                new Permission { Id = 4, Name = "leave_request.create_multiple_leave_request", Description = "LEAVE_REQUEST" }
             );
 
             modelBuilder.Entity<RolePermission>().HasData(
@@ -100,7 +102,8 @@ namespace ServicePortals.Infrastructure.Data
                 .WithMany(u => u.UserConfigs)
                 .HasForeignKey(uc => uc.UserCode)
                 .HasPrincipalKey(u => u.UserCode)
-                .OnDelete(DeleteBehavior.Cascade);
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.NoAction);
 
             //User → UserRole
             modelBuilder.Entity<UserRole>()
@@ -108,7 +111,8 @@ namespace ServicePortals.Infrastructure.Data
                 .WithMany(u => u.UserRoles)
                 .HasForeignKey(ur => ur.UserCode)
                 .HasPrincipalKey(u => u.UserCode)
-                .OnDelete(DeleteBehavior.Cascade);
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.NoAction);
 
             // Role → UserRole
             modelBuilder.Entity<UserRole>()
@@ -116,80 +120,89 @@ namespace ServicePortals.Infrastructure.Data
                 .WithMany(r => r.UserRoles)
                 .HasForeignKey(ur => ur.RoleId)
                 .HasPrincipalKey(r => r.Id)
-                .OnDelete(DeleteBehavior.Cascade);
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.NoAction);
 
             // Role → RolePermission
             modelBuilder.Entity<RolePermission>()
                 .HasOne(rp => rp.Role)
                 .WithMany(r => r.RolePermissions)
-                .HasForeignKey(rp => rp.RoleId)
                 .HasPrincipalKey(r => r.Id)
-                .OnDelete(DeleteBehavior.Cascade);
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.NoAction);
 
             // Permission → RolePermission
             modelBuilder.Entity<RolePermission>()
                 .HasOne(rp => rp.Permission)
                 .WithMany(p => p.RolePermissions)
-                .HasForeignKey(rp => rp.PermissionId)
                 .HasPrincipalKey(p => p.Id)
-                .OnDelete(DeleteBehavior.Cascade);
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.NoAction);
 
             // User → UserPermission
             modelBuilder.Entity<UserPermission>()
                 .HasOne(up => up.User)
                 .WithMany(u => u.UserPermissions)
-                .HasPrincipalKey(u => u.UserCode);
+                .HasForeignKey(up => up.UserCode)
+                .HasPrincipalKey(u => u.UserCode)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.NoAction);
 
             // Permission → UserPermission
             modelBuilder.Entity<UserPermission>()
                 .HasOne(up => up.Permission)
                 .WithMany(p => p.UserPermissions)
-                .HasForeignKey(up => up.PermissionId)
                 .HasPrincipalKey(p => p.Id)
-                .OnDelete(DeleteBehavior.Cascade);
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.NoAction);
 
             //application_from - history_application_form
             modelBuilder.Entity<HistoryApplicationForm>()
                 .HasOne(h => h.ApplicationForm)
                 .WithMany(a => a.HistoryApplicationForms)
-                .HasForeignKey(h => h.ApplicationFormId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .HasPrincipalKey(a => a.Id)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.NoAction);
 
             //memo - memo dept
             modelBuilder.Entity<MemoNotificationDepartment>()
                 .HasOne(mnd => mnd.MemoNotifications)
                 .WithMany(mn => mn.MemoNotificationDepartments)
-                .HasForeignKey(mnd => mnd.MemoNotificationId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .HasPrincipalKey(mn => mn.Id)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.NoAction);
 
             //leave_request - type_leave
             modelBuilder.Entity<LeaveRequest>()
                 .HasOne(lr => lr.TypeLeave)
                 .WithMany()
-                .HasForeignKey(lr => lr.TypeLeaveId)
-                .IsRequired(false);
+                .HasPrincipalKey(t => t.Id)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.NoAction);
 
             //leave_request - time_leavecls
             modelBuilder.Entity<LeaveRequest>()
                 .HasOne(lr => lr.TimeLeave)
                 .WithMany()
-                .HasForeignKey(lr => lr.TimeLeaveId)
-                .IsRequired(false);
+                .HasPrincipalKey(t => t.Id)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.NoAction);
 
             //leave_request - application_form
             modelBuilder.Entity<LeaveRequest>()
                 .HasOne(lr => lr.ApplicationForm)
                 .WithMany()
-                .HasForeignKey(lr => lr.ApplicationFormId)
-                .IsRequired(false);
+                .HasPrincipalKey(a => a.Id)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.NoAction);
 
             //leave_request - user
             modelBuilder.Entity<LeaveRequest>()
                 .HasOne(lr => lr.User)
                 .WithMany()
-                .HasForeignKey(lr => lr.RequesterUserCode) 
-                .HasPrincipalKey(u => u.UserCode) 
-                .IsRequired(false);
+                .HasPrincipalKey(u => u.UserCode)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.NoAction);
         }
     }
 }

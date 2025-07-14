@@ -9,7 +9,7 @@ using ServicePortals.Application.Interfaces.LeaveRequest;
 
 namespace ServicePortal.Controllers.LeaveRequest
 {
-    [Authorize]
+    //[Authorize]
     [ApiController, Route("api/leave-request")]
     public class LeaveRequestController : ControllerBase
     {
@@ -157,10 +157,34 @@ namespace ServicePortal.Controllers.LeaveRequest
             return Ok(new BaseResponse<object>(200, "success", result));
         }
 
+        [HttpPost("attach-user-manager-org-unit")]
+        public async Task<IActionResult> AttachUserManageOrgUnit(AttachUserManageOrgUnitRequest request)
+        {
+            var result = await _leaveRequestService.AttachUserManageOrgUnit(request);
+
+            return Ok(new BaseResponse<object>(200, "success", result));
+        }
+
+        [HttpGet("get-org-unit-id-attach-by-usercode")]
+        public async Task<IActionResult> GetOrgUnitIdAttachedByUserCode([FromQuery] string userCode)
+        {
+            var result = await _leaveRequestService.GetOrgUnitIdAttachedByUserCode(userCode);
+
+            return Ok(new BaseResponse<object>(200, "success", result));
+        }
+
         [HttpPost("create-leave-for-others")]
         public async Task<IActionResult> CreateLeaveForOther([FromBody] CreateLeaveRequestForManyPeopleRequest request)
         {
             var result = await _leaveRequestService.CreateLeaveForManyPeople(request);
+
+            return Ok(new BaseResponse<object>(200, "success", result));
+        }
+
+        [HttpGet("search-user-register-leave-request")]
+        public async Task<IActionResult> SearchUserRegisterLeaveRequest([FromQuery] SearchUserRegisterLeaveRequest request)
+        {
+            var result = await _leaveRequestService.SearchUserRegisterLeaveRequest(request);
 
             return Ok(new BaseResponse<object>(200, "success", result));
         }

@@ -22,13 +22,5 @@ namespace ServicePortal.Controllers.OrgUnit
 
             return Ok(new BaseResponse<dynamic>(200, "success", results));
         }
-
-        [HttpGet("get-org-unit-being-mng-timekeeping-by-user")]
-        public async Task<IActionResult> GetOrgUnitBeingMngTimeKeepingByUser([FromQuery] string userCode)
-        {
-            var results = await _orgUnitService.GetOrgUnitBeingMngTimeKeepingByUser(userCode);
-
-            return Ok(new BaseResponse<List<int?>?>(200, "success", results));
-        }
     }
 }

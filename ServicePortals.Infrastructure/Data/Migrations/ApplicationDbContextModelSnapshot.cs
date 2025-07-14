@@ -195,6 +195,12 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                     b.Property<DateTimeOffset?>("UpdateAt")
                         .HasColumnType("datetimeoffset");
 
+                    b.Property<string>("UserCode")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("UserCodeWriteLeaveRequest")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("UserNameWriteLeaveRequest")
                         .HasColumnType("nvarchar(max)");
 
@@ -202,11 +208,11 @@ namespace ServicePortals.Infrastructure.Data.Migrations
 
                     b.HasIndex("ApplicationFormId");
 
-                    b.HasIndex("RequesterUserCode");
-
                     b.HasIndex("TimeLeaveId");
 
                     b.HasIndex("TypeLeaveId");
+
+                    b.HasIndex("UserCode");
 
                     b.HasIndex("Id", "RequesterUserCode");
 
@@ -314,6 +320,18 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                             Id = 2,
                             Description = "LEAVE_REQUEST",
                             Name = "leave_request.send_to_hr"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Description = "TIME_KEEPING",
+                            Name = "time_keeping.mng_time_keeping"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Description = "LEAVE_REQUEST",
+                            Name = "leave_request.create_multiple_leave_request"
                         });
                 });
 
@@ -639,13 +657,16 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                     b.ToTable("user_configs");
                 });
 
-            modelBuilder.Entity("ServicePortals.Domain.Entities.UserMngOrgUnitTimekeeping", b =>
+            modelBuilder.Entity("ServicePortals.Domain.Entities.UserMngOrgUnitId", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ManagementType")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int?>("OrgUnitId")
                         .HasColumnType("int");
@@ -655,7 +676,7 @@ namespace ServicePortals.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("user_mng_org_unit_time_keeping");
+                    b.ToTable("user_mng_org_unit_id");
                 });
 
             modelBuilder.Entity("ServicePortals.Domain.Entities.UserPermission", b =>
@@ -672,14 +693,9 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                     b.Property<string>("UserCode")
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<string>("UserCode1")
-                        .HasColumnType("nvarchar(450)");
-
                     b.HasKey("Id");
 
                     b.HasIndex("PermissionId");
-
-                    b.HasIndex("UserCode1");
 
                     b.HasIndex("UserCode", "PermissionId");
 
@@ -792,7 +808,7 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                     b.HasOne("ServicePortals.Domain.Entities.ApplicationForm", "ApplicationForm")
                         .WithMany("HistoryApplicationForms")
                         .HasForeignKey("ApplicationFormId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.NoAction);
 
                     b.HasOne("ServicePortals.Domain.Entities.User", "User")
                         .WithMany()
@@ -807,20 +823,24 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                 {
                     b.HasOne("ServicePortals.Domain.Entities.ApplicationForm", "ApplicationForm")
                         .WithMany()
-                        .HasForeignKey("ApplicationFormId");
-
-                    b.HasOne("ServicePortals.Domain.Entities.User", "User")
-                        .WithMany()
-                        .HasForeignKey("RequesterUserCode")
-                        .HasPrincipalKey("UserCode");
+                        .HasForeignKey("ApplicationFormId")
+                        .OnDelete(DeleteBehavior.NoAction);
 
                     b.HasOne("ServicePortals.Domain.Entities.TimeLeave", "TimeLeave")
                         .WithMany()
-                        .HasForeignKey("TimeLeaveId");
+                        .HasForeignKey("TimeLeaveId")
+                        .OnDelete(DeleteBehavior.NoAction);
 
                     b.HasOne("ServicePortals.Domain.Entities.TypeLeave", "TypeLeave")
                         .WithMany()
-                        .HasForeignKey("TypeLeaveId");
+                        .HasForeignKey("TypeLeaveId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("ServicePortals.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserCode")
+                        .HasPrincipalKey("UserCode")
+                        .OnDelete(DeleteBehavior.NoAction);
 
                     b.Navigation("ApplicationForm");
 
@@ -836,7 +856,7 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                     b.HasOne("ServicePortals.Domain.Entities.MemoNotification", "MemoNotifications")
                         .WithMany("MemoNotificationDepartments")
                         .HasForeignKey("MemoNotificationId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.NoAction);
 
                     b.Navigation("MemoNotifications");
                 });
@@ -846,12 +866,12 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                     b.HasOne("ServicePortals.Domain.Entities.Permission", "Permission")
                         .WithMany("RolePermissions")
                         .HasForeignKey("PermissionId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.NoAction);
 
                     b.HasOne("ServicePortals.Domain.Entities.Role", "Role")
                         .WithMany("RolePermissions")
                         .HasForeignKey("RoleId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.NoAction);
 
                     b.Navigation("Permission");
 
@@ -864,7 +884,7 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                         .WithMany("UserConfigs")
                         .HasForeignKey("UserCode")
                         .HasPrincipalKey("UserCode")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.NoAction);
 
                     b.Navigation("User");
                 });
@@ -874,12 +894,13 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                     b.HasOne("ServicePortals.Domain.Entities.Permission", "Permission")
                         .WithMany("UserPermissions")
                         .HasForeignKey("PermissionId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.NoAction);
 
                     b.HasOne("ServicePortals.Domain.Entities.User", "User")
                         .WithMany("UserPermissions")
-                        .HasForeignKey("UserCode1")
-                        .HasPrincipalKey("UserCode");
+                        .HasForeignKey("UserCode")
+                        .HasPrincipalKey("UserCode")
+                        .OnDelete(DeleteBehavior.NoAction);
 
                     b.Navigation("Permission");
 
@@ -891,13 +912,13 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                     b.HasOne("ServicePortals.Domain.Entities.Role", "Role")
                         .WithMany("UserRoles")
                         .HasForeignKey("RoleId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.NoAction);
 
                     b.HasOne("ServicePortals.Domain.Entities.User", "User")
                         .WithMany("UserRoles")
                         .HasForeignKey("UserCode")
                         .HasPrincipalKey("UserCode")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.NoAction);
 
                     b.Navigation("Role");
 

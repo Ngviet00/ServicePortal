@@ -21,6 +21,7 @@ namespace ServicePortals.Application.Interfaces.User
         Task<List<OrgUnitNode>> BuildOrgTree(int departmentId);
         Task<dynamic?> GetUserByParentOrgUnit(int unitId);
         Task<PagedResults<object>> SearchAllUserFromViClock(SearchAllUserFromViclockRequest request);
+        Task<List<NextUserInfoApprovalResponse>> GetNextUserInfoApprovalByCurrentUserCode(string userCode);
         Task<dynamic> Test();
     }
 }

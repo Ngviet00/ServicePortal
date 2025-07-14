@@ -12,6 +12,7 @@ namespace ServicePortals.Domain.Entities
         public string? Name { get; set; }
         public string? Department { get; set; }
         public string? Position { get; set; }
+        public string? UserCodeWriteLeaveRequest { get; set; }
         public string? UserNameWriteLeaveRequest { get; set; }
         public DateTimeOffset? FromDate { get; set; }
         public DateTimeOffset? ToDate { get; set; }

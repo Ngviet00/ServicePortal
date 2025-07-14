@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ServicePortals.Application;
+using ServicePortals.Application.Dtos.LeaveRequest.Requests;
 using ServicePortals.Application.Dtos.TimeKeeping.Requests;
 using ServicePortals.Application.Interfaces.TimeKeeping;
 
@@ -54,12 +55,20 @@ namespace ServicePortal.Controllers.TimeKeeping
             return Ok(new BaseResponse<object>(200, "success", results));
         }
 
-        [HttpPost("update-user-mng-timekeeping")]
-        public async Task<IActionResult> UpdateUserMngTimeKeeping(UpdateUserMngTimeKeepingRequest request)
+        [HttpPost("attach-user-manager-org-unit")]
+        public async Task<IActionResult> AttachUserManageOrgUnit(AttachUserManageOrgUnitRequest request)
         {
-            var results = await _timeKeepingService.UpdateUserMngTimeKeeping(request);
+            var result = await _timeKeepingService.AttachUserManageOrgUnit(request);
 
-            return Ok(new BaseResponse<object>(200, "success", results));
+            return Ok(new BaseResponse<object>(200, "success", result));
+        }
+
+        [HttpGet("get-org-unit-id-attach-by-usercode")]
+        public async Task<IActionResult> GetOrgUnitIdAttachedByUserCode([FromQuery] string userCode)
+        {
+            var result = await _timeKeepingService.GetOrgUnitIdAttachedByUserCode(userCode);
+
+            return Ok(new BaseResponse<object>(200, "success", result));
         }
 
         [HttpPost("change-user-mng-timekeeping")]

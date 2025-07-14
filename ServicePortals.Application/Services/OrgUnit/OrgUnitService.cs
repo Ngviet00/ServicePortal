@@ -76,12 +76,5 @@ namespace ServicePortals.Application.Services.OrgUnit
 
             return result;
         }
-
-        public async Task<List<int?>?> GetOrgUnitBeingMngTimeKeepingByUser(string userCode)
-        {
-            var result = await _context.UserMngOrgUnitTimekeepings.Where(e => e.UserCode == userCode).Select(x => x.OrgUnitId).ToListAsync();
-
-            return result;
-        }
     }
 }

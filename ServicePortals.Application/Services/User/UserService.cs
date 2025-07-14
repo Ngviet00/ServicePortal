@@ -601,6 +601,47 @@ namespace ServicePortals.Infrastructure.Services.User
             };
         }
 
+        public async Task<List<NextUserInfoApprovalResponse>> GetNextUserInfoApprovalByCurrentUserCode(string userCode)
+        {
+            var connection = (SqlConnection)_context.CreateConnection();
+
+            if (connection.State != ConnectionState.Open)
+            {
+                await connection.OpenAsync();
+            }
+
+            var sql = $@"
+                WITH CurrentOrgUnitUser AS (
+                    SELECT
+		                NV.{Global.ColumnOrgUnitIdViClock}
+	                FROM {Global.DbViClock}.dbo.tblNhanVien AS NV
+	                WHERE NV.NVMaNV = @userCode
+                ),
+                NextOrgUnitUser AS (
+	                SELECT 
+		                ORG.ParentJobTitleId
+	                FROM {Global.DbViClock}.dbo.OrgUnits AS ORG
+	                INNER JOIN CurrentOrgUnitUser AS CORG ON CORG.{Global.ColumnOrgUnitIdViClock} = ORG.Id
+                )
+                SELECT
+	                NV.NVMaNV,
+	                vs_new.dbo.funTCVN2Unicode(NV.NVHoTen) AS NVHoTen,
+	                BP.BPTen,
+	                CV.CVTen,
+                    COALESCE(U.Email, NV.NVEmail, '') AS Email,
+	                NV.{Global.ColumnOrgUnitIdViClock}
+                FROM NextOrgUnitUser AS NORG
+                INNER JOIN vs_new.dbo.tblNhanVien AS NV ON NORG.ParentJobTitleId = NV.{Global.ColumnOrgUnitIdViClock}
+                LEFT JOIN ServicePortal.dbo.users AS U ON NV.NVMaNV = U.UserCode
+                LEFT JOIN vs_new.dbo.tblBoPhan AS BP ON NV.NVMaBP = BP.BPMa
+                LEFT JOIN vs_new.dbo.tblChucVu AS CV On NV.NVMaCV = CV.CVMa
+            ";
+
+            var result = await connection.QueryAsync<NextUserInfoApprovalResponse>(sql, new { userCode = userCode });
+
+            return (List<NextUserInfoApprovalResponse>)result;
+        }
+
         public async Task<dynamic> Test()
         {
             return 1;
