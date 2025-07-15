@@ -51,7 +51,7 @@ namespace ServicePortals.Infrastructure.Services.User
 
             var param = new
             {
-                SearchName = name,
+                SearchName = Helper.RemoveDiacritics(name),
                 SearchDept = DepartmentName,
                 SearchSex = Sex,
                 SearchPosition = PositionId,
@@ -65,10 +65,8 @@ namespace ServicePortals.Infrastructure.Services.User
 
             if (!string.IsNullOrWhiteSpace(name))
             {
-                whereSql.AppendLine($" AND nv.NVHoTen LIKE '%' + @SearchName + '%' ");
+                whereSql.AppendLine($" AND dbo.udf_RemoveDiacritics(dbo.funTCVN2Unicode(nv.NVHoTen)) LIKE '%' + @SearchName + '%' ");
                 whereSql.AppendLine($" OR u.UserCode LIKE '%' + @SearchName + '%' ");
-                whereSql.AppendLine($" OR u.Phone LIKE '%' + @SearchName + '%' ");
-                whereSql.AppendLine($" OR u.Email LIKE '%' + @SearchName + '%' ");
             }
 
             if (DepartmentName != null)

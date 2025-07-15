@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ServicePortal.Applications.Modules.LeaveRequest.DTO.Requests;
-using ServicePortal.Filters;
 using ServicePortals.Application;
 using ServicePortals.Application.Dtos.LeaveRequest;
 using ServicePortals.Application.Dtos.LeaveRequest.Requests;
@@ -9,7 +8,7 @@ using ServicePortals.Application.Interfaces.LeaveRequest;
 
 namespace ServicePortal.Controllers.LeaveRequest
 {
-    //[Authorize]
+    [Authorize]
     [ApiController, Route("api/leave-request")]
     public class LeaveRequestController : ControllerBase
     {
@@ -115,7 +114,7 @@ namespace ServicePortal.Controllers.LeaveRequest
             return Ok(new BaseResponse<long>(200, "success", result));
         }
 
-        //[HttpPost("hr-register-all-leave-rq")]
+        //[HttpPost("register-all-leave-rq")]
         //public async Task<IActionResult> HrRegisterAllLeave([FromBody] HrRegisterAllLeaveRequest request)
         //{
         //    var result = await _leaveRequestService.HrRegisterAllLeave(request);
@@ -123,7 +122,7 @@ namespace ServicePortal.Controllers.LeaveRequest
         //    return Ok(new BaseResponse<string>(200, "success", result));
         //}
 
-        [HttpGet("history-approval"), RoleAuthorize("HR", "HR_Manager")]
+        [HttpGet("history-approval")]
         public async Task<IActionResult> GetHistoryLeaveRequestApproval([FromQuery] GetAllLeaveRequest request)
         {
             var result = await _leaveRequestService.GetHistoryLeaveRequestApproval(request);

@@ -23,10 +23,10 @@ namespace ServicePortals.Infrastructure.Data
         public DbSet<MemoNotification> MemoNotifications { get; set; }
         public DbSet<MemoNotificationDepartment> MemoNotificationDepartments { get; set; }
         public DbSet<Domain.Entities.File> Files { get; set; }
-        public DbSet<AttachFile> AttachFiles {  get; set; }
-        public DbSet<RequestType> RequestTypes {  get; set; }
-        public DbSet<RequestStatus> RequestStatuses {  get; set; }
-        public DbSet<WorkFlowStep> WorkFlowSteps {  get; set; }
+        public DbSet<AttachFile> AttachFiles { get; set; }
+        public DbSet<RequestType> RequestTypes { get; set; }
+        public DbSet<RequestStatus> RequestStatuses { get; set; }
+        public DbSet<WorkFlowStep> WorkFlowSteps { get; set; }
         public DbSet<UserMngOrgUnitId> UserMngOrgUnits { get; set; }
 
         public IDbConnection CreateConnection() => Database.GetDbConnection();
@@ -59,12 +59,12 @@ namespace ServicePortals.Infrastructure.Data
             );
 
             modelBuilder.Entity<TypeLeave>().HasData(
-                new TypeLeave { Id = 1, Name = "Annual", Note = "type_leave.annual" },
-                new TypeLeave { Id = 2, Name = "Personal", Note = "type_leave.personal" },
-                new TypeLeave { Id = 3, Name = "Sick", Note = "type_leave.sick" },
-                new TypeLeave { Id = 4, Name = "Wedding", Note = "type_leave.wedding" },
-                new TypeLeave { Id = 5, Name = "Accident", Note = "type_leave.accident" },
-                new TypeLeave { Id = 6, Name = "Other", Note = "type_leave.other" }
+                new TypeLeave { Id = 1, Name = "Annual", Note = "type_leave.annual", NameV = "Nghỉ Phép Năm"  },
+                new TypeLeave { Id = 2, Name = "Personal", Note = "type_leave.personal", NameV = "Nghỉ Việc Cá Nhân" },
+                new TypeLeave { Id = 3, Name = "Sick", Note = "type_leave.sick", NameV = "Nghỉ Ốm" },
+                new TypeLeave { Id = 4, Name = "Wedding", Note = "type_leave.wedding", NameV = "Nghỉ Cưới" },
+                new TypeLeave { Id = 5, Name = "Accident", Note = "type_leave.accident", NameV = "Nghỉ TNLĐ" },
+                new TypeLeave { Id = 6, Name = "Other", Note = "type_leave.other", NameV = "Khác" }
             );
 
             modelBuilder.Entity<User>().HasData(
@@ -86,6 +86,68 @@ namespace ServicePortals.Infrastructure.Data
                     Id = 1,
                     UserCode = "0",
                     RoleId = 1
+                }
+            );
+
+            modelBuilder.Entity<TimeLeave>().HasData(
+                new TimeLeave
+                {
+                    Id = 1,
+                    Description = "Cả Ngày",
+                    English = "All Day"
+                },
+                new TimeLeave
+                {
+                    Id = 2,
+                    Description = "Buổi Sáng",
+                    English = "Morning"
+                },
+                new TimeLeave
+                {
+                    Id = 3,
+                    Description = "Buổi Chiều",
+                    English = "Afternoon"
+                }
+            );
+
+            modelBuilder.Entity<RequestStatus>().HasData(
+                new RequestStatus
+                {
+                    Id = 1,
+                    Name = "PENDING"
+                },
+                new RequestStatus
+                {
+                    Id = 2,
+                    Name = "IN_PROCESS"
+                },
+                new RequestStatus
+                {
+                    Id = 3,
+                    Name = "COMPLETE"
+                },
+                new RequestStatus
+                {
+                    Id = 4,
+                    Name = "WAIT_HR"
+                },
+                new RequestStatus
+                {
+                    Id = 5,
+                    Name = "REJECT"
+                }
+            );
+
+            modelBuilder.Entity<RequestType>().HasData(
+                new RequestType
+                {
+                    Id = 1,
+                    Name = "Nghỉ Phép"
+                },
+                new RequestType
+                {
+                    Id = 2,
+                    Name = "Chấm Công"
                 }
             );
 

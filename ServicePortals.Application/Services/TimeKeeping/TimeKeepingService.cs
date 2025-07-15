@@ -2,14 +2,17 @@
 using Dapper;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using ServicePortals.Application;
 using ServicePortals.Application.Dtos.LeaveRequest.Requests;
 using ServicePortals.Application.Dtos.TimeKeeping.Requests;
+using ServicePortals.Application.Dtos.TimeKeeping.Responses;
 using ServicePortals.Application.Interfaces.TimeKeeping;
 using ServicePortals.Domain.Entities;
 using ServicePortals.Infrastructure.Data;
 using ServicePortals.Infrastructure.Email;
 using ServicePortals.Infrastructure.Helpers;
 using ServicePortals.Shared.Exceptions;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace ServicePortals.Infrastructure.Services.TimeKeeping
 {
@@ -48,11 +51,13 @@ namespace ServicePortals.Infrastructure.Services.TimeKeeping
             return result;
         }
 
-        public async Task<IEnumerable<dynamic>> GetManagementTimeKeeping(GetManagementTimeKeepingRequest request)
+        public async Task<PagedResults<GroupedUserTimeKeeping>> GetManagementTimeKeeping(GetManagementTimeKeepingRequest request)
         {
             int month = request.Month ?? DateTime.UtcNow.Month;
             int year = request.Year ?? DateTime.UtcNow.Year;
             int dayInMonth = DateTime.DaysInMonth(year, month);
+            double pageSize = request.PageSize;
+            double page = request.Page;
 
             var fromDate = $"{year}-{month:D2}-01";
             var toDate = $"{year}-{month:D2}-{dayInMonth}";
@@ -83,52 +88,108 @@ namespace ServicePortals.Infrastructure.Services.TimeKeeping
 
             var orgUnitIds = await connection.QueryAsync<int>(orgUnitIdQuery);
 
-            var employeeQuery = @"
-                SELECT NV.NVMaNV, vs_new.dbo.funTCVN2Unicode(NV.NVHoTen) AS NVHoTen
-                FROM vs_new.dbo.tblNhanVien AS NV
-                WHERE NV.OrgUnitId IN @ids";
+            var countUser = await connection.QuerySingleAsync<int>($@"SELECT COUNT(*) FROM vs_new.dbo.tblNhanVien AS NV WHERE NV.OrgUnitID IN @ids", new { ids = orgUnitIds });
 
-            var result = await connection.QueryAsync<object>(employeeQuery, new { ids = orgUnitIds });
+            var totalPages = (int)Math.Ceiling((double)countUser / pageSize);
 
-            return result;
+            var sql = $@"
+                WITH Users AS (
+	                SELECT
+		                NV.NVMa, NV.NVMaNV, vs_new.dbo.funTCVN2Unicode(NV.NVHoTen) AS NVHoTen, BP.BPTen
+	                FROM vs_new.dbo.tblNhanVien AS NV
+	                LEFT JOIN vs_new.dbo.tblBoPhan AS BP ON NV.NVMaBP = BP.BPMa
+	                WHERE NV.OrgUnitID IN @ids --'13136', '17024', '16239', 
+	                ORDER BY NV.NVMa ASC
+	                OFFSET (@Page - 1) * @PageSize ROWS
+	                FETCH NEXT @PageSize ROWS ONLY
+                )
+                SELECT 
+	                U.NVMaNV,
+	                U.NVHoTen,
+	                U.BPTen,
+	                CASE WHEN DATEPART(dw, BCNGay) = 1 THEN 'CN' ELSE convert(nvarchar(10),DATEPART(dw, BCNGay)) END AS Thu,
+	                CONVERT(VARCHAR(10), BC.BCNgay, 120) AS BCNgay,
+	                BC.BCTGDen,
+	                BC.BCTGVe,
+                    BC.BCGhiChu,
+	                CASE
+		                --Chủ nhật
+		                WHEN DATEPART(dw, BCNGay) = 1 THEN
+			                CASE
+				                WHEN BCTGDen IS NOT NULL AND BCTGVe IS NOT NULL  THEN 'CN_X'
+			                END
 
-            //var rows = await connection.QueryAsync(
-            //    "sp_GetUserAttendanceTimeKeeping", //store proceduce in database service portal
-            //    new
-            //    {
-            //        UserCodeManage = request.UserCode,
-            //        FromDate = fromDate,
-            //        ToDate = toDate,
-            //        PageNumber = request.Page,
-            //        request.PageSize
-            //    },
-            //    commandType: CommandType.StoredProcedure
-            //);
+		                -- ngày thường
+		                ELSE
+			                CASE
+				                WHEN BCGhiChu != '' THEN BCGhiChu
 
-            //var records = rows
-            //    .GroupBy(r => r.NVMaNV)
-            //    .Select(g => new
-            //    {
-            //        NVMaNV = g.Key,
-            //        g.First().NVHoTen,
-            //        g.First().BPTen,
-            //        DataTimeKeeping = g.Select(r => new
-            //        {
-            //            r.BCNgay,
-            //            r.Thu,
-            //            r.CVietTat,
-            //            r.BCTGDen,
-            //            r.BCTGVe,
-            //            r.BCTGLamNgay,
-            //            r.BCTGLamToi,
-            //            r.BCGhiChu,
-            //            r.result
-            //        }).OrderBy(r => r.BCNgay).ToList()
-            //    })
-            //    .OrderBy(r => r.NVMaNV)
-            //    .ToList();
+				                WHEN BCTGLamNgay + BCTGLamToi = BCTGQuyDinh THEN 'X'
+					
+				                WHEN BCTGDen IS NOT NULL AND BCTGVe IS NOT NULL THEN 
+					                CASE 
+						                WHEN 1.0 * CEILING(1.0 * (BCTGQuyDinh - (BCTGLamNgay + BCTGLamToi)) / 30.0) * 30 
+							                    / NULLIF(BCTGQuyDinh, 0) = 1 THEN '?'
+						                ELSE RTRIM(
+								                FORMAT(
+										                1.0 * CEILING(1.0 * (BCTGQuyDinh - (BCTGLamNgay + BCTGLamToi)) / 30.0) * 30 
+										                / NULLIF(BCTGQuyDinh, 0),
+										                '0.####'
+									                )
+							                )
+					                END
+				                ELSE
+					                '?'
+			                END
+	                END AS Results
+	                --BC.*
+                FROM Users AS U
+                LEFT JOIN vs_new.dbo.tblBaoCao AS BC ON BC.BCMaNV = U.NVMa
+                WHERE BCNgay BETWEEN @FromDate AND @ToDate
+                ORDER BY U.NVMaNV ASC
+            ";
 
-            //return records;
+            var param = new
+            {
+                Page = (int)page,
+                PageSize = (int)pageSize,
+                Month = month,
+                Year = year,
+                FromDate = fromDate,
+                ToDate = toDate,
+                ids = orgUnitIds
+            };
+
+            var result = (await connection.QueryAsync<GetUserTimeKeepingResponse>(sql, param)).ToList();
+
+            var groupedResult = result
+                .GroupBy(x => new { x.NVMaNV, x.NVHoTen, x.BPTen })
+                .Select(g => new GroupedUserTimeKeeping
+                {
+                    NVMaNV = g.Key.NVMaNV,
+                    NVHoTen = g.Key.NVHoTen,
+                    BPTen = g.Key.BPTen,
+                    DataTimeKeeping = g.Select(x => new UserDailyRecord
+                    {
+                        thu = x.Thu,
+                        bcNgay = x.BCNgay,
+                        vao = x.BCTGDen,
+                        ra = x.BCTGVe,
+                        result = x.Results,
+                        bcGhiChu = x.BCGhiChu
+                    }).ToList()
+            }   ).ToList();
+
+            var finalResult = new PagedResults<GroupedUserTimeKeeping>
+            {
+                Data = groupedResult,
+                TotalItems = groupedResult.Count,
+                TotalPages = totalPages
+            };
+
+            return finalResult;
+
+            //return groupedResult;
         }
 
         public async Task<object> ConfirmTimeKeepingToHr(GetManagementTimeKeepingRequest request)

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using ServicePortals.Application;
 using ServicePortals.Application.Dtos.LeaveRequest.Requests;
 using ServicePortals.Application.Dtos.TimeKeeping.Requests;
+using ServicePortals.Application.Dtos.TimeKeeping.Responses;
 using ServicePortals.Application.Interfaces.TimeKeeping;
 
 namespace ServicePortal.Controllers.TimeKeeping
@@ -25,11 +26,22 @@ namespace ServicePortal.Controllers.TimeKeeping
             return Ok(new BaseResponse<object>(200, "Success", results));
         }
 
-        [HttpGet("get-management-time-keeping"), AllowAnonymous]
+        [HttpGet("get-management-time-keeping")]
         public async Task<IActionResult> GetMngTimeKeeping([FromQuery] GetManagementTimeKeepingRequest request)
         {
             var results = await _timeKeepingService.GetManagementTimeKeeping(request);
-            return Ok(new BaseResponse<IEnumerable<dynamic>>(200, "Success", results));
+
+            var response = new PageResponse<GroupedUserTimeKeeping>(
+                200,
+                "Success",
+                results.Data,
+                results.TotalPages,
+                request.Page,
+                request.PageSize,
+                results.TotalItems
+            );
+
+            return Ok(response);
         }
 
         [HttpPost("confirm-timekeeping-to-hr")]

@@ -236,12 +236,10 @@ namespace ServicePortals.Infrastructure.Services.LeaveRequest
                     WHERE nv.OrgUnitID = @nextOrgUnitId
                 ";
 
-                var param = new
+                dynamic? nextUserData = await _viclockDapperContext.QueryAsync<dynamic>(sqlFindNextUser, new
                 {
-                    nextOrgUnitId = nextOrgUnitId
-                };
-
-                dynamic? nextUserData = await _viclockDapperContext.QueryAsync<dynamic>(sqlFindNextUser, param);
+                    nextOrgUnitId
+                });
 
                 List<string> toEmails = [];
 
@@ -261,7 +259,7 @@ namespace ServicePortals.Infrastructure.Services.LeaveRequest
                     job.SendEmailRequestHasBeenSent(
                         toEmails,
                         null,
-                        $"Đơn xin nghỉ phép - {requesterUser.UserCode} - {name}",
+                        $"Đơn xin nghỉ phép",
                         bodyMail,
                         null,
                         true
@@ -516,13 +514,11 @@ namespace ServicePortals.Infrastructure.Services.LeaveRequest
 
             await _context.SaveChangesAsync();
 
-            string titleEmail = $"Đơn xin nghỉ phép - {leaveRequest.RequesterUserCode} - {leaveRequest.Name}";
-
             BackgroundJob.Enqueue<IEmailService>(job =>
                 job.SendEmailRequestHasBeenSent(
                     toEmails,
                     null,
-                    titleEmail,
+                    "Đơn xin nghỉ phép",
                     bodyMail,
                     null,
                     true
@@ -758,7 +754,6 @@ namespace ServicePortals.Infrastructure.Services.LeaveRequest
 
             List<ApplicationForm> applicationForms = [];
             List<Domain.Entities.LeaveRequest> leaveRequests = [];
-            List<HistoryApplicationForm> historyApplicationForms = [];
 
             bool isHr = false;
             List<string> toEmail = [];
@@ -821,7 +816,7 @@ namespace ServicePortals.Infrastructure.Services.LeaveRequest
                 {
                     Id = Guid.NewGuid(),
                     RequesterUserCode = itemLeave.RequesterUserCode,
-                    RequestTypeId = 1, //nghi phep
+                    RequestTypeId = 1, //nghỉ phép
                     RequestStatusId = isHr ? (int)StatusApplicationFormEnum.WAIT_HR : (int)StatusApplicationFormEnum.PENDING,
                     CurrentOrgUnitId = isHr ? (int)StatusApplicationFormEnum.ORG_UNIT_ID_HR_LEAVE_RQ : nextUserInfoApproval?.FirstOrDefault()?.OrgUnitID,
                     CreatedAt = DateTimeOffset.Now
@@ -844,27 +839,18 @@ namespace ServicePortals.Infrastructure.Services.LeaveRequest
                     Reason = itemLeave.Reason,
                     CreatedAt = DateTimeOffset.Now
                 };
-                
-                var historyApplicationForm = new HistoryApplicationForm
-                {
-                    Id = Guid.NewGuid(),
-                    ApplicationFormId = applicationForm.Id,
-                    UserApproval = itemLeave.UserNameWriteLeaveRequest,
-                    UserCodeApproval = itemLeave.WriteLeaveUserCode,
-                    ActionType = "APPROVAL",
-                    CreatedAt = DateTimeOffset.Now,
-                };
 
                 applicationForms.Add(applicationForm);
                 leaveRequests.Add(newLeave);
-                historyApplicationForms.Add(historyApplicationForm);
 
-                bodyMail += TemplateEmail.EmailContentLeaveRequest(newLeave, typeLeaves.FirstOrDefault(e => e.Id == itemLeave.TypeLeaveId), timeLeaves.FirstOrDefault(e => e.Id == itemLeave.TimeLeaveId)) + "<br/>";
+                var itemTypeLeave = typeLeaves.FirstOrDefault(e => e.Id == itemLeave.TypeLeaveId);
+                var itemTimeLeave = timeLeaves.FirstOrDefault(e => e.Id == itemLeave.TimeLeaveId);
+
+                bodyMail += TemplateEmail.EmailContentLeaveRequest(newLeave, itemTypeLeave, itemTimeLeave) + "<br/>";
             }
 
             _context.ApplicationForms.AddRange(applicationForms);
             _context.LeaveRequests.AddRange(leaveRequests);
-            _context.HistoryApplicationForms.AddRange(historyApplicationForms);
 
             await _context.SaveChangesAsync();
 

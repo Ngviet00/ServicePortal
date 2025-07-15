@@ -10,5 +10,8 @@ namespace ServicePortals.Domain.Entities
 
         [StringLength(30)]
         public string? Description { get; set; }
+
+        [StringLength(30)]
+        public string? English { get; set; }
     }
 }

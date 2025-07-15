@@ -8,7 +8,7 @@ namespace ServicePortals.Domain.Entities
         public int Id { get; set; }
         public string? Name { get; set; }
         public string? Note { get; set; }
-        public string? NameE {  get; set; }
+        public string? NameV {  get; set; }
 
         public static explicit operator int(TypeLeave v)
         {
