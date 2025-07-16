@@ -11,7 +11,7 @@ namespace ServicePortals.Application.Interfaces.LeaveRequest
         Task<PagedResults<LeaveRequestDto>> GetAll(GetAllLeaveRequest request);
         Task<LeaveRequestDto> GetById(Guid id);
         Task<LeaveRequestDto?> Approval(ApprovalRequests request, string currentUserCode, ClaimsPrincipal userClaim);
-        Task<LeaveRequestDto> Create(CreateLeaveRequest request);
+        Task<LeaveRequestDto> Create(CreateLeaveRequest request, ClaimsPrincipal userClaim);
         Task<LeaveRequestDto> Update(Guid id, LeaveRequestDto dto);
         Task<LeaveRequestDto> Delete(Guid id);
         Task<PagedResults<LeaveRequestDto>> GetAllWaitApproval(GetAllLeaveRequestWaitApprovalRequest request, ClaimsPrincipal userClaim);
@@ -26,9 +26,6 @@ namespace ServicePortals.Application.Interfaces.LeaveRequest
 
         Task<object> CreateLeaveForManyPeople(CreateLeaveRequestForManyPeopleRequest request);
         Task<object> SearchUserRegisterLeaveRequest(SearchUserRegisterLeaveRequest request);
-
-
-
-        //Task<string> HrRegisterAllLeave(HrRegisterAllLeaveRequest request);
+        Task<object> HrRegisterAllLeave(HrRegisterAllLeaveRequest request);
     }
 }

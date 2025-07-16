@@ -263,6 +263,7 @@ namespace ServicePortals.Infrastructure.Data
                 .HasOne(lr => lr.User)
                 .WithMany()
                 .HasPrincipalKey(u => u.UserCode)
+                .HasForeignKey(lr => lr.RequesterUserCode)
                 .IsRequired(false)
                 .OnDelete(DeleteBehavior.NoAction);
         }

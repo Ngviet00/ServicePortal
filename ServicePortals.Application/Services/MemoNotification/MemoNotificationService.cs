@@ -47,6 +47,8 @@ namespace ServicePortals.Infrastructure.Services.MemoNotification
                 roleId = role.Id;
             }
 
+            string CurrentUserCode = request.CurrentUserCode;
+
             string sql = $@"
                 WITH DistinctDeptNames AS (
                     SELECT 
@@ -57,7 +59,7 @@ namespace ServicePortals.Infrastructure.Services.MemoNotification
                         ON mn.Id = mnd.MemoNotificationId
                     LEFT JOIN {Global.DbViClock}.dbo.tblBoPhan AS d
                         ON mnd.DepartmentId = d.BPMa
-                    WHERE mn.CreatedByRoleId = @roleId
+                    WHERE (mn.CreatedByRoleId = @roleId OR mn.UserCodeCreated = @CurrentUserCode)
                     GROUP BY mn.Id, d.BPTen
                 ),
                 Base AS (
@@ -80,7 +82,7 @@ namespace ServicePortals.Infrastructure.Services.MemoNotification
                     FROM {Global.DbWeb}.dbo.memo_notifications AS mn
                     LEFT JOIN DistinctDeptNames AS d
                         ON mn.Id = d.Id
-                    WHERE mn.CreatedByRoleId = @roleId
+                    WHERE (mn.CreatedByRoleId = @roleId OR mn.UserCodeCreated = @CurrentUserCode)
                     GROUP BY 
                         mn.Id, mn.Title, mn.Content, mn.FromDate, mn.ToDate,
                         mn.UserCodeCreated, mn.CreatedBy, mn.CreatedAt,
@@ -92,18 +94,19 @@ namespace ServicePortals.Infrastructure.Services.MemoNotification
             string countSql = $@"
                 SELECT COUNT(DISTINCT mn.Id)
                 FROM {Global.DbWeb}.dbo.memo_notifications AS mn
-                WHERE mn.CreatedByRoleId = @roleId;
+                WHERE (mn.CreatedByRoleId = @roleId OR mn.UserCodeCreated = @CurrentUserCode);
             ";
 
             var parameters = new
             {
+                CurrentUserCode,
                 roleId,
                 skip,
                 take
             };
 
             var data = await _viclockDapperContext.QueryAsync<MemoNotificationDto>(sql, parameters);
-            var totalItems = await _viclockDapperContext.QueryFirstOrDefaultAsync<int>(countSql, new { roleId });
+            var totalItems = await _viclockDapperContext.QueryFirstOrDefaultAsync<int>(countSql, new { roleId, CurrentUserCode });
 
             int totalPages = (int)Math.Ceiling(totalItems / pageSize);
 

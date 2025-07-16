@@ -71,7 +71,9 @@ namespace ServicePortal.Controllers.LeaveRequest
         [HttpPost("create")]
         public async Task<IActionResult> Create([FromBody] CreateLeaveRequest request)
         {
-            var result = await _leaveRequestService.Create(request);
+            var userClaim = HttpContext.User;
+
+            var result = await _leaveRequestService.Create(request, userClaim);
 
             return Ok(new BaseResponse<LeaveRequestDto>(200, "success", result));
         }
@@ -114,13 +116,13 @@ namespace ServicePortal.Controllers.LeaveRequest
             return Ok(new BaseResponse<long>(200, "success", result));
         }
 
-        //[HttpPost("register-all-leave-rq")]
-        //public async Task<IActionResult> HrRegisterAllLeave([FromBody] HrRegisterAllLeaveRequest request)
-        //{
-        //    var result = await _leaveRequestService.HrRegisterAllLeave(request);
+        [HttpPost("hr-register-all-leave-rq")]
+        public async Task<IActionResult> HrRegisterAllLeave([FromBody] HrRegisterAllLeaveRequest request)
+        {
+            var result = await _leaveRequestService.HrRegisterAllLeave(request);
 
-        //    return Ok(new BaseResponse<string>(200, "success", result));
-        //}
+            return Ok(new BaseResponse<object>(200, "success", result));
+        }
 
         [HttpGet("history-approval")]
         public async Task<IActionResult> GetHistoryLeaveRequestApproval([FromQuery] GetAllLeaveRequest request)

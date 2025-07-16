@@ -65,8 +65,8 @@ namespace ServicePortals.Infrastructure.Services.User
 
             if (!string.IsNullOrWhiteSpace(name))
             {
-                whereSql.AppendLine($" AND dbo.udf_RemoveDiacritics(dbo.funTCVN2Unicode(nv.NVHoTen)) LIKE '%' + @SearchName + '%' ");
-                whereSql.AppendLine($" OR u.UserCode LIKE '%' + @SearchName + '%' ");
+                whereSql.AppendLine($" AND (dbo.udf_RemoveDiacritics(dbo.funTCVN2Unicode(nv.NVHoTen)) LIKE '%' + @SearchName + '%' ");
+                whereSql.AppendLine($" OR u.UserCode LIKE '%' + @SearchName + '%' )");
             }
 
             if (DepartmentName != null)

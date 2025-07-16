@@ -117,6 +117,7 @@ namespace ServicePortals.Infrastructure.Services.TimeKeeping
 		                WHEN DATEPART(dw, BCNGay) = 1 THEN
 			                CASE
 				                WHEN BCTGDen IS NOT NULL AND BCTGVe IS NOT NULL  THEN 'CN_X'
+                                ELSE 'CN'
 			                END
 
 		                -- ngày thường
