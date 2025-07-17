@@ -75,7 +75,7 @@ namespace ServicePortals.Infrastructure.Services.TimeKeeping
                     FROM user_mng_org_unit_id as um
                     INNER JOIN [{Global.DbViClock}].dbo.OrgUnits as o
                         ON um.OrgUnitId = o.id
-                    WHERE um.UserCode = {request.UserCode}
+                    WHERE um.UserCode = {request.UserCode} AND um.ManagementType = 'MNG_TIME_KEEPING'
 
                     UNION ALL
 

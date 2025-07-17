@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ServicePortals.Infrastructure.Data;
 
@@ -11,9 +12,11 @@ using ServicePortals.Infrastructure.Data;
 namespace ServicePortals.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250717020438_AddTableSystemConfig")]
+    partial class AddTableSystemConfig
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -84,40 +87,6 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                     b.HasIndex("EntityType", "EntityId");
 
                     b.ToTable("attach_files");
-                });
-
-            modelBuilder.Entity("ServicePortals.Domain.Entities.DelegatedTemp", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTimeOffset?>("FromDate")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<bool?>("IsActive")
-                        .HasColumnType("bit");
-
-                    b.Property<bool?>("IsPermanent")
-                        .HasColumnType("bit");
-
-                    b.Property<int?>("MainOrgUnitId")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("RequestTypeId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("TempUserCode")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTimeOffset?>("ToDate")
-                        .HasColumnType("datetimeoffset");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("delegated_temp");
                 });
 
             modelBuilder.Entity("ServicePortals.Domain.Entities.File", b =>
@@ -598,8 +567,8 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                     b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<bool?>("IsActive")
-                        .HasColumnType("bit");
+                    b.Property<short?>("IsActive")
+                        .HasColumnType("smallint");
 
                     b.Property<string>("MaxValue")
                         .HasColumnType("nvarchar(max)");
@@ -618,7 +587,7 @@ namespace ServicePortals.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("system_configs");
+                    b.ToTable("SystemConfigs");
                 });
 
             modelBuilder.Entity("ServicePortals.Domain.Entities.TimeLeave", b =>

@@ -28,6 +28,8 @@ namespace ServicePortals.Infrastructure.Data
         public DbSet<RequestStatus> RequestStatuses { get; set; }
         public DbSet<WorkFlowStep> WorkFlowSteps { get; set; }
         public DbSet<UserMngOrgUnitId> UserMngOrgUnits { get; set; }
+        public DbSet<SystemConfig> SystemConfigs { get; set; }
+        public DbSet<DelegatedTemp> DelegatedTemps { get; set; }
 
         public IDbConnection CreateConnection() => Database.GetDbConnection();
 

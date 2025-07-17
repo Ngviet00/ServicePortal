@@ -11,7 +11,6 @@ using ServicePortals.Application.Dtos.LeaveRequest;
 using ServicePortals.Application.Dtos.LeaveRequest.Requests;
 using ServicePortals.Application.Dtos.LeaveRequest.Responses;
 using ServicePortals.Application.Dtos.User.Requests;
-using ServicePortals.Application.Dtos.User.Responses;
 using ServicePortals.Application.Interfaces;
 using ServicePortals.Application.Interfaces.LeaveRequest;
 using ServicePortals.Application.Interfaces.OrgUnit;
@@ -380,44 +379,41 @@ namespace ServicePortals.Infrastructure.Services.LeaveRequest
 
         public async Task<int> CountWaitApproval(GetAllLeaveRequestWaitApprovalRequest request, ClaimsPrincipal userClaim)
         {
-            var roleClaims = userClaim.Claims.Where(c => c.Type == ClaimTypes.Role).Select(c => c.Value).ToHashSet(StringComparer.OrdinalIgnoreCase);
-
-            var baseQuery = GetBaseLeaveRequestApprovalQuery(request, userClaim);
-
-            return await baseQuery.CountAsync();
+            IQueryable<Domain.Entities.LeaveRequest> q = GetBaseLeaveRequestApprovalQuery(request, userClaim);
+            return await q.CountAsync();
         }
 
         public IQueryable<Domain.Entities.LeaveRequest> GetBaseLeaveRequestApprovalQuery(GetAllLeaveRequestWaitApprovalRequest request, ClaimsPrincipal userClaim)
         {
+            var userCode = request.UserCode;
             var roleClaims = userClaim.Claims.Where(c => c.Type == ClaimTypes.Role).Select(c => c.Value).ToHashSet(StringComparer.OrdinalIgnoreCase);
-
             int? orgUnitId = request.OrgUnitId;
+            bool isHR = roleClaims?.Contains("HR") ?? false;
 
-            var q = _context.LeaveRequests.AsQueryable();
+            var query = from l in _context.LeaveRequests
+                        join a in _context.ApplicationForms on l.ApplicationFormId equals a.Id into la
+                        from a in la.DefaultIfEmpty()
+                        join dt in _context.DelegatedTemps on a.CurrentOrgUnitId equals dt.MainOrgUnitId into adt
+                        from dt in adt.DefaultIfEmpty()
+                        where a != null && 
+                          (
+                              (isHR && 
+                               (
+                                   (a.CurrentOrgUnitId == orgUnitId &&
+                                    (a.RequestStatusId == (int)StatusApplicationFormEnum.PENDING ||
+                                     a.RequestStatusId == (int)StatusApplicationFormEnum.IN_PROCESS)) ||
+                                   (a.RequestStatusId == (int)StatusApplicationFormEnum.WAIT_HR)
+                               )) ||
+                              (!isHR && 
+                               (
+                                   (a.CurrentOrgUnitId == orgUnitId || (dt != null && dt.TempUserCode == userCode && dt.IsActive == true)) &&
+                                   (a.RequestStatusId == (int)StatusApplicationFormEnum.PENDING ||
+                                    a.RequestStatusId == (int)StatusApplicationFormEnum.IN_PROCESS)
+                               ))
+                          )
+                        select l;
 
-            if (roleClaims.Contains("HR"))
-            {
-                q = q.Where(e => 
-                    (
-                        e.ApplicationForm != null && e.ApplicationForm.CurrentOrgUnitId == orgUnitId &&
-                        (e.ApplicationForm.RequestStatusId == (int)StatusApplicationFormEnum.PENDING || e.ApplicationForm.RequestStatusId == (int)StatusApplicationFormEnum.IN_PROCESS)
-                    ) ||
-                    (e.ApplicationForm != null && e.ApplicationForm.RequestStatusId == (int)StatusApplicationFormEnum.WAIT_HR)
-                );
-            }
-            else
-            {
-                q = q.Where(e =>
-                    e.ApplicationForm != null &&
-                    e.ApplicationForm.CurrentOrgUnitId == orgUnitId &&
-                    (
-                        e.ApplicationForm.RequestStatusId == (int)StatusApplicationFormEnum.PENDING ||
-                        e.ApplicationForm.RequestStatusId == (int)StatusApplicationFormEnum.IN_PROCESS
-                    )
-                );
-            }
-
-            return q;
+            return query.Distinct();
         }
 
         public async Task<LeaveRequestDto?> Approval(ApprovalRequests request, string currentUserCodeInJwt, ClaimsPrincipal userClaim)
@@ -435,10 +431,21 @@ namespace ServicePortals.Infrastructure.Services.LeaveRequest
                 await connection.OpenAsync();
             }
 
-            int orgUnitIdCurrentUser = await connection.QueryFirstOrDefaultAsync<int>($@"SELECT OrgUnitID FROM {Global.DbViClock}.dbo.tblNhanVien AS NV WHERE NVMaNV = @UserCode", new
+            int? orgUnitIdCurrentUser = -1;
+
+            var delegatedTempUser = await _context.DelegatedTemps.FirstOrDefaultAsync(e => e.RequestTypeId == 1 && e.TempUserCode == request.UserCodeApproval);
+
+            if (delegatedTempUser != null)
             {
-                UserCode = request.UserCodeApproval
-            });
+                orgUnitIdCurrentUser = delegatedTempUser.MainOrgUnitId;
+            }
+            else
+            {
+                orgUnitIdCurrentUser = await connection.QueryFirstOrDefaultAsync<int>($@"SELECT OrgUnitID FROM {Global.DbViClock}.dbo.tblNhanVien AS NV WHERE NVMaNV = @UserCode", new
+                {
+                    UserCode = request.UserCodeApproval
+                });
+            }
 
             if (orgUnitIdCurrentUser == 0) //nếu hr chưa set org unit id, user sẽ k thể đăng ký nghỉ phép đc
             {
@@ -626,153 +633,7 @@ namespace ServicePortals.Infrastructure.Services.LeaveRequest
                 );
             }
 
-
-                //if (isSendHr && isComplete == false) //gửi email cho HR
-                //{
-                //    BackgroundJob.Enqueue<IEmailService>(job =>
-                //        job.SendEmailRequestHasBeenSent(
-                //            new List<string> { Global.EmailHRReceiveLeaveRequest },
-                //            null,
-                //            "Đơn xin nghỉ phép",
-                //            emailWithUrlApproval,
-                //            null,
-                //            true
-                //        )
-                //    );
-                //}
-
-
-
-            return null;
-
-            ////lấy thông tin người approval ở viclock => lấy đc OrgUnitId, họ tên
-            //dynamic? userApprovalInViclock = await _userService.GetCustomColumnUserViclockByUserCode(
-            //    currentUserCodeInJwt ?? "", "OrgUnitID, NVEmail"
-            //) ?? throw new NotFoundException("User not found in Viclock");
-
-            ////lấy thông tin người approval ở web system => email, user config...
-            //var userApprovalInWebSystem = await _context.Users
-            //    .Include(e => e.UserConfigs)
-            //    .FirstOrDefaultAsync(e => e.UserCode == currentUserCodeInJwt)
-            //    ?? throw new NotFoundException("User not found in Web system");
-
-
-            //var userRequester = leaveRequest.User;
-
-            //var applicationForm = leaveRequest.ApplicationForm ?? throw new NotFoundException("Application Form not found");
-
-            //var orgUnit = await _orgUnitService.GetOrgUnitById(userApprovalInViclock?.OrgUnitID);
-
-            //var historyApplicationForm = new HistoryApplicationForm
-            //{
-            //    ApplicationFormId = applicationForm.Id,
-            //    UserApproval = userApprovalInViclock?.NVHoTen,
-            //    CreatedAt = DateTimeOffset.Now
-            //};
-
-            ////reject
-            //if (request.Status == false)
-            //{
-            //    applicationForm.Id = applicationForm.Id;
-            //    applicationForm.RequestStatusId = (int)StatusApplicationFormEnum.REJECT;
-
-            //    historyApplicationForm.UserApproval = request.NameUserApproval;
-            //    historyApplicationForm.ActionType = "REJECT";
-            //    historyApplicationForm.Comment = request.Note ?? "";
-            //    historyApplicationForm.UserCodeApproval = request.UserCodeApproval;
-
-            //    _context.ApplicationForms.Update(applicationForm);
-            //    _context.HistoryApplicationForms.Add(historyApplicationForm);
-
-            //    SendRejectEmailLeaveRequest(userRequester, leaveRequest, request.Note ?? "");
-
-            //    await _context.SaveChangesAsync();
-            //    return null;
-            //}
-
-            ////đơn này đã đến bộ phận hr và người approval là hr => complete
-            //if (applicationForm.RequestStatusId == (int)StatusApplicationFormEnum.WAIT_HR && roleClaims.Contains("HR"))
-            //{
-            //    applicationForm.Id = applicationForm.Id;
-            //    applicationForm.RequestStatusId = (int)StatusApplicationFormEnum.COMPLETE;
-            //    applicationForm.CurrentOrgUnitId = ORG_UNIT_ID_COMPLETE_DONE;
-
-            //    historyApplicationForm.UserApproval = request.NameUserApproval;
-            //    historyApplicationForm.ActionType = "APPROVAL";
-            //    historyApplicationForm.Comment = request.Note ?? "";
-            //    historyApplicationForm.UserCodeApproval = request.UserCodeApproval;
-
-            //    _context.ApplicationForms.Update(applicationForm);
-            //    _context.HistoryApplicationForms.Add(historyApplicationForm);
-
-            //    SendEmailSuccessLeaveRequest(userApprovalInWebSystem, leaveRequest);
-
-            //    await _context.SaveChangesAsync();
-            //    return null;
-            //}
-
-            //string urlWaitApproval = $"{request.UrlFrontEnd}/leave/wait-approval";
-            //string bodyMail = $@"
-            //    <h4>
-            //        <span>Duyệt đơn: </span>
-            //        <a href={urlWaitApproval}>{urlWaitApproval}</a>
-            //    </h4>" + TemplateEmail.EmailContentLeaveRequest(leaveRequest, leaveRequest.TypeLeave, leaveRequest.TimeLeave) + "<br/>";
-
-            //List<string> toEmails = [];
-
-            //if (orgUnit == null || orgUnit?.ParentJobTitleId == null)
-            //{
-            //    applicationForm.RequestStatusId = (int)StatusApplicationFormEnum.WAIT_HR;
-            //    applicationForm.CurrentOrgUnitId = (int)StatusApplicationFormEnum.WAIT_HR;
-
-            //    historyApplicationForm.UserApproval = request.NameUserApproval;
-            //    historyApplicationForm.ActionType = "APPROVAL";
-            //    historyApplicationForm.UserCodeApproval = request.UserCodeApproval;
-
-            //    toEmails.Add(Global.EmailHRReceiveLeaveRequest);
-            //}
-            //else
-            //{
-            //    applicationForm.RequestStatusId = (int)StatusApplicationFormEnum.IN_PROCESS;
-            //    applicationForm.CurrentOrgUnitId = orgUnit?.ParentJobTitleId;
-
-            //    historyApplicationForm.UserApproval = request.NameUserApproval;
-            //    historyApplicationForm.ActionType = "APPROVAL";
-            //    historyApplicationForm.UserCodeApproval = request.UserCodeApproval;
-
-            //    dynamic users = await _userService.GetMultipleUserViclockByOrgUnitId(orgUnit?.ParentJobTitleId);
-
-            //    if (users is IEnumerable<object> list && list.Any())
-            //    {
-            //        foreach (var user in users)
-            //        {
-            //            dynamic u = user;
-            //            string email = !string.IsNullOrWhiteSpace(u?.Email) ? u.Email : (!string.IsNullOrWhiteSpace(u?.NVEmail) ? u.NVEmail : "");
-            //            if (!string.IsNullOrEmpty(email))
-            //            {
-            //                toEmails.Add(email);
-            //            }
-            //        }
-            //    }
-            //}
-
-            //_context.ApplicationForms.Update(applicationForm);
-            //_context.HistoryApplicationForms.Add(historyApplicationForm);
-
-            //await _context.SaveChangesAsync();
-
-            //BackgroundJob.Enqueue<IEmailService>(job =>
-            //    job.SendEmailRequestHasBeenSent(
-            //        toEmails,
-            //        null,
-            //        "Đơn xin nghỉ phép",
-            //        bodyMail,
-            //        null,
-            //        true
-            //    )
-            //);
-
-            //return null;
+            return LeaveRequestMapper.ToDto(leaveRequest);
         }
 
         private void SendEmailSuccessLeaveRequest(Domain.Entities.User userRequester, Domain.Entities.LeaveRequest leaveRequest)

@@ -4,6 +4,9 @@ namespace ServicePortals.Application.Dtos.LeaveRequest.Requests
 {
     public class GetAllLeaveRequestWaitApprovalRequest
     {
+        [FromQuery(Name = "UserCode")]
+        public string? UserCode { get; set; }
+
         [FromQuery(Name = "OrgUnitId")]
         public int? OrgUnitId { get; set; }
 

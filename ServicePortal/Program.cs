@@ -42,6 +42,8 @@ using ServicePortals.Application.Services.WorkFlowStep;
 using ServicePortals.Application.Interfaces;
 using ServicePortals.Application.Services;
 using Microsoft.OpenApi.Models;
+using ServicePortals.Application.Interfaces.SystemConfig;
+using ServicePortals.Application.Services.SystemConfig;
 
 namespace ServicePortal
 {
@@ -143,6 +145,8 @@ namespace ServicePortal
             builder.Services.AddScoped<IWorkFlowStepService, WorkFlowStepService>();
 
             builder.Services.AddScoped<ICommonDataService, CommonDataService>();
+
+            builder.Services.AddScoped<ISystemConfigService, SystemConfigService>();
 
             #endregion
 
