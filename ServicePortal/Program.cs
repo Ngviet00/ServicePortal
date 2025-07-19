@@ -44,6 +44,8 @@ using ServicePortals.Application.Services;
 using Microsoft.OpenApi.Models;
 using ServicePortals.Application.Interfaces.SystemConfig;
 using ServicePortals.Application.Services.SystemConfig;
+using ServicePortals.Application.Interfaces.DelegatedTemp;
+using ServicePortals.Application.Services.DelegatedTemp;
 
 namespace ServicePortal
 {
@@ -147,6 +149,8 @@ namespace ServicePortal
             builder.Services.AddScoped<ICommonDataService, CommonDataService>();
 
             builder.Services.AddScoped<ISystemConfigService, SystemConfigService>();
+
+            builder.Services.AddScoped<IDelegatedTempService, DelegatedTempService>();
 
             #endregion
 

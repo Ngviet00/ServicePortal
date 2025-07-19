@@ -433,7 +433,7 @@ namespace ServicePortals.Infrastructure.Services.LeaveRequest
 
             int? orgUnitIdCurrentUser = -1;
 
-            var delegatedTempUser = await _context.DelegatedTemps.FirstOrDefaultAsync(e => e.RequestTypeId == 1 && e.TempUserCode == request.UserCodeApproval);
+            var delegatedTempUser = await _context.DelegatedTemps.FirstOrDefaultAsync(e => e.RequestTypeId == 1 && e.TempUserCode == request.UserCodeApproval && e.IsActive == true);
 
             if (delegatedTempUser != null)
             {
@@ -988,7 +988,7 @@ namespace ServicePortals.Infrastructure.Services.LeaveRequest
                 .Where(e => 
                     e.ApplicationForm != null && 
                     e.ApplicationForm.RequestStatusId == (int)StatusApplicationFormEnum.WAIT_HR && 
-                    e.ApplicationForm.CurrentOrgUnitId == (int)StatusApplicationFormEnum.WAIT_HR
+                    e.ApplicationForm.CurrentOrgUnitId == (int)StatusApplicationFormEnum.ORG_UNIT_ID_HR_LEAVE_RQ
                 )
                 .ToListAsync();
 

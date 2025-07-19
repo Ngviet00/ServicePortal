@@ -540,7 +540,7 @@ namespace ServicePortals.Infrastructure.Services.User
 
             var param = new
             {
-                Key = Helper.UnicodeToTCVN(request.Keysearch ?? ""),
+                Key = request.Keysearch,
                 request.Page,
                 request.PageSize,
             };

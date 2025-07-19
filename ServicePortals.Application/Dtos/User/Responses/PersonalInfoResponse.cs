@@ -13,6 +13,7 @@
         public int? BPMa { get; set; }
         public string? BPTen { get; set; }
         public string? CVTen { get; set; }
+        public bool? NVGioiTinh { get; set; }
         public DateTimeOffset? DeletedAt { get; set; }
         public DateTime? NVNgayVao { get; set; }
     }
