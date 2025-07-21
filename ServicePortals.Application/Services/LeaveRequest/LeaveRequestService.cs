@@ -65,7 +65,7 @@ namespace ServicePortals.Infrastructure.Services.LeaveRequest
                 .Include(l => l.TypeLeave)
                 .Include(l => l.ApplicationForm)
                     .ThenInclude(a => a.HistoryApplicationForms)
-                .Where(l => l.RequesterUserCode == UserCode &&
+                .Where(l => (l.RequesterUserCode == UserCode || l.UserCodeWriteLeaveRequest == UserCode) &&
                             l.ApplicationForm != null &&
                             (
                                 status == 2
@@ -87,12 +87,12 @@ namespace ServicePortals.Infrastructure.Services.LeaveRequest
 
             var countPending = await _context.LeaveRequests
                 .Include(e => e.ApplicationForm)
-                .Where(e => e.RequesterUserCode == UserCode && e.ApplicationForm != null && e.ApplicationForm.RequestStatusId == 1) //1 pending
+                .Where(e => (e.RequesterUserCode == UserCode || e.UserCodeWriteLeaveRequest == UserCode) && e.ApplicationForm != null && e.ApplicationForm.RequestStatusId == 1) //1 pending
                 .CountAsync();
 
             var countInProcess = await _context.LeaveRequests
                 .Include(e => e.ApplicationForm)
-                .Where(e => e.RequesterUserCode == UserCode && e.ApplicationForm != null && 
+                .Where(e => (e.RequesterUserCode == UserCode || e.UserCodeWriteLeaveRequest == UserCode) && e.ApplicationForm != null && 
                     (
                         e.ApplicationForm.RequestStatusId == 2 || e.ApplicationForm.RequestStatusId == 4
                     )
