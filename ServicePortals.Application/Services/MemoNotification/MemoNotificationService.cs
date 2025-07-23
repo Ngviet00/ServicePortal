@@ -1,4 +1,5 @@
 ﻿using System.Security.Claims;
+using Azure.Core;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using ServicePortals.Application;
@@ -166,18 +167,22 @@ namespace ServicePortals.Infrastructure.Services.MemoNotification
 
         public async Task<MemoNotificationDto> Create(CreateMemoNotiRequest dto, IFormFile[] files)
         {
-            var user = _httpContextAccessor.HttpContext?.User;
-            var userCode = user?.FindFirst("user_code")?.Value;
-            var role = user?.FindFirst(ClaimTypes.Role)?.Value;
+            int requestTypeId = (int)RequestTypeEnum.CREATE_MEMO_NOTIFICATION;
 
-            //check
-            int nextOrgUnitId = -1;
+            var userClaims = _httpContextAccessor.HttpContext?.User;
+            var roleClaims = userClaims?.Claims.Where(c => c.Type == ClaimTypes.Role).Select(c => c.Value).ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-            //if is union
-            if (true)
+            var isUnion = roleClaims?.Contains("UNION") ?? false;
+
+            int? nextOrgUnitId = -1;
+
+            if (isUnion)
             {
+                var workFlowStep = await _context.WorkFlowSteps.FirstOrDefaultAsync(e => e.RequestTypeId == requestTypeId && e.OrgUnitContext == "ROLE_UNION");
+                nextOrgUnitId = workFlowStep?.ToSpecificOrgUnitId;
+
                 //get from workflow step where context is union => set next org unit id
-                
+
                 //if is final => set status application form status is final
                 //
                 //else lam nhu binh thuong
