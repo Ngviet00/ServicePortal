@@ -8,7 +8,6 @@ using Serilog;
 using ServicePortal.Infrastructure.Cache;
 using ServicePortals.Application;
 using ServicePortals.Application.Common;
-using ServicePortals.Application.Dtos.TimeKeeping.Requests;
 using ServicePortals.Application.Dtos.User.Requests;
 using ServicePortals.Application.Dtos.User.Responses;
 using ServicePortals.Application.Interfaces.User;
@@ -132,12 +131,8 @@ namespace ServicePortals.Infrastructure.Services.User
                     pu.Phone,
                     pu.Email,
                     pu.NVNgayVao,
-                    pu.DateOfBirth,
-                    r.Id AS RoleId,
-                    r.Name AS RoleName
+                    pu.DateOfBirth
                 FROM PagedUsers pu
-                LEFT JOIN [{Global.DbWeb}].dbo.user_roles ur ON pu.UserCode = ur.UserCode
-                LEFT JOIN [{Global.DbWeb}].dbo.roles r ON ur.RoleId = r.Id
             ");
 
             var users = await _viclockDapperContext.QueryAsync<GetAllUserResponse>(dataSql.ToString(), param);
@@ -158,13 +153,6 @@ namespace ServicePortals.Infrastructure.Services.User
                     Email = g.First().Email,
                     DateOfBirth = g.First().DateOfBirth,
                     NVNgayVao = g.First().NVNgayVao,
-                    Roles = g
-                        .Where(r => r.RoleId.HasValue)
-                        .Select(r => new Domain.Entities.Role
-                        {
-                            Id = r.RoleId.GetValueOrDefault(),
-                            Name = r.RoleName
-                        }).ToList()
                 })
                 .ToList();
 
@@ -175,6 +163,32 @@ namespace ServicePortals.Infrastructure.Services.User
                 TotalPages = totalPages
             };
         }
+
+        public async Task<DetailUserWithRoleAndPermissionResponse> GetDetailUserWithRoleAndPermission(string userCode)
+        {
+            DetailUserWithRoleAndPermissionResponse result = new();
+
+            var rolesOfUser = await _context.UserRoles
+                .Where(ur => ur.UserCode == userCode)
+                .Include(ur => ur.Role)
+                .Select(ur => ur.Role)
+                .ToListAsync();
+
+            var permissionOfUser = await _context.UserPermissions
+                .Where(up => up.UserCode == userCode)
+                .Include(up => up.Permission)
+                .Select(up => up.Permission)
+                .ToListAsync();
+
+            result.UserCode = userCode;
+
+            result.Roles = rolesOfUser;
+
+            result.Permissions = permissionOfUser;
+
+            return result;
+        }
+
         public async Task<bool> UpdateUserRole(UpdateUserRoleRequest dto)
         {
             try
@@ -202,6 +216,36 @@ namespace ServicePortals.Infrastructure.Services.User
             catch (Exception ex)
             {
                 Log.Error($"Error can not update user role, error: {ex.Message}");
+                return false;
+            }
+        }
+        public async Task<bool> UpdateUserPermission(UpdateUserRoleRequest dto)
+        {
+            try
+            {
+                List<UserPermission> userPermissions = [];
+
+                var oldUserPermissions = await _context.UserPermissions.Where(e => e.UserCode == dto.UserCode).ToListAsync();
+                _context.UserPermissions.RemoveRange(oldUserPermissions);
+
+                foreach (var item in dto.PermissionIds ?? [])
+                {
+                    userPermissions.Add(new UserPermission
+                    {
+                        UserCode = dto.UserCode,
+                        PermissionId = item
+                    });
+                }
+
+                _context.UserPermissions.AddRange(userPermissions);
+
+                await _context.SaveChangesAsync();
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"Error can not update user permission, error: {ex.Message}");
                 return false;
             }
         }
@@ -438,7 +482,7 @@ namespace ServicePortals.Infrastructure.Services.User
                         u.NVHoTen
                     FROM OrgTree ou
                     LEFT JOIN {Global.DbViClock}.dbo.tblNhanVien u ON u.OrgUnitId = ou.Id
-                    WHERE ou.UnitId = 5 AND u.NVMaNV IS NOT NULL
+                    WHERE u.NVMaNV IS NOT NULL
                 ),
                 AddMoreUser AS (
                     SELECT DISTINCT
@@ -450,7 +494,7 @@ namespace ServicePortals.Infrastructure.Services.User
                     FROM {Global.DbViClock}.dbo.tblNhanVien u -- Có vẻ bảng tblNhanVien và OrgUnits nằm chung vs_new
                     JOIN {Global.DbViClock}.dbo.OrgUnits ou ON ou.Id = u.OrgUnitId
                     WHERE ou.Id IN (
-                        SELECT DISTINCT ParentJobTitleId FROM OrgTree WHERE UnitId = 5
+                        SELECT DISTINCT ParentJobTitleId FROM OrgTree
                     )
                     AND u.NVMaNV NOT IN (SELECT NVMaNV FROM MainUsers WHERE NVMaNV IS NOT NULL) AND u.NVMaNV IS NOT NULL
                 ),
@@ -518,14 +562,11 @@ namespace ServicePortals.Infrastructure.Services.User
 
                 INNER JOIN [{Global.DbViClock}].dbo.tblNhanVien AS NV On OG.Id = NV.OrgUnitID
 
-                WHERE
-
-                 OG.UnitId = @UnitId AND OG.ParentOrgUnitId = @ParentOrgUnitId
+                WHERE OG.ParentOrgUnitId = @ParentOrgUnitId
             ";
 
             var param = new
             {
-                UnitId = 5,
                 ParentOrgUnitId = parentOrgUnitId,
             };
 
@@ -551,7 +592,8 @@ namespace ServicePortals.Infrastructure.Services.User
 
             if (!string.IsNullOrWhiteSpace(request.Keysearch))
             {
-                sbWhere.AppendLine(" AND (NV.NVHoTen like '%' + @Key + '%' OR NV.NVMaNV = @Key)");
+                sbWhere.AppendLine($" AND (dbo.udf_RemoveDiacritics(dbo.funTCVN2Unicode(NV.NVHoTen)) LIKE '%' + @Key + '%' ");
+                sbWhere.AppendLine($" OR NV.NVMaNV LIKE '%' + @Key + '%' )");
             }
 
             StringBuilder sb = new StringBuilder();

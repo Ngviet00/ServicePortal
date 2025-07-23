@@ -5,6 +5,7 @@ namespace ServicePortals.Application.Interfaces.User
 {
     public interface IUserService
     {
+        Task<DetailUserWithRoleAndPermissionResponse> GetDetailUserWithRoleAndPermission(string userCode);
         Task<PersonalInfoResponse?> GetMe(string userCode);
         Task<UserResponse> GetById(Guid id);
         Task<UserResponse?> GetByUserCode(string code);
@@ -15,11 +16,12 @@ namespace ServicePortals.Application.Interfaces.User
         Task<UserResponse> ForceDelete(Guid id);
         Task<PagedResults<GetAllUserResponse>> GetAll(GetAllUserRequest request);
         Task<bool> UpdateUserRole(UpdateUserRoleRequest request);
+        Task<bool> UpdateUserPermission(UpdateUserRoleRequest request);
         Task<UserResponse> ResetPassword(ResetPasswordRequest request);
         Task<UserResponse> Update(string userCode, UpdatePersonalInfoRequest request);
         Task<object?> GetMultipleUserViclockByOrgUnitId(int OrgUnitId);
         Task<List<OrgUnitNode>> BuildOrgTree(int departmentId);
-        Task<dynamic?> GetUserByParentOrgUnit(int unitId);
+        Task<dynamic?> GetUserByParentOrgUnit(int orgUnitId);
         Task<PagedResults<object>> SearchAllUserFromViClock(SearchAllUserFromViclockRequest request);
         Task<List<NextUserInfoApprovalResponse>> GetNextUserInfoApprovalByCurrentUserCode(string userCode);
         Task<dynamic> Test();

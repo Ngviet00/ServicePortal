@@ -7,7 +7,7 @@ using ServicePortals.Application.Interfaces.Role;
 
 namespace ServicePortal.Controllers.Role
 {
-    [ApiController, Route("api/role"), Authorize]
+    [ApiController, Route("api/role")]
     public class RoleController : ControllerBase
     {
         private readonly IRoleService _roleService;
@@ -17,7 +17,7 @@ namespace ServicePortal.Controllers.Role
             _roleService = roleService;
         }
 
-        [HttpGet("get-all"), Authorize, RoleAuthorize("HR", "HR_Manager")]
+        [HttpGet("get-all")]
         public async Task<IActionResult> GetAll([FromQuery] SearchRoleRequest request)
         {
             var results = await _roleService.GetAll(request);

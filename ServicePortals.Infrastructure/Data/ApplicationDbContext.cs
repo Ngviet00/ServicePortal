@@ -30,6 +30,8 @@ namespace ServicePortals.Infrastructure.Data
         public DbSet<UserMngOrgUnitId> UserMngOrgUnits { get; set; }
         public DbSet<SystemConfig> SystemConfigs { get; set; }
         public DbSet<DelegatedTemp> DelegatedTemps { get; set; }
+        public DbSet<Unit> Units { get; set; }
+        public DbSet<OrgUnit> OrgUnits { get; set; }
 
         public IDbConnection CreateConnection() => Database.GetDbConnection();
 
@@ -266,6 +268,20 @@ namespace ServicePortals.Infrastructure.Data
                 .WithMany()
                 .HasPrincipalKey(u => u.UserCode)
                 .HasForeignKey(lr => lr.RequesterUserCode)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<OrgUnitRole>()
+                .HasOne(o => o.Role)
+                .WithMany(r => r.OrgUnitRoles)
+                .HasForeignKey(o => o.RoleId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            //leave_request - application_form
+            modelBuilder.Entity<MemoNotification>()
+                .HasOne(lr => lr.ApplicationForm)
+                .WithMany()
+                .HasPrincipalKey(a => a.Id)
                 .IsRequired(false)
                 .OnDelete(DeleteBehavior.NoAction);
         }

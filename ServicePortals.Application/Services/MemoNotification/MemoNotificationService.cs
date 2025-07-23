@@ -1,10 +1,12 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using System.Security.Claims;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using ServicePortals.Application;
 using ServicePortals.Application.Dtos.MemoNotification;
 using ServicePortals.Application.Dtos.MemoNotification.Requests;
 using ServicePortals.Application.Interfaces.MemoNotification;
 using ServicePortals.Domain.Entities;
+using ServicePortals.Domain.Enums;
 using ServicePortals.Infrastructure.Data;
 using ServicePortals.Infrastructure.Helpers;
 using ServicePortals.Infrastructure.Mappers;
@@ -16,14 +18,17 @@ namespace ServicePortals.Infrastructure.Services.MemoNotification
     {
         private readonly ApplicationDbContext _context;
         private readonly IViclockDapperContext _viclockDapperContext;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
         public MemoNotificationService(
             ApplicationDbContext context, 
-            IViclockDapperContext viclockDapperContext
+            IViclockDapperContext viclockDapperContext,
+            IHttpContextAccessor httpContextAccessor
         )
         {
             _context = context;
             _viclockDapperContext = viclockDapperContext;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         public async Task<PagedResults<MemoNotificationDto>> GetAll(GetAllMemoNotiRequest request)
@@ -59,7 +64,7 @@ namespace ServicePortals.Infrastructure.Services.MemoNotification
                         ON mn.Id = mnd.MemoNotificationId
                     LEFT JOIN {Global.DbViClock}.dbo.tblBoPhan AS d
                         ON mnd.DepartmentId = d.BPMa
-                    WHERE (mn.CreatedByRoleId = @roleId OR mn.UserCodeCreated = @CurrentUserCode)
+                    WHERE mn.UserCodeCreated = @CurrentUserCode
                     GROUP BY mn.Id, d.BPTen
                 ),
                 Base AS (
@@ -74,7 +79,6 @@ namespace ServicePortals.Infrastructure.Services.MemoNotification
                         mn.CreatedAt,
                         mn.UpdatedBy,
                         mn.UpdatedAt,
-                        mn.CreatedByRoleId,
                         mn.Priority,
                         mn.Status,
                         mn.ApplyAllDepartment,
@@ -82,11 +86,11 @@ namespace ServicePortals.Infrastructure.Services.MemoNotification
                     FROM {Global.DbWeb}.dbo.memo_notifications AS mn
                     LEFT JOIN DistinctDeptNames AS d
                         ON mn.Id = d.Id
-                    WHERE (mn.CreatedByRoleId = @roleId OR mn.UserCodeCreated = @CurrentUserCode)
+                    WHERE mn.UserCodeCreated = @CurrentUserCode
                     GROUP BY 
                         mn.Id, mn.Title, mn.Content, mn.FromDate, mn.ToDate,
                         mn.UserCodeCreated, mn.CreatedBy, mn.CreatedAt,
-                        mn.UpdatedBy, mn.UpdatedAt, mn.CreatedByRoleId,
+                        mn.UpdatedBy, mn.UpdatedAt,
                         mn.Priority, mn.Status, mn.ApplyAllDepartment
                 )
              SELECT * FROM Base ORDER BY CreatedAt DESC OFFSET @skip ROWS FETCH NEXT @take ROWS ONLY;";
@@ -94,7 +98,7 @@ namespace ServicePortals.Infrastructure.Services.MemoNotification
             string countSql = $@"
                 SELECT COUNT(DISTINCT mn.Id)
                 FROM {Global.DbWeb}.dbo.memo_notifications AS mn
-                WHERE (mn.CreatedByRoleId = @roleId OR mn.UserCodeCreated = @CurrentUserCode);
+                WHERE mn.UserCodeCreated = @CurrentUserCode;
             ";
 
             var parameters = new
@@ -162,26 +166,49 @@ namespace ServicePortals.Infrastructure.Services.MemoNotification
 
         public async Task<MemoNotificationDto> Create(CreateMemoNotiRequest dto, IFormFile[] files)
         {
-            var role = await _context.Roles.FirstOrDefaultAsync(e => e.Name == dto.RoleNameCreated);
+            var user = _httpContextAccessor.HttpContext?.User;
+            var userCode = user?.FindFirst("user_code")?.Value;
+            var role = user?.FindFirst(ClaimTypes.Role)?.Value;
 
-            int? roleId = 0;
+            //check
+            int nextOrgUnitId = -1;
 
-            if (role == null)
+            //if is union
+            if (true)
             {
-                roleId = Global.DefaultDepartmentIdHR;
+                //get from workflow step where context is union => set next org unit id
+                
+                //if is final => set status application form status is final
+                //
+                //else lam nhu binh thuong
+                //
+
+
             }
-            else
+            else //else not uninon
             {
-                roleId = role.Id;
+
             }
+
+            //add new application form
+            ApplicationForm applicationForm = new ApplicationForm
+            {
+                Id = Guid.NewGuid(),
+                RequesterUserCode = dto.UserCodeCreated,
+                RequestTypeId = (int)RequestTypeEnum.CREATE_MEMO_NOTIFICATION,
+                RequestStatusId = (int)StatusApplicationFormEnum.PENDING,
+                CreatedAt = DateTimeOffset.Now,
+                CurrentOrgUnitId = nextOrgUnitId
+            };
+            //có thể sẽ config thêm
 
             var memoNotify = new Domain.Entities.MemoNotification
             {
                 Id = Guid.NewGuid(),
+                ApplicationFormId = applicationForm.Id,
                 Title = dto.Title,
                 Content = dto.Content,
                 Status = dto.Status,
-                CreatedByRoleId = roleId,
                 FromDate = dto.FromDate,
                 ToDate = dto.ToDate,
                 UserCodeCreated = dto.UserCodeCreated,
@@ -245,6 +272,8 @@ namespace ServicePortals.Infrastructure.Services.MemoNotification
                 _context.Files.AddRange(listEntityFiles);
                 _context.AttachFiles.AddRange(listAttachFiles);
             }
+
+            //nextOrgUnitId, lấy thông tin người với nextorgunit. gửi email
 
             await _context.SaveChangesAsync();
 
@@ -340,7 +369,11 @@ namespace ServicePortals.Infrastructure.Services.MemoNotification
         {
             var attachFiles = await _context.AttachFiles.Where(e => e.EntityType == nameof(MemoNotification) && e.EntityId == id).ToListAsync();
 
+            var memoNotifyDept = await _context.MemoNotificationDepartments.Where(e => e.MemoNotificationId == id).ToListAsync();
+
             var memoNotify = await _context.MemoNotifications.FirstOrDefaultAsync(e => e.Id == id) ?? throw new NotFoundException("Notification not found to delete!");
+
+            _context.MemoNotificationDepartments.RemoveRange(memoNotifyDept);
 
             _context.MemoNotifications.Remove(memoNotify);
             _context.AttachFiles.RemoveRange(attachFiles);
@@ -383,6 +416,21 @@ namespace ServicePortals.Infrastructure.Services.MemoNotification
             var file = await _context.Files.FirstOrDefaultAsync(e => e.Id == id) ?? throw new NotFoundException("Memo Notification not found!");
 
             return file;
+        }
+
+        public Task<PagedResults<MemoNotificationDto>> GetWaitApproval(GetAllMemoNotiRequest request)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<PagedResults<MemoNotificationDto>> GetHistoryApproval(GetAllMemoNotiRequest request)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<object> Approval()
+        {
+            throw new NotImplementedException();
         }
     }
 }

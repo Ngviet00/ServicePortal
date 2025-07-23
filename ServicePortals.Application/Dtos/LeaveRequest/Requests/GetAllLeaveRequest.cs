@@ -4,7 +4,8 @@ namespace ServicePortal.Applications.Modules.LeaveRequest.DTO.Requests
 {
     public class GetAllLeaveRequest
     {
-        public string? Keyword { get; set; }
+        [FromQuery(Name = "Keysearch")]
+        public string? Keysearch { get; set; }
 
         [FromQuery(Name = "UserCode")]
         public string? UserCode { get; set; }
@@ -17,5 +18,8 @@ namespace ServicePortal.Applications.Modules.LeaveRequest.DTO.Requests
 
         [FromQuery(Name = "PageSize")]
         public int PageSize { get; set; } = 10;
+
+        [FromQuery(Name = "Date")]
+        public DateTimeOffset? Date { get; set; }
     }
 }

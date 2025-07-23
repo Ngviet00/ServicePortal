@@ -12,7 +12,6 @@ namespace ServicePortals.Infrastructure.Mappers
                 Id = entity?.Id,
                 Title = entity?.Title,
                 Content = entity?.Content,
-                CreatedByRoleId = entity?.CreatedByRoleId,
                 FromDate = entity?.FromDate,
                 ToDate = entity?.ToDate,
                 UserCodeCreated = entity?.UserCodeCreated,

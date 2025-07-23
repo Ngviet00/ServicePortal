@@ -6,9 +6,10 @@ namespace ServicePortals.Domain.Entities
     public class MemoNotification
     {
         public Guid? Id { get; set; }
+        public Guid? ApplicationFormId { get; set; }
+        public ApplicationForm? ApplicationForm { get; set; }
         public string? Title { get; set; }
         public string? Content { get; set; }
-        public int? CreatedByRoleId { get; set; }
         public DateTimeOffset? FromDate {  get; set; }
         public DateTimeOffset? ToDate { get; set; }
         public string? UserCodeCreated { get; set; }

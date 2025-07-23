@@ -16,8 +16,8 @@ namespace ServicePortals.Domain.Entities
         public User? User { get; set; }
         public RequestType? RequestType { get; set; }
         public RequestStatus? RequestStatus { get; set; }
+        public string? AssignUserCode { get; set; }
         public DateTimeOffset? DeletedAt { get; set; }
         public ICollection<HistoryApplicationForm> HistoryApplicationForms { get; set; } = [];
-
     }
 }

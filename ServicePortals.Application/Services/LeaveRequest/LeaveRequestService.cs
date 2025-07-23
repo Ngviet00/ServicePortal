@@ -155,8 +155,8 @@ namespace ServicePortals.Infrastructure.Services.LeaveRequest
             bool isComplete = false;
             bool isSendHr = false;
 
-            //lấy danh sách workflow của người hiện tại, check xem user có custom workflow không,1 - nghỉ phép, 5 là unit chung
-            var workFlowSteps = await _context.WorkFlowSteps.Where(e => e.RequestTypeId == 1 && e.UnitId == 5 && e.FromOrgUnitId == orgUnitIdCurrentUser).ToListAsync();
+            //lấy danh sách workflow của người hiện tại, check xem user có custom workflow không,1 - nghỉ phép
+            var workFlowSteps = await _context.WorkFlowSteps.Where(e => e.RequestTypeId == 1 && e.FromOrgUnitId == orgUnitIdCurrentUser).ToListAsync();
 
             int? IdOrgUnitIdNextUser = await connection.QueryFirstOrDefaultAsync<int?>($@"SELECT ParentJobTitleId FROM {Global.DbViClock}.dbo.OrgUnits WHERE Id = @orgUnitIdCurrentUser", new
             {
@@ -193,7 +193,7 @@ namespace ServicePortals.Infrastructure.Services.LeaveRequest
                     requestStatusApplicationForm = (int)StatusApplicationFormEnum.COMPLETE; //complete
                     nextOrgUnitId = (int)StatusApplicationFormEnum.ORG_UNIT_ID_HR_LEAVE_RQ; //complete
                 }
-                else if (flow?.ToOrgUnitContext == "SPECIFIC_SEND_HR")
+                else if (flow?.OrgUnitContext == "SPECIFIC_SEND_HR")
                 {
                     isSendHr = true;
                     requestStatusApplicationForm = (int)StatusApplicationFormEnum.WAIT_HR;
@@ -477,8 +477,8 @@ namespace ServicePortals.Infrastructure.Services.LeaveRequest
             bool isComplete = false;
             bool isSendHr = false;
 
-            //lấy danh sách workflow của người hiện tại, check xem user có custom workflow không,1 - nghỉ phép, 5 là unit chung
-            var workFlowSteps = await _context.WorkFlowSteps.Where(e => e.RequestTypeId == 1 && e.UnitId == 5 && e.FromOrgUnitId == orgUnitIdCurrentUser).ToListAsync();
+            //lấy danh sách workflow của người hiện tại, check xem user có custom workflow không,1 - nghỉ phép
+            var workFlowSteps = await _context.WorkFlowSteps.Where(e => e.RequestTypeId == 1 && e.FromOrgUnitId == orgUnitIdCurrentUser).ToListAsync();
 
             int? IdOrgUnitIdNextUser = await connection.QueryFirstOrDefaultAsync<int?>($@"SELECT ParentJobTitleId FROM {Global.DbViClock}.dbo.OrgUnits WHERE Id = @orgUnitIdCurrentUser", new
             {
@@ -514,7 +514,7 @@ namespace ServicePortals.Infrastructure.Services.LeaveRequest
                     requestStatusApplicationForm = (int)StatusApplicationFormEnum.COMPLETE; //complete
                     nextOrgUnitId = (int)StatusApplicationFormEnum.ORG_UNIT_ID_HR_LEAVE_RQ; //complete
                 }
-                else if (flow?.ToOrgUnitContext == "SPECIFIC_SEND_HR")
+                else if (flow?.OrgUnitContext == "SPECIFIC_SEND_HR")
                 {
                     isSendHr = true;
                     requestStatusApplicationForm = (int)StatusApplicationFormEnum.WAIT_HR;
@@ -647,7 +647,7 @@ namespace ServicePortals.Infrastructure.Services.LeaveRequest
             {
                 BackgroundJob.Enqueue<IEmailService>(job =>
                     job.SendEmailRejectLeaveRequest(
-                        new List<string> { userRequester.Email },
+                        new List<string> { userRequester.Email ?? Global.EmailDefault },
                         null,
                         "Đơn xin nghỉ phép đã được đăng ký thành công",
                         TemplateEmail.EmailContentLeaveRequest(leaveRequest, leaveRequest.TypeLeave, leaveRequest.TimeLeave),
@@ -688,18 +688,22 @@ namespace ServicePortals.Infrastructure.Services.LeaveRequest
             int pageSize = request.PageSize;
             int page = request.Page;
             string? UserCode = request?.UserCode;
-            string? Keyword = request?.Keyword;
+            string? keysearch = request?.Keysearch;
+
+            var start = request.Date.Value.Date;
+            var end = start.AddDays(1);
 
             var q = _context.LeaveRequests
                 .Include(e => e.TypeLeave)
                 .Include(e => e.TimeLeave)
                 .Include(e => e.ApplicationForm)
                     .ThenInclude(e => e.HistoryApplicationForms)
-                .Where(e => e.ApplicationForm != null && e.ApplicationForm.HistoryApplicationForms.Any(e => e.UserCodeApproval == UserCode));
+                .Where(e => e.ApplicationForm != null && e.ApplicationForm.HistoryApplicationForms.Any(e => e.UserCodeApproval == UserCode))
+                .Where(e => e.ApplicationForm.HistoryApplicationForms.Any(e => e.CreatedAt >= start && e.CreatedAt < end));
 
-            if (!string.IsNullOrWhiteSpace(Keyword))
+            if (!string.IsNullOrWhiteSpace(keysearch))
             {
-                q = q.Where(e => (e.Name != null && e.Name.Contains(Keyword)) ||  (e.RequesterUserCode != null && e.RequesterUserCode.Contains(Keyword)));
+                q = q.Where(e => (e.Name != null && EF.Functions.Collate(e.Name, "Latin1_General_CI_AI").Contains(keysearch)) ||  (e.RequesterUserCode != null && e.RequesterUserCode.Contains(keysearch)));
             }
 
             var totalItems = await q.CountAsync();
@@ -844,7 +848,7 @@ namespace ServicePortals.Infrastructure.Services.LeaveRequest
             }
             else
             {
-                throw new ValidationException("Bạn chưa có quyền đăng ký nghỉ phép cho người này, liên hệ team IT");
+                throw new ValidationException("Bạn chưa có quyền đăng ký nghỉ phép cho người này, liên hệ HR");
             }
         }
 

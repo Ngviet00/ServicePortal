@@ -8,12 +8,15 @@ namespace ServicePortals.Domain.Entities
     {
         public int? Id { get; set; }
         public int? RequestTypeId { get; set; }
+        public int? DepartmentId { get; set; }
+        public int? Step { get; set; }
         public int? UnitId { get; set; }
         public int? FromOrgUnitId { get; set; }
-        public string? ToOrgUnitContext { get; set; }
+        public string? OrgUnitContext { get; set; }
         public int? ToSpecificOrgUnitId { get; set; }
         public int? ToSpecificDeptId { get; set; }
         public string? ToSpecificUserCode { get; set; }
+        public bool? IsNeedHighLevel { get; set; }
         public bool? IsFinal { get; set; }
     }
 }

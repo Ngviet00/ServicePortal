@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ServicePortals.Infrastructure.Data;
 
@@ -11,9 +12,11 @@ using ServicePortals.Infrastructure.Data;
 namespace ServicePortals.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250723083102_RemoveColumnCreateByRoleInMemo")]
+    partial class RemoveColumnCreateByRoleInMemo
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -259,9 +262,6 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("ApplicationFormId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<bool?>("ApplyAllDepartment")
                         .HasColumnType("bit");
 
@@ -299,8 +299,6 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("ApplicationFormId");
 
                     b.ToTable("memo_notifications");
                 });
@@ -1077,16 +1075,6 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                     b.Navigation("TypeLeave");
 
                     b.Navigation("User");
-                });
-
-            modelBuilder.Entity("ServicePortals.Domain.Entities.MemoNotification", b =>
-                {
-                    b.HasOne("ServicePortals.Domain.Entities.ApplicationForm", "ApplicationForm")
-                        .WithMany()
-                        .HasForeignKey("ApplicationFormId")
-                        .OnDelete(DeleteBehavior.NoAction);
-
-                    b.Navigation("ApplicationForm");
                 });
 
             modelBuilder.Entity("ServicePortals.Domain.Entities.MemoNotificationDepartment", b =>

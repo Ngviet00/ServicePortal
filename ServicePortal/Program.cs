@@ -46,6 +46,8 @@ using ServicePortals.Application.Interfaces.SystemConfig;
 using ServicePortals.Application.Services.SystemConfig;
 using ServicePortals.Application.Interfaces.DelegatedTemp;
 using ServicePortals.Application.Services.DelegatedTemp;
+using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
+using ServicePortals.Application.Services.Role;
 
 namespace ServicePortal
 {
@@ -152,7 +154,11 @@ namespace ServicePortal
 
             builder.Services.AddScoped<IDelegatedTempService, DelegatedTempService>();
 
+            builder.Services.AddScoped<IPermissionService, PermissionService>();
+
             #endregion
+
+            builder.Services.AddHttpContextAccessor();
 
             // Add services to the container.
             builder.Services.AddControllers();

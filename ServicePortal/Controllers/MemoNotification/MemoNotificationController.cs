@@ -18,7 +18,7 @@ namespace ServicePortal.Controllers.MemoNotification
             _memoNotificationService = memoNotificationService;
         }
 
-        [HttpGet("get-all"), RoleAuthorize(["HR", "union"])]
+        [HttpGet("get-all"), RoleAuthorize(["HR", "union", "IT"])]
         public async Task<IActionResult> GetAll([FromQuery] GetAllMemoNotiRequest request)
         {
             var results = await _memoNotificationService.GetAll(request);
@@ -53,7 +53,7 @@ namespace ServicePortal.Controllers.MemoNotification
             return Ok(new BaseResponse<MemoNotificationDto>(200, "success", result));
         }
 
-        [HttpPost("create"), RoleAuthorize(["HR", "Union"])]
+        [HttpPost("create"), RoleAuthorize(["HR", "Union", "IT"])]
         public async Task<IActionResult> Create([FromForm] CreateMemoNotiRequest request, [FromForm] IFormFile[] files)
         {
             var result = await _memoNotificationService.Create(request, files);
@@ -61,7 +61,7 @@ namespace ServicePortal.Controllers.MemoNotification
             return Ok(new BaseResponse<MemoNotificationDto>(200, "success", result));
         }
 
-        [HttpPut("update/{id}"), RoleAuthorize(["HR", "Union"])]
+        [HttpPut("update/{id}"), RoleAuthorize(["HR", "Union", "IT"])]
         public async Task<IActionResult> Update(Guid id, [FromForm] CreateMemoNotiRequest request, [FromForm] IFormFile[] files)
         {
             var result = await _memoNotificationService.Update(id, request, files);
@@ -69,7 +69,7 @@ namespace ServicePortal.Controllers.MemoNotification
             return Ok(new BaseResponse<MemoNotificationDto>(200, "success", result));
         }
 
-        [HttpDelete("delete/{id}"), RoleAuthorize(["HR", "Union"])]
+        [HttpDelete("delete/{id}"), RoleAuthorize(["HR", "Union", "IT"])]
         public async Task<IActionResult> Delete(Guid id)
         {
             var result = await _memoNotificationService.Delete(id);
@@ -83,6 +83,60 @@ namespace ServicePortal.Controllers.MemoNotification
             var file = await _memoNotificationService.GetFileDownload(id);
 
             return File(file.FileData ?? [], file.ContentType ?? "application/octet-stream", file.FileName);
+        }
+
+        [HttpGet("get-all-wait-approval"), RoleAuthorize(["HR", "union", "IT"])]
+        public async Task<IActionResult> GetAllWaitApproval([FromQuery] GetAllMemoNotiRequest request)
+        {
+            var results = await _memoNotificationService.GetAll(request);
+
+            var response = new PageResponse<MemoNotificationDto>(
+                200,
+                "Success",
+                results.Data,
+                results.TotalPages,
+                request.Page,
+                request.PageSize,
+                results.TotalItems
+            );
+
+            return Ok(response);
+        }
+
+        [HttpGet("get-all-history-approval"), RoleAuthorize(["HR", "union", "IT"])]
+        public async Task<IActionResult> GetAllHistoryApproval([FromQuery] GetAllMemoNotiRequest request)
+        {
+            var results = await _memoNotificationService.GetAll(request);
+
+            var response = new PageResponse<MemoNotificationDto>(
+                200,
+                "Success",
+                results.Data,
+                results.TotalPages,
+                request.Page,
+                request.PageSize,
+                results.TotalItems
+            );
+
+            return Ok(response);
+        }
+
+        [HttpGet("approval"), RoleAuthorize(["HR", "union", "IT"])]
+        public async Task<IActionResult> Approval([FromQuery] GetAllMemoNotiRequest request)
+        {
+            var results = await _memoNotificationService.GetAll(request);
+
+            var response = new PageResponse<MemoNotificationDto>(
+                200,
+                "Success",
+                results.Data,
+                results.TotalPages,
+                request.Page,
+                request.PageSize,
+                results.TotalItems
+            );
+
+            return Ok(response);
         }
     }
 }

@@ -1,9 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using ServicePortal.Filters;
 using ServicePortals.Application;
-using ServicePortals.Application.Dtos.TimeKeeping.Requests;
 using ServicePortals.Application.Dtos.User.Requests;
 using ServicePortals.Application.Dtos.User.Responses;
 using ServicePortals.Application.Interfaces.User;
@@ -83,10 +81,26 @@ namespace ServicePortal.Controllers.User
             return Ok(new BaseResponse<UserResponse>(200, "Delete user permanently successfully", null));
         }
 
+        [HttpGet("get-role-permission-user")]
+        public async Task<IActionResult> GetDetailUserWithRoleAndPermission([FromQuery] string userCode)
+        {
+            var result = await _userService.GetDetailUserWithRoleAndPermission(userCode);
+
+            return Ok(new BaseResponse<DetailUserWithRoleAndPermissionResponse>(200, "Success", result));
+        }
+
         [HttpPost("update-user-role"), RoleAuthorize("superadmin")]
         public async Task<IActionResult> UpdateUserRole(UpdateUserRoleRequest request)
         {
             var result = await _userService.UpdateUserRole(request);
+
+            return Ok(new BaseResponse<bool>(200, "Success", result));
+        }
+
+        [HttpPost("update-user-permission"), RoleAuthorize("superadmin")]
+        public async Task<IActionResult> UpdateUserPermission(UpdateUserRoleRequest request)
+        {
+            var result = await _userService.UpdateUserPermission(request);
 
             return Ok(new BaseResponse<bool>(200, "Success", result));
         }

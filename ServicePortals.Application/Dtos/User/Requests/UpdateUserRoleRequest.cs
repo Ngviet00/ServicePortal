@@ -9,5 +9,8 @@ namespace ServicePortals.Application.Dtos.User.Requests
 
         [JsonPropertyName("role_ids")]
         public List<int>? RoleIds { get; set; } = [];
+
+        [JsonPropertyName("permission_ids")]
+        public List<int>? PermissionIds { get; set; } = [];
     }
 }
