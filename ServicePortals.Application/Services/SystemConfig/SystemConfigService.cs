@@ -16,6 +16,11 @@ namespace ServicePortals.Application.Services.SystemConfig
             _context = context;
         }
 
+        /// <summary>
+        /// 
+        /// lấy config theo key
+        /// 
+        /// </summary>
         public async Task<SystemConfigDto?> GetByConfigKey(string configkey)
         {
             var result = await _context.SystemConfigs.FirstOrDefaultAsync(e => e.ConfigKey == configkey) ?? throw new NotFoundException("Config not found!");
@@ -23,6 +28,11 @@ namespace ServicePortals.Application.Services.SystemConfig
             return SystemConfigMapper.ToDto(result);
         }
 
+        /// <summary>
+        /// 
+        /// thêm mới config của hệ thống, vdu như giới hạn upload file memo, email hr,...
+        /// 
+        /// </summary>
         public async Task<SystemConfigDto?> AddConfig(SystemConfigDto request)
         {
             var newConfig = new Domain.Entities.SystemConfig
@@ -46,6 +56,11 @@ namespace ServicePortals.Application.Services.SystemConfig
             return SystemConfigMapper.ToDto(newConfig);
         }
 
+        /// <summary>
+        /// 
+        /// cập nhật config
+        /// 
+        /// </summary>
         public async Task<SystemConfigDto?> UpdateConfig(string configkey, SystemConfigDto request)
         {
             var config = await _context.SystemConfigs.FirstOrDefaultAsync(e => e.ConfigKey == configkey) ?? throw new NotFoundException("Config not found!");

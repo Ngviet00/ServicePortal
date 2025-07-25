@@ -4,6 +4,11 @@ using ServicePortals.Infrastructure.Data;
 
 namespace ServicePortals.Infrastructure.Services.UserConfig
 {
+    /// <summary>
+    /// 
+    /// Hàm lấy config theo key của người dùng và hàm thêm mới config của user
+    /// 
+    /// </summary>
     public class UserConfigService : IUserConfigService
     {
         private readonly ApplicationDbContext _context;

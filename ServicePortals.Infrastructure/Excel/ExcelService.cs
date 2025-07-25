@@ -1,7 +1,101 @@
-﻿namespace ServicePortals.Infrastructure.Excel
+﻿using Microsoft.AspNetCore.Http;
+using ClosedXML.Excel;
+using ServicePortals.Infrastructure.Data;
+using System.Text;
+using Dapper;
+
+namespace ServicePortals.Infrastructure.Excel
 {
     public class ExcelService
     {
+        private readonly ApplicationDbContext _context;
+
+        public ExcelService (ApplicationDbContext context)
+        {
+            _context = context;
+        }
+
+        public async Task InsertFromExcelAsync(IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+            {
+                throw new ArgumentException("File không hợp lệ");
+            }
+
+            var insertBuilder = new StringBuilder();
+            insertBuilder.Append("INSERT INTO YourTable (Name, Age) VALUES ");
+
+            var valuesList = new List<string>();
+            var parameters = new DynamicParameters();
+
+            using (var stream = new MemoryStream())
+            {
+                await file.CopyToAsync(stream);
+                using (var workbook = new XLWorkbook(stream))
+                {
+                    var worksheet = workbook.Worksheet(1);
+                    var rows = worksheet.RangeUsed().RowsUsed();
+
+                    int index = 0;
+                    foreach (var row in rows.Skip(1))
+                    {
+                        var name = row.Cell(1).GetString();
+                        var ageCell = row.Cell(2);
+                        int age = 0;
+
+                        if (ageCell.DataType == XLDataType.Number)
+                            age = (int)ageCell.GetDouble();
+                        else if (int.TryParse(ageCell.GetString(), out int parsedAge))
+                            age = parsedAge;
+
+                        // Tạo tham số cho từng bản ghi
+                        string paramName = "@Name" + index;
+                        string paramAge = "@Age" + index;
+
+                        valuesList.Add($"({paramName}, {paramAge})");
+                        parameters.Add(paramName, name);
+                        parameters.Add(paramAge, age);
+
+                        index++;
+                    }
+                }
+            }
+
+            if (valuesList.Count > 0)
+            {
+                var sql = insertBuilder.ToString() + string.Join(", ", valuesList);
+                //await _connection.ExecuteAsync(sql, parameters);
+            }
+        }
+
+        public byte[] ExportLeaveRequestToExcel()
+        {
+            using (var workbook = new XLWorkbook())
+            {
+                var worksheet = workbook.Worksheets.Add("Data");
+
+                // Thêm tiêu đề
+                worksheet.Cell(1, 1).Value = "ID";
+                worksheet.Cell(1, 2).Value = "Name";
+                worksheet.Cell(1, 3).Value = "Date";
+
+                //// Thêm dữ liệu
+                //for (int i = 0; i < data.Count; i++)
+                //{
+                //    var row = i + 2;
+                //    worksheet.Cell(row, 1).Value = data[i].Id;
+                //    worksheet.Cell(row, 2).Value = data[i].Name;
+                //    worksheet.Cell(row, 3).Value = data[i].Date;
+                //}
+
+                using (var stream = new MemoryStream())
+                {
+                    workbook.SaveAs(stream);
+                    return stream.ToArray();
+                }
+            }
+        }
+
         public byte[] GenerateExcelManagerConfirmToHR()
         {
             //var holidays = data.Holidays;

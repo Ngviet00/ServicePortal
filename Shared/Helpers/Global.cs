@@ -5,7 +5,6 @@
         public const string DbWeb = "ServicePortal";
         public const string DbViClock= "vs_new";
         public const string EmailDefault = "nguyenviet@vsvn.com.vn";
-        public const string ColumnOrgUnitIdViClock = "OrgUnitID";
 
         public const string UserCodeSuperAdmin = "0";
         public const string DefaultExpirationDaysRefreshToken = "2";

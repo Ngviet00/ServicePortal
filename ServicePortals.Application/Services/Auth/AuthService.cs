@@ -35,6 +35,11 @@ namespace ServicePortals.Infrastructure.Services.Auth
             _userService = userService;
         }
 
+        /// <summary>
+        /// 
+        /// Hàm đăng ký, user phải tồn tại trên viclock thì mới đăng được
+        /// 
+        /// </summary>
         public async Task<LoginResponse> Register(CreateUserRequest request)
         {
             dynamic? userFromViclock = await _userService.GetCustomColumnUserViclockByUserCode(
@@ -117,6 +122,11 @@ namespace ServicePortals.Infrastructure.Services.Auth
             return result;
         }
 
+        /// <summary>
+        /// 
+        /// Hàm đăng nhập
+        /// 
+        /// </summary>
         public async Task<LoginResponse> Login(LoginRequest request)
         {
             var userFromWebSystem = await _context.Users.FirstOrDefaultAsync(e => e.UserCode == request.UserCode) ?? throw new ValidationException("User not found!");
@@ -165,6 +175,12 @@ namespace ServicePortals.Infrastructure.Services.Auth
             return result;
         }
 
+        /// <summary>
+        /// 
+        /// Hàm tạo mới access token, đang set là 15 phút sẽ tự động gọi lấy lại. hàm này khi lấy sẽ bao gồm usercode, role và permission
+        /// lưu vào claims để thuận tiện cho việc check role và permission (RoleAuthorize và RoleOrPermissionAuththorize)
+        /// 
+        /// </summary>
         public async Task<string> RefreshAccessToken(string refreshToken)
         {
             var token = await _context.RefreshTokens.FirstOrDefaultAsync(x => x.Token == refreshToken && x.IsRevoked == false && x.ExpiresAt > DateTimeOffset.UtcNow);
@@ -193,6 +209,11 @@ namespace ServicePortals.Infrastructure.Services.Auth
             return newAccessToken;
         }
 
+        /// <summary>
+        /// 
+        /// Đổi mật khẩu
+        /// 
+        /// </summary>
         public async Task ChangePassword(ChangePasswordRequest request, string userCode)
         {
             var user = await _context.Users.FirstOrDefaultAsync(e => e.UserCode == userCode) ?? throw new NotFoundException("User not found!");
@@ -211,6 +232,11 @@ namespace ServicePortals.Infrastructure.Services.Auth
             await _context.SaveChangesAsync();
         }
 
+        /// <summary>
+        /// 
+        /// Mỗi khi logout, set refresh token invoke = 1 hết hạn
+        /// 
+        /// </summary>
         public async Task UpdateRefreshTokenWhenLogout(string refreshToken)
         {
             var token = await _context.RefreshTokens.FirstOrDefaultAsync(x => x.Token == refreshToken) ?? throw new NotFoundException("Refresh Token not found!");

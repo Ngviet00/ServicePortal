@@ -8,6 +8,7 @@ using ServicePortals.Application.Dtos.User.Responses;
 using ServicePortals.Application.Interfaces.LeaveRequest;
 using ServicePortals.Application.Interfaces.MemoNotification;
 using ServicePortals.Application.Interfaces.User;
+using ServicePortals.Infrastructure.Excel;
 
 namespace ServicePortal.Controllers.User
 {
@@ -18,16 +19,19 @@ namespace ServicePortal.Controllers.User
         private readonly IUserService _userService;
         private readonly ILeaveRequestService _leaveRequestService;
         private readonly IMemoNotificationService _memoNotificationService;
+        private readonly ExcelService _excelService;
 
         public UserController(
             IUserService userService,
             ILeaveRequestService leaveRequestService,
-            IMemoNotificationService memoNotificationService
+            IMemoNotificationService memoNotificationService,
+            ExcelService excelService
         )
         {
             _userService = userService;
             _leaveRequestService = leaveRequestService;
             _memoNotificationService = memoNotificationService;
+            _excelService = excelService;
         }
 
         [HttpGet("me")]
@@ -181,6 +185,13 @@ namespace ServicePortal.Controllers.User
             results.CountWaitLeaveRequest = await _leaveRequestService.CountWaitApproval(requestLeaveRq, userClaim);
 
             return Ok(new BaseResponse<CountWaitApprovalInSidebarResponse>(200, "Success", results));
+        }
+
+        [HttpPost("import-excel-test-insert-new-user")]
+        public async Task<IActionResult> ImportExcelTestInsertNewUser(IFormFile file)
+        {
+            await _excelService.InsertFromExcelAsync(file);
+            return Ok("Nhập dữ liệu thành công");
         }
 
         [HttpGet("test"), AllowAnonymous]

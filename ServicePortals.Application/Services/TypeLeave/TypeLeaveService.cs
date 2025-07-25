@@ -8,6 +8,11 @@ using ServicePortals.Shared.Exceptions;
 
 namespace ServicePortals.Infrastructure.Services.TypeLeave
 {
+    /// <summary>
+    /// 
+    /// CRUD loại phép
+    /// 
+    /// </summary>
     public class TypeLeaveService : ITypeLeaveService
     {
         private readonly ApplicationDbContext _context;

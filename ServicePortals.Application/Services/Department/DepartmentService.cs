@@ -17,6 +17,11 @@ namespace ServicePortals.Infrastructure.Services.Department
             _cacheService = cacheService;
         }
 
+        /// <summary>
+        /// 
+        /// Lấy tất cả phòng ban bên db viclock
+        /// 
+        /// </summary>
         public async Task<List<GetAllDepartmentResponse>> GetAll()
         {
             var items = await _cacheService.GetOrCreateAsync(Global.CacheKeyGetAllDepartment, async () =>
@@ -30,6 +35,11 @@ namespace ServicePortals.Infrastructure.Services.Department
             return (List<GetAllDepartmentResponse>)items;
         }
 
+        /// <summary>
+        /// 
+        /// Lấy tất cả phòng ban bên db viclock loại bỏ trùng tên, chỉ lấy tên
+        /// 
+        /// </summary>
         public async Task<List<string>> GetAllWithDistinctName()
         {
             var items = await _cacheService.GetOrCreateAsync(Global.CacheKeyGetAllDepartmentDistinctName, async () =>

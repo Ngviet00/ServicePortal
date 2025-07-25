@@ -6,6 +6,9 @@ using ServicePortals.Infrastructure.Data;
 
 namespace ServicePortals.Application.Services.Role
 {
+    /// <summary>
+    /// CRUD permission
+    /// </summary>
     public class PermissionService : IPermissionService
     {
         private readonly ApplicationDbContext _context;

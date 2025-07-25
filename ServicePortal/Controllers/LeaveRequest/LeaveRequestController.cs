@@ -5,6 +5,7 @@ using ServicePortals.Application;
 using ServicePortals.Application.Dtos.LeaveRequest;
 using ServicePortals.Application.Dtos.LeaveRequest.Requests;
 using ServicePortals.Application.Interfaces.LeaveRequest;
+using ServicePortals.Infrastructure.Excel;
 
 namespace ServicePortal.Controllers.LeaveRequest
 {
@@ -13,9 +14,14 @@ namespace ServicePortal.Controllers.LeaveRequest
     public class LeaveRequestController : ControllerBase
     {
         private readonly ILeaveRequestService _leaveRequestService;
+        private readonly ExcelService _excelService;
 
-        public LeaveRequestController(ILeaveRequestService leaveRequestService)
+        public LeaveRequestController(
+            ILeaveRequestService leaveRequestService,
+            ExcelService excelService
+        )
         {
+            _excelService = excelService;
             _leaveRequestService = leaveRequestService;
         }
 
@@ -188,6 +194,22 @@ namespace ServicePortal.Controllers.LeaveRequest
             var result = await _leaveRequestService.SearchUserRegisterLeaveRequest(request);
 
             return Ok(new BaseResponse<object>(200, "success", result));
+        }
+
+        [HttpGet("export-leave-request-to-excel")]
+        public async Task<IActionResult> ExportLeaveRequestToExcel()
+        {
+            //var data = new List<MyObject>
+            //{
+            //    new MyObject { Id = 1, Name = "Item 1", Date = DateTime.Now },
+            //    new MyObject { Id = 2, Name = "Item 2", Date = DateTime.Now.AddDays(-1) }
+            //};
+
+            // Gọi hàm export
+            var fileBytes = _excelService.ExportLeaveRequestToExcel();
+
+            // Trả về file để download
+            return File(fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "DataExport.xlsx");
         }
     }
 }

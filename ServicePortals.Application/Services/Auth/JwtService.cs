@@ -21,6 +21,11 @@ namespace ServicePortals.Infrastructure.Services.Auth
             _context = context;
         }
 
+        /// <summary>
+        /// 
+        /// Hàm tạo access token, sẽ có thời gian hết hạn của token, tác giả, key của token 
+        /// 
+        /// </summary>
         public string GenerateAccessToken(List<Claim> claims)
         {
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"] ?? "service-portal-management-system"));
@@ -39,11 +44,21 @@ namespace ServicePortals.Infrastructure.Services.Auth
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
+        /// <summary>
+        /// 
+        /// Hàm tạo refresh token
+        /// 
+        /// </summary>
         public string GenerateRefreshToken()
         {
             return Convert.ToBase64String(RandomNumberGenerator.GetBytes(64));
         }
 
+        /// <summary>
+        /// 
+        /// Hàm đăng ký, user phải tồn tại trên viclock thì mới đăng được
+        /// 
+        /// </summary>
         //cronjob auto delete daily, token have expired 20 day
         public void DeleteOldRefreshToken()
         {

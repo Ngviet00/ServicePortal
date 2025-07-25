@@ -7,6 +7,9 @@ using ServicePortals.Shared.Exceptions;
 
 namespace ServicePortals.Infrastructure.Services.Role
 {
+    /// <summary>
+    /// CRUD role
+    /// </summary>
     public class RoleService : IRoleService
     {
         private readonly ApplicationDbContext _context;

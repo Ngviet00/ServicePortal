@@ -519,10 +519,10 @@ namespace ServicePortals.Application.Services.User
                     SELECT DISTINCT
                         ou.Id AS OrgUnitId,
                         ou.Name AS OrgUnitName,
-                        CAST(NULL AS INT) AS ParentJobTitleId, -- CAST NULL thành kiểu INT để khớp với ParentJobTitleId (int?)
+                        CAST(NULL AS INT) AS ParentJobTitleId,
                         u.NVMaNV AS NVMaNV,
                         u.NVHoTen
-                    FROM {Global.DbViClock}.dbo.tblNhanVien u -- Có vẻ bảng tblNhanVien và OrgUnits nằm chung vs_new
+                    FROM {Global.DbViClock}.dbo.tblNhanVien u
                     JOIN {Global.DbWeb}.dbo.org_units ou ON ou.Id = u.OrgUnitId
                     WHERE ou.Id IN (
                         SELECT DISTINCT ParentJobTitleId FROM OrgTree
@@ -535,7 +535,7 @@ namespace ServicePortals.Application.Services.User
 		                OrgUnitName,
 		                ParentJobTitleId,
 		                NVMaNV,
-		                vs_new.dbo.funTCVN2Unicode(NVHoTen) AS NVHoTen
+		                {Global.DbViClock}.dbo.funTCVN2Unicode(NVHoTen) AS NVHoTen
 	                FROM MainUsers
 	                UNION ALL
 	                SELECT 
@@ -543,11 +543,11 @@ namespace ServicePortals.Application.Services.User
 		                OrgUnitName,
 		                ParentJobTitleId,
 		                NVMaNV,
-		                vs_new.dbo.funTCVN2Unicode(NVHoTen) AS NVHoTen
+		                {Global.DbViClock}.dbo.funTCVN2Unicode(NVHoTen) AS NVHoTen
 	                FROM AddMoreUser
                 )
                 SELECT CU.* FROM CombinedUsers AS CU
-                LEFT JOIN ServicePortal.dbo.users AS U
+                LEFT JOIN {Global.DbWeb}.dbo.users AS U
                 on CU.NVMaNV = u.UserCode
                 ORDER BY CU.OrgUnitId ASC
             ";
@@ -683,35 +683,34 @@ namespace ServicePortals.Application.Services.User
             var sql = $@"
                 WITH CurrentOrgUnitUser AS (
                     SELECT
-		                NV.{Global.ColumnOrgUnitIdViClock}
+		                NV.OrgUnitID
 	                FROM {Global.DbViClock}.dbo.tblNhanVien AS NV
 	                WHERE NV.NVMaNV = @userCode
                 ),
                 NextOrgUnitUser AS (
 	                SELECT 
 		                ORG.ParentJobTitleId
-	                FROM {Global.DbViClock}.dbo.OrgUnits AS ORG
-	                INNER JOIN CurrentOrgUnitUser AS CORG ON CORG.{Global.ColumnOrgUnitIdViClock} = ORG.Id
+	                FROM {Global.DbWeb}.dbo.org_units AS ORG
+	                INNER JOIN CurrentOrgUnitUser AS CORG ON CORG.OrgUnitID = ORG.Id
                 )
                 SELECT
 	                NV.NVMaNV,
-	                vs_new.dbo.funTCVN2Unicode(NV.NVHoTen) AS NVHoTen,
+	                {Global.DbViClock}.dbo.funTCVN2Unicode(NV.NVHoTen) AS NVHoTen,
 	                BP.BPTen,
 	                CV.CVTen,
                     COALESCE(U.Email, NV.NVEmail, '') AS Email,
-	                NV.{Global.ColumnOrgUnitIdViClock}
+	                NV.OrgUnitID
                 FROM NextOrgUnitUser AS NORG
-                INNER JOIN vs_new.dbo.tblNhanVien AS NV ON NORG.ParentJobTitleId = NV.{Global.ColumnOrgUnitIdViClock}
-                LEFT JOIN ServicePortal.dbo.users AS U ON NV.NVMaNV = U.UserCode
-                LEFT JOIN vs_new.dbo.tblBoPhan AS BP ON NV.NVMaBP = BP.BPMa
-                LEFT JOIN vs_new.dbo.tblChucVu AS CV On NV.NVMaCV = CV.CVMa
+                INNER JOIN {Global.DbViClock}.dbo.tblNhanVien AS NV ON NORG.ParentJobTitleId = NV.OrgUnitID
+                LEFT JOIN {Global.DbWeb}.dbo.users AS U ON NV.NVMaNV = U.UserCode
+                LEFT JOIN {Global.DbViClock}.dbo.tblBoPhan AS BP ON NV.NVMaBP = BP.BPMa
+                LEFT JOIN {Global.DbViClock}.dbo.tblChucVu AS CV On NV.NVMaCV = CV.CVMa
             ";
 
             var result = await connection.QueryAsync<NextUserInfoApprovalResponse>(sql, new { userCode });
 
             return (List<NextUserInfoApprovalResponse>)result;
         }
-
         public async Task<dynamic> Test()
         {
             return null;

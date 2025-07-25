@@ -19,6 +19,11 @@ namespace ServicePortals.Application.Services.OrgUnit
             _viclockDapperContext = viclockDapperContext;
         }
 
+        /// <summary>
+        /// Lấy row trong bảng org_unit 
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
         public async Task<dynamic?> GetOrgUnitById(int id)
         {
             string sql = $@"SELECT * FROM [{Global.DbViClock}].[dbo].OrgUnits WHERE ID = @Id";
@@ -49,12 +54,14 @@ namespace ServicePortals.Application.Services.OrgUnit
                     pb.Name AS DepartmentName,
                     org.Id AS OrgUnitId,
                     org.Name AS OrgUnitName
-                FROM [{Global.DbViClock}].dbo.OrgUnits pb
-                LEFT JOIN [{Global.DbViClock}].dbo.OrgUnits org
+                FROM [{Global.DbWeb}].dbo.org_units pb
+                LEFT JOIN [{Global.DbWeb}].dbo.org_units org
                     ON org.ParentOrgUnitId = pb.Id
                 WHERE pb.DeptId IS NOT NULL
                 ORDER BY pb.Id, org.Id
             ";
+
+            Console.WriteLine(sql.ToString());
 
             var rawData = await connection.QueryAsync<dynamic>(sql);
 
@@ -67,8 +74,8 @@ namespace ServicePortals.Application.Services.OrgUnit
                     type = "department",
                     children = group.Select(x => new
                     {
-                        id = x.OrgUnitId.ToString(),
-                        label = x.OrgUnitName,
+                        id = x.OrgUnitId?.ToString() ?? "",
+                        label = x.OrgUnitName ?? "",
                         type = "jobtitle"
                     }).ToList()
                 })

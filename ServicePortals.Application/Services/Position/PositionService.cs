@@ -17,6 +17,11 @@ namespace ServicePortals.Infrastructure.Services.Position
             _cacheService = cacheService;
         }
 
+        /// <summary>
+        /// 
+        /// Lấy tất cả vị trí từ db viclock
+        /// 
+        /// </summary>
         public async Task<List<GetAllPositionResponse>> GetAll()
         {
             var items = await _cacheService.GetOrCreateAsync(Global.CacheKeyGetAllPosition, async () =>

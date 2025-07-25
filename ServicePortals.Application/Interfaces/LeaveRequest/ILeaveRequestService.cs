@@ -26,5 +26,6 @@ namespace ServicePortals.Application.Interfaces.LeaveRequest
         Task<object> CreateLeaveForManyPeople(CreateLeaveRequestForManyPeopleRequest request);
         Task<object> SearchUserRegisterLeaveRequest(SearchUserRegisterLeaveRequest request);
         Task<object> HrRegisterAllLeave(HrRegisterAllLeaveRequest request);
+        
     }
 }
