@@ -16,5 +16,7 @@
         public bool? NVGioiTinh { get; set; }
         public DateTimeOffset? DeletedAt { get; set; }
         public DateTime? NVNgayVao { get; set; }
+        public HashSet<string> Roles { get; set; } = [];
+        public HashSet<string> Permissions { get; set; } = [];
     }
 }

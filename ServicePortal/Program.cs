@@ -19,15 +19,12 @@ using ServicePortals.Application.Interfaces.Position;
 using ServicePortals.Application.Interfaces.Department;
 using ServicePortals.Infrastructure.Data;
 using ServicePortals.Infrastructure.Services.Auth;
-using ServicePortals.Infrastructure.Services.User;
 using ServicePortals.Infrastructure.Services.Role;
-using ServicePortals.Infrastructure.Services.LeaveRequest;
 using ServicePortals.Infrastructure.Services.TypeLeave;
 using ServicePortals.Infrastructure.Email;
 using ServicePortals.Infrastructure.Hubs;
 using ServicePortals.Infrastructure.Services.UserConfig;
 using ServicePortals.Infrastructure.Services.TimeKeeping;
-using ServicePortals.Infrastructure.Services.MemoNotification;
 using ServicePortals.Infrastructure.Services.Department;
 using ServicePortals.Infrastructure.Services.Position;
 using ServicePortal.Infrastructure.Cache;
@@ -48,6 +45,9 @@ using ServicePortals.Application.Interfaces.DelegatedTemp;
 using ServicePortals.Application.Services.DelegatedTemp;
 using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
 using ServicePortals.Application.Services.Role;
+using ServicePortals.Application.Services.User;
+using ServicePortals.Application.Services.MemoNotification;
+using ServicePortals.Application.Services.LeaveRequest;
 
 namespace ServicePortal
 {

@@ -2,21 +2,32 @@
 using Microsoft.AspNetCore.Mvc;
 using ServicePortal.Filters;
 using ServicePortals.Application;
+using ServicePortals.Application.Dtos.LeaveRequest.Requests;
 using ServicePortals.Application.Dtos.User.Requests;
 using ServicePortals.Application.Dtos.User.Responses;
+using ServicePortals.Application.Interfaces.LeaveRequest;
+using ServicePortals.Application.Interfaces.MemoNotification;
 using ServicePortals.Application.Interfaces.User;
 
 namespace ServicePortal.Controllers.User
 {
-    //[Authorize]
+    [Authorize]
     [ApiController, Route("api/user")]
     public class UserController : ControllerBase
     {
         private readonly IUserService _userService;
+        private readonly ILeaveRequestService _leaveRequestService;
+        private readonly IMemoNotificationService _memoNotificationService;
 
-        public UserController(IUserService userService)
+        public UserController(
+            IUserService userService,
+            ILeaveRequestService leaveRequestService,
+            IMemoNotificationService memoNotificationService
+        )
         {
             _userService = userService;
+            _leaveRequestService = leaveRequestService;
+            _memoNotificationService = memoNotificationService;
         }
 
         [HttpGet("me")]
@@ -151,6 +162,25 @@ namespace ServicePortal.Controllers.User
                 request.PageSize,
                 results.TotalItems
             ));
+        }
+
+        [HttpGet("count-wait-approval-in-sidebar")]
+        public async Task<IActionResult> CountWaitApprovalInSidebar([FromQuery] CountWaitAprrovalSidebarRequest request)
+        {
+            var userClaim = HttpContext.User;
+
+            GetAllLeaveRequestWaitApprovalRequest requestLeaveRq = new()
+            {
+                UserCode = request.UserCode,
+                OrgUnitId = request.OrgUnitId
+            };
+
+            CountWaitApprovalInSidebarResponse results = new();
+
+            results.CountWaitNotification = await _memoNotificationService.CountWaitApprovalMemoNotification(request?.OrgUnitId ?? -9999);
+            results.CountWaitLeaveRequest = await _leaveRequestService.CountWaitApproval(requestLeaveRq, userClaim);
+
+            return Ok(new BaseResponse<CountWaitApprovalInSidebarResponse>(200, "Success", results));
         }
 
         [HttpGet("test"), AllowAnonymous]

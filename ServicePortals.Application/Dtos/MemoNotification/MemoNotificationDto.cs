@@ -1,6 +1,4 @@
-﻿using ServicePortals.Domain.Entities;
-
-namespace ServicePortals.Application.Dtos.MemoNotification
+﻿namespace ServicePortals.Application.Dtos.MemoNotification
 {
     public class MemoNotificationDto
     {
@@ -21,5 +19,17 @@ namespace ServicePortals.Application.Dtos.MemoNotification
         public List<int?> DepartmentIdApply { get; set; } = new List<int?>();
         public List<Domain.Entities.File> Files { get; set; } = new List<Domain.Entities.File>();
         public string? DepartmentNames { get; set; }
+        public Guid? ApplicationFormId { get; set; }
+        public string? RequesterUserCode { get; set; }
+        public int? RequestStatusId { get; set; }
+        public int? CurrentOrgUnitId { get; set; }
+        public DateTimeOffset? ApplicationFormCreatedAt { get; set; }
+        public Guid? LatestHistoryApplicationFormId { get; set; }
+        public string? UserApproval { get; set; }
+        public string? UserCodeApproval { get; set; }
+        public string? ActionType { get; set; }
+        public string? Comment { get; set; }
+        public DateTimeOffset? HistoryApplicationFormCreatedAt { get; set; }
+        public int? TotalRecords { get; set; }
     }
 }

@@ -2,7 +2,6 @@
 using ServicePortal.Applications.Modules.LeaveRequest.DTO.Requests;
 using ServicePortals.Application.Dtos.LeaveRequest;
 using ServicePortals.Application.Dtos.LeaveRequest.Requests;
-using ServicePortals.Application.Dtos.LeaveRequest.Responses;
 
 namespace ServicePortals.Application.Interfaces.LeaveRequest
 {

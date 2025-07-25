@@ -1,123 +1,153 @@
-﻿using System.Security.Claims;
-using Azure.Core;
+﻿using System.Data;
+using System.Security.Claims;
+using Dapper;
+using Hangfire;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
-using ServicePortals.Application;
+using ServicePortals.Application.Common;
 using ServicePortals.Application.Dtos.MemoNotification;
 using ServicePortals.Application.Dtos.MemoNotification.Requests;
+using ServicePortals.Application.Interfaces.Department;
 using ServicePortals.Application.Interfaces.MemoNotification;
+using ServicePortals.Application.Interfaces.User;
 using ServicePortals.Domain.Entities;
 using ServicePortals.Domain.Enums;
 using ServicePortals.Infrastructure.Data;
+using ServicePortals.Infrastructure.Email;
 using ServicePortals.Infrastructure.Helpers;
 using ServicePortals.Infrastructure.Mappers;
 using ServicePortals.Shared.Exceptions;
 
-namespace ServicePortals.Infrastructure.Services.MemoNotification
+namespace ServicePortals.Application.Services.MemoNotification
 {
     public class MemoNotificationService : IMemoNotificationService
     {
         private readonly ApplicationDbContext _context;
         private readonly IViclockDapperContext _viclockDapperContext;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IDepartmentService _departmentService;
+        private readonly IEmailService _emailService;
+        private readonly IUserService _userService;
 
         public MemoNotificationService(
             ApplicationDbContext context, 
             IViclockDapperContext viclockDapperContext,
-            IHttpContextAccessor httpContextAccessor
+            IHttpContextAccessor httpContextAccessor,
+            IDepartmentService departmentService,
+            IEmailService emailService,
+            IUserService userService
         )
         {
             _context = context;
             _viclockDapperContext = viclockDapperContext;
             _httpContextAccessor = httpContextAccessor;
+            _departmentService = departmentService;
+            _emailService = emailService;
+            _userService = userService;
         }
 
         public async Task<PagedResults<MemoNotificationDto>> GetAll(GetAllMemoNotiRequest request)
         {
-            double pageSize = request.PageSize;
-            double page = request.Page;
+            int pageSize = request.PageSize;
+            int page = request.Page;
 
-            int skip = (int)((page - 1) * pageSize);
-            int take = (int)pageSize;
+            string? CurrentUserCode = request.CurrentUserCode;
 
-            var role = await _context.Roles.FirstOrDefaultAsync(e => e.Name == request.RoleName);
+            var connection = (SqlConnection)_context.CreateConnection();
 
-            int? roleId = 0;
-
-            if (role == null)
+            if (connection.State != ConnectionState.Open)
             {
-                roleId = Global.DefaultDepartmentIdHR;
+                await connection.OpenAsync();
             }
-            else
-            {
-                roleId = role.Id;
-            }
-
-            string CurrentUserCode = request.CurrentUserCode;
 
             string sql = $@"
-                WITH DistinctDeptNames AS (
+                WITH NotificationData AS (
                     SELECT 
-                        mn.Id,
-                        d.BPTen
-                    FROM {Global.DbWeb}.dbo.memo_notifications AS mn
-                    LEFT JOIN {Global.DbWeb}.dbo.memo_notification_departments AS mnd
-                        ON mn.Id = mnd.MemoNotificationId
-                    LEFT JOIN {Global.DbViClock}.dbo.tblBoPhan AS d
-                        ON mnd.DepartmentId = d.BPMa
-                    WHERE mn.UserCodeCreated = @CurrentUserCode
-                    GROUP BY mn.Id, d.BPTen
-                ),
-                Base AS (
-                    SELECT
-                        mn.Id,
-                        mn.Title,
-                        mn.Content,
-                        mn.FromDate,
-                        mn.ToDate,
-                        mn.UserCodeCreated,
-                        mn.CreatedBy,
-                        mn.CreatedAt,
-                        mn.UpdatedBy,
-                        mn.UpdatedAt,
-                        mn.Priority,
-                        mn.Status,
-                        mn.ApplyAllDepartment,
-                        STRING_AGG(d.BPTen, ', ') AS DepartmentNames
-                    FROM {Global.DbWeb}.dbo.memo_notifications AS mn
-                    LEFT JOIN DistinctDeptNames AS d
-                        ON mn.Id = d.Id
-                    WHERE mn.UserCodeCreated = @CurrentUserCode
-                    GROUP BY 
-                        mn.Id, mn.Title, mn.Content, mn.FromDate, mn.ToDate,
-                        mn.UserCodeCreated, mn.CreatedBy, mn.CreatedAt,
-                        mn.UpdatedBy, mn.UpdatedAt,
-                        mn.Priority, mn.Status, mn.ApplyAllDepartment
+                        MN.Id,
+                        MN.Title,
+                        MN.Content,
+                        MN.FromDate,
+                        MN.ToDate,
+                        MN.UserCodeCreated,
+                        MN.CreatedAt,
+		                MN.CreatedBy,
+		                MN.Priority,
+		                MN.Status,
+                        MN.ApplyAllDepartment,
+		                CASE 
+                            WHEN MN.ApplyAllDepartment = 1 THEN NULL
+                            ELSE (
+                                SELECT STRING_AGG(BPTen, ', ')
+                                FROM (
+                                    SELECT DISTINCT BP.BPTen
+                                    FROM memo_notification_departments MND2
+                                    LEFT JOIN vs_new.dbo.tblBoPhan BP ON MND2.DepartmentId = BP.BPMa
+                                    WHERE MND2.MemoNotificationId = MN.Id
+                                ) AS UniqueDepartments
+                            )
+                        END AS DepartmentNames,
+		                AF.Id AS ApplicationFormId,
+		                AF.RequesterUserCode,
+		                AF.RequestStatusId,
+		                AF.CurrentOrgUnitId,
+		                AF.CreatedAt AS ApplicationFormCreatedAt,
+		                HAF.Id AS LatestHistoryApplicationFormId,
+		                HAF.UserApproval,
+		                HAF.UserCodeApproval,
+		                HAF.ActionType,
+		                HAF.Comment,
+		                HAF.CreatedAt AS HistoryApplicationFormCreatedAt
+                    FROM 
+                        {Global.DbWeb}.dbo.memo_notifications AS MN
+	                LEFT JOIN 
+                        {Global.DbWeb}.dbo.application_forms AS AF
+                        ON MN.ApplicationFormId = AF.Id
+                    LEFT JOIN (
+                        SELECT 
+                            MND.MemoNotificationId,
+                            STRING_AGG(BP.BPTen, ', ') AS DepartmentNames
+                        FROM 
+                            {Global.DbWeb}.dbo.memo_notification_departments AS MND
+                        LEFT JOIN 
+                            {Global.DbViClock}.dbo.tblBoPhan AS BP
+                            ON MND.DepartmentId = BP.BPMa
+                        GROUP BY 
+                            MND.MemoNotificationId
+                    ) AS NA
+                        ON MN.Id = NA.MemoNotificationId
+                    OUTER APPLY (
+                        SELECT TOP 1 HAF.*
+                        FROM {Global.DbWeb}.dbo.history_application_forms HAF
+                        WHERE HAF.ApplicationFormId = AF.Id
+                        ORDER BY HAF.CreatedAt DESC
+                    ) AS HAF
+                    WHERE 
+                        MN.UserCodeCreated = @CurrentUserCode
                 )
-             SELECT * FROM Base ORDER BY CreatedAt DESC OFFSET @skip ROWS FETCH NEXT @take ROWS ONLY;";
-
-            string countSql = $@"
-                SELECT COUNT(DISTINCT mn.Id)
-                FROM {Global.DbWeb}.dbo.memo_notifications AS mn
-                WHERE mn.UserCodeCreated = @CurrentUserCode;
+                    SELECT *
+                    FROM NotificationData
+                    ORDER BY CreatedAt DESC
+                    OFFSET (@page - 1) * @pageSize ROWS
+                    FETCH NEXT @pageSize ROWS ONLY;
             ";
 
             var parameters = new
             {
                 CurrentUserCode,
-                roleId,
-                skip,
-                take
+                page,
+                pageSize
             };
 
-            var data = await _viclockDapperContext.QueryAsync<MemoNotificationDto>(sql, parameters);
-            var totalItems = await _viclockDapperContext.QueryFirstOrDefaultAsync<int>(countSql, new { roleId, CurrentUserCode });
+            var result = await connection.QueryAsync<MemoNotificationDto>(sql, parameters );
 
-            int totalPages = (int)Math.Ceiling(totalItems / pageSize);
+            var totalItems = await _context.MemoNotifications.CountAsync(e => e.UserCodeCreated == CurrentUserCode);
+
+            int totalPages = (int)Math.Ceiling((double)totalItems / pageSize);
 
             return new PagedResults<MemoNotificationDto>
             {
-                Data = (List<MemoNotificationDto>)data,
+                Data = (List<MemoNotificationDto>)result,
                 TotalItems = totalItems,
                 TotalPages = totalPages
             };
@@ -131,6 +161,9 @@ namespace ServicePortals.Infrastructure.Services.MemoNotification
                 .Where(mnd => mnd.MemoNotificationId == id)
                 .Select(mnd => mnd.DepartmentId)
                 .ToArrayAsync();
+
+            var allDepartment = await _departmentService.GetAll();
+            var nameDepartmentApplies = allDepartment.Where(e => departmentIds.Contains(e.BPMa)).Select(e => e.BPTen).Distinct().ToList();
 
             var files = await _context.AttachFiles
                 .Where(e => e.EntityId == memoNotify.Id && e.EntityType == nameof(MemoNotification))
@@ -162,11 +195,15 @@ namespace ServicePortals.Infrastructure.Services.MemoNotification
                 Files = files
             };
 
+            result.DepartmentNames = string.Join(", ", nameDepartmentApplies);
+
             return result;
         }
 
-        public async Task<MemoNotificationDto> Create(CreateMemoNotiRequest dto, IFormFile[] files)
+        public async Task<MemoNotificationDto> Create(CreateMemoNotiRequest request, IFormFile[] files)
         {
+            int? orgUnitId = request.OrgUnitId;
+
             int requestTypeId = (int)RequestTypeEnum.CREATE_MEMO_NOTIFICATION;
 
             var userClaims = _httpContextAccessor.HttpContext?.User;
@@ -175,63 +212,86 @@ namespace ServicePortals.Infrastructure.Services.MemoNotification
             var isUnion = roleClaims?.Contains("UNION") ?? false;
 
             int? nextOrgUnitId = -1;
+            int statusApplicationForm = -1;
 
+            //công đoàn
             if (isUnion)
             {
                 var workFlowStep = await _context.WorkFlowSteps.FirstOrDefaultAsync(e => e.RequestTypeId == requestTypeId && e.OrgUnitContext == "ROLE_UNION");
                 nextOrgUnitId = workFlowStep?.ToSpecificOrgUnitId;
-
-                //get from workflow step where context is union => set next org unit id
-
-                //if is final => set status application form status is final
-                //
-                //else lam nhu binh thuong
-                //
-
-
+                statusApplicationForm = (int)StatusApplicationFormEnum.FINAL_APPROVAL;
             }
-            else //else not uninon
+            else
             {
+                if (orgUnitId == null)
+                {
+                    throw new ValidationException("Thông tin vị trí chưa được cập nhật đủ, liên hệ bộ phận HR");
+                }
 
+                //case Mr.Ter tạo thông báo
+                var workFlowStep = await _context.WorkFlowSteps.FirstOrDefaultAsync(e => e.RequestTypeId == requestTypeId && e.FromOrgUnitId == orgUnitId);
+
+                if (workFlowStep != null)
+                {
+                    statusApplicationForm = (int)StatusApplicationFormEnum.FINAL_APPROVAL;
+                    nextOrgUnitId = workFlowStep?.ToSpecificOrgUnitId ?? orgUnitId;
+                }
+                else
+                {
+                    var orgUnit = await _context.OrgUnits.FirstOrDefaultAsync(e => e.Id == orgUnitId);
+                    var dept = orgUnit?.DeptId;
+
+                    var workFlowStepOfStaff = await _context.WorkFlowSteps.FirstOrDefaultAsync(e => e.DepartmentId == dept && e.RequestTypeId == requestTypeId);
+
+                    if (workFlowStepOfStaff != null)
+                    {
+                        nextOrgUnitId = workFlowStepOfStaff?.ToSpecificOrgUnitId;
+                        statusApplicationForm = (int)StatusApplicationFormEnum.PENDING;
+                    }
+                    else
+                    {
+                        throw new NotFoundException("Không tìm thấy luồng tạo thông báo của bạn, liên hệ Team IT");
+                    }
+                }
             }
 
             //add new application form
-            ApplicationForm applicationForm = new ApplicationForm
+            var applicationForm = new ApplicationForm
             {
                 Id = Guid.NewGuid(),
-                RequesterUserCode = dto.UserCodeCreated,
+                RequesterUserCode = request.UserCodeCreated,
                 RequestTypeId = (int)RequestTypeEnum.CREATE_MEMO_NOTIFICATION,
-                RequestStatusId = (int)StatusApplicationFormEnum.PENDING,
+                RequestStatusId = statusApplicationForm,
                 CreatedAt = DateTimeOffset.Now,
                 CurrentOrgUnitId = nextOrgUnitId
             };
-            //có thể sẽ config thêm
 
             var memoNotify = new Domain.Entities.MemoNotification
             {
                 Id = Guid.NewGuid(),
                 ApplicationFormId = applicationForm.Id,
-                Title = dto.Title,
-                Content = dto.Content,
-                Status = dto.Status,
-                FromDate = dto.FromDate,
-                ToDate = dto.ToDate,
-                UserCodeCreated = dto.UserCodeCreated,
-                CreatedAt = dto.CreatedAt,
-                CreatedBy = dto.CreatedBy,
-                ApplyAllDepartment = dto.ApplyAllDepartment,
+                Title = request.Title,
+                Content = request.Content,
+                Status = request.Status,
+                FromDate = request.FromDate,
+                ToDate = request.ToDate,
+                UserCodeCreated = request.UserCodeCreated,
+                CreatedAt = request.CreatedAt,
+                CreatedBy = request.CreatedBy,
+                ApplyAllDepartment = request.ApplyAllDepartment,
             };
 
+            _context.ApplicationForms.Add(applicationForm);
             _context.MemoNotifications.Add(memoNotify);
 
             //memo department
-            if (dto.ApplyAllDepartment == false)
+            if (request.ApplyAllDepartment == false)
             {
                 List<MemoNotificationDepartment> memoNotificationDepartments = [];
 
-                if (dto.DepartmentIdApply != null)
+                if (request.DepartmentIdApply != null)
                 {
-                    foreach (var item in dto.DepartmentIdApply)
+                    foreach (var item in request.DepartmentIdApply)
                     {
                         memoNotificationDepartments.Add(new MemoNotificationDepartment
                         {
@@ -278,7 +338,18 @@ namespace ServicePortals.Infrastructure.Services.MemoNotification
                 _context.AttachFiles.AddRange(listAttachFiles);
             }
 
-            //nextOrgUnitId, lấy thông tin người với nextorgunit. gửi email
+            var receiveUser = await _userService.GetMultipleUserViclockByOrgUnitId(nextOrgUnitId ?? 0);
+
+            BackgroundJob.Enqueue<IEmailService>(job =>
+                job.EmailSendMemoNotificationNeedApproval(
+                    receiveUser.Select(e => e.Email ?? "").ToList(),
+                    null,
+                    "New approval request notification",
+                    TemplateEmail.EmailSendMemoNotificationNeedApproval(request.UrlFrontend ?? ""),
+                    null,
+                    true
+                )
+            );
 
             await _context.SaveChangesAsync();
 
@@ -390,9 +461,12 @@ namespace ServicePortals.Infrastructure.Services.MemoNotification
 
         public async Task<List<MemoNotificationDto>> GetAllInHomePage(int? DepartmentId)
         {
+            var userCode = _httpContextAccessor.HttpContext?.User?.FindFirst("user_code")?.Value;
+
             var today = TimeZoneInfo.ConvertTime(DateTimeOffset.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time")).Date;
 
             var result = await _context.MemoNotifications
+                .Include(e => e.ApplicationForm)
                 .GroupJoin(
                     _context.MemoNotificationDepartments,
                     memo => memo.Id,
@@ -403,11 +477,17 @@ namespace ServicePortals.Infrastructure.Services.MemoNotification
                     x => x.memoDeptGroup.DefaultIfEmpty(),
                     (x, memoDept) => new { MemoNotification = x.memo, MemoNotificationDepartment = memoDept }
                 )
-                .Where(x =>
-                    x.MemoNotification.Status == true &&
+                .Where(x => 
+                    x.MemoNotification.Status == true && 
+                    x.MemoNotification.ApplicationForm != null && 
+                    x.MemoNotification.ApplicationForm.RequestStatusId == (int)StatusApplicationFormEnum.COMPLETE &&
                     x.MemoNotification.FromDate.HasValue && x.MemoNotification.FromDate.Value.Date <= today &&
                     x.MemoNotification.ToDate.HasValue && x.MemoNotification.ToDate.Value.Date >= today &&
-                    (x.MemoNotification.ApplyAllDepartment == true || x.MemoNotificationDepartment != null && x.MemoNotificationDepartment.DepartmentId == DepartmentId)
+                    (
+                        x.MemoNotification.ApplyAllDepartment == true || 
+                        x.MemoNotificationDepartment != null && 
+                        (x.MemoNotificationDepartment.DepartmentId == DepartmentId || x.MemoNotification.UserCodeCreated == userCode)
+                    )
                 )
                 .Select(x => x.MemoNotification)
                 .Distinct()
@@ -423,19 +503,345 @@ namespace ServicePortals.Infrastructure.Services.MemoNotification
             return file;
         }
 
-        public Task<PagedResults<MemoNotificationDto>> GetWaitApproval(GetAllMemoNotiRequest request)
+        public async Task<PagedResults<MemoNotificationDto>> GetWaitApproval(MemoNotifyWaitApprovalRequest request)
         {
-            throw new NotImplementedException();
+            int pageSize = request.PageSize;
+            int page = request.Page;
+
+            int? orgUnitId = request.OrgUnitId;
+
+            var connection = (SqlConnection)_context.CreateConnection();
+
+            if (connection.State != ConnectionState.Open)
+            {
+                await connection.OpenAsync();
+            }
+
+            string sql = $@"
+                WITH NotificationData AS (
+                    SELECT 
+                        MN.Id,
+                        MN.Title,
+                        MN.Content,
+                        MN.FromDate,
+                        MN.ToDate,
+                        MN.UserCodeCreated,
+                        MN.CreatedAt,
+                        MN.CreatedBy,
+                        MN.Priority,
+                        MN.Status,
+                        MN.ApplyAllDepartment,
+		                CASE 
+                            WHEN MN.ApplyAllDepartment = 1 THEN NULL
+                            ELSE (
+                                SELECT STRING_AGG(BPTen, ', ')
+                                FROM (
+                                    SELECT DISTINCT BP.BPTen
+                                    FROM memo_notification_departments MND2
+                                    LEFT JOIN vs_new.dbo.tblBoPhan BP ON MND2.DepartmentId = BP.BPMa
+                                    WHERE MND2.MemoNotificationId = MN.Id
+                                ) AS UniqueDepartments
+                            )
+                        END AS DepartmentNames,
+                        AF.Id AS ApplicationFormId,
+                        AF.RequesterUserCode,
+                        AF.RequestStatusId,
+                        AF.CurrentOrgUnitId,
+                        AF.CreatedAt AS ApplicationFormCreatedAt,
+		                HAF.Id AS LatestHistoryApplicationFormId,
+		                HAF.UserApproval,
+		                HAF.UserCodeApproval,
+		                HAF.ActionType,
+		                HAF.Comment,
+		                HAF.CreatedAt AS HistoryApplicationFormCreatedAt,
+                        COUNT(*) OVER () AS TotalRecords
+                        FROM 
+                            {Global.DbWeb}.dbo.memo_notifications AS MN
+                        INNER JOIN 
+                                {Global.DbWeb}.dbo.application_forms AS AF
+                            ON MN.ApplicationFormId = AF.Id
+                        LEFT JOIN (
+                            SELECT 
+                                MND.MemoNotificationId,
+                                STRING_AGG(BP.BPTen, ', ') AS DepartmentNames
+                            FROM 
+                                {Global.DbWeb}.dbo.memo_notification_departments AS MND
+                            LEFT JOIN 
+                                {Global.DbViClock}.dbo.tblBoPhan AS BP
+                                ON MND.DepartmentId = BP.BPMa
+                            GROUP BY 
+                                MND.MemoNotificationId
+                        ) AS NA
+                            ON MN.Id = NA.MemoNotificationId
+                        OUTER APPLY (
+                            SELECT TOP 1 HAF.*
+                            FROM {Global.DbWeb}.dbo.history_application_forms HAF
+                            WHERE HAF.ApplicationFormId = AF.Id
+                            ORDER BY HAF.CreatedAt DESC
+                        ) AS HAF
+                        WHERE 
+                            AF.CurrentOrgUnitId = @orgUnitId AND AF.RequestStatusId NOT IN (@Complete, @Reject)
+                    )
+                    SELECT * FROM NotificationData ORDER BY CreatedAt DESC OFFSET (@page - 1) * @pageSize ROWS FETCH NEXT @pageSize ROWS ONLY;
+            ";
+
+            var parameters = new
+            {
+                orgUnitId,
+                page,
+                pageSize,
+                Complete = (int)StatusApplicationFormEnum.COMPLETE,
+                Reject = (int)StatusApplicationFormEnum.REJECT,
+            };
+
+            var result = await connection.QueryAsync<MemoNotificationDto>(sql, parameters);
+
+            int totalItems = 0;
+
+            if (result.Any())
+            {
+                totalItems = result?.FirstOrDefault()?.TotalRecords ?? 0;
+            }
+
+            int totalPages = (int)Math.Ceiling((double)totalItems / pageSize);
+
+            return new PagedResults<MemoNotificationDto>
+            {
+                Data = (List<MemoNotificationDto>)result,
+                TotalItems = totalItems,
+                TotalPages = totalPages
+            };
         }
 
-        public Task<PagedResults<MemoNotificationDto>> GetHistoryApproval(GetAllMemoNotiRequest request)
+        public async Task<PagedResults<MemoNotificationDto>> GetHistoryApproval(HistoryWaitApprovalMemoNotifyRequest request)
         {
-            throw new NotImplementedException();
+            int pageSize = request.PageSize;
+            int page = request.Page;
+
+            string? CurrentUserCode = request.CurrentUserCode;
+
+            var connection = (SqlConnection)_context.CreateConnection();
+
+            if (connection.State != ConnectionState.Open)
+            {
+                await connection.OpenAsync();
+            }
+
+            string sql = $@"
+                WITH NotificationData AS (
+                    SELECT 
+                        MN.Id,
+                        MN.Title,
+                        MN.Content,
+                        MN.FromDate,
+                        MN.ToDate,
+                        MN.UserCodeCreated,
+                        MN.CreatedAt,
+		                MN.CreatedBy,
+		                MN.Priority,
+		                MN.Status,
+                        MN.ApplyAllDepartment,
+		                CASE 
+                            WHEN MN.ApplyAllDepartment = 1 THEN NULL
+                            ELSE (
+                                SELECT STRING_AGG(BPTen, ', ')
+                                FROM (
+                                    SELECT DISTINCT BP.BPTen
+                                    FROM memo_notification_departments MND2
+                                    LEFT JOIN vs_new.dbo.tblBoPhan BP ON MND2.DepartmentId = BP.BPMa
+                                    WHERE MND2.MemoNotificationId = MN.Id
+                                ) AS UniqueDepartments
+                            )
+                        END AS DepartmentNames,
+		                AF.Id AS ApplicationFormId,
+		                AF.RequesterUserCode,
+		                AF.RequestStatusId,
+		                AF.CurrentOrgUnitId,
+		                AF.CreatedAt AS ApplicationFormCreatedAt,
+		                HAF.Id AS LatestHistoryApplicationFormId,
+		                HAF.UserApproval,
+		                HAF.UserCodeApproval,
+		                HAF.ActionType,
+		                HAF.Comment,
+		                HAF.CreatedAt AS HistoryApplicationFormCreatedAt,
+		                COUNT(*) OVER () AS TotalRecords
+                    FROM 
+                        {Global.DbWeb}.dbo.memo_notifications AS MN
+	                LEFT JOIN 
+                        {Global.DbWeb}.dbo.application_forms AS AF
+                        ON MN.ApplicationFormId = AF.Id
+	                INNER JOIN 
+	                    {Global.DbWeb}.dbo.history_application_forms AS HAF
+                        ON HAF.ApplicationFormId = AF.Id
+                    LEFT JOIN (
+                        SELECT 
+                            MND.MemoNotificationId,
+                            STRING_AGG(BP.BPTen, ', ') AS DepartmentNames
+                        FROM 
+                            {Global.DbWeb}.dbo.memo_notification_departments AS MND
+                        LEFT JOIN 
+                            {Global.DbViClock}.dbo.tblBoPhan AS BP
+                            ON MND.DepartmentId = BP.BPMa
+                        GROUP BY 
+                            MND.MemoNotificationId
+                    ) AS NA
+                        ON MN.Id = NA.MemoNotificationId
+                    WHERE 
+                        HAF.UserCodeApproval = @UserCode
+                )
+                SELECT *
+                FROM NotificationData
+                ORDER BY CreatedAt DESC
+                OFFSET (@page - 1) * @pageSize ROWS
+                FETCH NEXT @pageSize ROWS ONLY;
+            ";
+
+            var parameters = new
+            {
+                UserCode = CurrentUserCode,
+                page,
+                pageSize
+            };
+
+            var result = await connection.QueryAsync<MemoNotificationDto>(sql, parameters);
+            int totalItems = 0;
+
+            if (result.Any())
+            {
+                totalItems = result?.FirstOrDefault()?.TotalRecords ?? 0;
+            }
+
+            int totalPages = (int)Math.Ceiling((double)totalItems / pageSize);
+
+            return new PagedResults<MemoNotificationDto>
+            {
+                Data = (List<MemoNotificationDto>)result,
+                TotalItems = totalItems,
+                TotalPages = totalPages
+            };
         }
 
-        public Task<object> Approval()
+        public async Task<object> Approval(ApprovalMemoNotifyRequest request)
         {
-            throw new NotImplementedException();
+            var orgUnitId = request.OrgUnitId;
+
+            var memoNotify = await _context.MemoNotifications.Include(e => e.ApplicationForm).FirstOrDefaultAsync(e => e.Id == request.MemoNotificationId);
+
+            if (memoNotify == null)
+            {
+                throw new NotFoundException("Memo notify not found");
+            }
+
+            var applicationForm = memoNotify.ApplicationForm;
+
+            if (applicationForm == null)
+            {
+                throw new NotFoundException("Application form memo notify not found");
+            }
+
+            applicationForm.Id = applicationForm.Id;
+
+            var historyApplicationForm = new HistoryApplicationForm
+            {
+                Id = Guid.NewGuid(),
+                ApplicationFormId = applicationForm?.Id,
+                UserApproval = request.UserNameApproval,
+                UserCodeApproval = request.UserCodeApproval,
+                Comment = request.Note,
+                ActionType = request.Status == true ? "APPROVAL" : "REJECT",
+                CreatedAt = DateTimeOffset.Now
+            };
+
+            int? nextOrgUnitId = -1;
+            bool isFinal = false;
+
+            //reject
+            if (request.Status == false)
+            {
+                applicationForm!.RequestStatusId = (int)StatusApplicationFormEnum.REJECT;
+            }
+            else //approval
+            {
+                if (applicationForm!.RequestStatusId == (int)StatusApplicationFormEnum.FINAL_APPROVAL) //if is final -> approval will publish
+                {
+                    applicationForm.RequestStatusId = (int)StatusApplicationFormEnum.COMPLETE;
+                    isFinal = true;
+                }
+                else
+                {
+                    var workFlowStep = await _context.WorkFlowSteps.FirstOrDefaultAsync(e => e.RequestTypeId == (int)RequestTypeEnum.CREATE_MEMO_NOTIFICATION && e.FromOrgUnitId == orgUnitId);
+
+                    if (workFlowStep != null)
+                    {
+                        applicationForm.RequestStatusId = workFlowStep.IsFinal == true ? (int)StatusApplicationFormEnum.FINAL_APPROVAL : (int)StatusApplicationFormEnum.IN_PROCESS;
+                        nextOrgUnitId = workFlowStep?.ToSpecificOrgUnitId ?? orgUnitId;
+                    }
+                    else
+                    {
+                        throw new NotFoundException("Không tìm thấy luồng tạo thông báo của bạn, liên hệ Team IT");
+                    }
+                }
+            }
+
+            applicationForm.CurrentOrgUnitId = nextOrgUnitId;
+
+            _context.HistoryApplicationForms.Add(historyApplicationForm);
+
+            _context.ApplicationForms.Update(applicationForm);
+
+            await _context.SaveChangesAsync();
+
+            if (request.Status == false || request.Status == true && isFinal) //gửi email cho người tạo thông báo là complete or reject
+            {
+                var userRequest = await _context.Users.Where(e => e.UserCode == memoNotify.UserCodeCreated).ToListAsync();
+                bool isApproved = request.Status == true;
+                string title = isApproved ? "approved" : "reject";
+                
+                BackgroundJob.Enqueue<IEmailService>(job =>
+                    job.EmailSendMemoNotificationHasBeenCompletedOrReject(
+                        userRequest.Select(e => e.Email ?? "").ToList(),
+                        null,
+                        $"Your request create notification has been {title}",
+                        TemplateEmail.EmailSendMemoNotificationHasBeenCompletedOrReject(request.UrlFrontend ?? "", isApproved),
+                        null,
+                        true
+                    )
+                );
+            }
+            else //gửi cho người tiếp theo duyệt
+            {
+                var receiveUser = await _userService.GetMultipleUserViclockByOrgUnitId(nextOrgUnitId ?? 0);
+
+                BackgroundJob.Enqueue<IEmailService>(job =>
+                    job.EmailSendMemoNotificationNeedApproval(
+                        receiveUser.Select(e => e.Email ?? "").ToList(),
+                        null,
+                        "New approval request notification",
+                        TemplateEmail.EmailSendMemoNotificationNeedApproval(request.UrlFrontend ?? ""),
+                        null,
+                        true
+                    )
+                );
+            }
+
+            return true;
+        }
+
+        public async Task<int> CountWaitApprovalMemoNotification(int orgUnitId)
+        {
+            var result = await _context.MemoNotifications
+                .Include(e => e.ApplicationForm)
+                .Where(e => 
+                    e.ApplicationForm != null &&
+                    e.ApplicationForm.CurrentOrgUnitId == orgUnitId && 
+                    (
+                        e.ApplicationForm.RequestTypeId != (int)StatusApplicationFormEnum.COMPLETE || 
+                        e.ApplicationForm.RequestStatusId != (int)StatusApplicationFormEnum.REJECT
+                    )
+                )
+                .CountAsync();
+
+            return result;
         }
     }
 }

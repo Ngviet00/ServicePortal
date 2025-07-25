@@ -6,7 +6,6 @@ using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 using ServicePortal.Infrastructure.Cache;
-using ServicePortals.Application;
 using ServicePortals.Application.Common;
 using ServicePortals.Application.Dtos.User.Requests;
 using ServicePortals.Application.Dtos.User.Responses;
@@ -19,7 +18,7 @@ using ServicePortals.Infrastructure.Hubs;
 using ServicePortals.Infrastructure.Mappers;
 using ServicePortals.Shared.Exceptions;
 
-namespace ServicePortals.Infrastructure.Services.User
+namespace ServicePortals.Application.Services.User
 {
     public class UserService : IUserService
     {
@@ -211,6 +210,8 @@ namespace ServicePortals.Infrastructure.Services.User
 
                 await _context.SaveChangesAsync();
 
+                _cacheService.Remove($"user_info_{dto.UserCode}");
+
                 return true;
             }
             catch (Exception ex)
@@ -240,6 +241,8 @@ namespace ServicePortals.Infrastructure.Services.User
                 _context.UserPermissions.AddRange(userPermissions);
 
                 await _context.SaveChangesAsync();
+
+                _cacheService.Remove($"user_info_{dto.UserCode}");
 
                 return true;
             }
@@ -330,15 +333,32 @@ namespace ServicePortals.Infrastructure.Services.User
 
             return UserMapper.ToDto(user);
         }
-        public async Task<PersonalInfoResponse?> GetMe(string UserCode)
+        public async Task<PersonalInfoResponse?> GetMe(string userCode)
         {
-            return await _context.Database.GetDbConnection()
+            var result = await _cacheService.GetOrCreateAsync($"user_info_{userCode}", async () =>
+            {
+                var info = await _context.Database.GetDbConnection()
                     .QueryFirstOrDefaultAsync<PersonalInfoResponse>(
                         "dbo.GetUserInfoBetweenWebSystemAndViclock",
-                        new { UserCode },
+                        new { userCode },
                         commandType: CommandType.StoredProcedure
                     );
+
+                var roleAndPermissionUser = await GetRoleAndPermissionByUser(userCode);
+                var formatRoleAndPermission = FormatRoleAndPermissionByUser(roleAndPermissionUser);
+
+                if (info != null)
+                {
+                    info.Roles = formatRoleAndPermission.Roles;
+                    info.Permissions = formatRoleAndPermission.Permissions;
+                }
+
+                return info;
+            }, expireMinutes: 2);
+
+            return result;
         }
+
         public async Task<object?> GetCustomColumnUserViclockByUserCode(string userCode, string columns)
         {
             var sql = $@"SELECT
@@ -366,7 +386,10 @@ namespace ServicePortals.Infrastructure.Services.User
                 .Include(up => up.Permission)
                 .ToListAsync();
 
-            user!.UserPermissions = userPermissions;
+            if (user != null)
+            {
+                user.UserPermissions = userPermissions;
+            }
 
             return user;
         }
@@ -435,22 +458,30 @@ namespace ServicePortals.Infrastructure.Services.User
 
             return UserMapper.ToDto(user);
         }
-        public async Task<object?> GetMultipleUserViclockByOrgUnitId(int OrgUnitId)
+        public async Task<List<GetMultiUserViClockByOrgUnitIdResponse>> GetMultipleUserViclockByOrgUnitId(int OrgUnitId)
         {
+            var connection = (SqlConnection)_context.CreateConnection();
+
+            if (connection.State != ConnectionState.Open)
+            {
+                await connection.OpenAsync();
+            }
+
             var sql = $@"SELECT
                             NVMa,
                             NVMaNV,
-                            NVEmail,
                             {Global.DbViClock}.dbo.funTCVN2Unicode(NVHoTen) AS NVHoTen,
                             OrgUnitID,
-	                        Email
+	                        COALESCE(NULLIF(Email, ''), NVEmail, '') AS Email
                         FROM {Global.DbViClock}.[dbo].[tblNhanVien] AS NV
                         RIGHT JOIN {Global.DbWeb}.dbo.users as U
 	                        ON NV.NVMaNV = U.UserCode
                         WHERE
-                            NV.OrgUnitID = @OrgUnitId";
+                            NV.OrgUnitID = @OrgUnitId AND NV.NVNgayRa > GETDATE()";
 
-            return await _viclockDapperContext.QueryAsync<object?>(sql, new { OrgUnitID = OrgUnitId });
+            var result = await connection.QueryAsync<GetMultiUserViClockByOrgUnitIdResponse>(sql, new { OrgUnitID = OrgUnitId });
+
+            return (List<GetMultiUserViClockByOrgUnitIdResponse>)result;
         }
         public async Task<List<OrgUnitNode>> BuildOrgTree(int departmentId)
         {
@@ -466,11 +497,11 @@ namespace ServicePortals.Infrastructure.Services.User
 
                 WITH OrgTree AS (
                     SELECT *
-                    FROM {Global.DbViClock}.dbo.OrgUnits
+                    FROM {Global.DbWeb}.dbo.org_units
                     WHERE DeptId = @departmentId_param
                     UNION ALL
                     SELECT child.*
-                    FROM {Global.DbViClock}.dbo.OrgUnits child
+                    FROM {Global.DbWeb}.dbo.org_units child
                     JOIN OrgTree parent ON child.ParentOrgUnitId = parent.Id
                 ),
                 MainUsers AS (
@@ -492,7 +523,7 @@ namespace ServicePortals.Infrastructure.Services.User
                         u.NVMaNV AS NVMaNV,
                         u.NVHoTen
                     FROM {Global.DbViClock}.dbo.tblNhanVien u -- Có vẻ bảng tblNhanVien và OrgUnits nằm chung vs_new
-                    JOIN {Global.DbViClock}.dbo.OrgUnits ou ON ou.Id = u.OrgUnitId
+                    JOIN {Global.DbWeb}.dbo.org_units ou ON ou.Id = u.OrgUnitId
                     WHERE ou.Id IN (
                         SELECT DISTINCT ParentJobTitleId FROM OrgTree
                     )
@@ -521,7 +552,7 @@ namespace ServicePortals.Infrastructure.Services.User
                 ORDER BY CU.OrgUnitId ASC
             ";
 
-            var result = await connection.QueryAsync<OrgUnitNode>(sql, new { departmentId = departmentId });
+            var result = await connection.QueryAsync<OrgUnitNode>(sql, new { departmentId });
             var orgUnits = result.ToList();
 
             var groupedByOrgUnitId = orgUnits?.GroupBy(x => x.OrgUnitId)?.ToDictionary(g => g.Key, g => g.ToList());
@@ -558,7 +589,7 @@ namespace ServicePortals.Infrastructure.Services.User
             string sql = $@"
                 SELECT NV.NVMaNV, [{Global.DbViClock}].dbo.funTCVN2Unicode(NV.NVHoTen) as NVHoTen
 
-                FROM [{Global.DbViClock}].dbo.OrgUnits AS OG
+                FROM [{Global.DbWeb}].dbo.org_units AS OG
 
                 INNER JOIN [{Global.DbViClock}].dbo.tblNhanVien AS NV On OG.Id = NV.OrgUnitID
 
@@ -640,7 +671,6 @@ namespace ServicePortals.Infrastructure.Services.User
                 TotalPages = totalPages
             };
         }
-
         public async Task<List<NextUserInfoApprovalResponse>> GetNextUserInfoApprovalByCurrentUserCode(string userCode)
         {
             var connection = (SqlConnection)_context.CreateConnection();
@@ -677,14 +707,14 @@ namespace ServicePortals.Infrastructure.Services.User
                 LEFT JOIN vs_new.dbo.tblChucVu AS CV On NV.NVMaCV = CV.CVMa
             ";
 
-            var result = await connection.QueryAsync<NextUserInfoApprovalResponse>(sql, new { userCode = userCode });
+            var result = await connection.QueryAsync<NextUserInfoApprovalResponse>(sql, new { userCode });
 
             return (List<NextUserInfoApprovalResponse>)result;
         }
 
         public async Task<dynamic> Test()
         {
-            return 1;
+            return null;
         }
     }
 }

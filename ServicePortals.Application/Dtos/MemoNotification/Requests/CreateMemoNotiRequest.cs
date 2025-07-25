@@ -9,7 +9,6 @@ namespace ServicePortals.Application.Dtos.MemoNotification.Requests
         public string? Title { get; set; }
         [Required]
         public string? Content { get; set; }
-        public string? RoleNameCreated { get; set; }
         public int[]? DepartmentIdApply { get; set; }
         public bool? Status { get; set; }
         public bool? ApplyAllDepartment { get; set; }
@@ -21,5 +20,7 @@ namespace ServicePortals.Application.Dtos.MemoNotification.Requests
         public string? UpdatedBy { get; set; }
         public DateTimeOffset? UpdatedAt { get; set; }
         public List<string>? DeleteFiles { get; set; }
+        public int? OrgUnitId { get; set; }
+        public string? UrlFrontend { get; set; }
     }
 }

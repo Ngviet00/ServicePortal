@@ -5,6 +5,7 @@ namespace ServicePortals.Application.Interfaces.User
 {
     public interface IUserService
     {
+        Task<PagedResults<GetAllUserResponse>> GetAll(GetAllUserRequest request);
         Task<DetailUserWithRoleAndPermissionResponse> GetDetailUserWithRoleAndPermission(string userCode);
         Task<PersonalInfoResponse?> GetMe(string userCode);
         Task<UserResponse> GetById(Guid id);
@@ -14,12 +15,11 @@ namespace ServicePortals.Application.Interfaces.User
         UserRolesAndPermissionsResponse FormatRoleAndPermissionByUser(Domain.Entities.User? user);
         Task<UserResponse> Delete(Guid id);
         Task<UserResponse> ForceDelete(Guid id);
-        Task<PagedResults<GetAllUserResponse>> GetAll(GetAllUserRequest request);
         Task<bool> UpdateUserRole(UpdateUserRoleRequest request);
         Task<bool> UpdateUserPermission(UpdateUserRoleRequest request);
         Task<UserResponse> ResetPassword(ResetPasswordRequest request);
         Task<UserResponse> Update(string userCode, UpdatePersonalInfoRequest request);
-        Task<object?> GetMultipleUserViclockByOrgUnitId(int OrgUnitId);
+        Task<List<GetMultiUserViClockByOrgUnitIdResponse>> GetMultipleUserViclockByOrgUnitId(int OrgUnitId);
         Task<List<OrgUnitNode>> BuildOrgTree(int departmentId);
         Task<dynamic?> GetUserByParentOrgUnit(int orgUnitId);
         Task<PagedResults<object>> SearchAllUserFromViClock(SearchAllUserFromViclockRequest request);

@@ -24,7 +24,7 @@ using ServicePortals.Infrastructure.Helpers;
 using ServicePortals.Infrastructure.Mappers;
 using ServicePortals.Shared.Exceptions;
 
-namespace ServicePortals.Infrastructure.Services.LeaveRequest
+namespace ServicePortals.Application.Services.LeaveRequest
 {
     public class LeaveRequestService : ILeaveRequestService
     {
@@ -69,7 +69,7 @@ namespace ServicePortals.Infrastructure.Services.LeaveRequest
                             l.ApplicationForm != null &&
                             (
                                 status == 2
-                                    ? (l.ApplicationForm.RequestStatusId == 2 || l.ApplicationForm.RequestStatusId == 4)
+                                    ? l.ApplicationForm.RequestStatusId == 2 || l.ApplicationForm.RequestStatusId == 4
                                     : l.ApplicationForm.RequestStatusId == status
                             )
                 );
@@ -397,19 +397,19 @@ namespace ServicePortals.Infrastructure.Services.LeaveRequest
                         from dt in adt.DefaultIfEmpty()
                         where a != null && 
                           (
-                              (isHR && 
+                              isHR && 
                                (
-                                   (a.CurrentOrgUnitId == orgUnitId &&
+                                   a.CurrentOrgUnitId == orgUnitId &&
                                     (a.RequestStatusId == (int)StatusApplicationFormEnum.PENDING ||
-                                     a.RequestStatusId == (int)StatusApplicationFormEnum.IN_PROCESS)) ||
-                                   (a.RequestStatusId == (int)StatusApplicationFormEnum.WAIT_HR)
-                               )) ||
-                              (!isHR && 
-                               (
-                                   (a.CurrentOrgUnitId == orgUnitId || (dt != null && dt.TempUserCode == userCode && dt.IsActive == true)) &&
+                                     a.RequestStatusId == (int)StatusApplicationFormEnum.IN_PROCESS) ||
+                                   a.RequestStatusId == (int)StatusApplicationFormEnum.WAIT_HR
+                               ) ||
+                              !isHR && 
+                               
+                                   (a.CurrentOrgUnitId == orgUnitId || dt != null && dt.TempUserCode == userCode && dt.IsActive == true) &&
                                    (a.RequestStatusId == (int)StatusApplicationFormEnum.PENDING ||
                                     a.RequestStatusId == (int)StatusApplicationFormEnum.IN_PROCESS)
-                               ))
+                               
                           )
                         select l;
 
@@ -703,7 +703,7 @@ namespace ServicePortals.Infrastructure.Services.LeaveRequest
 
             if (!string.IsNullOrWhiteSpace(keysearch))
             {
-                q = q.Where(e => (e.Name != null && EF.Functions.Collate(e.Name, "Latin1_General_CI_AI").Contains(keysearch)) ||  (e.RequesterUserCode != null && e.RequesterUserCode.Contains(keysearch)));
+                q = q.Where(e => e.Name != null && EF.Functions.Collate(e.Name, "Latin1_General_CI_AI").Contains(keysearch) ||  e.RequesterUserCode != null && e.RequesterUserCode.Contains(keysearch));
             }
 
             var totalItems = await q.CountAsync();
@@ -854,7 +854,7 @@ namespace ServicePortals.Infrastructure.Services.LeaveRequest
 
         public async Task<object> CreateLeaveForManyPeople(CreateLeaveRequestForManyPeopleRequest request)
         {
-            if (request.Leaves == null || (request.Leaves != null && request.Leaves.Count == 0))
+            if (request.Leaves == null || request.Leaves != null && request.Leaves.Count == 0)
             {
                 throw new ValidationException("Không có người nào xin nghỉ phép, vui lòng check lại!");
             }
@@ -892,7 +892,7 @@ namespace ServicePortals.Infrastructure.Services.LeaveRequest
                     INNER JOIN ServicePortal.dbo.users AS U ON NV.NVMaNV = U.UserCode
                     WHERE NV.NVMaNV IN @userCodeCCEmail";
 
-            var resultGetCCEmail = await connection.QueryAsync<dynamic>(sqlGetCCEmail, new { userCodeCCEmail = userCodeCCEmail });
+            var resultGetCCEmail = await connection.QueryAsync<dynamic>(sqlGetCCEmail, new { userCodeCCEmail });
 
             foreach (var emailCC in resultGetCCEmail)
             {

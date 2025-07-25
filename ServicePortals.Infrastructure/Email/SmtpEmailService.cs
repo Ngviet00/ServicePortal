@@ -50,6 +50,16 @@ namespace ServicePortals.Infrastructure.Email
             await SendAsync(to, cc, subject, body, attachments, isHtml);
         }
 
+        public async Task EmailSendMemoNotificationNeedApproval(List<string>? to, List<string>? cc, string subject, string? body, List<(string, byte[])>? attachments, bool isHtml = true)
+        {
+            await SendAsync(to, cc, subject, body, attachments, isHtml);
+        }
+
+        public async Task EmailSendMemoNotificationHasBeenCompletedOrReject(List<string>? to, List<string>? cc, string subject, string? body, List<(string, byte[])>? attachments, bool isHtml = true)
+        {
+            await SendAsync(to, cc, subject, body, attachments, isHtml);
+        }
+
         private async Task SendAsync(List<string>? to, List<string>? cc, string subject, string? body, List<(string FileName, byte[] FileBytes)>? attachments = null, bool isHtml = true)
         {
             try

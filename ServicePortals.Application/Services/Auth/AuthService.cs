@@ -3,7 +3,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using ServicePortal.Infrastructure.Cache;
 using ServicePortals.Application.Dtos.Auth.Requests;
-using ServicePortals.Application.Dtos.User.Responses;
 using ServicePortals.Application.Interfaces.Auth;
 using ServicePortals.Application.Interfaces.User;
 using ServicePortals.Domain.Entities;
@@ -102,24 +101,16 @@ namespace ServicePortals.Infrastructure.Services.Auth
 
             await _context.SaveChangesAsync();
 
-            UserResponse userResponse = new UserResponse
-            {
-                Id = newUser?.Id,
-                UserCode = newUser?.UserCode,
-                Password = null,
-                IsActive = newUser?.IsActive,
-                IsChangePassword = newUser?.IsChangePassword,
-                Email = newUser?.Email,
-                DateOfBirth = newUser?.DateOfBirth,
-                Roles = formatRoleAndPermission.Roles,
-                Permissions = formatRoleAndPermission.Permissions
-            };
-
             var result = new LoginResponse
             {
                 AccessToken = accessToken,
                 RefreshToken = refreshToken,
-                UserInfo = userResponse,
+                UserInfo = new
+                {
+                    newUser?.UserCode,
+                    newUser?.IsChangePassword,
+                    newUser?.Email
+                },
                 ExpiresAt = refreshTokenEntity.ExpiresAt
             };
 
@@ -128,22 +119,17 @@ namespace ServicePortals.Infrastructure.Services.Auth
 
         public async Task<LoginResponse> Login(LoginRequest request)
         {
-            var userFromWebSystem = await _context.Users.FirstOrDefaultAsync(e => e.UserCode == request.UserCode);
-
-            if (userFromWebSystem == null)
-            {
-                throw new ValidationException("User not found!");
-            }
+            var userFromWebSystem = await _context.Users.FirstOrDefaultAsync(e => e.UserCode == request.UserCode) ?? throw new ValidationException("User not found!");
 
             if (!Helper.VerifyString(userFromWebSystem?.Password ?? "", request?.Password ?? ""))
             {
                 throw new ValidationException("Password is incorrect!");
             }
 
+            var claims = new List<Claim> { new("user_code", userFromWebSystem?.UserCode ?? "") };
+
             var roleAndPermissions = await _userService.GetRoleAndPermissionByUser(userFromWebSystem?.UserCode ?? "");
             var formatRoleAndPermission = _userService.FormatRoleAndPermissionByUser(roleAndPermissions);
-
-            var claims = new List<Claim> { new("user_code", userFromWebSystem?.UserCode ?? "") };
 
             claims.AddRange(formatRoleAndPermission.Roles.Select(roleName => new Claim(ClaimTypes.Role, roleName)));
             claims.AddRange(formatRoleAndPermission.Permissions.Select(permissionName => new Claim("permission", permissionName)));
@@ -163,24 +149,16 @@ namespace ServicePortals.Infrastructure.Services.Auth
             _context.RefreshTokens.Add(refreshTokenEntity);
             await _context.SaveChangesAsync();
 
-            UserResponse userResponse = new()
-            {
-                Id = userFromWebSystem?.Id,
-                UserCode = userFromWebSystem?.UserCode,
-                Password = null,
-                IsActive = userFromWebSystem?.IsActive,
-                IsChangePassword = userFromWebSystem?.IsChangePassword,
-                Email = userFromWebSystem?.Email,
-                DateOfBirth = userFromWebSystem?.DateOfBirth,
-                Roles = formatRoleAndPermission.Roles,
-                Permissions = formatRoleAndPermission.Permissions
-            };
-
             var result = new LoginResponse
             {
                 AccessToken = accessToken,
                 RefreshToken = refreshToken,
-                UserInfo = userResponse,
+                UserInfo = new
+                {
+                    userFromWebSystem?.UserCode,
+                    userFromWebSystem?.IsChangePassword,
+                    userFromWebSystem?.Email
+                },
                 ExpiresAt = refreshTokenEntity.ExpiresAt
             };
 
@@ -204,8 +182,6 @@ namespace ServicePortals.Infrastructure.Services.Auth
             }
 
             var userRoleAndPermissions = _userService.FormatRoleAndPermissionByUser(user);
-
-            user!.Password = null;
 
             var claims = new List<Claim> {new("user_code", user?.UserCode ?? "")};
 
