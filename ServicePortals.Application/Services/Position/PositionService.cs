@@ -19,7 +19,7 @@ namespace ServicePortals.Infrastructure.Services.Position
 
         /// <summary>
         /// 
-        /// Lấy tất cả vị trí từ db viclock
+        /// Lấy tất cả chức vụ từ db viclock
         /// 
         /// </summary>
         public async Task<List<GetAllPositionResponse>> GetAll()

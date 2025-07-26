@@ -2,6 +2,7 @@
 using ServicePortal.Applications.Modules.LeaveRequest.DTO.Requests;
 using ServicePortals.Application.Dtos.LeaveRequest;
 using ServicePortals.Application.Dtos.LeaveRequest.Requests;
+using ServicePortals.Application.Dtos.LeaveRequest.Responses;
 
 namespace ServicePortals.Application.Interfaces.LeaveRequest
 {
@@ -26,6 +27,8 @@ namespace ServicePortals.Application.Interfaces.LeaveRequest
         Task<object> CreateLeaveForManyPeople(CreateLeaveRequestForManyPeopleRequest request);
         Task<object> SearchUserRegisterLeaveRequest(SearchUserRegisterLeaveRequest request);
         Task<object> HrRegisterAllLeave(HrRegisterAllLeaveRequest request);
-        
+
+        Task<List<HrMngLeaveRequestResponse>> GetHrWithManagementLeavePermission();
+        Task<object> UpdateHrWithManagementLeavePermission(List<string> UserCode);
     }
 }

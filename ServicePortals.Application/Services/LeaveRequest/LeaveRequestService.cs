@@ -1,11 +1,11 @@
 ﻿using System.Data;
 using System.Security.Claims;
 using Dapper;
+using DocumentFormat.OpenXml.Drawing.Diagrams;
 using Hangfire;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using ServicePortal.Applications.Modules.LeaveRequest.DTO.Requests;
-using ServicePortals.Application;
 using ServicePortals.Application.Common;
 using ServicePortals.Application.Dtos.LeaveRequest;
 using ServicePortals.Application.Dtos.LeaveRequest.Requests;
@@ -53,6 +53,9 @@ namespace ServicePortals.Application.Services.LeaveRequest
             _commonDataService = commonDataService;
         }
 
+        /// <summary>
+        /// Lấy danh sách nhưng đơn nghỉ phép của user, nếu như request gửi lên là in process thì hthi những đơn có trạng thái là in process hoặc wait hr
+        /// </summary>
         public async Task<PagedResults<LeaveRequestDto>> GetAll(GetAllLeaveRequest request)
         {
             int pageSize = request.PageSize;
@@ -68,8 +71,8 @@ namespace ServicePortals.Application.Services.LeaveRequest
                 .Where(l => (l.RequesterUserCode == UserCode || l.UserCodeWriteLeaveRequest == UserCode) &&
                             l.ApplicationForm != null &&
                             (
-                                status == 2
-                                    ? l.ApplicationForm.RequestStatusId == 2 || l.ApplicationForm.RequestStatusId == 4
+                                status == (int)StatusApplicationFormEnum.IN_PROCESS
+                                    ? l.ApplicationForm.RequestStatusId == (int)StatusApplicationFormEnum.IN_PROCESS || l.ApplicationForm.RequestStatusId == (int)StatusApplicationFormEnum.WAIT_HR
                                     : l.ApplicationForm.RequestStatusId == status
                             )
                 );
@@ -120,6 +123,9 @@ namespace ServicePortals.Application.Services.LeaveRequest
             return LeaveRequestMapper.ToDto(leaveRequest);
         }
 
+        /// <summary>
+        /// Tạo đơn nghỉ phép, phải có orgUnitId, lấy luồng duyệt từ bảng workflowstep, sau đó gửi email cho người tiếp theo, mặc định k có ai cấp trên thì gửi thẳng hr
+        /// </summary>
         public async Task<LeaveRequestDto> Create(CreateLeaveRequest request, ClaimsPrincipal userClaim)
         {
             //lấy thông tin người dùng hiện tại
@@ -158,11 +164,7 @@ namespace ServicePortals.Application.Services.LeaveRequest
             //lấy danh sách workflow của người hiện tại, check xem user có custom workflow không,1 - nghỉ phép
             var workFlowSteps = await _context.WorkFlowSteps.Where(e => e.RequestTypeId == 1 && e.FromOrgUnitId == orgUnitIdCurrentUser).ToListAsync();
 
-            int? IdOrgUnitIdNextUser = await connection.QueryFirstOrDefaultAsync<int?>($@"SELECT ParentJobTitleId FROM {Global.DbViClock}.dbo.OrgUnits WHERE Id = @orgUnitIdCurrentUser", new
-            {
-                orgUnitIdCurrentUser
-            });
-
+            var IdOrgUnitIdNextUser = await _context.OrgUnits.Where(e => e.Id == orgUnitIdCurrentUser).Select(e => e.ParentJobTitleId).FirstOrDefaultAsync();
 
             if (IdOrgUnitIdNextUser == null)
             {
@@ -271,9 +273,12 @@ namespace ServicePortals.Application.Services.LeaveRequest
 
             if (isSendHr && isComplete == false) //gửi email cho HR
             {
+                var hrHavePermissionMngLeaveRequest = await GetHrWithManagementLeavePermission();
+
                 BackgroundJob.Enqueue<IEmailService>(job =>
                     job.SendEmailRequestHasBeenSent(
-                        new List<string> { Global.EmailHRReceiveLeaveRequest },
+                        hrHavePermissionMngLeaveRequest.Select(e => e.Email ?? "").ToList()
+                        ,
                         null,
                         "Đơn xin nghỉ phép",
                         emailWithUrlApproval,
@@ -284,18 +289,11 @@ namespace ServicePortals.Application.Services.LeaveRequest
             }
             else if (isComplete == false) //lấy email của những người tiếp theo và gửi email cho họ
             {
-                string sqlGetEmails = @"
-                    SELECT 
-                        COALESCE(U.Email, NV.NVEmail, '') AS Email
-                    FROM vs_new.dbo.tblNhanVien AS NV
-                    LEFT JOIN ServicePortal.dbo.users AS U
-                        ON U.UserCode = NV.NVMaNV
-                    WHERE OrgUnitID = @OrgUnitID
-                ";
-                var emails = (await connection.QueryAsync<string>(sqlGetEmails, new { OrgUnitID = nextOrgUnitId })).ToList();
+                var receiveUser = await _userService.GetMultipleUserViclockByOrgUnitId(nextOrgUnitId);
+
                 BackgroundJob.Enqueue<IEmailService>(job =>
                     job.SendEmailRequestHasBeenSent(
-                        emails,
+                        receiveUser.Select(e => e.Email ?? "").ToList(),
                         null,
                         "Đơn xin nghỉ phép",
                         emailWithUrlApproval,
@@ -346,6 +344,9 @@ namespace ServicePortals.Application.Services.LeaveRequest
             return LeaveRequestMapper.ToDto(leaveRequest);
         }
 
+        /// <summary>
+        /// Lấy danh sách chờ duyệt, theo orgUnitId và có trạng thái là inprocess hoặc pending của user đó
+        /// </summary>
         public async Task<PagedResults<LeaveRequestDto>> GetAllWaitApproval(GetAllLeaveRequestWaitApprovalRequest request, ClaimsPrincipal userClaim)
         {
             int pageSize = request.PageSize;
@@ -377,18 +378,29 @@ namespace ServicePortals.Application.Services.LeaveRequest
             };
         }
 
+        /// <summary>
+        /// Đếm danh sách chờ duyệt, theo orgUnitId và có trạng thái là inprocess hoặc pending của user đó
+        /// </summary>
         public async Task<int> CountWaitApproval(GetAllLeaveRequestWaitApprovalRequest request, ClaimsPrincipal userClaim)
         {
             IQueryable<Domain.Entities.LeaveRequest> q = GetBaseLeaveRequestApprovalQuery(request, userClaim);
             return await q.CountAsync();
         }
 
+        //Base query chờ duyệt của danh sách chờ duyệt và đếm những đơn chờ duyệt
         public IQueryable<Domain.Entities.LeaveRequest> GetBaseLeaveRequestApprovalQuery(GetAllLeaveRequestWaitApprovalRequest request, ClaimsPrincipal userClaim)
         {
             var userCode = request.UserCode;
             var roleClaims = userClaim.Claims.Where(c => c.Type == ClaimTypes.Role).Select(c => c.Value).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var permissionClaims = userClaim.Claims.Where(c => c.Type == "permission").Select(c => c.Value).ToHashSet(StringComparer.OrdinalIgnoreCase);
             int? orgUnitId = request.OrgUnitId;
-            bool isHR = roleClaims?.Contains("HR") ?? false;
+
+            bool isHR = false;
+
+            if (roleClaims?.Contains("HR") == true && permissionClaims?.Contains("leave_request.hr_management_leave_request") == true)
+            {
+                isHR = true;
+            }
 
             var query = from l in _context.LeaveRequests
                         join a in _context.ApplicationForms on l.ApplicationFormId equals a.Id into la
@@ -416,6 +428,9 @@ namespace ServicePortals.Application.Services.LeaveRequest
             return query.Distinct();
         }
 
+        /// <summary>
+        /// Hàm duyệt đơn nghỉ phép, cần orgUnitId, lấy luồng duyệt theo workflowstep nếu approval thì gửi đến người tiếp theo, hoặc k có người tiếp thì gửi đến hr
+        /// khi approval hoặc reject thì sẽ gửi email đến người đó
         public async Task<LeaveRequestDto?> Approval(ApprovalRequests request, string currentUserCodeInJwt, ClaimsPrincipal userClaim)
         {
             if (string.IsNullOrWhiteSpace(currentUserCodeInJwt) || currentUserCodeInJwt.Trim() != request.UserCodeApproval)
@@ -480,10 +495,12 @@ namespace ServicePortals.Application.Services.LeaveRequest
             //lấy danh sách workflow của người hiện tại, check xem user có custom workflow không,1 - nghỉ phép
             var workFlowSteps = await _context.WorkFlowSteps.Where(e => e.RequestTypeId == 1 && e.FromOrgUnitId == orgUnitIdCurrentUser).ToListAsync();
 
-            int? IdOrgUnitIdNextUser = await connection.QueryFirstOrDefaultAsync<int?>($@"SELECT ParentJobTitleId FROM {Global.DbViClock}.dbo.OrgUnits WHERE Id = @orgUnitIdCurrentUser", new
+            var IdOrgUnitIdNextUser = await _context.OrgUnits.Where(e => e.Id == orgUnitIdCurrentUser).Select(e => e.ParentJobTitleId).FirstOrDefaultAsync();
+
+            if (IdOrgUnitIdNextUser == null)
             {
-                orgUnitIdCurrentUser
-            });
+                IdOrgUnitIdNextUser = 0;
+            }
 
             if (IdOrgUnitIdNextUser == null)
             {
@@ -599,9 +616,11 @@ namespace ServicePortals.Application.Services.LeaveRequest
 
             if (isSendHr)
             {
+                var hrHavePermissionMngLeaveRequest = await GetHrWithManagementLeavePermission();
+
                 BackgroundJob.Enqueue<IEmailService>(job =>
                     job.SendEmailRequestHasBeenSent(
-                        new List<string> { Global.EmailHRReceiveLeaveRequest },
+                        hrHavePermissionMngLeaveRequest.Select(e => e.Email ?? "").ToList(),
                         null,
                         "Đơn xin nghỉ phép",
                         emailWithUrlApproval,
@@ -612,18 +631,11 @@ namespace ServicePortals.Application.Services.LeaveRequest
             }
             else
             {
-                string sqlGetEmails = $@"
-                    SELECT 
-                        COALESCE(U.Email, NV.NVEmail, '') AS Email
-                    FROM {Global.DbViClock}.dbo.tblNhanVien AS NV
-                    LEFT JOIN {Global.DbWeb}.dbo.users AS U
-                        ON U.UserCode = NV.NVMaNV
-                    WHERE OrgUnitID = @OrgUnitID
-                ";
-                var emails = (await connection.QueryAsync<string>(sqlGetEmails, new { OrgUnitID = nextOrgUnitId })).ToList();
+                var receiveUser = await _userService.GetMultipleUserViclockByOrgUnitId(nextOrgUnitId);
+
                 BackgroundJob.Enqueue<IEmailService>(job =>
                     job.SendEmailRequestHasBeenSent(
-                        emails,
+                        receiveUser.Select(e => e.Email ?? "").ToList(),
                         null,
                         "Đơn xin nghỉ phép",
                         emailWithUrlApproval,
@@ -636,6 +648,7 @@ namespace ServicePortals.Application.Services.LeaveRequest
             return LeaveRequestMapper.ToDto(leaveRequest);
         }
 
+        //hàm send email khi mà approved bước cuối cùng thành công
         private void SendEmailSuccessLeaveRequest(Domain.Entities.User userRequester, Domain.Entities.LeaveRequest leaveRequest)
         {
             if (userRequester?.UserConfigs?.FirstOrDefault(e => e.Key == "RECEIVE_MAIL_LEAVE_REQUEST")?.Value == "false")
@@ -658,6 +671,7 @@ namespace ServicePortals.Application.Services.LeaveRequest
             }
         }
 
+        //hàm send email khi mà bị từ chối reject
         private void SendRejectEmailLeaveRequest(Domain.Entities.User? userRequester, Domain.Entities.LeaveRequest leaveRequest, string rejectionNote)
         {
             if (userRequester?.UserConfigs?.FirstOrDefault(e => e.Key == "RECEIVE_MAIL_LEAVE_REQUEST")?.Value == "false")
@@ -683,6 +697,9 @@ namespace ServicePortals.Application.Services.LeaveRequest
             }
         }
         
+        /// <summary>
+        /// Lấy danh sách các đơn đã duyệt, cần inner join vs application form và inner join vs history apprlication form, where theo usercodeapproval trong history application form
+        /// </summary>
         public async Task<PagedResults<LeaveRequestDto>> GetHistoryLeaveRequestApproval(GetAllLeaveRequest request)
         {
             int pageSize = request.PageSize;
@@ -728,6 +745,9 @@ namespace ServicePortals.Application.Services.LeaveRequest
             return data;
         }
 
+        /// <summary>
+        /// cập nhật những người có quyền quản lý nghỉ phép, có thể đăng ký nghỉ phép hộ
+        /// </summary>
         public async Task<object> UpdateUserHavePermissionCreateMultipleLeaveRequest(List<string> UserCodes)
         {
             var permission = await _context.Permissions.FirstOrDefaultAsync(e => e.Name == "leave_request.create_multiple_leave_request")
@@ -748,6 +768,9 @@ namespace ServicePortals.Application.Services.LeaveRequest
             return true;
         }
 
+        /// <summary>
+        /// lấy những người có quyền quản lý nghỉ phép, có thể đăng ký nghỉ phép hộ
+        /// </summary>
         public async Task<object> GetUserCodeHavePermissionCreateMultipleLeaveRequest()
         {
             var permission = await _context.Permissions.FirstOrDefaultAsync(e => e.Name == "leave_request.create_multiple_leave_request");
@@ -760,6 +783,9 @@ namespace ServicePortals.Application.Services.LeaveRequest
             return await _context.UserPermissions.Where(e => e.PermissionId == permission.Id).Select(e => e.UserCode).ToListAsync();
         }
 
+        /// <summary>
+        /// Chọn những vị trí được quản lý nghỉ phép cho người dùng, vd: người a quản lý tổ A, tổ B
+        /// </summary>
         public async Task<object> AttachUserManageOrgUnit(AttachUserManageOrgUnitRequest request)
         {
             var userMngOrgUnitIds = await _context.UserMngOrgUnits
@@ -785,6 +811,9 @@ namespace ServicePortals.Application.Services.LeaveRequest
             return true;
         }
 
+        /// <summary>
+        /// Lấy những vị trí được quản lý nghỉ phép theo người dùng, vd: ID: 1 (tổ a), ID: 2 (tổ b)
+        /// </summary>
         public async Task<object> GetOrgUnitIdAttachedByUserCode(string userCode)
         {
             var results = await _context.UserMngOrgUnits
@@ -795,6 +824,9 @@ namespace ServicePortals.Application.Services.LeaveRequest
             return results;
         }
 
+        /// <summary>
+        /// Tìm kiếm người xin nghỉ phép ở màn tạo nghỉ phép hộ, vd: người a có thể tìm kiếm người a,b,c, k thể tìm kiếm người d, được thiết lập ở màn ql nghỉ phép của HR
+        /// </summary>
         public async Task<object> SearchUserRegisterLeaveRequest(SearchUserRegisterLeaveRequest request)
         {
             var connection = (SqlConnection)_context.CreateConnection();
@@ -816,7 +848,7 @@ namespace ServicePortals.Application.Services.LeaveRequest
                 FROM vs_new.dbo.tblNhanVien AS NV
                 LEFT JOIN {Global.DbViClock}.dbo.tblBoPhan AS BP ON NV.NVMaBP = BP.BPMa
                 LEFT JOIN {Global.DbViClock}.dbo.tblChucVu AS CV ON NV.NVMaCV = CV.CVMa
-                LEFT JOIN {Global.DbViClock}.dbo.OrgUnits AS OU ON OU.Id = NV.OrgUnitID
+                LEFT JOIN {Global.DbWeb}.dbo.org_units AS OU ON OU.Id = NV.OrgUnitID
                 LEFT JOIN {Global.DbWeb}.dbo.user_mng_org_unit_id AS UM ON NV.NVMaNV = UM.UserCode AND UM.ManagementType = 'MNG_LEAVE_REQUEST'
                 WHERE NVMaNV IN (@UserCodeRegister, @UserCode)
             ";
@@ -852,6 +884,9 @@ namespace ServicePortals.Application.Services.LeaveRequest
             }
         }
 
+        /// <summary>
+        /// xin nghỉ phép cho nghiều người khác, gửi cho cấp trên của người tạo đơn nghỉ phép, vd: a viết phép nghỉ cho b, c -> gửi cho cấp trên của a
+        /// </summary>
         public async Task<object> CreateLeaveForManyPeople(CreateLeaveRequestForManyPeopleRequest request)
         {
             if (request.Leaves == null || request.Leaves != null && request.Leaves.Count == 0)
@@ -981,6 +1016,9 @@ namespace ServicePortals.Application.Services.LeaveRequest
             return true;
         }
 
+        /// <summary>
+        /// Hàm HR đăng ký nghỉ phép tất cả, lấy những request có trạng tháo là wait hr và vị trí của HR mặc định là -10
+        /// </summary>
         public async Task<object> HrRegisterAllLeave(HrRegisterAllLeaveRequest request)
         {
             var leaveRequestsWaitHrApproval = await _context.LeaveRequests
@@ -1025,6 +1063,84 @@ namespace ServicePortals.Application.Services.LeaveRequest
                     }
                 }
             }
+
+            await _context.SaveChangesAsync();
+
+            return true;
+        }
+
+        /// <summary>
+        /// Lấy danh sách những hr có quyền quản lý nghỉ phép
+        /// </summary>
+        public async Task<List<HrMngLeaveRequestResponse>> GetHrWithManagementLeavePermission()
+        {
+            var permissionHrMngLeaveRequest = await _context.Permissions.FirstOrDefaultAsync(e => e.Name == "leave_request.hr_management_leave_request");
+
+            if (permissionHrMngLeaveRequest == null)
+            {
+                throw new NotFoundException("Permission hr manage leave request not found");
+            }
+
+            var connection = (SqlConnection)_context.CreateConnection();
+
+            if (connection.State != ConnectionState.Open)
+            {
+                await connection.OpenAsync();
+            }
+
+            var userCodePerission = await _context.UserPermissions.Where(e => e.PermissionId == permissionHrMngLeaveRequest.Id).Select(e => e.UserCode).ToListAsync();
+
+            var sql = $@"
+                SELECT
+                     NV.NVMaNV,
+                     {Global.DbViClock}.dbo.funTCVN2Unicode(NV.NVHoTen) as NVHoTen,
+                     BP.BPMa,
+                     {Global.DbViClock}.dbo.funTCVN2Unicode(BP.BPTen) as BPTen,
+                     COALESCE(NULLIF(Email, ''), NVEmail, '') AS Email
+                FROM vs_new.dbo.tblNhanVien AS NV
+                LEFT JOIN {Global.DbViClock}.dbo.tblBoPhan as BP ON NV.NVMaBP = BP.BPMa
+                LEFT JOIN {Global.DbWeb}.dbo.users AS U ON NV.NVMaNV = U.UserCode
+                WHERE NV.NVMaNV IN @userCodePerission
+            ";
+
+            var param = new
+            {
+                userCodePerission = userCodePerission
+            };
+
+            var result = await connection.QueryAsync<HrMngLeaveRequestResponse>(sql, param);
+
+            return (List<HrMngLeaveRequestResponse>)result;
+        }
+
+        /// <summary>
+        /// Thêm quyền hr quản lý nghỉ phép
+        /// </summary>
+        public async Task<object> UpdateHrWithManagementLeavePermission(List<string> UserCode)
+        {
+            var permissionHrMngLeaveRequest = await _context.Permissions.FirstOrDefaultAsync(e => e.Name == "leave_request.hr_management_leave_request");
+
+            if (permissionHrMngLeaveRequest == null)
+            {
+                throw new NotFoundException("Permission hr manage leave request not found");
+            }
+
+            var oldUserPermissionsMngTKeeping = await _context.UserPermissions.Where(e => e.PermissionId == permissionHrMngLeaveRequest.Id).ToListAsync();
+
+            _context.UserPermissions.RemoveRange(oldUserPermissionsMngTKeeping);
+
+            List<UserPermission> newUserPermissions = new List<UserPermission>();
+
+            foreach (var code in UserCode)
+            {
+                newUserPermissions.Add(new UserPermission
+                {
+                    UserCode = code,
+                    PermissionId = permissionHrMngLeaveRequest.Id
+                });
+            }
+
+            _context.UserPermissions.AddRange(newUserPermissions);
 
             await _context.SaveChangesAsync();
 

@@ -6,6 +6,7 @@ using ServicePortals.Application.Dtos.DelegatedTemp.Responses;
 using ServicePortals.Application.Interfaces.DelegatedTemp;
 using ServicePortals.Application.Mappers;
 using ServicePortals.Infrastructure.Data;
+using ServicePortals.Infrastructure.Helpers;
 
 namespace ServicePortals.Application.Services.DelegatedTemp
 {
@@ -60,20 +61,22 @@ namespace ServicePortals.Application.Services.DelegatedTemp
 
         public async Task<List<GetAllDelegatedTempResponse>> GetAll(DelegatedTempDto request)
         {
+            var delegatedTemp = await _context.DelegatedTemps.Where(e => e.RequestTypeId == request.RequestTypeId).ToListAsync();
+
             var sql = $@"
-                SELECT 
+            SELECT
                   DT.MainOrgUnitId, 
                   ORG.Name AS OrgUnitName, 
-                  vs_new.dbo.funTCVN2Unicode(NV1.NVHoTen) AS MainUser, 
+                  {Global.DbViClock}.dbo.funTCVN2Unicode(NV1.NVHoTen) AS MainUser,
                   NV1.NVMaNV AS MainUserCode, 
-                  vs_new.dbo.funTCVN2Unicode(NV.NVHoTen) AS TempUser, 
-                  NV.NVMaNV AS TempUserCode 
-                FROM 
-                  [ServicePortal].[dbo].[delegated_temp] AS DT 
-                  INNER JOIN vs_new.dbo.OrgUnits AS ORG ON DT.MainOrgUnitId = ORG.Id 
-                  LEFT JOIN vs_new.dbo.tblNhanVien AS NV ON DT.TempUserCode = NV.NVMaNV 
-                  LEFT JOIN vs_new.dbo.tblNhanVien AS NV1 ON DT.MainOrgUnitId = NV1.OrgUnitID 
-                WHERE 
+                  {Global.DbViClock}.dbo.funTCVN2Unicode(NV.NVHoTen) AS TempUser,
+                  NV.NVMaNV AS TempUserCode
+                FROM
+                  {Global.DbWeb}.[dbo].[delegated_temp] AS DT
+                  INNER JOIN {Global.DbWeb}.dbo.org_units AS ORG ON DT.MainOrgUnitId = ORG.Id
+                  LEFT JOIN {Global.DbViClock}.dbo.tblNhanVien AS NV ON DT.TempUserCode = NV.NVMaNV
+                  LEFT JOIN {Global.DbViClock}.dbo.tblNhanVien AS NV1 ON DT.MainOrgUnitId = NV1.OrgUnitID
+                WHERE
                   DT.RequestTypeId = @RequestTypeId";
 
             var connection = _context.Database.GetDbConnection();

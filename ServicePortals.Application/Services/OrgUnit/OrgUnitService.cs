@@ -1,10 +1,10 @@
 ﻿using Microsoft.Data.SqlClient;
 using System.Data;
-using Microsoft.EntityFrameworkCore;
 using ServicePortals.Application.Interfaces.OrgUnit;
 using ServicePortals.Infrastructure.Data;
 using ServicePortals.Infrastructure.Helpers;
 using Dapper;
+using Microsoft.EntityFrameworkCore;
 
 namespace ServicePortals.Application.Services.OrgUnit
 {
@@ -19,25 +19,15 @@ namespace ServicePortals.Application.Services.OrgUnit
             _viclockDapperContext = viclockDapperContext;
         }
 
-        /// <summary>
-        /// Lấy row trong bảng org_unit 
-        /// </summary>
-        /// <param name="id"></param>
-        /// <returns></returns>
-        public async Task<dynamic?> GetOrgUnitById(int id)
+        //lấy orgUnit theo id
+        public async Task<Domain.Entities.OrgUnit?> GetOrgUnitById(int id)
         {
-            string sql = $@"SELECT * FROM [{Global.DbViClock}].[dbo].OrgUnits WHERE ID = @Id";
-
-            var param = new
-            {
-                Id = id,
-            };
-
-            var data = await _viclockDapperContext.QueryFirstOrDefaultAsync<dynamic>(sql, param);
-
-            return data;
+            var result = await _context.OrgUnits.FirstOrDefaultAsync(e => e.Id == id);
+            
+            return result;
         }
 
+        //lấy tất cả phòng ban và vị trị thuộc phòng ban đó
         public async Task<dynamic?> GetAllDepartmentAndFirstOrgUnit()
         {
             var connection = (SqlConnection)_context.CreateConnection();
@@ -57,7 +47,7 @@ namespace ServicePortals.Application.Services.OrgUnit
                 FROM [{Global.DbWeb}].dbo.org_units pb
                 LEFT JOIN [{Global.DbWeb}].dbo.org_units org
                     ON org.ParentOrgUnitId = pb.Id
-                WHERE pb.DeptId IS NOT NULL
+                WHERE pb.DeptId IS NOT NULL AND org.Id IS NOT NULL
                 ORDER BY pb.Id, org.Id
             ";
 

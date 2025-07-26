@@ -12,7 +12,6 @@ using ServicePortals.Infrastructure.Data;
 using ServicePortals.Infrastructure.Email;
 using ServicePortals.Infrastructure.Helpers;
 using ServicePortals.Shared.Exceptions;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace ServicePortals.Infrastructure.Services.TimeKeeping
 {
@@ -33,6 +32,7 @@ namespace ServicePortals.Infrastructure.Services.TimeKeeping
             _context = context;
         }
 
+        //lấy sanh sách chấm công của user, tìm kiếm theo tháng, param truyền vào gồm fromdate và to date, usercode
         public async Task<IEnumerable<object>> GetPersonalTimeKeeping(GetPersonalTimeKeepingRequest request)
         {
             var param = new
@@ -51,6 +51,7 @@ namespace ServicePortals.Infrastructure.Services.TimeKeeping
             return result;
         }
 
+        //màn quản lý chấm công, người quản lý chấm công quản lý chấm công của người khác
         public async Task<PagedResults<GroupedUserTimeKeeping>> GetManagementTimeKeeping(GetManagementTimeKeepingRequest request)
         {
             int month = request.Month ?? DateTime.UtcNow.Month;
@@ -73,14 +74,14 @@ namespace ServicePortals.Infrastructure.Services.TimeKeeping
                 WITH RecursiveOrg AS (
                     SELECT o.id
                     FROM user_mng_org_unit_id as um
-                    INNER JOIN [{Global.DbViClock}].dbo.OrgUnits as o
+                    INNER JOIN [{Global.DbWeb}].dbo.org_units as o
                         ON um.OrgUnitId = o.id
                     WHERE um.UserCode = {request.UserCode} AND um.ManagementType = 'MNG_TIME_KEEPING'
 
                     UNION ALL
 
                     SELECT o.id
-                    FROM vs_new.dbo.OrgUnits o
+                    FROM {Global.DbWeb}.dbo.org_units o
                     INNER JOIN RecursiveOrg ro ON o.ParentOrgUnitId = ro.id
                 )
                 SELECT DISTINCT id FROM RecursiveOrg
@@ -95,9 +96,9 @@ namespace ServicePortals.Infrastructure.Services.TimeKeeping
             var sql = $@"
                 WITH Users AS (
 	                SELECT
-		                NV.NVMa, NV.NVMaNV, vs_new.dbo.funTCVN2Unicode(NV.NVHoTen) AS NVHoTen, BP.BPTen
-	                FROM vs_new.dbo.tblNhanVien AS NV
-	                LEFT JOIN vs_new.dbo.tblBoPhan AS BP ON NV.NVMaBP = BP.BPMa
+		                NV.NVMa, NV.NVMaNV, {Global.DbViClock}.dbo.funTCVN2Unicode(NV.NVHoTen) AS NVHoTen, BP.BPTen
+	                FROM {Global.DbViClock}.dbo.tblNhanVien AS NV
+	                LEFT JOIN {Global.DbViClock}.dbo.tblBoPhan AS BP ON NV.NVMaBP = BP.BPMa
 	                WHERE NV.OrgUnitID IN @ids --'13136', '17024', '16239', 
 	                ORDER BY NV.NVMa ASC
 	                OFFSET (@Page - 1) * @PageSize ROWS
@@ -145,7 +146,7 @@ namespace ServicePortals.Infrastructure.Services.TimeKeeping
 	                END AS Results
 	                --BC.*
                 FROM Users AS U
-                LEFT JOIN vs_new.dbo.tblBaoCao AS BC ON BC.BCMaNV = U.NVMa
+                LEFT JOIN {Global.DbViClock}.dbo.tblBaoCao AS BC ON BC.BCMaNV = U.NVMa
                 WHERE BCNgay BETWEEN @FromDate AND @ToDate
                 ORDER BY U.NVMaNV ASC
             ";
@@ -189,10 +190,9 @@ namespace ServicePortals.Infrastructure.Services.TimeKeeping
             };
 
             return finalResult;
-
-            //return groupedResult;
         }
 
+        //gửi chấm công cho bộ phận HR
         public async Task<object> ConfirmTimeKeepingToHr(GetManagementTimeKeepingRequest request)
         {
             //using var stream = new MemoryStream();
@@ -221,6 +221,7 @@ namespace ServicePortals.Infrastructure.Services.TimeKeeping
             return true;
         }
 
+        //Cập nhật mới những người có quyền quản lý chấm công
         public async Task<object> UpdateUserHavePermissionMngTimeKeeping(List<string> userCodes)
         {
             var permissionMngTimekeeping = await _context.Permissions.FirstOrDefaultAsync(e => e.Name == "time_keeping.mng_time_keeping");
@@ -251,29 +252,8 @@ namespace ServicePortals.Infrastructure.Services.TimeKeeping
 
             return true;
         }
-        public async Task<object> UpdateUserMngTimeKeeping(UpdateUserMngTimeKeepingRequest request)
-        {
-            var oldData = await _context.UserMngOrgUnits.Where(e => e.UserCode == request.UserCode).ToListAsync();
 
-            _context.UserMngOrgUnits.RemoveRange(oldData);
-
-            List<UserMngOrgUnitId> umt = [];
-
-            foreach (var orgUnitId in request.OrgUnitId)
-            {
-                umt.Add(new UserMngOrgUnitId
-                {
-                    UserCode = request.UserCode,
-                    OrgUnitId = orgUnitId
-                });
-            }
-
-            _context.UserMngOrgUnits.AddRange(umt);
-
-            await _context.SaveChangesAsync();
-
-            return true;
-        }
+        //Lấy danh sách những người có quyền quản lý chấm công
         public async Task<object> GetUserHavePermissionMngTimeKeeping()
         {
             var permissionMngTimeKeeping = await _context.Permissions.FirstOrDefaultAsync(e => e.Name == "time_keeping.mng_time_keeping");
@@ -314,6 +294,7 @@ namespace ServicePortals.Infrastructure.Services.TimeKeeping
             return result;
         }
 
+        //Chọn các vị trí được quản lý chấm công theo người dùng, vdu: người a qly tổ c, tổ d, thì ở màn qly chấm công người a sẽ qly chấm công của những người thuộc tổ c, tổ d
         public async Task<object> AttachUserManageOrgUnit(AttachUserManageOrgUnitRequest request)
         {
             var userMngOrgUnitIds = await _context.UserMngOrgUnits
@@ -339,6 +320,7 @@ namespace ServicePortals.Infrastructure.Services.TimeKeeping
             return true;
         }
 
+        //lấy những vị trí đc quản lý theo user
         public async Task<object> GetOrgUnitIdAttachedByUserCode(string userCode)
         {
             var results = await _context.UserMngOrgUnits
@@ -349,6 +331,7 @@ namespace ServicePortals.Infrastructure.Services.TimeKeeping
             return results;
         }
 
+        //thay đổi người quản lý chấm công, thay thế người cũ sang người mới
         public async Task<object> ChangeUserMngTimeKeeping(ChangeUserMngTimeKeepingRequest request)
         {
             var old = await _context.UserMngOrgUnits.Where(e => e.UserCode == request.OldUserCode).ToListAsync();

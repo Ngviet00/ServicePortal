@@ -187,7 +187,7 @@ namespace ServicePortal.Controllers.User
             return Ok(new BaseResponse<CountWaitApprovalInSidebarResponse>(200, "Success", results));
         }
 
-        [HttpPost("import-excel-test-insert-new-user")]
+        [HttpPost("import-excel-test-insert-new-user"), AllowAnonymous]
         public async Task<IActionResult> ImportExcelTestInsertNewUser(IFormFile file)
         {
             await _excelService.InsertFromExcelAsync(file);

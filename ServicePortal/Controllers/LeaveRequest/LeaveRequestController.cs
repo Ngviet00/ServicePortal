@@ -4,6 +4,7 @@ using ServicePortal.Applications.Modules.LeaveRequest.DTO.Requests;
 using ServicePortals.Application;
 using ServicePortals.Application.Dtos.LeaveRequest;
 using ServicePortals.Application.Dtos.LeaveRequest.Requests;
+using ServicePortals.Application.Dtos.LeaveRequest.Responses;
 using ServicePortals.Application.Interfaces.LeaveRequest;
 using ServicePortals.Infrastructure.Excel;
 
@@ -210,6 +211,22 @@ namespace ServicePortal.Controllers.LeaveRequest
 
             // Trả về file để download
             return File(fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "DataExport.xlsx");
+        }
+
+        [HttpPost("update-user-have-permission-hr-mng-leave-request")]
+        public async Task<IActionResult> UpdateUserHavePermissionHrMngLeaveRequest([FromBody] List<string> userCodes)
+        {
+            var results = await _leaveRequestService.UpdateHrWithManagementLeavePermission(userCodes);
+
+            return Ok(new BaseResponse<object>(200, "success", results));
+        }
+
+        [HttpGet("get-user-have-permission-hr-mng-leave-request")]
+        public async Task<IActionResult> GetUserHavePermissionHrMngLeaveRequest()
+        {
+            var results = await _leaveRequestService.GetHrWithManagementLeavePermission();
+
+            return Ok(new BaseResponse<List<HrMngLeaveRequestResponse>>(200, "success", results));
         }
     }
 }

@@ -3,6 +3,9 @@ using ClosedXML.Excel;
 using ServicePortals.Infrastructure.Data;
 using System.Text;
 using Dapper;
+using ServicePortals.Infrastructure.Helpers;
+using Microsoft.EntityFrameworkCore;
+using System.Data;
 
 namespace ServicePortals.Infrastructure.Excel
 {
@@ -18,12 +21,12 @@ namespace ServicePortals.Infrastructure.Excel
         public async Task InsertFromExcelAsync(IFormFile file)
         {
             if (file == null || file.Length == 0)
-            {
                 throw new ArgumentException("File không hợp lệ");
-            }
 
             var insertBuilder = new StringBuilder();
-            insertBuilder.Append("INSERT INTO YourTable (Name, Age) VALUES ");
+            insertBuilder.Append($@"INSERT INTO {Global.DbViClock}.dbo.tblNhanVien
+                (NVMaNV, NVHoTen, NVMaBP, NVMaCV, NVGioiTinh, NVNgaySinh, NVNgayVao, NVNgayRa, OrgUnitID)
+                VALUES ");
 
             var valuesList = new List<string>();
             var parameters = new DynamicParameters();
@@ -33,28 +36,55 @@ namespace ServicePortals.Infrastructure.Excel
                 await file.CopyToAsync(stream);
                 using (var workbook = new XLWorkbook(stream))
                 {
-                    var worksheet = workbook.Worksheet(1);
-                    var rows = worksheet.RangeUsed().RowsUsed();
+                    var worksheet = workbook.Worksheets.FirstOrDefault(ws => ws.Name == "NDL");
+                    if (worksheet == null)
+                        throw new Exception("Không tìm thấy sheet 'NDL' trong file Excel.");
+
+                    var rows = worksheet.RangeUsed()?.RowsUsed();
+                    if (rows == null)
+                        throw new Exception("Không tìm thấy dữ liệu trong sheet 'NDL'.");
 
                     int index = 0;
                     foreach (var row in rows.Skip(1))
                     {
-                        var name = row.Cell(1).GetString();
-                        var ageCell = row.Cell(2);
-                        int age = 0;
+                        string prefix = $"@p{index}_";
 
-                        if (ageCell.DataType == XLDataType.Number)
-                            age = (int)ageCell.GetDouble();
-                        else if (int.TryParse(ageCell.GetString(), out int parsedAge))
-                            age = parsedAge;
+                        string maNV = row.Cell(2).GetString().Trim();
+                        string hoTen = row.Cell(3).GetString().Trim();
 
-                        // Tạo tham số cho từng bản ghi
-                        string paramName = "@Name" + index;
-                        string paramAge = "@Age" + index;
+                        // NVMaBP
+                        int maBP = int.TryParse(row.Cell(4).GetString().Trim(), out var bpVal) ? bpVal : 118;
 
-                        valuesList.Add($"({paramName}, {paramAge})");
-                        parameters.Add(paramName, name);
-                        parameters.Add(paramAge, age);
+                        // NVMaCV (mặc định hoặc lấy theo logic riêng nếu cần)
+                        int maCV = 0;
+
+                        // NVGioiTinh
+                        string gioiTinhStr = row.Cell(6).GetString().Trim().ToLower();
+                        bool gioiTinh = gioiTinhStr == "nam" || gioiTinhStr == "male";
+
+                        string cccd = row.Cell(7).GetString().Trim();
+
+                        DateTime? ngaySinh = row.Cell(8).TryGetValue<DateTime>(out var ns) ? ns : null;
+                        DateTime? ngayVao = row.Cell(9).TryGetValue<DateTime>(out var nv) ? nv : null;
+
+                        // NVNgayRa: để null
+                        DateTime? ngayRa = DateTime.MaxValue;
+
+                        int orgUnitId = row.Cell(13).TryGetValue<int>(out var ouid) ? ouid : 0;
+
+                        // SQL dòng giá trị
+                        valuesList.Add($"({prefix}maNV, {prefix}hoTen, {prefix}maBP, {prefix}maCV, {prefix}gioiTinh, {prefix}ngaySinh, {prefix}ngayVao, {prefix}ngayRa, {prefix}orgUnitId)");
+
+                        // Add parameter
+                        parameters.Add($"{prefix}maNV", maNV);
+                        parameters.Add($"{prefix}hoTen", hoTen);
+                        parameters.Add($"{prefix}maBP", maBP);
+                        parameters.Add($"{prefix}maCV", maCV);
+                        parameters.Add($"{prefix}gioiTinh", gioiTinh);
+                        parameters.Add($"{prefix}ngaySinh", ngaySinh);
+                        parameters.Add($"{prefix}ngayVao", ngayVao);
+                        parameters.Add($"{prefix}ngayRa", ngayRa);
+                        parameters.Add($"{prefix}orgUnitId", orgUnitId);
 
                         index++;
                     }
@@ -64,7 +94,16 @@ namespace ServicePortals.Infrastructure.Excel
             if (valuesList.Count > 0)
             {
                 var sql = insertBuilder.ToString() + string.Join(", ", valuesList);
-                //await _connection.ExecuteAsync(sql, parameters);
+                Console.WriteLine(sql);
+
+                using var connection = _context.CreateConnection();
+
+                if (connection.State != ConnectionState.Open)
+                    connection.Open();
+
+                await connection.ExecuteAsync(sql, parameters);
+
+                //await _context.Database.ExecuteSqlRawAsync(sql);
             }
         }
 

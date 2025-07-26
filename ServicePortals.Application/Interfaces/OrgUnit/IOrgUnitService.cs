@@ -2,7 +2,7 @@
 {
     public interface IOrgUnitService
     {
-        Task<dynamic?> GetOrgUnitById(int id);
+        Task<Domain.Entities.OrgUnit?> GetOrgUnitById(int id);
         Task<dynamic?> GetAllDepartmentAndFirstOrgUnit();
     }
 }

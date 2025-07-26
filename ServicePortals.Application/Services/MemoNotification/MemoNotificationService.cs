@@ -47,6 +47,10 @@ namespace ServicePortals.Application.Services.MemoNotification
             _userService = userService;
         }
 
+        /// <summary>
+        /// Lấy danh sách thông báo đã tạo của user, join với tblBoPhan ở bên viclock để lấy tên
+        /// vì có 1 số thông báo chỉ áp dụng cho 1 vài bộ phận/phòng ban
+        /// </summary>
         public async Task<PagedResults<MemoNotificationDto>> GetAll(GetAllMemoNotiRequest request)
         {
             int pageSize = request.PageSize;
@@ -153,6 +157,9 @@ namespace ServicePortals.Application.Services.MemoNotification
             };
         }
 
+        /// <summary>
+        /// Lấy chi tiết thông báo, bao gồm tên các bộ phận áp dụng, các file đính kèm của thông báo như ảnh, file excel, word,..
+        /// </summary>
         public async Task<MemoNotificationDto> GetById(Guid id)
         {
             var memoNotify = await _context.MemoNotifications.FirstOrDefaultAsync(e => e.Id == id) ?? throw new NotFoundException("Memo Notification not found!");
@@ -200,6 +207,13 @@ namespace ServicePortals.Application.Services.MemoNotification
             return result;
         }
 
+        /// <summary>
+        /// Tạo thông báo, có các trường hợp tạo thông báo
+        /// General manager, công đoàn, manager của bộ phận, thành viên của bộ phận
+        /// nếu như là general man, công đoàn, man của bộ phận tạo thông báo thì khi đó sẽ set trạng thái là FINAL_APPROVAL - để nhận biết là lần approval cuối
+        /// còn thành viên trong bộ phận tạo thì có trạng thái là PENDING
+        /// sau khi tạo xong thì sẽ gửi email cho người tiếp theo duyệt
+        /// </summary>
         public async Task<MemoNotificationDto> Create(CreateMemoNotiRequest request, IFormFile[] files)
         {
             int? orgUnitId = request.OrgUnitId;
@@ -228,7 +242,6 @@ namespace ServicePortals.Application.Services.MemoNotification
                     throw new ValidationException("Thông tin vị trí chưa được cập nhật đủ, liên hệ bộ phận HR");
                 }
 
-                //case Mr.Ter tạo thông báo
                 var workFlowStep = await _context.WorkFlowSteps.FirstOrDefaultAsync(e => e.RequestTypeId == requestTypeId && e.FromOrgUnitId == orgUnitId);
 
                 if (workFlowStep != null)
@@ -356,6 +369,7 @@ namespace ServicePortals.Application.Services.MemoNotification
             return MemoNotifyMapper.ToDto(memoNotify);
         }
 
+        //update thông báo
         public async Task<MemoNotificationDto> Update(Guid id, CreateMemoNotiRequest dto, IFormFile[] files)
         {
             var memoNotify = await _context.MemoNotifications.FirstOrDefaultAsync(e => e.Id == id) ?? throw new NotFoundException("Memo notification not found!");
@@ -441,6 +455,7 @@ namespace ServicePortals.Application.Services.MemoNotification
             return MemoNotifyMapper.ToDto(memoNotify);
         }
 
+        //delete thông báo, sẽ xóa nhưng dữ liên quan trước như là file, phòng ban vs thông báo rồi tới thông báo
         public async Task<MemoNotificationDto> Delete(Guid id)
         {
             var attachFiles = await _context.AttachFiles.Where(e => e.EntityType == nameof(MemoNotification) && e.EntityId == id).ToListAsync();
@@ -459,6 +474,11 @@ namespace ServicePortals.Application.Services.MemoNotification
             return MemoNotifyMapper.ToDto(memoNotify);
         }
 
+        /// <summary>
+        /// Lấy những thông báo được sẽ hiển thị ở ngoài màn hình chính homepage.
+        /// thông báo phải có trạng thái được duyệt là complete và trạng thái hiển thị = true và nằm trong khoảng thời gian hiển thị
+        /// những tbao áp dụng 1 vài phòng ban thì tìm kiếm thêm department_id của user, người nào tạo thông báo thì cũng sẽ hiển thị tbao cho người đó
+        /// </summary>
         public async Task<List<MemoNotificationDto>> GetAllInHomePage(int? DepartmentId)
         {
             var userCode = _httpContextAccessor.HttpContext?.User?.FindFirst("user_code")?.Value;
@@ -496,6 +516,7 @@ namespace ServicePortals.Application.Services.MemoNotification
             return MemoNotifyMapper.ToDtoList(result);
         }
 
+        //tìm kiếm file để trả về file cần download
         public async Task<Domain.Entities.File> GetFileDownload(Guid id)
         {
             var file = await _context.Files.FirstOrDefaultAsync(e => e.Id == id) ?? throw new NotFoundException("Memo Notification not found!");
@@ -503,6 +524,10 @@ namespace ServicePortals.Application.Services.MemoNotification
             return file;
         }
 
+
+        /// <summary>
+        /// Lấy danh sách chờ duyệt, theo điều kiện trong bảng tbl application form where theo currentOrgUnit và có trạng thái là pending, inprocess, final approval
+        /// </summary>
         public async Task<PagedResults<MemoNotificationDto>> GetWaitApproval(MemoNotifyWaitApprovalRequest request)
         {
             int pageSize = request.PageSize;
@@ -613,6 +638,9 @@ namespace ServicePortals.Application.Services.MemoNotification
             };
         }
 
+        /// <summary>
+        /// Lấy danh sách đã duyệt, memo notification inner join vs application_form inner join vs history_application_form where history_applications_form.userCodeApproval = @UserCode
+        /// </summary>
         public async Task<PagedResults<MemoNotificationDto>> GetHistoryApproval(HistoryWaitApprovalMemoNotifyRequest request)
         {
             int pageSize = request.PageSize;
@@ -721,6 +749,12 @@ namespace ServicePortals.Application.Services.MemoNotification
             };
         }
 
+        /// <summary>
+        /// Hàm phê duyệt tbao, sẽ tạo 1 bản ghi vào tbl history_applications_form để lưu lịch sử đã phê duyệt như là approval or reject, ai duyệt,tgian duyệt,..
+        /// tìm kiếm luồng duyệt tiếp theo dựa trên orgUnitId trong bảng work_flow_steps
+        /// nếu như request có status = false thì là reject, ngược lại là approved
+        /// nếu reject hoặc approval bước cuối cùng thì gửi email cho người tạo thông báo, nếu approval không phải cuối thì gửi email cho người tiếp theo duyệt
+        /// </summary>
         public async Task<object> Approval(ApprovalMemoNotifyRequest request)
         {
             var orgUnitId = request.OrgUnitId;
@@ -827,6 +861,9 @@ namespace ServicePortals.Application.Services.MemoNotification
             return true;
         }
 
+        /// <summary>
+        /// đếm những thông báo đang cần user duyệt, where theo orgUnitId và có trạng thái là PENDING, INPROCESS, FINAL_APPROVAL, k đếm COMPLETE OR REJECT
+        /// param truyền vào vị trí của người đó 
         public async Task<int> CountWaitApprovalMemoNotification(int orgUnitId)
         {
             var result = await _context.MemoNotifications

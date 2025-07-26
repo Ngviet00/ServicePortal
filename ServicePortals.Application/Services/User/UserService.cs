@@ -38,6 +38,7 @@ namespace ServicePortals.Application.Services.User
             _cacheService = cacheService;
         }
 
+        //lấy danh sách user, kết hợp vs tblNhanVien bên db viclock
         public async Task<PagedResults<GetAllUserResponse>> GetAll(GetAllUserRequest request)
         {
             string name = request.Name ?? "";
@@ -163,6 +164,9 @@ namespace ServicePortals.Application.Services.User
             };
         }
 
+        /// <summary>
+        /// Lấy chi tiết thông tin user bao gồm role và permission
+        /// </summary>
         public async Task<DetailUserWithRoleAndPermissionResponse> GetDetailUserWithRoleAndPermission(string userCode)
         {
             DetailUserWithRoleAndPermissionResponse result = new();
@@ -188,6 +192,7 @@ namespace ServicePortals.Application.Services.User
             return result;
         }
 
+        //Cập nhật user role
         public async Task<bool> UpdateUserRole(UpdateUserRoleRequest dto)
         {
             try
@@ -220,6 +225,8 @@ namespace ServicePortals.Application.Services.User
                 return false;
             }
         }
+        
+        //cập nhật user permission
         public async Task<bool> UpdateUserPermission(UpdateUserRoleRequest dto)
         {
             try
@@ -252,6 +259,8 @@ namespace ServicePortals.Application.Services.User
                 return false;
             }
         }
+
+        //reset pw, khi reset xong, người dùng đăng nhập lại bắt buộc phải đổi mật khẩu -> khi đổi xong IsChangePassword = 1
         public async Task<UserResponse> ResetPassword(ResetPasswordRequest request)
         {
             var user = await _context.Users.FirstOrDefaultAsync(e => e.UserCode == request.UserCode) ?? throw new NotFoundException("User not found!");
@@ -281,6 +290,8 @@ namespace ServicePortals.Application.Services.User
 
             return UserMapper.ToDto(user);
         }
+
+        //tìm kiếm user theo usercode
         public async Task<UserResponse?> GetByUserCode(string code)
         {
             if (string.IsNullOrWhiteSpace(code))
@@ -292,6 +303,8 @@ namespace ServicePortals.Application.Services.User
 
             return user != null ? UserMapper.ToDto(user) : null;
         }
+
+        //tìm kiếm user theo id
         public async Task<UserResponse> GetById(Guid id)
         {
             if (string.IsNullOrWhiteSpace(id.ToString()))
@@ -303,6 +316,7 @@ namespace ServicePortals.Application.Services.User
 
             return UserMapper.ToDto(user);
         }
+
         public async Task<UserResponse> Delete(Guid id)
         {
             if (string.IsNullOrWhiteSpace(id.ToString()))
@@ -318,6 +332,7 @@ namespace ServicePortals.Application.Services.User
 
             return UserMapper.ToDto(user);
         }
+
         public async Task<UserResponse> ForceDelete(Guid id)
         {
             if (string.IsNullOrWhiteSpace(id.ToString()))
@@ -333,6 +348,8 @@ namespace ServicePortals.Application.Services.User
 
             return UserMapper.ToDto(user);
         }
+
+        //lấy thông tin cá nhân của user, kết hợp cả thông tin bên viclock, cache tầm 2 phút
         public async Task<PersonalInfoResponse?> GetMe(string userCode)
         {
             var result = await _cacheService.GetOrCreateAsync($"user_info_{userCode}", async () =>
@@ -359,6 +376,7 @@ namespace ServicePortals.Application.Services.User
             return result;
         }
 
+        //lấy thông tin user theo mã nhân viên ở db viclock, có thể tùy chỉnh thêm cột nếu muốn
         public async Task<object?> GetCustomColumnUserViclockByUserCode(string userCode, string columns)
         {
             var sql = $@"SELECT
@@ -372,6 +390,8 @@ namespace ServicePortals.Application.Services.User
 
             return await _viclockDapperContext.QueryFirstOrDefaultAsync<object?>(sql, new { UserCode = userCode });
         }
+
+        //lấy role và permission theo usercode
         public async Task<Domain.Entities.User?> GetRoleAndPermissionByUser(string userCode)
         {
             var user = await _context.Users
@@ -458,6 +478,10 @@ namespace ServicePortals.Application.Services.User
 
             return UserMapper.ToDto(user);
         }
+
+        /// <summary>
+        /// Lấy những người theo orgUnitId kết hợp bảng user vs tblNhanVien bên db viclock
+        /// </summary>
         public async Task<List<GetMultiUserViClockByOrgUnitIdResponse>> GetMultipleUserViclockByOrgUnitId(int OrgUnitId)
         {
             var connection = (SqlConnection)_context.CreateConnection();
@@ -483,6 +507,8 @@ namespace ServicePortals.Application.Services.User
 
             return (List<GetMultiUserViClockByOrgUnitIdResponse>)result;
         }
+
+        //xây dựng hierarchy sơ đồ tổ chức
         public async Task<List<OrgUnitNode>> BuildOrgTree(int departmentId)
         {
             var connection = (SqlConnection)_context.CreateConnection();
@@ -537,7 +563,7 @@ namespace ServicePortals.Application.Services.User
 		                NVMaNV,
 		                {Global.DbViClock}.dbo.funTCVN2Unicode(NVHoTen) AS NVHoTen
 	                FROM MainUsers
-	                UNION ALL
+	                UNION
 	                SELECT 
 		                OrgUnitId,
 		                OrgUnitName,
@@ -584,6 +610,8 @@ namespace ServicePortals.Application.Services.User
 
             return roots;
         }
+
+        //lấy thông tin của người quản lý tiếp theo //-> format sau sẽ bỏ hàm này
         public async Task<dynamic?> GetUserByParentOrgUnit(int parentOrgUnitId)
         {
             string sql = $@"
@@ -605,6 +633,8 @@ namespace ServicePortals.Application.Services.User
 
             return data;
         }
+
+        //tìm kiếm tất cả người dùng ở bên viclock
         public async Task<PagedResults<object>> SearchAllUserFromViClock(SearchAllUserFromViclockRequest request)
         {
             double pageSize = request.PageSize;
@@ -671,6 +701,8 @@ namespace ServicePortals.Application.Services.User
                 TotalPages = totalPages
             };
         }
+
+        //lấy thông tin người tiếp theo approval theo usercode
         public async Task<List<NextUserInfoApprovalResponse>> GetNextUserInfoApprovalByCurrentUserCode(string userCode)
         {
             var connection = (SqlConnection)_context.CreateConnection();
