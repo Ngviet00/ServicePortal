@@ -1,4 +1,4 @@
-﻿using ServicePortals.Application.Dtos.Department.Responses;
+﻿using ServicePortals.Shared.SharedDto;
 
 namespace ServicePortals.Application.Interfaces.Department
 {

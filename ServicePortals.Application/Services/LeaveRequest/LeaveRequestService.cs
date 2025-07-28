@@ -1,7 +1,6 @@
 ﻿using System.Data;
 using System.Security.Claims;
 using Dapper;
-using DocumentFormat.OpenXml.Drawing.Diagrams;
 using Hangfire;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
@@ -20,6 +19,7 @@ using ServicePortals.Domain.Entities;
 using ServicePortals.Domain.Enums;
 using ServicePortals.Infrastructure.Data;
 using ServicePortals.Infrastructure.Email;
+using ServicePortals.Infrastructure.Excel;
 using ServicePortals.Infrastructure.Helpers;
 using ServicePortals.Infrastructure.Mappers;
 using ServicePortals.Shared.Exceptions;
@@ -34,6 +34,7 @@ namespace ServicePortals.Application.Services.LeaveRequest
         private readonly IViclockDapperContext _viclockDapperContext;
         private readonly IWorkFlowStepService _workFlowStepService;
         private readonly ICommonDataService _commonDataService;
+        private readonly ExcelService _excelService;
         private const int ORG_UNIT_ID_COMPLETE_DONE = -10;
 
         public LeaveRequestService(
@@ -42,7 +43,8 @@ namespace ServicePortals.Application.Services.LeaveRequest
             IOrgUnitService orgUnitService,
             IViclockDapperContext viclockDapperContext,
             IWorkFlowStepService workFlowStepService,
-            ICommonDataService commonDataService
+            ICommonDataService commonDataService,
+            ExcelService excelService
         )
         {
             _context = context;
@@ -51,6 +53,7 @@ namespace ServicePortals.Application.Services.LeaveRequest
             _viclockDapperContext = viclockDapperContext;
             _workFlowStepService = workFlowStepService;
             _commonDataService = commonDataService;
+            _excelService = excelService;
         }
 
         /// <summary>
@@ -1021,6 +1024,12 @@ namespace ServicePortals.Application.Services.LeaveRequest
         /// </summary>
         public async Task<object> HrRegisterAllLeave(HrRegisterAllLeaveRequest request)
         {
+            var parsedIds = request.LeaveRequestIds
+                .Select(id => Guid.TryParse(id, out var guid) ? guid : (Guid?)null)
+                .Where(g => g != null)
+                .Select(g => g.Value)
+                .ToList();
+
             var leaveRequestsWaitHrApproval = await _context.LeaveRequests
                 .Include(e => e.TimeLeave)
                 .Include(e => e.TypeLeave)
@@ -1030,7 +1039,8 @@ namespace ServicePortals.Application.Services.LeaveRequest
                 .Where(e => 
                     e.ApplicationForm != null && 
                     e.ApplicationForm.RequestStatusId == (int)StatusApplicationFormEnum.WAIT_HR && 
-                    e.ApplicationForm.CurrentOrgUnitId == (int)StatusApplicationFormEnum.ORG_UNIT_ID_HR_LEAVE_RQ
+                    e.ApplicationForm.CurrentOrgUnitId == (int)StatusApplicationFormEnum.ORG_UNIT_ID_HR_LEAVE_RQ &&
+                    parsedIds.Contains(e.Id)
                 )
                 .ToListAsync();
 
@@ -1145,6 +1155,31 @@ namespace ServicePortals.Application.Services.LeaveRequest
             await _context.SaveChangesAsync();
 
             return true;
+        }
+
+        /// <summary>
+        /// Hàm HR export leave request
+        /// </summary>
+        public async Task<byte[]> HrExportExcelLeaveRequest(List<string> leaveRequestIds)
+        {
+            var parsedIds = leaveRequestIds
+                .Select(id => Guid.TryParse(id, out var guid) ? guid : (Guid?)null)
+                .Where(guid => guid.HasValue)
+                .Select(guid => guid.Value)
+                .ToList();
+
+            var leaveRequestsWaitHrApproval = await _context.LeaveRequests
+                .Include(e => e.TimeLeave)
+                .Include(e => e.TypeLeave)
+                .Where(e =>
+                    e.ApplicationForm != null &&
+                    e.ApplicationForm.RequestStatusId == (int)StatusApplicationFormEnum.WAIT_HR &&
+                    e.ApplicationForm.CurrentOrgUnitId == (int)StatusApplicationFormEnum.ORG_UNIT_ID_HR_LEAVE_RQ &&
+                    parsedIds.Contains(e.Id)
+                )
+                .ToListAsync();
+
+            return _excelService.ExportLeaveRequestToExcel(leaveRequestsWaitHrApproval);
         }
     }
 }

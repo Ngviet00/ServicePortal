@@ -30,5 +30,6 @@ namespace ServicePortals.Application.Interfaces.LeaveRequest
 
         Task<List<HrMngLeaveRequestResponse>> GetHrWithManagementLeavePermission();
         Task<object> UpdateHrWithManagementLeavePermission(List<string> UserCode);
+        Task<byte[]> HrExportExcelLeaveRequest(List<string> leaveRequestIds);
     }
 }

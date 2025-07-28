@@ -5,5 +5,6 @@
         public string? UserCode { get; set; }
         public string? UserName { get; set; }
         public string? UrlFrontEnd { get; set; }
+        public List<string> LeaveRequestIds { get; set; } = [];
     }
 }

@@ -59,6 +59,7 @@ namespace ServicePortals.Infrastructure.Services.TimeKeeping
             int dayInMonth = DateTime.DaysInMonth(year, month);
             double pageSize = request.PageSize;
             double page = request.Page;
+            string keySearch = request.DebouncedKeySearch ?? "";
 
             var fromDate = $"{year}-{month:D2}-01";
             var toDate = $"{year}-{month:D2}-{dayInMonth}";
@@ -99,7 +100,7 @@ namespace ServicePortals.Infrastructure.Services.TimeKeeping
 		                NV.NVMa, NV.NVMaNV, {Global.DbViClock}.dbo.funTCVN2Unicode(NV.NVHoTen) AS NVHoTen, BP.BPTen
 	                FROM {Global.DbViClock}.dbo.tblNhanVien AS NV
 	                LEFT JOIN {Global.DbViClock}.dbo.tblBoPhan AS BP ON NV.NVMaBP = BP.BPMa
-	                WHERE NV.OrgUnitID IN @ids --'13136', '17024', '16239', 
+	                WHERE NV.OrgUnitID IN @ids
 	                ORDER BY NV.NVMa ASC
 	                OFFSET (@Page - 1) * @PageSize ROWS
 	                FETCH NEXT @PageSize ROWS ONLY
@@ -148,8 +149,14 @@ namespace ServicePortals.Infrastructure.Services.TimeKeeping
                 FROM Users AS U
                 LEFT JOIN {Global.DbViClock}.dbo.tblBaoCao AS BC ON BC.BCMaNV = U.NVMa
                 WHERE BCNgay BETWEEN @FromDate AND @ToDate
-                ORDER BY U.NVMaNV ASC
             ";
+
+            if (!string.IsNullOrWhiteSpace(keySearch))
+            {
+                sql += " AND (dbo.udf_RemoveDiacritics(dbo.funTCVN2Unicode(U.NVHoTen)) LIKE '%' + @KeySearch + '%'  OR U.NVMaNV LIKE '%' + @KeySearch + '%')";
+            }
+
+            sql += " ORDER BY U.NVMaNV ASC";
 
             var param = new
             {
@@ -159,7 +166,8 @@ namespace ServicePortals.Infrastructure.Services.TimeKeeping
                 Year = year,
                 FromDate = fromDate,
                 ToDate = toDate,
-                ids = orgUnitIds
+                ids = orgUnitIds,
+                KeySearch = keySearch
             };
 
             var result = (await connection.QueryAsync<GetUserTimeKeepingResponse>(sql, param)).ToList();

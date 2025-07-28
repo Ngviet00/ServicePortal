@@ -6,6 +6,9 @@ using Dapper;
 using ServicePortals.Infrastructure.Helpers;
 using Microsoft.EntityFrameworkCore;
 using System.Data;
+using ServicePortals.Shared.SharedDto;
+using ServicePortals.Domain.Entities;
+using System.Globalization;
 
 namespace ServicePortals.Infrastructure.Excel
 {
@@ -21,7 +24,17 @@ namespace ServicePortals.Infrastructure.Excel
         public async Task InsertFromExcelAsync(IFormFile file)
         {
             if (file == null || file.Length == 0)
+            {
                 throw new ArgumentException("File không hợp lệ");
+            }
+
+            using var connection = _context.CreateConnection();
+            if (connection.State != ConnectionState.Open)
+            {
+                connection.Open();
+            }
+
+            var departments = await connection.QueryAsync<GetAllDepartmentResponse>($"SELECT BPMa, BPTen FROM {Global.DbViClock}.dbo.tblBoPhan WHERE BPMaCha = 86");
 
             var insertBuilder = new StringBuilder();
             insertBuilder.Append($@"INSERT INTO {Global.DbViClock}.dbo.tblNhanVien
@@ -34,15 +47,22 @@ namespace ServicePortals.Infrastructure.Excel
             using (var stream = new MemoryStream())
             {
                 await file.CopyToAsync(stream);
+
                 using (var workbook = new XLWorkbook(stream))
                 {
                     var worksheet = workbook.Worksheets.FirstOrDefault(ws => ws.Name == "NDL");
+
                     if (worksheet == null)
+                    {
                         throw new Exception("Không tìm thấy sheet 'NDL' trong file Excel.");
+                    }
 
                     var rows = worksheet.RangeUsed()?.RowsUsed();
+
                     if (rows == null)
+                    {
                         throw new Exception("Không tìm thấy dữ liệu trong sheet 'NDL'.");
+                    }
 
                     int index = 0;
                     foreach (var row in rows.Skip(1))
@@ -52,13 +72,12 @@ namespace ServicePortals.Infrastructure.Excel
                         string maNV = row.Cell(2).GetString().Trim();
                         string hoTen = row.Cell(3).GetString().Trim();
 
-                        // NVMaBP
-                        int maBP = int.TryParse(row.Cell(4).GetString().Trim(), out var bpVal) ? bpVal : 118;
+                        string bpTen = row.Cell(4).GetString().Trim();
 
-                        // NVMaCV (mặc định hoặc lấy theo logic riêng nếu cần)
+                        int maBP = departments.FirstOrDefault(e => e.BPTen == bpTen)?.BPMa ?? 0;
+
                         int maCV = 0;
 
-                        // NVGioiTinh
                         string gioiTinhStr = row.Cell(6).GetString().Trim().ToLower();
                         bool gioiTinh = gioiTinhStr == "nam" || gioiTinhStr == "male";
 
@@ -67,17 +86,14 @@ namespace ServicePortals.Infrastructure.Excel
                         DateTime? ngaySinh = row.Cell(8).TryGetValue<DateTime>(out var ns) ? ns : null;
                         DateTime? ngayVao = row.Cell(9).TryGetValue<DateTime>(out var nv) ? nv : null;
 
-                        // NVNgayRa: để null
                         DateTime? ngayRa = DateTime.MaxValue;
 
                         int orgUnitId = row.Cell(13).TryGetValue<int>(out var ouid) ? ouid : 0;
 
-                        // SQL dòng giá trị
                         valuesList.Add($"({prefix}maNV, {prefix}hoTen, {prefix}maBP, {prefix}maCV, {prefix}gioiTinh, {prefix}ngaySinh, {prefix}ngayVao, {prefix}ngayRa, {prefix}orgUnitId)");
 
-                        // Add parameter
                         parameters.Add($"{prefix}maNV", maNV);
-                        parameters.Add($"{prefix}hoTen", hoTen);
+                        parameters.Add($"{prefix}hoTen", Helper.UnicodeToTCVN(hoTen));
                         parameters.Add($"{prefix}maBP", maBP);
                         parameters.Add($"{prefix}maCV", maCV);
                         parameters.Add($"{prefix}gioiTinh", gioiTinh);
@@ -91,48 +107,80 @@ namespace ServicePortals.Infrastructure.Excel
                 }
             }
 
+            //insert to db
             if (valuesList.Count > 0)
             {
                 var sql = insertBuilder.ToString() + string.Join(", ", valuesList);
-                Console.WriteLine(sql);
-
-                using var connection = _context.CreateConnection();
-
-                if (connection.State != ConnectionState.Open)
-                    connection.Open();
-
                 await connection.ExecuteAsync(sql, parameters);
-
-                //await _context.Database.ExecuteSqlRawAsync(sql);
             }
         }
 
-        public byte[] ExportLeaveRequestToExcel()
+        public byte[] ExportLeaveRequestToExcel(List<LeaveRequest> leaveRequests)
         {
-            using (var workbook = new XLWorkbook())
+            using var wb = new XLWorkbook();
+            var ws = wb.AddWorksheet("BANG DANG KY CA");
+
+            ws.RowHeight = 23;
+
+            // Header title
+            ws.Cell("A1").Value = "Danh sách nghỉ phép";
+            ws.Cell("A1").Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+            ws.Cell("A1").Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+
+            // Merge tiêu đề
+            ws.Range("A1:H1").Merge().Style.Font.SetBold().Font.FontSize = 14;
+
+            ws.Columns("A:B").Width = 13;
+            ws.Columns("C:H").Width = 18;
+
+            // Cột tiêu đề bảng
+            var headers = new[] { "Mã NV", "Lý do nghỉ", "Ngày bắt đầu", "Ngày kết thúc", "Kiểu Nghỉ", "Ghi Chú", "Từ ngày", "Đến ngày" };
+            for (int i = 0; i < headers.Length; i++)
             {
-                var worksheet = workbook.Worksheets.Add("Data");
+                var cell = ws.Cell(3, i + 1);
+                cell.Value = headers[i];
 
-                // Thêm tiêu đề
-                worksheet.Cell(1, 1).Value = "ID";
-                worksheet.Cell(1, 2).Value = "Name";
-                worksheet.Cell(1, 3).Value = "Date";
+                cell.Style.Font.SetBold();
+                
+                cell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                cell.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
 
-                //// Thêm dữ liệu
-                //for (int i = 0; i < data.Count; i++)
-                //{
-                //    var row = i + 2;
-                //    worksheet.Cell(row, 1).Value = data[i].Id;
-                //    worksheet.Cell(row, 2).Value = data[i].Name;
-                //    worksheet.Cell(row, 3).Value = data[i].Date;
-                //}
-
-                using (var stream = new MemoryStream())
-                {
-                    workbook.SaveAs(stream);
-                    return stream.ToArray();
-                }
+                cell.Style.Fill.BackgroundColor = (headers[i] == "Từ ngày") ? XLColor.Yellow : headers[i] == "Đến ngày" ? XLColor.LightBlue : XLColor.NoColor;
+                cell.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
             }
+
+            // Dữ liệu
+            for (int i = 0; i < leaveRequests.Count; i++)
+            {
+                var item = leaveRequests[i];
+                int row = i + 4;
+
+                ws.Row(row).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                ws.Row(row).Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+
+                ws.Cell(row, 1).Value = item.RequesterUserCode;
+                ws.Cell(row, 2).Value = item?.TypeLeave?.Code;
+
+                var dateFrom = ((DateTimeOffset)item.FromDate).DateTime;
+                var dateTo = ((DateTimeOffset)item.ToDate).DateTime;
+
+                var cellFrom = ws.Cell(row, 3);
+                cellFrom.Value = dateFrom;
+                cellFrom.Style.NumberFormat.Format = "yyyy-M-d";
+
+                var cellTo = ws.Cell(row, 4);
+                cellTo.Value = dateTo;
+                cellTo.Style.NumberFormat.Format = "yyyy-M-d";
+
+                ws.Cell(row, 5).Value = "";
+                ws.Cell(row, 6).Value = "";
+                ws.Cell(row, 7).Value = ((DateTimeOffset)item.FromDate).DateTime.ToString("d-MMM", CultureInfo.InvariantCulture);
+                ws.Cell(row, 8).Value = ((DateTimeOffset)item.ToDate).DateTime.ToString("d-MMM", CultureInfo.InvariantCulture);
+            }
+
+            using var stream = new MemoryStream();
+            wb.SaveAs(stream);
+            return stream.ToArray();
         }
 
         public byte[] GenerateExcelManagerConfirmToHR()

@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Authorization;
 using ServicePortals.Application.Interfaces.Department;
 using ServicePortals.Application;
-using ServicePortals.Application.Dtos.Department.Responses;
+using ServicePortals.Shared.SharedDto;
 
 namespace ServicePortal.Controllers.Department
 {

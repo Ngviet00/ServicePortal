@@ -1,8 +1,8 @@
 ﻿using ServicePortal.Infrastructure.Cache;
-using ServicePortals.Application.Dtos.Department.Responses;
 using ServicePortals.Application.Interfaces.Department;
 using ServicePortals.Infrastructure.Data;
 using ServicePortals.Infrastructure.Helpers;
+using ServicePortals.Shared.SharedDto;
 
 namespace ServicePortals.Infrastructure.Services.Department
 {

@@ -1,4 +1,4 @@
-﻿namespace ServicePortals.Application.Dtos.Department.Responses
+﻿namespace ServicePortals.Shared.SharedDto
 {
     public class GetAllDepartmentResponse
     {

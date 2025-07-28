@@ -2,9 +2,7 @@
 using System.Globalization;
 using System.Reflection;
 using System.Text;
-using BCrypt.Net;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using Serilog;
 
 namespace ServicePortals.Infrastructure.Helpers

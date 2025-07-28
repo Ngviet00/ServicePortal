@@ -15,14 +15,11 @@ namespace ServicePortal.Controllers.LeaveRequest
     public class LeaveRequestController : ControllerBase
     {
         private readonly ILeaveRequestService _leaveRequestService;
-        private readonly ExcelService _excelService;
 
         public LeaveRequestController(
-            ILeaveRequestService leaveRequestService,
-            ExcelService excelService
+            ILeaveRequestService leaveRequestService
         )
         {
-            _excelService = excelService;
             _leaveRequestService = leaveRequestService;
         }
 
@@ -197,22 +194,6 @@ namespace ServicePortal.Controllers.LeaveRequest
             return Ok(new BaseResponse<object>(200, "success", result));
         }
 
-        [HttpGet("export-leave-request-to-excel")]
-        public async Task<IActionResult> ExportLeaveRequestToExcel()
-        {
-            //var data = new List<MyObject>
-            //{
-            //    new MyObject { Id = 1, Name = "Item 1", Date = DateTime.Now },
-            //    new MyObject { Id = 2, Name = "Item 2", Date = DateTime.Now.AddDays(-1) }
-            //};
-
-            // Gọi hàm export
-            var fileBytes = _excelService.ExportLeaveRequestToExcel();
-
-            // Trả về file để download
-            return File(fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "DataExport.xlsx");
-        }
-
         [HttpPost("update-user-have-permission-hr-mng-leave-request")]
         public async Task<IActionResult> UpdateUserHavePermissionHrMngLeaveRequest([FromBody] List<string> userCodes)
         {
@@ -227,6 +208,16 @@ namespace ServicePortal.Controllers.LeaveRequest
             var results = await _leaveRequestService.GetHrWithManagementLeavePermission();
 
             return Ok(new BaseResponse<List<HrMngLeaveRequestResponse>>(200, "success", results));
+        }
+
+        [HttpPost("hr-export-excel-leave-request")]
+        public async Task<IActionResult> HrExportExcelLeaveRequest([FromBody] List<string> leaveRequestIds)
+        {
+            var fileContent = await _leaveRequestService.HrExportExcelLeaveRequest(leaveRequestIds);
+
+            var fileName = $"LeaveRequests_{DateTime.Now:yyyy_MM_dd_HH_mm_ss_fff}.xlsx";
+
+            return File(fileContent ?? [], "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
         }
     }
 }
