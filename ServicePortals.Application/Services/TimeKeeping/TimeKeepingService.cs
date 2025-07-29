@@ -59,7 +59,8 @@ namespace ServicePortals.Infrastructure.Services.TimeKeeping
             int dayInMonth = DateTime.DaysInMonth(year, month);
             double pageSize = request.PageSize;
             double page = request.Page;
-            string keySearch = request.DebouncedKeySearch ?? "";
+            string keySearch = request.keySearch ?? "";
+            int? team = request.Team;
 
             var fromDate = $"{year}-{month:D2}-01";
             var toDate = $"{year}-{month:D2}-{dayInMonth}";
@@ -71,39 +72,60 @@ namespace ServicePortals.Infrastructure.Services.TimeKeeping
                 await connection.OpenAsync();
             }
 
-            var orgUnitIdQuery = $@"
+            string sqlOrgUnitIdQuery = $@"
                 WITH RecursiveOrg AS (
-                    SELECT o.id
-                    FROM user_mng_org_unit_id as um
+                    SELECT o.id FROM user_mng_org_unit_id as um
                     INNER JOIN [{Global.DbWeb}].dbo.org_units as o
                         ON um.OrgUnitId = o.id
-                    WHERE um.UserCode = {request.UserCode} AND um.ManagementType = 'MNG_TIME_KEEPING'
-
-                    UNION ALL
-
-                    SELECT o.id
-                    FROM {Global.DbWeb}.dbo.org_units o
-                    INNER JOIN RecursiveOrg ro ON o.ParentOrgUnitId = ro.id
-                )
-                SELECT DISTINCT id FROM RecursiveOrg
+                    WHERE um.UserCode = {request.UserCode} AND um.ManagementType = @type
             ";
 
-            var orgUnitIds = await connection.QueryAsync<int>(orgUnitIdQuery);
+            if (team == null)
+            {
+                sqlOrgUnitIdQuery += $@"
+                    UNION ALL
+                        SELECT o.id FROM  {Global.DbWeb}.dbo.org_units o INNER JOIN RecursiveOrg ro ON o.ParentOrgUnitId = ro.id
+                    )
+                    SELECT DISTINCT id FROM RecursiveOrg
+                ";
+            }
+            else
+            {
+                sqlOrgUnitIdQuery += $@"
+                )
+                SELECT 
+                    o.id 
+                    FROM 
+                    {Global.DbWeb}.dbo.org_units o 
+                    INNER JOIN RecursiveOrg ro ON o.ParentOrgUnitId = ro.id AND o.ParentOrgUnitId = @team
+                ";
+            }
 
-            var countUser = await connection.QuerySingleAsync<int>($@"SELECT COUNT(*) FROM vs_new.dbo.tblNhanVien AS NV WHERE NV.OrgUnitID IN @ids", new { ids = orgUnitIds });
+            var orgUnitIds = await connection.QueryAsync<int>(sqlOrgUnitIdQuery, new
+            {
+                type = "MNG_TIME_KEEPING",
+                team
+            });
+
+            //var countUser = await connection.QuerySingleAsync<int>($@"SELECT COUNT(*) FROM vs_new.dbo.tblNhanVien AS NV WHERE NV.OrgUnitID IN @ids", new { ids = orgUnitIds });
+            var countUser = await connection.QuerySingleAsync<int>(
+                @"SELECT COUNT(*) FROM vs_new.dbo.tblNhanVien AS NV WHERE NV.OrgUnitID IN @ids AND (@KeySearch = '' OR NV.NVMaNV = @KeySearch)",
+                new { ids = orgUnitIds, KeySearch = keySearch }
+            );
 
             var totalPages = (int)Math.Ceiling((double)countUser / pageSize);
 
             var sql = $@"
                 WITH Users AS (
-	                SELECT
-		                NV.NVMa, NV.NVMaNV, {Global.DbViClock}.dbo.funTCVN2Unicode(NV.NVHoTen) AS NVHoTen, BP.BPTen
-	                FROM {Global.DbViClock}.dbo.tblNhanVien AS NV
-	                LEFT JOIN {Global.DbViClock}.dbo.tblBoPhan AS BP ON NV.NVMaBP = BP.BPMa
-	                WHERE NV.OrgUnitID IN @ids
-	                ORDER BY NV.NVMa ASC
-	                OFFSET (@Page - 1) * @PageSize ROWS
-	                FETCH NEXT @PageSize ROWS ONLY
+                    SELECT
+                        NV.NVMa, NV.NVMaNV, {Global.DbViClock}.dbo.funTCVN2Unicode(NV.NVHoTen) AS NVHoTen, BP.BPTen
+                    FROM {Global.DbViClock}.dbo.tblNhanVien AS NV
+                    LEFT JOIN {Global.DbViClock}.dbo.tblBoPhan AS BP ON NV.NVMaBP = BP.BPMa
+                    WHERE NV.OrgUnitID IN @ids
+                        AND (@KeySearch = '' OR NV.NVMaNV = @KeySearch) -- filter TRONG CTE
+                    ORDER BY NV.NVMa ASC
+                    OFFSET (@Page - 1) * @PageSize ROWS
+                    FETCH NEXT @PageSize ROWS ONLY
                 )
                 SELECT 
 	                U.NVMaNV,
@@ -147,13 +169,14 @@ namespace ServicePortals.Infrastructure.Services.TimeKeeping
 	                END AS Results
 	                --BC.*
                 FROM Users AS U
-                LEFT JOIN {Global.DbViClock}.dbo.tblBaoCao AS BC ON BC.BCMaNV = U.NVMa
-                WHERE BCNgay BETWEEN @FromDate AND @ToDate
+                LEFT JOIN {Global.DbViClock}.dbo.tblBaoCao AS BC ON BC.BCMaNV = U.NVMa AND BCNgay BETWEEN @FromDate AND @ToDate
             ";
+
+            sql += " WHERE 1 = 1 AND DATEPART(dw, BC.BCNgay) IS NOT NULL AND BC.BCNgay IS NOT NULL";
 
             if (!string.IsNullOrWhiteSpace(keySearch))
             {
-                sql += " AND (dbo.udf_RemoveDiacritics(dbo.funTCVN2Unicode(U.NVHoTen)) LIKE '%' + @KeySearch + '%'  OR U.NVMaNV LIKE '%' + @KeySearch + '%')";
+                sql += " AND U.NVMaNV = @KeySearch";
             }
 
             sql += " ORDER BY U.NVMaNV ASC";
@@ -354,6 +377,17 @@ namespace ServicePortals.Infrastructure.Services.TimeKeeping
             await _context.SaveChangesAsync();
 
             return true;
+        }
+
+        
+        //lấy id của org unit có type = tổ theo usercode
+        public async Task<object> GetIdOrgUnitByUserCodeAndUnitId(string userCode, int unitId)
+        {
+            var data = await GetOrgUnitIdAttachedByUserCode(userCode) as List<int?>;
+
+            var results = await _context.OrgUnits.Where(e => data != null && data.Contains(e.Id) && e.UnitId == unitId).ToListAsync();
+
+            return results;
         }
     }
 }

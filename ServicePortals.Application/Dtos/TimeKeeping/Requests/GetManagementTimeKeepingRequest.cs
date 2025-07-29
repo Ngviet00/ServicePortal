@@ -10,6 +10,7 @@
         public string? EmailSender { get; set; }
         public int Page { get; set; } = 1;
         public int PageSize { get; set; } = 20;
-        public string? DebouncedKeySearch { get; set; }
+        public string? keySearch { get; set; }
+        public int? Team { get; set; }
     }
 }

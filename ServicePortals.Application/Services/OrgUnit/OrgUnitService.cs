@@ -51,8 +51,6 @@ namespace ServicePortals.Application.Services.OrgUnit
                 ORDER BY pb.Id, org.Id
             ";
 
-            Console.WriteLine(sql.ToString());
-
             var rawData = await connection.QueryAsync<dynamic>(sql);
 
             var result = rawData
@@ -72,6 +70,11 @@ namespace ServicePortals.Application.Services.OrgUnit
                 .ToList();
 
             return result;
+        }
+
+        public Task<dynamic?> GetOrgUnitUserWithDepartment()
+        {
+            throw new NotImplementedException();
         }
     }
 }

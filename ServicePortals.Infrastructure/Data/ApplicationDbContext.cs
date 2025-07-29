@@ -32,6 +32,7 @@ namespace ServicePortals.Infrastructure.Data
         public DbSet<DelegatedTemp> DelegatedTemps { get; set; }
         public DbSet<Unit> Units { get; set; }
         public DbSet<OrgUnit> OrgUnits { get; set; }
+        public DbSet<TimeAttendanceEditHistory> TimeAttendanceEditHistories { get; set; }
 
         public IDbConnection CreateConnection() => Database.GetDbConnection();
 

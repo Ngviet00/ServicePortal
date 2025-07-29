@@ -90,5 +90,13 @@ namespace ServicePortal.Controllers.TimeKeeping
 
             return Ok(new BaseResponse<object>(200, "success", results));
         }
+
+        [HttpGet("get-id-org-unit-by-usercode-and-unit-id")]
+        public async Task<IActionResult> GetIdOrgUnitByUserCodeAndUnitId([FromQuery] string userCode)
+        {
+            var result = await _timeKeepingService.GetIdOrgUnitByUserCodeAndUnitId(userCode, 4); //unit = 4 -> tổ
+
+            return Ok(new BaseResponse<object>(200, "success", result));
+        }
     }
 }
