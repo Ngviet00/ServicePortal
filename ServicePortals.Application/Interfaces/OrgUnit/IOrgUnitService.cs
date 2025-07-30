@@ -1,9 +1,16 @@
-﻿namespace ServicePortals.Application.Interfaces.OrgUnit
+﻿using ServicePortals.Application.Dtos.OrgUnit;
+using ServicePortals.Application.Dtos.OrgUnit.Requests;
+using ServicePortals.Shared.SharedDto;
+
+namespace ServicePortals.Application.Interfaces.OrgUnit
 {
     public interface IOrgUnitService
     {
+        Task<List<TreeCheckboxResponse>> GetAllDeptOfOrgUnit();
         Task<Domain.Entities.OrgUnit?> GetOrgUnitById(int id);
         Task<dynamic?> GetAllDepartmentAndFirstOrgUnit();
-        Task<dynamic?> GetOrgUnitUserWithDepartment();
+        Task<object> GetOrgUnitTeamAndUserNotSetOrgUnitWithDept(int departmentId);
+        Task<List<OrgUnitDto>> GetOrgUnitUserWithDept(int departmentId);
+        Task<bool> SaveChangeUserOrgUnit(SaveChangeOrgUnitUserRequest request);
     }
 }

@@ -2,14 +2,13 @@
 {
     public class OrgUnitDto
     {
-        public int? ID {  get; set; }
-        public string? DeptID {  get; set; }
-        public string? Name {  get; set; }
-        public int? UnitID {  get; set; }
-        public int? ParentOrgUnitID {  get; set; }
-        public bool? IsManagement {  get; set; }
-        public int? ManagerID { get; set; }
-        public int? DeputyID { get; set; }
-
+        public int? Id { get; set; }
+        public int? DeptId { get; set; }
+        public string? Name { get; set; }
+        public int? UnitId { get; set; }
+        public int? ParentOrgUnitId { get; set; }
+        public int? ParentJobTitleId { get; set; }
+        public string? ManagerUserCode { get; set; }
+        public string? DeputyUserCode { get; set; }
     }
 }

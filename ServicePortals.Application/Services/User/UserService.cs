@@ -508,8 +508,97 @@ namespace ServicePortals.Application.Services.User
             return (List<GetMultiUserViClockByOrgUnitIdResponse>)result;
         }
 
+        //public static List<OrgUnitNode> BuildOrgUnitTree(List<RawDataRow> flatData)
+        //{
+        //    // Bước 1: Tạo một map cho tất cả các node chức danh/đơn vị duy nhất.
+        //    // Key là Id của chức danh (int), Value là đối tượng OrgUnitNode đại diện cho chức danh đó.
+        //    var jobTitleNodesMap = new Dictionary<int, OrgUnitNode>();
+
+        //    // Duyệt qua dữ liệu phẳng để khởi tạo các node chức danh và tách riêng các người dùng.
+        //    foreach (var row in flatData)
+        //    {
+        //        // Nếu Id chức danh chưa có trong map, tạo một node mới cho chức danh đó.
+        //        if (!jobTitleNodesMap.ContainsKey(row.Id))
+        //        {
+        //            jobTitleNodesMap[row.Id] = new OrgUnitNode
+        //            {
+        //                OrgUnitId = row.Id,
+        //                OrgUnitName = row.Name, // Tên chức danh từ cột 'Name' đầu tiên
+        //                ParentJobTitleId = row.ParentJobTitleId,
+        //                // Các thông tin NVMaNV, NVHoTen sẽ được xử lý sau nếu có người kèm theo chức danh này
+        //                AssociatedOrgUnitName = row.OrgUnitName // Cột 'Name' cuối cùng
+        //            };
+        //        }
+        //    }
+
+        //    // Bước 2: Gắn người dùng vào các node chức danh tương ứng và thiết lập quan hệ cha-con cho các chức danh.
+        //    var rootNodes = new List<OrgUnitNode>();
+
+        //    // Lặp qua dữ liệu phẳng một lần nữa để xử lý người dùng và xây dựng cây.
+        //    foreach (var row in flatData)
+        //    {
+        //        // Lấy node chức danh hiện tại từ map (chắc chắn tồn tại sau Bước 1)
+        //        var currentJobTitleNode = jobTitleNodesMap[row.Id];
+
+        //        // Nếu hàng này có thông tin người dùng, tạo một node con cho người đó.
+        //        if (!string.IsNullOrEmpty(row.NVMaNV))
+        //        {
+        //            var personNode = new OrgUnitNode
+        //            {
+        //                OrgUnitId = null, // Node người dùng không có OrgUnitId riêng
+        //                OrgUnitName = row.NVHoTen, // Tên của node người dùng là tên người
+        //                NVMaNV = row.NVMaNV,
+        //                NVHoTen = row.NVHoTen,
+        //                ParentJobTitleId = row.Id, // Cha của người dùng là chức danh hiện tại
+        //                AssociatedOrgUnitName = row.OrgUnitName // Có thể giữ thông tin này cho người dùng
+        //            };
+        //            currentJobTitleNode.Children.Add(personNode);
+        //        }
+        //    }
+
+        //    // Bước 3: Thiết lập quan hệ cha-con giữa các chức danh và xác định các node gốc.
+        //    foreach (var node in jobTitleNodesMap.Values)
+        //    {
+        //        // Nếu ParentJobTitleId tồn tại và tìm thấy cha trong map
+        //        if (node.ParentJobTitleId.HasValue && jobTitleNodesMap.ContainsKey(node.ParentJobTitleId.Value))
+        //        {
+        //            var parentNode = jobTitleNodesMap[node.ParentJobTitleId.Value];
+        //            parentNode.Children.Add(node);
+        //        }
+        //        else
+        //        {
+        //            // Nếu ParentJobTitleId là NULL hoặc không tìm thấy cha hợp lệ, đây là một node gốc.
+        //            rootNodes.Add(node);
+        //        }
+        //    }
+
+        //    return rootNodes;
+        //}
+
+        //public static List<OrgUnitNode_1> BuildOrgChartTree(List<OrgUnitNode_1> flatList)
+        //{
+        //    var lookup = flatList.ToDictionary(x => x.UnitId!.Value, x => x);
+        //    var roots = new List<OrgUnitNode_1>();
+
+        //    foreach (var node in flatList)
+        //    {
+        //        if (node.ParentOrgUnitId.HasValue && lookup.ContainsKey(node.ParentOrgUnitId.Value))
+        //        {
+        //            var parent = lookup[node.ParentOrgUnitId.Value];
+        //            parent.Children.Add(node);
+        //        }
+        //        else
+        //        {
+        //            // Không có cha → gốc
+        //            roots.Add(node);
+        //        }
+        //    }
+
+        //    return roots;
+        //}
+
         //xây dựng hierarchy sơ đồ tổ chức
-        public async Task<List<OrgUnitNode>> BuildOrgTree(int departmentId)
+        public async Task<List<OrgUnitNode_1>> BuildOrgTree(int departmentId)
         {
             var connection = (SqlConnection)_context.CreateConnection();
 
@@ -518,100 +607,154 @@ namespace ServicePortals.Application.Services.User
                 await connection.OpenAsync();
             }
 
-            var sql = $@"
-                DECLARE @departmentId_param int = @departmentId;
+            var sql1 = $@"SELECT TOP (1000) OU.[Id]
+                          ,OU.[DeptId]
+                          ,OU.[Name]
+                          ,OU.[UnitId]
+                          ,OU.[ParentOrgUnitId]
+                          ,OU.[ParentJobTitleId],
+	                      NV.NVMaNV,
+	                      NV.NVHoTen,
+	                      OU1.Name
+                      FROM [ServicePortal].[dbo].[org_units] AS OU
+                      LEFT JOIN vs_new.dbo.tblNhanVien AS NV ON NV.NVNgayRa > GETDATE() AND NV.OrgUnitID = OU.Id
+                      LEFT JOIN [ServicePortal].[dbo].[org_units] AS OU1 ON OU.ParentOrgUnitId = OU1.Id
+                      WHERE OU.DeptId = 113
+                      AND OU.UnitId >= 5
+                      ORDER BY UnitId ASC, ParentOrgUnitId ASC";
 
-                WITH OrgTree AS (
-                    SELECT *
-                    FROM {Global.DbWeb}.dbo.org_units
-                    WHERE DeptId = @departmentId_param
-                    UNION ALL
-                    SELECT child.*
-                    FROM {Global.DbWeb}.dbo.org_units child
-                    JOIN OrgTree parent ON child.ParentOrgUnitId = parent.Id
-                ),
-                MainUsers AS (
-                    SELECT
-                        ou.Id AS OrgUnitId,
-                        ou.Name AS OrgUnitName,
-                        ou.ParentJobTitleId,
-                        u.NVMaNV AS NVMaNV,
-                        u.NVHoTen
-                    FROM OrgTree ou
-                    LEFT JOIN {Global.DbViClock}.dbo.tblNhanVien u ON u.OrgUnitId = ou.Id
-                    WHERE u.NVMaNV IS NOT NULL
-                ),
-                AddMoreUser AS (
-                    SELECT DISTINCT
-                        ou.Id AS OrgUnitId,
-                        ou.Name AS OrgUnitName,
-                        CAST(NULL AS INT) AS ParentJobTitleId,
-                        u.NVMaNV AS NVMaNV,
-                        u.NVHoTen
-                    FROM {Global.DbViClock}.dbo.tblNhanVien u
-                    JOIN {Global.DbWeb}.dbo.org_units ou ON ou.Id = u.OrgUnitId
-                    WHERE ou.Id IN (
-                        SELECT DISTINCT ParentJobTitleId FROM OrgTree
-                    )
-                    AND u.NVMaNV NOT IN (SELECT NVMaNV FROM MainUsers WHERE NVMaNV IS NOT NULL) AND u.NVMaNV IS NOT NULL
-                ),
-                CombinedUsers AS (
-	                SELECT 
-		                OrgUnitId,
-		                OrgUnitName,
-		                ParentJobTitleId,
-		                NVMaNV,
-		                {Global.DbViClock}.dbo.funTCVN2Unicode(NVHoTen) AS NVHoTen
-	                FROM MainUsers
-	                UNION
-	                SELECT 
-		                OrgUnitId,
-		                OrgUnitName,
-		                ParentJobTitleId,
-		                NVMaNV,
-		                {Global.DbViClock}.dbo.funTCVN2Unicode(NVHoTen) AS NVHoTen
-	                FROM AddMoreUser
-                )
-                SELECT CU.* FROM CombinedUsers AS CU
-                LEFT JOIN {Global.DbWeb}.dbo.users AS U
-                on CU.NVMaNV = u.UserCode
-                ORDER BY CU.OrgUnitId ASC
-            ";
-
-            var result = await connection.QueryAsync<OrgUnitNode>(sql, new { departmentId });
+            var result = await connection.QueryAsync<OrgUnitNode_1>(sql1);
             var orgUnits = result.ToList();
 
-            var groupedByOrgUnitId = orgUnits?.GroupBy(x => x.OrgUnitId)?.ToDictionary(g => g.Key, g => g.ToList());
-            var dict = orgUnits?.GroupBy(x => x.OrgUnitId)?.ToDictionary(g => g.Key, g => g.First());
+            List<OrgUnitNode_1> results = new List<OrgUnitNode_1>();
 
-            List<OrgUnitNode> roots = new List<OrgUnitNode>();
+            var rootNode = orgUnits.FirstOrDefault(e => e.ParentJobTitleId == null || e.ParentOrgUnitId == null) ?? orgUnits.FirstOrDefault();
+            
 
-            foreach (var node in orgUnits)
-            {
-                if (node.ParentJobTitleId.HasValue)
-                {
-                    if (dict.TryGetValue(node.ParentJobTitleId.Value, out var parent))
-                    {
-                        parent.Children.Add(node);
-                        node.ParentName = parent.OrgUnitName;
-                    }
-                    else
-                    {
-                        node.ParentName = "Không có cha";
-                        roots.Add(node);
-                    }
-                }
-                else
-                {
-                    node.ParentName = "Không có cha";
-                    roots.Add(node);
-                }
-            }
 
-            return roots;
+            var jobTitleNodesMap = new Dictionary<int, OrgUnitNode_1>();
+
+            //foreach (var row in orgUnits)
+            //{
+            //    // Nếu Id chức danh chưa có trong map, tạo một node mới cho chức danh đó.
+            //    if (!jobTitleNodesMap.ContainsKey(row.Id))
+            //    {
+            //        jobTitleNodesMap[row.Id] = new OrgUnitNode
+            //        {
+            //            OrgUnitId = row.Id,
+            //            OrgUnitName = row.Name, // Tên chức danh từ cột 'Name' đầu tiên
+            //            ParentJobTitleId = row.ParentJobTitleId,
+            //            // Các thông tin NVMaNV, NVHoTen sẽ được xử lý sau nếu có người kèm theo chức danh này
+            //            AssociatedOrgUnitName = row.OrgUnitName // Cột 'Name' cuối cùng
+            //        };
+            //    }
+            //}
+
+            return null;
+
+            //return null;
+
+            //var connection = (SqlConnection)_context.CreateConnection();
+
+            //if (connection.State != ConnectionState.Open)
+            //{
+            //    await connection.OpenAsync();
+            //}
+
+            //var sql = $@"
+            //    DECLARE @departmentId_param int = @departmentId;
+
+            //    WITH OrgTree AS (
+            //        SELECT *
+            //        FROM {Global.DbWeb}.dbo.org_units
+            //        WHERE DeptId = @departmentId_param
+            //        UNION ALL
+            //        SELECT child.*
+            //        FROM {Global.DbWeb}.dbo.org_units child
+            //        JOIN OrgTree parent ON child.ParentOrgUnitId = parent.Id
+            //    ),
+            //    MainUsers AS (
+            //        SELECT
+            //            ou.Id AS OrgUnitId,
+            //            ou.Name AS OrgUnitName,
+            //            ou.ParentJobTitleId,
+            //            u.NVMaNV AS NVMaNV,
+            //            u.NVHoTen
+            //        FROM OrgTree ou
+            //        LEFT JOIN {Global.DbViClock}.dbo.tblNhanVien u ON u.OrgUnitId = ou.Id
+            //        WHERE u.NVMaNV IS NOT NULL
+            //    ),
+            //    AddMoreUser AS (
+            //        SELECT DISTINCT
+            //            ou.Id AS OrgUnitId,
+            //            ou.Name AS OrgUnitName,
+            //            CAST(NULL AS INT) AS ParentJobTitleId,
+            //            u.NVMaNV AS NVMaNV,
+            //            u.NVHoTen
+            //        FROM {Global.DbViClock}.dbo.tblNhanVien u
+            //        JOIN {Global.DbWeb}.dbo.org_units ou ON ou.Id = u.OrgUnitId
+            //        WHERE ou.Id IN (
+            //            SELECT DISTINCT ParentJobTitleId FROM OrgTree
+            //        )
+            //        AND u.NVMaNV NOT IN (SELECT NVMaNV FROM MainUsers WHERE NVMaNV IS NOT NULL) AND u.NVMaNV IS NOT NULL
+            //    ),
+            //    CombinedUsers AS (
+            //     SELECT 
+            //      OrgUnitId,
+            //      OrgUnitName,
+            //      ParentJobTitleId,
+            //      NVMaNV,
+            //      {Global.DbViClock}.dbo.funTCVN2Unicode(NVHoTen) AS NVHoTen
+            //     FROM MainUsers
+            //     UNION
+            //     SELECT 
+            //      OrgUnitId,
+            //      OrgUnitName,
+            //      ParentJobTitleId,
+            //      NVMaNV,
+            //      {Global.DbViClock}.dbo.funTCVN2Unicode(NVHoTen) AS NVHoTen
+            //     FROM AddMoreUser
+            //    )
+            //    SELECT CU.* FROM CombinedUsers AS CU
+            //    LEFT JOIN {Global.DbWeb}.dbo.users AS U
+            //    on CU.NVMaNV = u.UserCode
+            //    ORDER BY CU.OrgUnitId ASC
+            //";
+
+            //var result = await connection.QueryAsync<OrgUnitNode>(sql, new { departmentId });
+            //var orgUnits = result.ToList();
+
+            //var groupedByOrgUnitId = orgUnits?.GroupBy(x => x.OrgUnitId)?.ToDictionary(g => g.Key, g => g.ToList());
+            //var dict = orgUnits?.GroupBy(x => x.OrgUnitId)?.ToDictionary(g => g.Key, g => g.First());
+
+            //List<OrgUnitNode> roots = new List<OrgUnitNode>();
+
+            //foreach (var node in orgUnits)
+            //{
+            //    if (node.ParentJobTitleId.HasValue)
+            //    {
+            //        if (dict.TryGetValue(node.ParentJobTitleId.Value, out var parent))
+            //        {
+            //            parent.Children.Add(node);
+            //            node.ParentName = parent.OrgUnitName;
+            //        }
+            //        else
+            //        {
+            //            node.ParentName = "Không có cha";
+            //            roots.Add(node);
+            //        }
+            //    }
+            //    else
+            //    {
+            //        node.ParentName = "Không có cha";
+            //        roots.Add(node);
+            //    }
+            //}
+
+            //return roots;
         }
 
-        //lấy thông tin của người quản lý tiếp theo //-> format sau sẽ bỏ hàm này
+        //lấy thông tin của người quản lý tiếp theo
         public async Task<dynamic?> GetUserByParentOrgUnit(int parentOrgUnitId)
         {
             string sql = $@"
