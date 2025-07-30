@@ -141,7 +141,7 @@ namespace ServicePortal.Controllers.User
         {
             var result = await _userService.BuildOrgTree(departmentId);
 
-            return Ok(new BaseResponse<List<OrgUnitNode_1>>(200, "Success", result));
+            return Ok(new BaseResponse<List<OrgUnitNode>>(200, "Success", result));
         }
 
         [HttpGet("get-user-by-parent-org-unit-id")]

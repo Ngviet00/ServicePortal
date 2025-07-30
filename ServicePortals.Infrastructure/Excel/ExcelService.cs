@@ -166,11 +166,11 @@ namespace ServicePortals.Infrastructure.Excel
 
                 var cellFrom = ws.Cell(row, 3);
                 cellFrom.Value = dateFrom;
-                cellFrom.Style.NumberFormat.Format = "yyyy-M-d";
+                cellFrom.Style.NumberFormat.Format = "yyyy-M-d HH:mm";
 
                 var cellTo = ws.Cell(row, 4);
                 cellTo.Value = dateTo;
-                cellTo.Style.NumberFormat.Format = "yyyy-M-d";
+                cellTo.Style.NumberFormat.Format = "yyyy-M-d HH:mm";
 
                 ws.Cell(row, 5).Value = "";
                 ws.Cell(row, 6).Value = "";
