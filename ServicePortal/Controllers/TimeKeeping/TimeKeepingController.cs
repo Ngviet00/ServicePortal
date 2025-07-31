@@ -98,5 +98,13 @@ namespace ServicePortal.Controllers.TimeKeeping
 
             return Ok(new BaseResponse<object>(200, "success", result));
         }
+
+        [HttpGet("get-dept-user-mng-timekeeping")]
+        public async Task<IActionResult> GetDeptUserMngTimeKeeping([FromQuery] string userCode)
+        {
+            var result = await _timeKeepingService.GetDeptUserMngTimeKeeping(userCode);
+
+            return Ok(new BaseResponse<object>(200, "success", result));
+        }
     }
 }

@@ -8,6 +8,7 @@ using ServicePortals.Application.Dtos.TimeKeeping.Requests;
 using ServicePortals.Application.Dtos.TimeKeeping.Responses;
 using ServicePortals.Application.Interfaces.TimeKeeping;
 using ServicePortals.Domain.Entities;
+using ServicePortals.Domain.Enums;
 using ServicePortals.Infrastructure.Data;
 using ServicePortals.Infrastructure.Email;
 using ServicePortals.Infrastructure.Helpers;
@@ -61,6 +62,7 @@ namespace ServicePortals.Infrastructure.Services.TimeKeeping
             double page = request.Page;
             string keySearch = request.keySearch ?? "";
             int? team = request.Team;
+            int? deptId = request.DeptId;
 
             var fromDate = $"{year}-{month:D2}-01";
             var toDate = $"{year}-{month:D2}-{dayInMonth}";
@@ -80,7 +82,7 @@ namespace ServicePortals.Infrastructure.Services.TimeKeeping
                     WHERE um.UserCode = {request.UserCode} AND um.ManagementType = @type
             ";
 
-            if (team == null)
+            if (deptId == null)
             {
                 sqlOrgUnitIdQuery += $@"
                     UNION ALL
@@ -97,14 +99,14 @@ namespace ServicePortals.Infrastructure.Services.TimeKeeping
                     o.id 
                     FROM 
                     {Global.DbWeb}.dbo.org_units o 
-                    INNER JOIN RecursiveOrg ro ON o.ParentOrgUnitId = ro.id AND o.ParentOrgUnitId = @team
+                    INNER JOIN RecursiveOrg ro ON o.ParentOrgUnitId = ro.id AND o.DeptId = @deptId
                 ";
             }
 
             var orgUnitIds = await connection.QueryAsync<int>(sqlOrgUnitIdQuery, new
             {
                 type = "MNG_TIME_KEEPING",
-                team
+                deptId
             });
 
             //var countUser = await connection.QuerySingleAsync<int>($@"SELECT COUNT(*) FROM vs_new.dbo.tblNhanVien AS NV WHERE NV.OrgUnitID IN @ids", new { ids = orgUnitIds });
@@ -140,7 +142,7 @@ namespace ServicePortals.Infrastructure.Services.TimeKeeping
 		                --Chủ nhật
 		                WHEN DATEPART(dw, BCNGay) = 1 THEN
 			                CASE
-				                WHEN BCTGDen IS NOT NULL AND BCTGVe IS NOT NULL  THEN 'CN_X'
+				                WHEN BCTGDen IS NOT NULL AND BCTGVe IS NOT NULL AND BCGhiChu = 'CN' THEN 'CN_X'
                                 ELSE 'CN'
 			                END
 
@@ -386,6 +388,15 @@ namespace ServicePortals.Infrastructure.Services.TimeKeeping
             var data = await GetOrgUnitIdAttachedByUserCode(userCode) as List<int?>;
 
             var results = await _context.OrgUnits.Where(e => data != null && data.Contains(e.Id) && e.UnitId == unitId).ToListAsync();
+
+            return results;
+        }
+
+        public async Task<object> GetDeptUserMngTimeKeeping(string userCode)
+        {
+            var data = await GetOrgUnitIdAttachedByUserCode(userCode) as List<int?>;
+
+            var results = await _context.OrgUnits.Where(e => data != null && data.Contains(e.Id) && e.UnitId == (int)UnitEnum.Phong).ToListAsync();
 
             return results;
         }

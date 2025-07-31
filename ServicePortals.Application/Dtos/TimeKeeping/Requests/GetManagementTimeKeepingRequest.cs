@@ -12,5 +12,6 @@
         public int PageSize { get; set; } = 20;
         public string? keySearch { get; set; }
         public int? Team { get; set; }
+        public int? DeptId { get; set; }
     }
 }

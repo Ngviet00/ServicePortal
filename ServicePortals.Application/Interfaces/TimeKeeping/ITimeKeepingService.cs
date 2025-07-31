@@ -18,5 +18,6 @@ namespace ServicePortals.Application.Interfaces.TimeKeeping
         Task<object> ChangeUserMngTimeKeeping(ChangeUserMngTimeKeepingRequest request);
 
         Task<object> GetIdOrgUnitByUserCodeAndUnitId(string userCode, int unitId);
+        Task<object> GetDeptUserMngTimeKeeping(string userCode);
     }
 }

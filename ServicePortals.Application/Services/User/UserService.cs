@@ -563,6 +563,7 @@ namespace ServicePortals.Application.Services.User
 
             return roots;
 
+            #region OLD QUERY ORG CHART
             //var connection = (SqlConnection)_context.CreateConnection();
 
             //if (connection.State != ConnectionState.Open)
@@ -661,6 +662,7 @@ namespace ServicePortals.Application.Services.User
             //}
 
             //return roots;
+            #endregion
         }
 
         //lấy thông tin của người quản lý tiếp theo
