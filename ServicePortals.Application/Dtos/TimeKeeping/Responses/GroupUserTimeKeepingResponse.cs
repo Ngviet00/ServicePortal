@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace ServicePortals.Application.Dtos.TimeKeeping.Responses
+﻿namespace ServicePortals.Application.Dtos.TimeKeeping.Responses
 {
     public class UserDailyRecord
     {
@@ -14,6 +8,8 @@ namespace ServicePortals.Application.Dtos.TimeKeeping.Responses
         public DateTime? ra { get; set; }
         public string? result { get; set; }
         public string? bcGhiChu { get; set; }
+        public string? CustomValueTimeAttendance { get; set; }
+        public bool? IsSentToHR { get; set; }
     }
 
     public class GroupedUserTimeKeeping

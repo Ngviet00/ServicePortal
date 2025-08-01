@@ -1,4 +1,5 @@
 ﻿using System.Data;
+using System.Globalization;
 using Dapper;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
@@ -57,18 +58,21 @@ namespace ServicePortals.Infrastructure.Services.TimeKeeping
         {
             int month = request.Month ?? DateTime.UtcNow.Month;
             int year = request.Year ?? DateTime.UtcNow.Year;
+
+
             int dayInMonth = DateTime.DaysInMonth(year, month);
-            double pageSize = request.PageSize;
-            double page = request.Page;
-            string keySearch = request.keySearch ?? "";
-            int? team = request.Team;
+
+            double pageSize = request.PageSize > 0 ? request.PageSize : 10;
+            double page = request.Page > 0 ? request.Page : 1;
+            string keySearch = request.keySearch?.Trim() ?? "";
+
             int? deptId = request.DeptId;
+            int? team = request.Team;
 
             var fromDate = $"{year}-{month:D2}-01";
             var toDate = $"{year}-{month:D2}-{dayInMonth}";
 
-            var connection = _context.Database.GetDbConnection();
-
+            using var connection = _context.Database.GetDbConnection();
             if (connection.State != ConnectionState.Open)
             {
                 await connection.OpenAsync();
@@ -79,16 +83,16 @@ namespace ServicePortals.Infrastructure.Services.TimeKeeping
                     SELECT o.id FROM user_mng_org_unit_id as um
                     INNER JOIN [{Global.DbWeb}].dbo.org_units as o
                         ON um.OrgUnitId = o.id
-                    WHERE um.UserCode = {request.UserCode} AND um.ManagementType = @type
+                    WHERE um.UserCode = @userCode AND um.ManagementType = @type
             ";
 
             if (deptId == null)
             {
                 sqlOrgUnitIdQuery += $@"
                     UNION ALL
-                        SELECT o.id FROM  {Global.DbWeb}.dbo.org_units o INNER JOIN RecursiveOrg ro ON o.ParentOrgUnitId = ro.id
-                    )
-                    SELECT DISTINCT id FROM RecursiveOrg
+                    SELECT o.id FROM  {Global.DbWeb}.dbo.org_units o INNER JOIN RecursiveOrg ro ON o.ParentOrgUnitId = ro.id
+                )
+                SELECT DISTINCT id FROM RecursiveOrg
                 ";
             }
             else
@@ -103,15 +107,25 @@ namespace ServicePortals.Infrastructure.Services.TimeKeeping
                 ";
             }
 
-            var orgUnitIds = await connection.QueryAsync<int>(sqlOrgUnitIdQuery, new
+            var orgUnitIds = (await connection.QueryAsync<int>(sqlOrgUnitIdQuery, new
             {
+                userCode = request.UserCode,
                 type = "MNG_TIME_KEEPING",
                 deptId
-            });
+            })).ToList();
 
-            //var countUser = await connection.QuerySingleAsync<int>($@"SELECT COUNT(*) FROM vs_new.dbo.tblNhanVien AS NV WHERE NV.OrgUnitID IN @ids", new { ids = orgUnitIds });
+            if (orgUnitIds.Count == 0)
+            {
+                return new PagedResults<GroupedUserTimeKeeping>
+                {
+                    Data = [],
+                    TotalItems = 0,
+                    TotalPages = 0
+                };
+            }
+
             var countUser = await connection.QuerySingleAsync<int>(
-                @"SELECT COUNT(*) FROM vs_new.dbo.tblNhanVien AS NV WHERE NV.OrgUnitID IN @ids AND (@KeySearch = '' OR NV.NVMaNV = @KeySearch)",
+                @"SELECT COUNT(*) FROM vs_new.dbo.tblNhanVien AS NV WHERE NV.NVNgayRa > GETDATE() AND NV.OrgUnitID IN @ids AND (@KeySearch = '' OR NV.NVMaNV = @KeySearch)",
                 new { ids = orgUnitIds, KeySearch = keySearch }
             );
 
@@ -122,9 +136,9 @@ namespace ServicePortals.Infrastructure.Services.TimeKeeping
                     SELECT
                         NV.NVMa, NV.NVMaNV, {Global.DbViClock}.dbo.funTCVN2Unicode(NV.NVHoTen) AS NVHoTen, BP.BPTen
                     FROM {Global.DbViClock}.dbo.tblNhanVien AS NV
-                    LEFT JOIN {Global.DbViClock}.dbo.tblBoPhan AS BP ON NV.NVMaBP = BP.BPMa
+                    LEFT JOIN {Global.DbViClock}.dbo.tblBoPhan AS BP ON NV.NVMaBP = BP.BPMa AND NV.NVNgayRa > GETDATE() AND NV.OrgUnitID IS NOT NULL
                     WHERE NV.OrgUnitID IN @ids
-                        AND (@KeySearch = '' OR NV.NVMaNV = @KeySearch) -- filter TRONG CTE
+                        AND (@KeySearch = '' OR NV.NVMaNV = @KeySearch)
                     ORDER BY NV.NVMa ASC
                     OFFSET (@Page - 1) * @PageSize ROWS
                     FETCH NEXT @PageSize ROWS ONLY
@@ -133,14 +147,17 @@ namespace ServicePortals.Infrastructure.Services.TimeKeeping
 	                U.NVMaNV,
 	                U.NVHoTen,
 	                U.BPTen,
-	                CASE WHEN DATEPART(dw, BCNGay) = 1 THEN 'CN' ELSE convert(nvarchar(10),DATEPART(dw, BCNGay)) END AS Thu,
+	                CASE 
+                        WHEN DATEPART(dw, BCNGay) = 1 THEN 'CN' 
+                        ELSE convert(nvarchar(10),DATEPART(dw, BCNGay)) 
+                    END AS Thu,
 	                CONVERT(VARCHAR(10), BC.BCNgay, 120) AS BCNgay,
 	                BC.BCTGDen,
 	                BC.BCTGVe,
                     BC.BCGhiChu,
 	                CASE
 		                --Chủ nhật
-		                WHEN DATEPART(dw, BCNGay) = 1 THEN
+		                WHEN DATEPART(dw, BCNGay) = 1 THEN 
 			                CASE
 				                WHEN BCTGDen IS NOT NULL AND BCTGVe IS NOT NULL AND BCGhiChu = 'CN' THEN 'CN_X'
                                 ELSE 'CN'
@@ -149,32 +166,22 @@ namespace ServicePortals.Infrastructure.Services.TimeKeeping
 		                -- ngày thường
 		                ELSE
 			                CASE
-				                WHEN BCGhiChu != '' THEN BCGhiChu
-
-				                WHEN BCTGLamNgay + BCTGLamToi = BCTGQuyDinh THEN 'X'
-					
-				                WHEN BCTGDen IS NOT NULL AND BCTGVe IS NOT NULL THEN 
+                                WHEN BC.BCGhiChu IS NOT NULL AND BC.BCGhiChu != '' THEN BC.BCGhiChu
+				                WHEN (BC.BCTGLamNgay + BC.BCTGLamToi) = BC.BCTGQuyDinh THEN 'X'
+				                WHEN BC.BCTGDen IS NOT NULL AND BC.BCTGVe IS NOT NULL THEN 
 					                CASE 
-						                WHEN 1.0 * CEILING(1.0 * (BCTGQuyDinh - (BCTGLamNgay + BCTGLamToi)) / 30.0) * 30 
-							                    / NULLIF(BCTGQuyDinh, 0) = 1 THEN '?'
-						                ELSE RTRIM(
-								                FORMAT(
-										                1.0 * CEILING(1.0 * (BCTGQuyDinh - (BCTGLamNgay + BCTGLamToi)) / 30.0) * 30 
-										                / NULLIF(BCTGQuyDinh, 0),
-										                '0.####'
-									                )
-							                )
+						                WHEN 1.0 * CEILING(1.0 * (BCTGQuyDinh - (BCTGLamNgay + BCTGLamToi)) / 30.0) * 30 / NULLIF(BCTGQuyDinh, 0) = 1 THEN '?'
+						                ELSE RTRIM(FORMAT(1.0 * CEILING(1.0 * (BCTGQuyDinh - (BCTGLamNgay + BCTGLamToi)) / 30.0) * 30 / NULLIF(BCTGQuyDinh, 0),'0.####'))
 					                END
 				                ELSE
 					                '?'
 			                END
 	                END AS Results
-	                --BC.*
                 FROM Users AS U
-                LEFT JOIN {Global.DbViClock}.dbo.tblBaoCao AS BC ON BC.BCMaNV = U.NVMa AND BCNgay BETWEEN @FromDate AND @ToDate
+                LEFT JOIN {Global.DbViClock}.dbo.tblBaoCao AS BC 
+                    ON BC.BCMaNV = U.NVMa AND BCNgay BETWEEN @FromDate AND @ToDate AND BC.BCNgay IS NOT NULL 
+                WHERE DATEPART(dw, BC.BCNgay) IS NOT NULL
             ";
-
-            sql += " WHERE 1 = 1 AND DATEPART(dw, BC.BCNgay) IS NOT NULL AND BC.BCNgay IS NOT NULL";
 
             if (!string.IsNullOrWhiteSpace(keySearch))
             {
@@ -197,6 +204,32 @@ namespace ServicePortals.Infrastructure.Services.TimeKeeping
 
             var result = (await connection.QueryAsync<GetUserTimeKeepingResponse>(sql, param)).ToList();
 
+            var startFindHistory = new DateTimeOffset(year, month, 1, 0, 0, 0, TimeSpan.FromHours(7));
+            var endFindHistory = startFindHistory.AddMonths(1);
+
+            //user của những người được chấm công
+            var userCodes = result.Select(x => x.NVMaNV).Distinct().ToList();
+
+            var timeAttendanceEditHistories = await _context.TimeAttendanceEditHistories
+                .Where(e =>
+                    userCodes.Contains(e.UserCode) && 
+                    e.Datetime >= startFindHistory && 
+                    e.Datetime < endFindHistory)
+                .ToListAsync();
+
+            var timeAttendanceDict = timeAttendanceEditHistories
+                .ToDictionary(
+                    e => (
+                        e.UserCode,
+                        e.Datetime.HasValue ? e.Datetime.Value.Date : default
+                    ),
+                    e => new
+                    {
+                        e.CurrentValue,
+                        e.IsSentToHR
+                    }
+                );
+
             var groupedResult = result
                 .GroupBy(x => new { x.NVMaNV, x.NVHoTen, x.BPTen })
                 .Select(g => new GroupedUserTimeKeeping
@@ -204,16 +237,23 @@ namespace ServicePortals.Infrastructure.Services.TimeKeeping
                     NVMaNV = g.Key.NVMaNV,
                     NVHoTen = g.Key.NVHoTen,
                     BPTen = g.Key.BPTen,
-                    DataTimeKeeping = g.Select(x => new UserDailyRecord
+                    DataTimeKeeping = g.Select(x =>
                     {
-                        thu = x.Thu,
-                        bcNgay = x.BCNgay,
-                        vao = x.BCTGDen,
-                        ra = x.BCTGVe,
-                        result = x.Results,
-                        bcGhiChu = x.BCGhiChu
+                        var CustomValueTimeAttendance = timeAttendanceDict.TryGetValue((g.Key.NVMaNV, DateTime.ParseExact(x?.BCNgay ?? "", "yyyy-MM-dd", CultureInfo.InvariantCulture).Date), out var value) ? value : null;
+                        
+                        return new UserDailyRecord
+                        {
+                            thu = x.Thu,
+                            bcNgay = x.BCNgay,
+                            vao = x.BCTGDen,
+                            ra = x.BCTGVe,
+                            result = x.Results,
+                            bcGhiChu = x.BCGhiChu,
+                            CustomValueTimeAttendance = CustomValueTimeAttendance?.CurrentValue ?? null,
+                            IsSentToHR = CustomValueTimeAttendance?.IsSentToHR ?? false,
+                        };
                     }).ToList()
-            }   ).ToList();
+                }).ToList();
 
             var finalResult = new PagedResults<GroupedUserTimeKeeping>
             {
@@ -399,6 +439,53 @@ namespace ServicePortals.Infrastructure.Services.TimeKeeping
             var results = await _context.OrgUnits.Where(e => data != null && data.Contains(e.Id) && e.UnitId == (int)UnitEnum.Phong).ToListAsync();
 
             return results;
+        }
+
+        public async Task<object> EditTimeKeeping(CreateTimeAttendanceRequest request)
+        {
+            var itemAttendance = await _context.TimeAttendanceEditHistories.FirstOrDefaultAsync(e => e.Datetime == request.Datetime && e.UserCode == request.UserCode);
+
+            if (itemAttendance != null)
+            {
+                itemAttendance.OldValue = request.OldValue;
+                itemAttendance.CurrentValue = request.CurrentValue;
+                itemAttendance.UserCodeUpdate = request.UserCodeUpdate;
+                itemAttendance.UpdatedBy = request.UpdatedBy;
+                itemAttendance.UpdatedAt = DateTimeOffset.Now;
+                itemAttendance.IsSentToHR = false;
+
+                _context.TimeAttendanceEditHistories.Update(itemAttendance);
+            }
+            else
+            {
+                var data = new TimeAttendanceEditHistory
+                {
+                    Datetime = request.Datetime,
+                    UserCode = request.UserCode,
+                    OldValue = request.OldValue,
+                    CurrentValue = request.CurrentValue,
+                    UserCodeUpdate = request.UserCodeUpdate,
+                    UpdatedBy = request.UpdatedBy,
+                    UpdatedAt = DateTimeOffset.Now,
+                    IsSentToHR = false
+                };
+
+                _context.TimeAttendanceEditHistories.Add(data);
+            }
+
+            await _context.SaveChangesAsync();
+
+            return true;
+        }
+
+        public Task<object> GetListHistoryEditTimeKeeping(string userCode)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<object> DeleteHistoryEditTimeKeeping()
+        {
+            throw new NotImplementedException();
         }
     }
 }

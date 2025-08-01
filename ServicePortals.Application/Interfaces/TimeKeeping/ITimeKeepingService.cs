@@ -7,7 +7,6 @@ namespace ServicePortals.Application.Interfaces.TimeKeeping
     {
         Task<IEnumerable<object>> GetPersonalTimeKeeping(GetPersonalTimeKeepingRequest request);
         Task<PagedResults<GroupedUserTimeKeeping>> GetManagementTimeKeeping(GetManagementTimeKeepingRequest request);
-        Task<object> ConfirmTimeKeepingToHr(GetManagementTimeKeepingRequest request);
 
         Task<object> UpdateUserHavePermissionMngTimeKeeping(List<string> userCodes);
         Task<object> GetUserHavePermissionMngTimeKeeping();
@@ -19,5 +18,10 @@ namespace ServicePortals.Application.Interfaces.TimeKeeping
 
         Task<object> GetIdOrgUnitByUserCodeAndUnitId(string userCode, int unitId);
         Task<object> GetDeptUserMngTimeKeeping(string userCode);
+
+        Task<object> EditTimeKeeping(CreateTimeAttendanceRequest request); //old value, new value
+        Task<object> GetListHistoryEditTimeKeeping(string userCode);
+        Task<object> DeleteHistoryEditTimeKeeping(); //chỉ xóa được những cái chưa gửi cho hr
+        Task<object> ConfirmTimeKeepingToHr(GetManagementTimeKeepingRequest request);
     }
 }

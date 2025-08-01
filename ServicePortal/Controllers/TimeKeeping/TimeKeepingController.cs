@@ -106,5 +106,13 @@ namespace ServicePortal.Controllers.TimeKeeping
 
             return Ok(new BaseResponse<object>(200, "success", result));
         }
+
+        [HttpPost("edit-time-keeping")]
+        public async Task<IActionResult> EditTimeKeeping([FromBody] CreateTimeAttendanceRequest request)
+        {
+            var result = await _timeKeepingService.EditTimeKeeping(request);
+
+            return Ok(new BaseResponse<object>(200, "success", result));
+        }
     }
 }
