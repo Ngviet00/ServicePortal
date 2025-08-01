@@ -478,14 +478,36 @@ namespace ServicePortals.Infrastructure.Services.TimeKeeping
             return true;
         }
 
-        public Task<object> GetListHistoryEditTimeKeeping(string userCode)
+        public Task<object> GetListHistoryEditTimeKeeping(GetListHistoryEditTimeKeepingRequest request)
         {
+            var sql = $@"
+                SELECT 
+                    TA.*, {Global.DbViClock}.dbo.funTCVN2Unicode(NV.NVHoTen) AS NVHoTen FROM {Global.DbWeb}.dbo.time_attendance_edit_histories AS TA
+                INNER JOIN 
+                    {Global.DbViClock}.dbo.tblNhanVien AS NV 
+                ON TA.UserCode = NV.NVMaNV AND NV.NVNgayRa > GETDATE() AND UserCodeUpdate = @UserCodeUpdated
+            ";
+
+
+
+
             throw new NotImplementedException();
         }
 
-        public Task<object> DeleteHistoryEditTimeKeeping()
+        public async Task<object> DeleteHistoryEditTimeKeeping(int id)
         {
-            throw new NotImplementedException();
+            var item = await _context.TimeAttendanceEditHistories.FirstOrDefaultAsync(e => e.Id == id) ?? throw new NotFoundException("History time attendance not found");
+
+            _context.TimeAttendanceEditHistories.Remove(item);
+
+            await _context.SaveChangesAsync();
+
+            return true;
+        }
+
+        public async Task<int> CountHistoryEditTimeKeepingNotSendHR(string userCode)
+        {
+            return await _context.TimeAttendanceEditHistories.Where(e => e.UserCodeUpdate == userCode && e.IsSentToHR == false).CountAsync();
         }
     }
 }

@@ -114,5 +114,13 @@ namespace ServicePortal.Controllers.TimeKeeping
 
             return Ok(new BaseResponse<object>(200, "success", result));
         }
+
+        [HttpGet("count-history-edit-timekeeping-not-send-hr")]
+        public async Task<IActionResult> CountHistoryEditTimeKeepingNotSendHR([FromQuery] string userCode)
+        {
+            var result = await _timeKeepingService.CountHistoryEditTimeKeepingNotSendHR(userCode);
+
+            return Ok(new BaseResponse<int>(200, "success", result));
+        }
     }
 }
