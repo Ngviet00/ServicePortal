@@ -1,7 +1,9 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Hangfire;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ServicePortals.Application;
 using ServicePortals.Application.Dtos.LeaveRequest.Requests;
+using ServicePortals.Application.Dtos.TimeKeeping;
 using ServicePortals.Application.Dtos.TimeKeeping.Requests;
 using ServicePortals.Application.Dtos.TimeKeeping.Responses;
 using ServicePortals.Application.Interfaces.TimeKeeping;
@@ -47,8 +49,9 @@ namespace ServicePortal.Controllers.TimeKeeping
         [HttpPost("confirm-timekeeping-to-hr")]
         public async Task<IActionResult> ConfirmTimeKeepingToHr([FromBody] GetManagementTimeKeepingRequest request)
         {
-            var results = await _timeKeepingService.ConfirmTimeKeepingToHr(request);
-            return Ok(new BaseResponse<object>(200, "Success", results));
+            var result = await _timeKeepingService.ConfirmTimeKeepingToHr(request);
+            //BackgroundJob.Enqueue<ITimeKeepingService>(job => job.ConfirmTimeKeepingToHr(request));
+            return Ok("Hệ thống đang xử lý, HR sẽ nhận được email khi xong.");
         }
 
         [HttpPost("update-user-have-permission-mng-timekeeping")]
@@ -121,6 +124,32 @@ namespace ServicePortal.Controllers.TimeKeeping
             var result = await _timeKeepingService.CountHistoryEditTimeKeepingNotSendHR(userCode);
 
             return Ok(new BaseResponse<int>(200, "success", result));
+        }
+
+        [HttpGet("get-list-history-edit-timekeeping")]
+        public async Task<IActionResult> GetListHistoryEditTimeKeeping([FromQuery] GetListHistoryEditTimeKeepingRequest request)
+        {
+            var results = await _timeKeepingService.GetListHistoryEditTimeKeeping(request);
+
+            var response = new PageResponse<TimeAttendanceHistoryDto>(
+                200,
+                "Success",
+                results.Data,
+                results.TotalPages,
+                request.Page,
+                request.PageSize,
+                results.TotalItems
+            );
+
+            return Ok(response);
+        }
+
+        [HttpDelete("delete-history-edit-timekeeping/{id}")]
+        public async Task<IActionResult> DeleteHistoryEditTimeKeeping(int id)
+        {
+            var result = await _timeKeepingService.DeleteHistoryEditTimeKeeping(id);
+
+            return Ok(new BaseResponse<object>(200, "success", result));
         }
     }
 }

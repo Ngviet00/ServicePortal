@@ -1,12 +1,16 @@
 ﻿using System.Data;
 using System.Globalization;
+using ClosedXML.Excel;
 using Dapper;
+using Hangfire;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using ServicePortals.Application;
 using ServicePortals.Application.Dtos.LeaveRequest.Requests;
+using ServicePortals.Application.Dtos.TimeKeeping;
 using ServicePortals.Application.Dtos.TimeKeeping.Requests;
 using ServicePortals.Application.Dtos.TimeKeeping.Responses;
+using ServicePortals.Application.Dtos.User.Responses;
 using ServicePortals.Application.Interfaces.TimeKeeping;
 using ServicePortals.Domain.Entities;
 using ServicePortals.Domain.Enums;
@@ -265,9 +269,322 @@ namespace ServicePortals.Infrastructure.Services.TimeKeeping
             return finalResult;
         }
 
+        public void WriteToExcel(List<AttendanceExportRow> rows, string filePath, bool isFirstBatch)
+        {
+            using var workbook = isFirstBatch && System.IO.File.Exists(filePath)
+                ? new XLWorkbook(filePath)
+                : new XLWorkbook();
+
+            var worksheet = workbook.Worksheets.FirstOrDefault() ?? workbook.AddWorksheet("Attendance");
+
+            int startRow = worksheet.LastRowUsed()?.RowNumber() + 1 ?? 1;
+
+            if (isFirstBatch && startRow == 1)
+            {
+                worksheet.Cell(startRow, 1).Value = "UserCode";
+                worksheet.Cell(startRow, 2).Value = "FullName";
+                worksheet.Cell(startRow, 3).Value = "JoinDate";
+
+                for (int day = 1; day <= 31; day++)
+                    worksheet.Cell(startRow, 3 + day).Value = $"Day {day}";
+
+                startRow++;
+            }
+
+            foreach (var row in rows)
+            {
+                int col = 1;
+                worksheet.Cell(startRow, col++).Value = row.UserCode;
+                worksheet.Cell(startRow, col++).Value = row.FullName;
+                worksheet.Cell(startRow, col++).Value = row.JoinDate == DateTime.MinValue ? "" : row.JoinDate.ToString("yyyy-MM-dd");
+
+                for (int d = 1; d <= 31; d++)
+                {
+                    worksheet.Cell(startRow, col++).Value = row.DayValues.GetValueOrDefault(d, "");
+                }
+
+                startRow++;
+            }
+
+            workbook.SaveAs(filePath);
+        }
+
+        public byte[] BuildExcelFile(List<AttendanceExportRow> rows)
+        {
+            using var workbook = new XLWorkbook();
+            var worksheet = workbook.Worksheets.Add("Attendance");
+
+            int startRow = 1;
+
+            // Header
+            worksheet.Cell(startRow, 1).Value = "UserCode";
+            worksheet.Cell(startRow, 2).Value = "FullName";
+            worksheet.Cell(startRow, 3).Value = "JoinDate";
+
+            for (int day = 1; day <= 31; day++)
+                worksheet.Cell(startRow, 3 + day).Value = $"Day {day}";
+
+            startRow++;
+
+            // Body
+            foreach (var row in rows)
+            {
+                int col = 1;
+                worksheet.Cell(startRow, col++).Value = row.UserCode;
+                worksheet.Cell(startRow, col++).Value = row.FullName;
+                worksheet.Cell(startRow, col++).Value = row.JoinDate == DateTime.MinValue ? "" : row.JoinDate.ToString("yyyy-MM-dd");
+
+                for (int d = 1; d <= 31; d++)
+                {
+                    worksheet.Cell(startRow, col++).Value = row.DayValues.GetValueOrDefault(d, "");
+                }
+
+                startRow++;
+            }
+
+            using var ms = new MemoryStream();
+            workbook.SaveAs(ms);
+            return ms.ToArray(); // trả về nội dung file Excel
+        }
+
         //gửi chấm công cho bộ phận HR
         public async Task<object> ConfirmTimeKeepingToHr(GetManagementTimeKeepingRequest request)
         {
+            int batchSize = 200;
+
+            int month = request.Month ?? DateTime.Now.Month;
+            int year = request.Year ?? DateTime.Now.Year;
+            int daysInMonth = DateTime.DaysInMonth(year, month);
+            string fromDate = $"{year}-{month.ToString("D2")}-01";
+            string toDate = $"{year}-{month.ToString("D2")}-{daysInMonth}";
+
+            string userCodeSendConfirm = request.UserCode ?? "";
+
+            const string filePath = @"E:\ChamCong_T6_2025.xlsx";
+
+            if (System.IO.File.Exists(filePath))
+            {
+                System.IO.File.Delete(filePath);
+            }
+
+            using var connection = _context.Database.GetDbConnection();
+            if (connection.State != ConnectionState.Open)
+            {
+                await connection.OpenAsync();
+            }
+
+            string sqlCombinedQuery = $@"
+                WITH RecursiveOrg AS (
+                    -- CTE đệ quy để lấy tất cả OrgUnitId con
+                    SELECT o.id
+                    FROM user_mng_org_unit_id as um
+                    INNER JOIN {Global.DbWeb}.dbo.org_units as o
+                        ON um.OrgUnitId = o.id
+                    WHERE um.UserCode = @userCode AND um.ManagementType = @type
+                    UNION ALL
+                    SELECT o.id
+                    FROM {Global.DbWeb}.dbo.org_units o
+                    INNER JOIN RecursiveOrg ro ON o.ParentOrgUnitId = ro.id
+                ),
+                DistinctOrgUnits AS (
+                    -- Lấy danh sách các OrgUnitId duy nhất
+                    SELECT DISTINCT id FROM RecursiveOrg
+                )
+                SELECT
+                    NV.NVMa,
+                    NV.NVMaNV,
+                    {Global.DbViClock}.dbo.funTCVN2Unicode(NV.NVHoTen) AS NVHoTen,
+                    NV.OrgUnitID,
+                    BP.BPTen
+                FROM {Global.DbViClock}.[dbo].[tblNhanVien] AS NV
+                LEFT JOIN {Global.DbViClock}.[dbo].[tblBoPhan] AS BP ON BP.BPMa = NV.NVMaBP
+                WHERE
+                    NV.OrgUnitID IN (SELECT id FROM DistinctOrgUnits) -- Sử dụng kết quả từ CTE trên
+                    AND NV.NVNgayRa > GETDATE();
+            ";
+
+            var paramCombined = new
+            {
+                userCode = request.UserCode,
+                type = "MNG_TIME_KEEPING",
+            };
+
+            var allUsers = await connection.QueryAsync<GetMultiUserViClockByOrgUnitIdConfirmTimeKeepingResponse>(sqlCombinedQuery, paramCombined);
+
+            int totalUsers = allUsers.Count();
+            int totalBatches = (int)Math.Ceiling((double)totalUsers / batchSize);
+
+            var allExportRows = new List<AttendanceExportRow>();
+
+            for (int i = 0; i < totalBatches; i++)
+            {
+                var currentBatch = allUsers.Skip(i * batchSize).Take(batchSize).ToList();
+
+                var userIds = currentBatch.Select(u => u.NVMa).Distinct().ToList();
+
+                var sqlGetTimeekping = StringSqlGetTimeekping();
+
+                var attendanceLists = (await connection.QueryAsync<GetUserTimeKeepingResponse>(sqlGetTimeekping, new
+                {
+                    FromDate = fromDate,
+                    ToDate = toDate,
+                    UserIds = userIds
+                })).ToList();
+
+                //var exportRows = BuildExportRows(currentBatch, attendanceLists, month, year);
+
+                //WriteToExcel(exportRows, filePath, i == 0);
+                var exportRows = BuildExportRows(currentBatch, attendanceLists, month, year);
+                allExportRows.AddRange(exportRows);
+            }
+
+            var excelBytes = BuildExcelFile(allExportRows);
+
+            var attachments = new List<(string FileName, byte[] FileBytes)>
+            {
+                ("ChamCong_2025-08-02.xlsx", excelBytes)
+            };
+
+            await _emailService.EmailSendTimeKeepingToHR(new List<string> { "nguyenviet@vsvn.com.vn" },
+                    new List<string> { Global.EmailDefault },
+                    "test",
+                    "avbc",
+                    attachments,
+                    false);
+
+            //BackgroundJob.Enqueue<IEmailService>(job =>
+            //    job.SendEmailAsync(
+            //        new List<string> { Global.EmailDefault },
+            //        new List<string> { Global.EmailDefault },
+            //        "test",
+            //        "avbc",
+            //        attachments,
+            //        false
+            //    )
+            //);
+
+
+            //const string filePath = @"E:\ChamCong_T6_2025.xlsx";
+
+            //var allUserCodes = Enumerable.Range(1, TotalUsers)
+            //                         .Select(i => $"U{i:0000}")
+            //                         .ToList();
+
+            //if (System.IO.File.Exists(filePath))
+            //    System.IO.File.Delete(filePath);
+
+
+            //using var workbook = new XLWorkbook();
+            //var worksheet = workbook.Worksheets.Add("Attendance");
+
+            //// Header
+            //worksheet.Cell(1, 1).Value = "UserCode";
+            //for (int day = 1; day <= daysInMonth; day++)
+            //{
+            //    worksheet.Cell(1, day + 1).Value = $"Day {day}";
+            //}
+
+            //int currentRow = 2;
+
+            //for (int i = 0; i < allUserCodes.Count; i += batchSize)
+            //{
+            //    var batch = allUserCodes.Skip(i).Take(batchSize).ToList();
+            //    var attendanceBatch = GenerateAttendance(batch);
+
+            //    foreach (var userCode in batch)
+            //    {
+            //        var records = attendanceBatch.Where(x => x.UserCode == userCode).ToList();
+
+            //        worksheet.Cell(currentRow, 1).Value = userCode;
+            //        for (int day = 1; day <= daysInMonth; day++)
+            //        {
+            //            var dayRecord = records.FirstOrDefault(r => r.Day == day);
+            //            worksheet.Cell(currentRow, day + 1).Value = dayRecord?.Status ?? "";
+            //        }
+
+            //        currentRow++;
+            //    }
+
+            //    Console.WriteLine($"Đã xử lý xong batch từ {i} đến {i + batch.Count - 1}");
+            //}
+
+            //// Style nhẹ
+            //worksheet.RangeUsed().Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+            //worksheet.RangeUsed().Style.Border.InsideBorder = XLBorderStyleValues.Hair;
+
+            //workbook.SaveAs(filePath);
+            //Console.WriteLine($"Đã lưu file Excel vào {Path.GetFullPath(filePath)}");
+
+            //int totalEmployees = 2000;
+            //int batchSize = 500;
+            //var startDate = new DateTime(2025, 6, 1);
+            //var endDate = new DateTime(2025, 6, 30);
+
+            //var wb = System.IO.File.Exists(filePath) ? new XLWorkbook(filePath) : new XLWorkbook();
+            //var ws = wb.Worksheets.Contains("ChamCong") ? wb.Worksheet("ChamCong") : wb.AddWorksheet("ChamCong");
+
+            //int currentRow = 1;
+
+            //// Ghi header nếu dòng đầu chưa có
+            //if (ws.Cell(1, 1).GetString() != "STT")
+            //{
+            //    ws.Cell(currentRow, 1).Value = "STT";
+            //    ws.Cell(currentRow, 2).Value = "MaNV";
+            //    ws.Cell(currentRow, 3).Value = "HoTen";
+            //    ws.Cell(currentRow, 4).Value = "Ngay";
+            //    ws.Cell(currentRow, 5).Value = "GioVao";
+            //    ws.Cell(currentRow, 6).Value = "GioRa";
+            //    currentRow++;
+            //}
+            //else
+            //{
+            //    currentRow = ws.LastRowUsed().RowNumber() + 1;
+            //}
+
+            //for (int i = 0; i < totalEmployees; i += batchSize)
+            //{
+            //    var batch = GenerateChamCongBatch(i + 1, Math.Min(i + batchSize, totalEmployees), startDate, endDate);
+
+            //    foreach (var item in batch)
+            //    {
+            //        ws.Cell(currentRow, 1).Value = item.STT;
+            //        ws.Cell(currentRow, 2).Value = item.MaNV;
+            //        ws.Cell(currentRow, 3).Value = item.HoTen;
+            //        ws.Cell(currentRow, 4).Value = item.Ngay;
+            //        ws.Cell(currentRow, 5).Value = item.GioVao;
+            //        ws.Cell(currentRow, 6).Value = item.GioRa;
+            //        currentRow++;
+            //    }
+
+            //    Console.WriteLine($"Batch từ {i + 1} đến {Math.Min(i + batchSize, totalEmployees)} đã xong.");
+            //}
+
+            //wb.SaveAs(filePath);
+            //Console.WriteLine("Tạo file xong tại: " + filePath);
+
+
+            //var data = GetFakeData(); // hoặc gọi từ DbContext
+
+            //var fileName = $"Report_{DateTime.Now:yyyyMMddHHmmss}.xlsx";
+            //var filePath = Path.Combine(Path.GetTempPath(), fileName);
+
+            //// Tạo Excel bằng ClosedXML
+            //using (var workbook = new XLWorkbook())
+            //{
+            //    var ws = workbook.Worksheets.Add("Báo Cáo");
+            //    ws.Cell(1, 1).InsertTable(data);
+            //    workbook.SaveAs(filePath);
+            //}
+
+            //// Gửi mail kèm file
+            //await _emailService.SendEmailAsync(
+            //    "hr@congty.com",
+            //    "Báo cáo dữ liệu ngày " + DateTime.Now.ToString("dd/MM/yyyy"),
+            //    "File báo cáo đính kèm.",
+            //    new[] { filePath });
+
+            //File.Delete(filePath); // dọn file
+
             //using var stream = new MemoryStream();
             //var fileBytes = stream.ToArray();
 
@@ -279,6 +596,8 @@ namespace ServicePortals.Infrastructure.Services.TimeKeeping
             //{
             //    ($"Confirm_Attendance_T{request.Month} - {request.Year}.xlsx", fileBytes)
             //};
+
+            //_emailService.EmailSendTimeKeepingToHR();
 
             //BackgroundJob.Enqueue<IEmailService>(job =>
             //    job.SendEmailAsync(
@@ -292,6 +611,101 @@ namespace ServicePortals.Infrastructure.Services.TimeKeeping
             //);
 
             return true;
+        }
+
+        /// <summary>
+        /// Build export rows from users and attendance data
+        /// </summary>
+        public static List<AttendanceExportRow> BuildExportRows(
+            List<GetMultiUserViClockByOrgUnitIdConfirmTimeKeepingResponse> users,
+            List<GetUserTimeKeepingResponse> attendances,
+            int month,
+            int year)
+        {
+            var exportRows = new List<AttendanceExportRow>();
+            int daysInMonth = DateTime.DaysInMonth(year, month);
+
+            foreach (var user in users)
+            {
+                var row = new AttendanceExportRow
+                {
+                    UserCode = user.NVMaNV ?? "",
+                    FullName = user.NVHoTen ?? "",
+                    DayValues = new Dictionary<int, string>()
+                };
+
+                var userAtt = attendances
+                    .Where(a => a.NVMaNV == user.NVMaNV)
+                    .ToDictionary(
+                        a => DateTime.Parse(a.BCNgay!).Day,
+                        a => (a.Results ?? "", a.CustomResult ?? "", a.IsSentToHR == true ? "✓" : ""));
+
+                for (int day = 1; day <= daysInMonth; day++)
+                {
+                    if (userAtt.TryGetValue(day, out var val))
+                    {
+                        var (results, custom, isSent) = val;
+                        var display = string.Join(" | ", new[] { results, custom, isSent }.Where(x => !string.IsNullOrWhiteSpace(x)));
+                        row.DayValues[day] = display;
+                    }
+                    else
+                    {
+                        row.DayValues[day] = "";
+                    }
+                }
+
+                exportRows.Add(row);
+            }
+
+            return exportRows;
+        }
+
+        public string StringSqlGetTimeekping()
+        {
+            var sql = $@"
+                SELECT 
+	                BC.BCMaNV,
+                    NV.NVMaNV,
+                    CASE 
+                        WHEN DATEPART(dw, BC.BCNGay) = 1 THEN 'CN' 
+                        ELSE convert(nvarchar(10),DATEPART(dw, BC.BCNGay)) 
+                    END AS Thu,
+                    CONVERT(VARCHAR(10),BC.BCNgay, 120) AS BCNgay,
+                    BC.BCTGDen,
+                    BC.BCTGVe,
+                    BC.BCGhiChu,
+                    CASE
+                        --Chủ nhật
+                        WHEN DATEPART(dw, BC.BCNGay) = 1 THEN 
+                            CASE
+                                WHEN BC.BCTGDen IS NOT NULL AND BC.BCTGVe IS NOT NULL AND BC.BCGhiChu = 'CN' THEN 'CN_X'
+                                ELSE 'CN'
+                            END
+
+                        -- ngày thường
+                        ELSE
+                            CASE
+                                WHEN BC.BCGhiChu IS NOT NULL AND BC.BCGhiChu != '' THEN BCGhiChu
+                                WHEN (BC.BCTGLamNgay + BC.BCTGLamToi) = BC.BCTGQuyDinh THEN 'X'
+                                WHEN BC.BCTGDen IS NOT NULL AND BC.BCTGVe IS NOT NULL THEN 
+				                                CASE 
+					                                WHEN 1.0 * CEILING(1.0 * (BC.BCTGQuyDinh - (BC.BCTGLamNgay + BC.BCTGLamToi)) / 30.0) * 30 / NULLIF(BC.BCTGQuyDinh, 0) = 1 THEN '?'
+					                                ELSE RTRIM(FORMAT(1.0 * CEILING(1.0 * (BC.BCTGQuyDinh - (BC.BCTGLamNgay + BC.BCTGLamToi)) / 30.0) * 30 / NULLIF(BC.BCTGQuyDinh, 0),'0.####'))
+				                                END
+                                ELSE
+				                                '?'
+                            END
+                    END AS Results,
+	                H.CurrentValue AS CustomResult,
+	                H.IsSentToHR
+                FROM {Global.DbViClock}.dbo.tblBaoCao AS BC
+                LEFT JOIN {Global.DbViClock}.dbo.tblNhanVien AS NV ON BC.BCMaNV = NV.NVMa
+                LEFT JOIN {Global.DbWeb}.dbo.time_attendance_edit_histories AS H ON BC.BCMaNV = NV.NVMa AND BC.BCNgay = CAST(H.Datetime AS DATE) AND  NV.NVMaNV = H.UserCode
+                WHERE DATEPART(dw, BC.BCNgay) IS NOT NULL AND BC.BCNgay BETWEEN @FromDate AND @ToDate AND BC.BCNgay IS NOT NULL
+                AND BC.BCMaNV IN @UserIds
+            ";
+
+            return sql;
         }
 
         //Cập nhật mới những người có quyền quản lý chấm công
@@ -441,6 +855,9 @@ namespace ServicePortals.Infrastructure.Services.TimeKeeping
             return results;
         }
 
+        /// <summary>
+        /// Cập nhật chấm công, chỉ đc cập nhật khi chưa được gửi tới HR
+        /// </summary>
         public async Task<object> EditTimeKeeping(CreateTimeAttendanceRequest request)
         {
             var itemAttendance = await _context.TimeAttendanceEditHistories.FirstOrDefaultAsync(e => e.Datetime == request.Datetime && e.UserCode == request.UserCode);
@@ -478,25 +895,57 @@ namespace ServicePortals.Infrastructure.Services.TimeKeeping
             return true;
         }
 
-        public Task<object> GetListHistoryEditTimeKeeping(GetListHistoryEditTimeKeepingRequest request)
+        /// <summary>
+        /// Lấy danh sách lịch sử đã cập nhật chấm công
+        /// </summary>
+        public async Task<PagedResults<TimeAttendanceHistoryDto>> GetListHistoryEditTimeKeeping(GetListHistoryEditTimeKeepingRequest request)
         {
+            double pageSize = request.PageSize;
+            double page = request.Page;
+
+            using var connection = _context.Database.GetDbConnection();
+            if (connection.State != ConnectionState.Open)
+            {
+                await connection.OpenAsync();
+            }
+
             var sql = $@"
                 SELECT 
-                    TA.*, {Global.DbViClock}.dbo.funTCVN2Unicode(NV.NVHoTen) AS NVHoTen FROM {Global.DbWeb}.dbo.time_attendance_edit_histories AS TA
+                    TA.Id, TA.Datetime, TA.UserCode, TA.OldValue, TA.CurrentValue, TA.UserCodeUpdate, TA.UpdatedBy, TA.UpdatedAt, TA.IsSentToHR,
+                    {Global.DbViClock}.dbo.funTCVN2Unicode(NV.NVHoTen) AS NVHoTen 
+                FROM {Global.DbWeb}.dbo.time_attendance_edit_histories AS TA
                 INNER JOIN 
                     {Global.DbViClock}.dbo.tblNhanVien AS NV 
-                ON TA.UserCode = NV.NVMaNV AND NV.NVNgayRa > GETDATE() AND UserCodeUpdate = @UserCodeUpdated
+                ON TA.UserCode = NV.NVMaNV AND UserCodeUpdate = @UserCodeUpdated
+                ORDER BY TA.UpdatedAt DESC
+                OFFSET (@Page - 1) * @PageSize ROWS
+                FETCH NEXT @PageSize ROWS ONLY
             ";
 
+            var totalItems = await _context.TimeAttendanceEditHistories.Where(e => e.UserCodeUpdate == request.UserCodeUpdated).CountAsync();
+            var totalPages = (int)Math.Ceiling(totalItems / pageSize);
 
+            var result = (await connection.QueryAsync<TimeAttendanceHistoryDto>(sql, new
+            {
+                Page = (int)page,
+                PageSize = (int)pageSize,
+                request.UserCodeUpdated
+            })).ToList();
 
-
-            throw new NotImplementedException();
+            return new PagedResults<TimeAttendanceHistoryDto>
+            {
+                Data = result,
+                TotalItems = totalItems,
+                TotalPages = totalPages
+            };
         }
 
+        /// <summary>
+        /// Xóa lịch sử bản ghi chưa gửi đến hr
+        /// </summary>
         public async Task<object> DeleteHistoryEditTimeKeeping(int id)
         {
-            var item = await _context.TimeAttendanceEditHistories.FirstOrDefaultAsync(e => e.Id == id) ?? throw new NotFoundException("History time attendance not found");
+            var item = await _context.TimeAttendanceEditHistories.FirstOrDefaultAsync(e => e.Id == id && e.IsSentToHR == false) ?? throw new NotFoundException("History time attendance not found");
 
             _context.TimeAttendanceEditHistories.Remove(item);
 
@@ -505,9 +954,20 @@ namespace ServicePortals.Infrastructure.Services.TimeKeeping
             return true;
         }
 
+        /// <summary>
+        /// Đếm những bản ghi của người hiện tại cập nhật chấm công và có trạng thái chưa confirm HR
+        /// </summary>
         public async Task<int> CountHistoryEditTimeKeepingNotSendHR(string userCode)
         {
             return await _context.TimeAttendanceEditHistories.Where(e => e.UserCodeUpdate == userCode && e.IsSentToHR == false).CountAsync();
         }
+    }
+
+    public class AttendanceExportRow
+    {
+        public string UserCode { get; set; }
+        public string FullName { get; set; }
+        public DateTime JoinDate { get; set; }
+        public Dictionary<int, string> DayValues { get; set; } = new(); // key = day 1..31
     }
 }

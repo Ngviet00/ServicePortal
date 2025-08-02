@@ -10,4 +10,13 @@ namespace ServicePortals.Application.Dtos.User.Responses
         public int? OrgUnitID { get; set; }
         public string? Email { get; set; }
     }
+
+    public class GetMultiUserViClockByOrgUnitIdConfirmTimeKeepingResponse
+    {
+        public int? NVMa { get; set; }
+        public string? NVMaNV { get; set; }
+        public string? NVHoTen { get; set; }
+        public int? OrgUnitID { get; set; }
+        public string? BPTen { get; set; }
+    }
 }

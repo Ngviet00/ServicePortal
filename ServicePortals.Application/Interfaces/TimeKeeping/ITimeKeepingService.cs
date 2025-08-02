@@ -1,4 +1,5 @@
 ﻿using ServicePortals.Application.Dtos.LeaveRequest.Requests;
+using ServicePortals.Application.Dtos.TimeKeeping;
 using ServicePortals.Application.Dtos.TimeKeeping.Requests;
 using ServicePortals.Application.Dtos.TimeKeeping.Responses;
 namespace ServicePortals.Application.Interfaces.TimeKeeping
@@ -21,7 +22,7 @@ namespace ServicePortals.Application.Interfaces.TimeKeeping
 
         Task<object> EditTimeKeeping(CreateTimeAttendanceRequest request); //old value, new value
 
-        Task<object> GetListHistoryEditTimeKeeping(GetListHistoryEditTimeKeepingRequest request);
+        Task<PagedResults<TimeAttendanceHistoryDto>> GetListHistoryEditTimeKeeping(GetListHistoryEditTimeKeepingRequest request);
 
         Task<object> DeleteHistoryEditTimeKeeping(int id); //chỉ xóa được những cái chưa gửi cho hr
 

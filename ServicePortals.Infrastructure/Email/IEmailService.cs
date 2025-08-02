@@ -35,5 +35,10 @@ namespace ServicePortals.Infrastructure.Email
         Task EmailSendMemoNotificationHasBeenCompletedOrReject(List<string>? to, List<string>? cc, string subject, string? body, List<(string, byte[])>? attachments, bool isHtml = true);
 
         #endregion
+
+        #region Email gửi chấm công đến HR
+        [AutomaticRetry(Attempts = 10)]
+        Task EmailSendTimeKeepingToHR(List<string>? to, List<string>? cc, string subject, string? body, List<(string, byte[])>? attachments, bool isHtml = false);
+        #endregion
     }
 }

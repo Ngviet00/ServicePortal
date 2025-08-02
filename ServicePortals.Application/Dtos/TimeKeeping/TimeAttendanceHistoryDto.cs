@@ -11,5 +11,6 @@
         public string? UpdatedBy { get; set; }
         public DateTimeOffset? UpdatedAt { get; set; }
         public bool? IsSentToHR { get; set; }
+        public string? NVHoTen {  get; set; }
     }
 }
