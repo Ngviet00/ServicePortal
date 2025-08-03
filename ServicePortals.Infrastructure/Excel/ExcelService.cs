@@ -9,6 +9,7 @@ using System.Data;
 using ServicePortals.Shared.SharedDto;
 using ServicePortals.Domain.Entities;
 using System.Globalization;
+using DocumentFormat.OpenXml.Spreadsheet;
 
 namespace ServicePortals.Infrastructure.Excel
 {
@@ -183,172 +184,97 @@ namespace ServicePortals.Infrastructure.Excel
             return stream.ToArray();
         }
 
-        public byte[] GenerateExcelManagerConfirmToHR()
+        public void GenerateExcelManagerConfirmToHR(XLWorkbook workbook, List<AttendanceExportRow> rows, bool isFirstBatch, int daysInMonth)
         {
-            //var holidays = data.Holidays;
-            //var userData = data.UserData;
+            var worksheet = workbook.Worksheets.FirstOrDefault() ?? workbook.AddWorksheet("CHẤM CÔNG");
+            worksheet.TabColor = XLColor.Green;
 
-            //if (userData == null || userData.Count == 0 || userData[0].Attendances == null)
-            //    return [];
+            int startRow = worksheet.LastRowUsed()?.RowNumber() + 1 ?? 1;
 
-            //int daysInMonth = userData[0].Attendances.Count;
+            if (isFirstBatch && startRow == 1)
+            {
+                worksheet.Cell(startRow, 1).Value = "Mã Nhân Viên";
+                worksheet.Cell(startRow, 2).Value = "Họ Tên";
+                worksheet.Cell(startRow, 3).Value = "Bộ Phận";
+                worksheet.Cell(startRow, 4).Value = "Ngày vào làm";
 
-            //using var workbook = new XLWorkbook();
-            //var worksheet = workbook.Worksheets.Add("Attendance");
+                worksheet.Column(1).Width = 12;
+                worksheet.Column(2).Width = 18;
+                worksheet.Column(3).Width = 13;
+                worksheet.Column(4).Width = 14;
 
-            ////row start list attendance
-            //int startRow = 8;
+                for (int day = 1; day <= daysInMonth; day++)
+                {
+                    worksheet.Cell(startRow, 4 + day).Value = $"{day:D2}";
+                }
 
-            ////display month, year
-            //var cellMonthYear = worksheet.Cell(3, 16);
-            //cellMonthYear.Value = $"{request.Month} - {request.Year}";
-            //cellMonthYear.Style.Font.Bold = true;
-            //cellMonthYear.Style.Font.FontSize = 28;
-            //cellMonthYear.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
-            //cellMonthYear.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
-            //worksheet.Row(3).Height = 24;
+                worksheet.Range(startRow, 1, startRow, daysInMonth + 4).Style.Border.SetOutsideBorder(XLBorderStyleValues.Thin);
+                worksheet.Range(startRow, 1, startRow, daysInMonth + 4).Style.Border.SetInsideBorder(XLBorderStyleValues.Thin);
 
-            ////display color
-            //int startColumnColor = 3;
-            //int startRowColor = 5;
+                worksheet.Columns(5, daysInMonth + 5).Width = 6;
 
-            //if (request.StatusColors != null && request.StatusDefine != null)
-            //{
-            //    foreach (var (status, colorHex) in request.StatusColors)
-            //    {
-            //        var statusCell = worksheet.Cell(startRowColor, startColumnColor);
-            //        statusCell.Value = status;
-            //        statusCell.Style.Fill.BackgroundColor = XLColor.FromHtml(colorHex);
-            //        statusCell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                startRow++;
+            }
 
-            //        var cellRange = worksheet.Range(startRowColor, startColumnColor + 1, startRowColor, startColumnColor + 2);
-            //        cellRange.Merge();
-            //        if (request.StatusDefine.TryGetValue(status, out var description))
-            //        {
-            //            cellRange.Value = description;
-            //        }
-            //        else
-            //        {
-            //            cellRange.Value = "";
-            //        }
+            var headerRow = worksheet.Row(1);
+            headerRow.Height = 23;
+            headerRow.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+            headerRow.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
 
-            //        cellRange.Style.Font.FontSize = 10;
-            //        cellRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Left;
+            int batchDataStartRow = startRow;
 
-            //        startColumnColor += 4;
-            //    }
-            //}
+            foreach (var row in rows)
+            {
+                int col = 1;
+                worksheet.Cell(startRow, col++).Value = row.UserCode;
+                worksheet.Cell(startRow, col++).Value = row.FullName;
+                worksheet.Cell(startRow, col++).Value = row.DepartmentName;
+                worksheet.Cell(startRow, col++).Value = row.JoinDate;
 
+                for (int d = 1; d <= daysInMonth; d++)
+                {
+                    var cellValue = row.DayValues.GetValueOrDefault(d, "");
+                    var currentCell = worksheet.Cell(startRow, col);
 
-            // === Header ===
-            //var headerRange = worksheet.Range(startRow, 1, startRow, daysInMonth + 2);
-            //headerRange.Style.Fill.BackgroundColor = XLColor.FromHtml("#d1d5dc");
-            //headerRange.Style.Font.FontColor = XLColor.Black;
-            //headerRange.Style.Font.FontSize = 12;
-            //headerRange.Style.Font.Bold = true;
-            //headerRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
-            //headerRange.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
-            //worksheet.Row(startRow).Height = 24;
+                    currentCell.Value = cellValue;
 
-            //for (int day = 1; day <= daysInMonth + 2; day++)
-            //{
-            //    int colIndex = day;
+                    bool isNumber = double.TryParse(cellValue, out _);
+                    if (!isNumber)
+                    {
+                        switch (cellValue)
+                        {
+                            case "SH":
+                                currentCell.Style.Fill.SetBackgroundColor(XLColor.LightGreen);
+                                break;
+                            case "CN":
+                                currentCell.Style.Fill.SetBackgroundColor(XLColor.Gray);
+                                break;
+                            case "X":
+                                break;
+                            case "CN_X":
+                                break;
+                            default:
+                                if (!string.IsNullOrWhiteSpace(cellValue))
+                                {
+                                    currentCell.Style.Fill.SetBackgroundColor(XLColor.Yellow);
+                                }
+                                break;
+                        }
+                    }
 
-            //    var cell = worksheet.Cell(startRow, colIndex);
-            //    cell.Style.Border.TopBorder = XLBorderStyleValues.Thin;
-            //    cell.Style.Border.BottomBorder = XLBorderStyleValues.Thin;
-            //    cell.Style.Border.LeftBorder = XLBorderStyleValues.Thin;
-            //    cell.Style.Border.RightBorder = XLBorderStyleValues.Thin;
+                    col++;
+                }
 
-            //    if (colIndex == 1)
-            //    {
-            //        worksheet.Column(colIndex).Width = 22;
-            //        cell.Value = "Mã Nhân Viên";
-            //    }
-            //    else if (colIndex == 2)
-            //    {
-            //        worksheet.Column(colIndex).Width = 25;
-            //        cell.Value = "Họ Tên";
-            //    }
-            //    else
-            //    {
-            //        worksheet.Column(colIndex).Width = 6;
-            //        cell.Value = (colIndex - 2).ToString("D2");
+                var currentRow = worksheet.Row(startRow);
+                currentRow.Height = 20;
+                currentRow.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+                currentRow.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
 
-            //        //var dayStr = $"{request?.Year}-{request?.Month?.ToString("D2")}-{(colIndex - 2).ToString("D2")}";
+                worksheet.Range(startRow, 1, startRow, daysInMonth + 4).Style.Border.SetOutsideBorder(XLBorderStyleValues.Thin);
+                worksheet.Range(startRow, 1, startRow, daysInMonth + 4).Style.Border.SetInsideBorder(XLBorderStyleValues.Thin);
 
-            //        //var holiday = holidays?.FirstOrDefault(h => h.Date == dayStr);
-
-            //        //if (holiday != null)
-            //        //{
-            //        //    if (holiday.Type == "sunday")
-            //        //    {
-            //        //        cell.Style.Fill.BackgroundColor = XLColor.Black;
-            //        //        cell.Style.Font.FontColor = XLColor.White;
-            //        //    }
-            //        //    else if (holiday.Type == "special_holiday")
-            //        //    {
-            //        //        cell.Style.Fill.BackgroundColor = XLColor.FromHtml("#07ee15");
-            //        //        cell.Style.Font.FontColor = XLColor.Black;
-            //        //    }
-            //        //}
-            //    }
-            //}
-
-            // === Body ===
-            //for (int row = 0; row < userData.Count; row++)
-            //{
-            //    var item = userData[row];
-            //    var lengthAttendaces = item.Attendances != null ? item.Attendances.Count : 0;
-            //    worksheet.Row(row + 2 + (startRow - 1)).Height = 24;
-
-            //    if (item.Attendances != null)
-            //    {
-            //        for (int col = 1; col <= lengthAttendaces + 2; col++)
-            //        {
-            //            var cell = worksheet.Cell(row + 2 + (startRow - 1), col);
-            //            cell.Style.Border.TopBorder = XLBorderStyleValues.Thin;
-            //            cell.Style.Border.BottomBorder = XLBorderStyleValues.Thin;
-            //            cell.Style.Border.LeftBorder = XLBorderStyleValues.Thin;
-            //            cell.Style.Border.RightBorder = XLBorderStyleValues.Thin;
-            //            cell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
-            //            cell.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
-
-            //            if (col == 1)
-            //            {
-            //                worksheet.Column(col).Width = 22;
-            //                cell.Value = item.UserCode;
-            //            }
-            //            else if (col == 2)
-            //            {
-            //                worksheet.Column(col).Width = 25;
-            //                cell.Value = $"Name_{item.UserCode}";
-            //            }
-            //            else
-            //            {
-            //                int attIndex = col - 3;
-            //                if (attIndex >= 0 && attIndex < item.Attendances.Count)
-            //                {
-            //                    var att = item.Attendances[attIndex];
-            //                    worksheet.Column(col).Width = 6;
-            //                    cell.Value = att?.Status ?? "";
-            //                    if (!string.IsNullOrWhiteSpace(att?.Status) && request.StatusColors != null && request.StatusColors.TryGetValue(att.Status, out var hexColor))
-            //                    {
-            //                        cell.Style.Fill.BackgroundColor = XLColor.FromHtml(hexColor);
-            //                    }
-            //                    else
-            //                    {
-            //                        cell.Style.Fill.BackgroundColor = XLColor.FromHtml("#f7f7f7");
-            //                    }
-            //                }
-            //            }
-            //        }
-            //    }
-            //}
-
-            using var stream = new MemoryStream();
-            //workbook.SaveAs(stream);
-            return stream.ToArray();
+                startRow++;
+            }
         }
     }
 }

@@ -49,8 +49,8 @@ namespace ServicePortal.Controllers.TimeKeeping
         [HttpPost("confirm-timekeeping-to-hr")]
         public async Task<IActionResult> ConfirmTimeKeepingToHr([FromBody] GetManagementTimeKeepingRequest request)
         {
-            var result = await _timeKeepingService.ConfirmTimeKeepingToHr(request);
-            //BackgroundJob.Enqueue<ITimeKeepingService>(job => job.ConfirmTimeKeepingToHr(request));
+            //var result = await _timeKeepingService.ConfirmTimeKeepingToHr(request);
+            BackgroundJob.Enqueue<ITimeKeepingService>(job => job.ConfirmTimeKeepingToHr(request));
             return Ok("Hệ thống đang xử lý, HR sẽ nhận được email khi xong.");
         }
 

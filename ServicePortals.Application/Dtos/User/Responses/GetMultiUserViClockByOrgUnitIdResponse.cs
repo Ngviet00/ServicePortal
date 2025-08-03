@@ -18,5 +18,6 @@ namespace ServicePortals.Application.Dtos.User.Responses
         public string? NVHoTen { get; set; }
         public int? OrgUnitID { get; set; }
         public string? BPTen { get; set; }
+        public DateTime? NVNgayVao { get; set; }
     }
 }
