@@ -290,6 +290,18 @@ namespace ServicePortals.Infrastructure.Services.TimeKeeping
 
             string userCodeSendConfirm = request.UserCode ?? "";
 
+            var listEditTimeKeeping = await _context.TimeAttendanceEditHistories.Where(e => e.UserCodeUpdate == userCodeSendConfirm && e.IsSentToHR == false).ToListAsync();
+
+            foreach (var item in listEditTimeKeeping)
+            {
+                item.IsSentToHR = true;
+            }
+
+            _context.TimeAttendanceEditHistories.UpdateRange(listEditTimeKeeping);
+            await _context.SaveChangesAsync();
+
+            byte[] excelFileEditHistoryTimeKeeping = _excelService.GenerateExcelHistoryEditTimeKeeping(listEditTimeKeeping);
+
             using var connection = _context.Database.GetDbConnection();
             if (connection.State != ConnectionState.Open)
             {
@@ -320,9 +332,7 @@ namespace ServicePortals.Infrastructure.Services.TimeKeeping
                     NV.NVNgayVao
                 FROM {Global.DbViClock}.[dbo].[tblNhanVien] AS NV
                 LEFT JOIN {Global.DbViClock}.[dbo].[tblBoPhan] AS BP ON BP.BPMa = NV.NVMaBP
-                WHERE
-                    NV.OrgUnitID IN (SELECT id FROM DistinctOrgUnits) -- Sử dụng kết quả từ CTE trên
-                    AND NV.NVNgayRa > GETDATE();
+                JOIN DistinctOrgUnits DOU ON NV.OrgUnitID = DOU.id
             ";
 
             var paramCombined = new
@@ -331,7 +341,7 @@ namespace ServicePortals.Infrastructure.Services.TimeKeeping
                 type = "MNG_TIME_KEEPING",
             };
 
-            var allUsers = await connection.QueryAsync<GetMultiUserViClockByOrgUnitIdConfirmTimeKeepingResponse>(sqlCombinedQuery, paramCombined);
+            var allUsers = await connection.QueryAsync<GetMultiUserViClockByOrgUnitIdConfirmTimeKeepingResponse>(sqlCombinedQuery, paramCombined, commandTimeout: 900);
 
             int totalUsers = allUsers.Count();
             int totalBatches = (int)Math.Ceiling((double)totalUsers / batchSize);
@@ -351,7 +361,7 @@ namespace ServicePortals.Infrastructure.Services.TimeKeeping
                     FromDate = fromDate,
                     ToDate = toDate,
                     UserIds = userIds
-                })).ToList();
+                }, commandTimeout: 900)).ToList();
 
                 var exportRows = BuildExportRows(currentBatch, attendanceLists, daysInMonth);
                 _excelService.GenerateExcelManagerConfirmToHR(workbook, exportRows, isFirstBatch, daysInMonth);
@@ -369,20 +379,11 @@ namespace ServicePortals.Infrastructure.Services.TimeKeeping
                 excelBytes = stream.ToArray();
             }
 
-            var attachments = new List<(string FileName, byte[] FileBytes)>
-            {
-                ($"BangChamCong_2025-{request.Month:D2}.xlsx", excelBytes)
-            };
-
-            string tempFilePath = Path.Combine(Path.GetTempPath(), $"BangChamCong_DEBUG_{year}-{month:D2}_{DateTime.Now:yyyyMMddHHmmss}.xlsx");
-            try
-            {
-                await System.IO.File.WriteAllBytesAsync(tempFilePath, excelBytes);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Lỗi khi lưu file tạm thời: {ex.Message}");
-            }
+            List<(string FileName, byte[] FileBytes)> attachments =
+            [
+                ($"BangChamCong_2025-{request.Month:D2}.xlsx", excelBytes),
+                ($"DanhSachChinhSua.xlsx", excelFileEditHistoryTimeKeeping)
+            ];
 
             var hrHavePermissionMngLeaveRequest = await _leaveRequestService.GetHrWithManagementLeavePermission();
             var emailUserSend = await _context.Users.FirstOrDefaultAsync(e => e.UserCode == userCodeSendConfirm);

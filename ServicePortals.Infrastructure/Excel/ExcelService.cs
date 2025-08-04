@@ -184,6 +184,42 @@ namespace ServicePortals.Infrastructure.Excel
             return stream.ToArray();
         }
 
+        public byte[] GenerateExcelHistoryEditTimeKeeping(List<TimeAttendanceEditHistory> data)
+        {
+            using (var workbook = new XLWorkbook())
+            {
+                var worksheet = workbook.Worksheets.Add("DanhSachChinhSuaChamCong");
+
+                worksheet.Cell(1, 1).Value = "Mã NV (Được Sửa)";
+                worksheet.Cell(1, 2).Value = "Ngày Chấm Công";
+                worksheet.Cell(1, 3).Value = "Giá Trị Cũ";
+                worksheet.Cell(1, 4).Value = "Giá Trị Mới";
+
+                worksheet.Row(1).Style.Font.SetBold();
+                worksheet.Row(1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+
+
+                int row = 2;
+                foreach (var item in data)
+                {
+                    worksheet.Cell(row, 1).Value = item.UserCode;
+                    worksheet.Cell(row, 2).Value = item.Datetime.Value.ToString("yyyy-MM-dd");
+                    worksheet.Cell(row, 3).Value = item.OldValue;
+                    worksheet.Cell(row, 4).Value = item.CurrentValue;
+
+                    row++;
+                }
+
+                worksheet.Columns().AdjustToContents();
+
+                using (var stream = new MemoryStream())
+                {
+                    workbook.SaveAs(stream);
+                    return stream.ToArray();
+                }
+            }
+        }
+
         public void GenerateExcelManagerConfirmToHR(XLWorkbook workbook, List<AttendanceExportRow> rows, bool isFirstBatch, int daysInMonth)
         {
             var worksheet = workbook.Worksheets.FirstOrDefault() ?? workbook.AddWorksheet("CHẤM CÔNG");
