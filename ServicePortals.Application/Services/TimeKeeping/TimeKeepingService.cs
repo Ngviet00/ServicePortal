@@ -68,11 +68,30 @@ namespace ServicePortals.Infrastructure.Services.TimeKeeping
         //màn quản lý chấm công, người quản lý chấm công quản lý chấm công của người khác
         public async Task<PagedResults<GroupedUserTimeKeeping>> GetManagementTimeKeeping(GetManagementTimeKeepingRequest request)
         {
+            using var connection = _context.Database.GetDbConnection();
+            if (connection.State != ConnectionState.Open)
+            {
+                await connection.OpenAsync();
+            }
+
             int month = request.Month ?? DateTime.UtcNow.Month;
             int year = request.Year ?? DateTime.UtcNow.Year;
 
-
             int dayInMonth = DateTime.DaysInMonth(year, month);
+
+            string tblName = $"{Global.DbViClock}.dbo.BaoCaoVS5{year}_{month:D2}";
+
+            bool isTableExists = connection.ExecuteScalar<int?>("SELECT OBJECT_ID(@tableName, 'U')", new { tableName = tblName }).HasValue;
+
+            if (!isTableExists)
+            {
+                return new PagedResults<GroupedUserTimeKeeping>
+                {
+                    Data = [],
+                    TotalItems = 0,
+                    TotalPages = 0
+                };
+            }
 
             double pageSize = request.PageSize > 0 ? request.PageSize : 10;
             double page = request.Page > 0 ? request.Page : 1;
@@ -83,12 +102,6 @@ namespace ServicePortals.Infrastructure.Services.TimeKeeping
 
             var fromDate = $"{year}-{month:D2}-01";
             var toDate = $"{year}-{month:D2}-{dayInMonth}";
-
-            using var connection = _context.Database.GetDbConnection();
-            if (connection.State != ConnectionState.Open)
-            {
-                await connection.OpenAsync();
-            }
 
             string sqlOrgUnitIdQuery = $@"
                 WITH RecursiveOrg AS (
