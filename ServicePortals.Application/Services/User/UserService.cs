@@ -694,6 +694,13 @@ namespace ServicePortals.Application.Services.User
             double pageSize = request.PageSize;
             double page = request.Page;
 
+            var connection = (SqlConnection)_context.CreateConnection();
+
+            if (connection.State != ConnectionState.Open)
+            {
+                await connection.OpenAsync();
+            }
+
             var param = new
             {
                 Key = request.Keysearch,
@@ -707,20 +714,20 @@ namespace ServicePortals.Application.Services.User
 
             if (!string.IsNullOrWhiteSpace(request.Keysearch))
             {
-                sbWhere.AppendLine($" AND (dbo.udf_RemoveDiacritics(dbo.funTCVN2Unicode(NV.NVHoTen)) LIKE '%' + @Key + '%' ");
+                sbWhere.AppendLine($" AND ({Global.DbViClock}.dbo.udf_RemoveDiacritics({Global.DbViClock}.dbo.funTCVN2Unicode(NV.NVHoTen)) LIKE '%' + @Key + '%' ");
                 sbWhere.AppendLine($" OR NV.NVMaNV LIKE '%' + @Key + '%' )");
             }
 
             StringBuilder sb = new StringBuilder();
             sb.AppendLine(" SELECT");
             sb.AppendLine("     NV.NVMaNV,");
-            sb.AppendLine("     dbo.funTCVN2Unicode(NV.NVHoTen) as NVHoTen,");
+            sb.AppendLine($"     {Global.DbViClock}.dbo.funTCVN2Unicode(NV.NVHoTen) as NVHoTen,");
             sb.AppendLine("     BP.BPMa,");
-            sb.AppendLine("     dbo.funTCVN2Unicode(BP.BPTen) as BPTen,");
+            sb.AppendLine($"     {Global.DbViClock}.dbo.funTCVN2Unicode(BP.BPTen) as BPTen,");
             sb.AppendLine("     NV.NVNgayVao");
-            sb.AppendLine(" FROM tblNhanVien as NV");
+            sb.AppendLine($" FROM {Global.DbViClock}.dbo.tblNhanVien as NV");
 
-            sb.AppendLine(" INNER JOIN tblBoPhan as BP");
+            sb.AppendLine($" LEFT JOIN {Global.DbViClock}.dbo.tblBoPhan as BP");
             sb.AppendLine(" ON NV.NVMaBP = BP.BPMa");
 
             sb.AppendLine($@" {sbWhere}");
@@ -738,15 +745,15 @@ namespace ServicePortals.Application.Services.User
 
             var countSql = new StringBuilder();
             countSql.AppendLine(" SELECT COUNT(*)");
-            countSql.AppendLine(" FROM tblNhanVien AS NV");
-            countSql.AppendLine(" INNER JOIN tblBoPhan as BP ON NV.NVMaBP = BP.BPMa");
+            countSql.AppendLine($" FROM {Global.DbViClock}.dbo.tblNhanVien AS NV");
+            countSql.AppendLine($" LEFT JOIN {Global.DbViClock}.dbo.tblBoPhan as BP ON NV.NVMaBP = BP.BPMa");
             countSql.AppendLine($"{sbWhere}");
 
-            int totalItems = await _viclockDapperContext.QueryFirstOrDefaultAsync<int>(countSql.ToString(), param);
+            int totalItems = await connection.QueryFirstOrDefaultAsync<int>(countSql.ToString(), param);
 
             int totalPages = (int)Math.Ceiling(totalItems / pageSize);
 
-            var data = await _viclockDapperContext.QueryAsync<object>(sb.ToString(), param);
+            var data = await connection.QueryAsync<object>(sb.ToString(), param);
 
             return new PagedResults<object>
             {
