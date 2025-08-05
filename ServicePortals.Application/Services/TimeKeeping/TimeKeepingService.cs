@@ -1,9 +1,11 @@
 ﻿using System.Data;
+using System.Dynamic;
 using System.Globalization;
 using ClosedXML.Excel;
 using Dapper;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 using ServicePortals.Application;
 using ServicePortals.Application.Dtos.LeaveRequest.Requests;
 using ServicePortals.Application.Dtos.TimeKeeping;
@@ -156,138 +158,364 @@ namespace ServicePortals.Infrastructure.Services.TimeKeeping
 
             var totalPages = (int)Math.Ceiling((double)countUser / pageSize);
 
-            var sql = $@"
-                WITH Users AS (
-                    SELECT
-                        NV.NVMa, NV.NVMaNV, {Global.DbViClock}.dbo.funTCVN2Unicode(NV.NVHoTen) AS NVHoTen, BP.BPTen
-                    FROM {Global.DbViClock}.dbo.tblNhanVien AS NV
-                    LEFT JOIN {Global.DbViClock}.dbo.tblBoPhan AS BP ON NV.NVMaBP = BP.BPMa AND NV.NVNgayRa > GETDATE() AND NV.OrgUnitID IS NOT NULL
-                    WHERE NV.OrgUnitID IN @ids
-                        AND (@KeySearch = '' OR NV.NVMaNV = @KeySearch)
-                    ORDER BY NV.NVMa ASC
-                    OFFSET (@Page - 1) * @PageSize ROWS
-                    FETCH NEXT @PageSize ROWS ONLY
-                )
+            var q = $@"
                 SELECT 
-	                U.NVMaNV,
-	                U.NVHoTen,
-	                U.BPTen,
-	                CASE 
-                        WHEN DATEPART(dw, BCNGay) = 1 THEN 'CN' 
-                        ELSE convert(nvarchar(10),DATEPART(dw, BCNGay)) 
-                    END AS Thu,
-	                CONVERT(VARCHAR(10), BC.BCNgay, 120) AS BCNgay,
-	                BC.BCTGDen,
-	                BC.BCTGVe,
-                    BC.BCGhiChu,
-	                CASE
-		                --Chủ nhật
-		                WHEN DATEPART(dw, BCNGay) = 1 THEN 
-			                CASE
-				                WHEN BCTGDen IS NOT NULL AND BCTGVe IS NOT NULL AND BCGhiChu = 'CN' THEN 'CN_X'
-                                ELSE 'CN'
-			                END
-
-		                -- ngày thường
-		                ELSE
-			                CASE
-                                WHEN BC.BCGhiChu IS NOT NULL AND BC.BCGhiChu != '' THEN BC.BCGhiChu
-				                WHEN (BC.BCTGLamNgay + BC.BCTGLamToi) = BC.BCTGQuyDinh THEN 'X'
-				                WHEN BC.BCTGDen IS NOT NULL AND BC.BCTGVe IS NOT NULL THEN 
-					                CASE 
-						                WHEN 1.0 * CEILING(1.0 * (BCTGQuyDinh - (BCTGLamNgay + BCTGLamToi)) / 30.0) * 30 / NULLIF(BCTGQuyDinh, 0) = 1 THEN '?'
-						                ELSE RTRIM(FORMAT(1.0 * CEILING(1.0 * (BCTGQuyDinh - (BCTGLamNgay + BCTGLamToi)) / 30.0) * 30 / NULLIF(BCTGQuyDinh, 0),'0.####'))
-					                END
-				                ELSE
-					                '?'
-			                END
-	                END AS Results
-                FROM Users AS U
-                LEFT JOIN {Global.DbViClock}.dbo.tblBaoCao AS BC 
-                    ON BC.BCMaNV = U.NVMa AND BCNgay BETWEEN @FromDate AND @ToDate AND BC.BCNgay IS NOT NULL 
-                WHERE DATEPART(dw, BC.BCNgay) IS NOT NULL
+                    TA.Datetime, TA.CurrentValue, BC.* 
+                FROM {Global.DbViClock}.dbo.tblNhanVien AS NV
+                LEFT JOIN {tblName} AS BC ON NV.NVMaNV = BC.NVMaNV
+                LEFT JOIN {Global.DbWeb}.dbo.time_attendance_edit_histories AS TA ON TA.UserCode = BC.NVMaNV AND TA.Datetime BETWEEN @FromDate AND @ToDate
+                WHERE 1 = 1 AND NV.OrgUnitID IN @OrgUnitIds AND NV.NVNgayRa > GETDATE()
             ";
 
             if (!string.IsNullOrWhiteSpace(keySearch))
             {
-                sql += " AND U.NVMaNV = @KeySearch";
+                q += " AND BC.NVMaNV = @KeySearch";
             }
 
-            sql += " ORDER BY U.NVMaNV ASC";
+            q += " ORDER BY BC.NVNgayVao2 OFFSET (@Page - 1) * @PageSize ROWS FETCH NEXT @PageSize ROWS ONLY";
 
             var param = new
             {
                 Page = (int)page,
                 PageSize = (int)pageSize,
-                Month = month,
-                Year = year,
                 FromDate = fromDate,
                 ToDate = toDate,
-                ids = orgUnitIds,
+                OrgUnitIds = orgUnitIds,
                 KeySearch = keySearch
             };
 
-            var result = (await connection.QueryAsync<GetUserTimeKeepingResponse>(sql, param)).ToList();
+            var rawData = (await connection.QueryAsync<dynamic>(q, param)).ToList();
 
-            var startFindHistory = new DateTimeOffset(year, month, 1, 0, 0, 0, TimeSpan.FromHours(7));
-            var endFindHistory = startFindHistory.AddMonths(1);
+            var displayRows = new List<dynamic>();
 
-            //user của những người được chấm công
-            var userCodes = result.Select(x => x.NVMaNV).Distinct().ToList();
+            var userGroups = rawData.GroupBy(r => r.NVMaNV);
 
-            var timeAttendanceEditHistories = await _context.TimeAttendanceEditHistories
-                .Where(e =>
-                    userCodes.Contains(e.UserCode) && 
-                    e.Datetime >= startFindHistory && 
-                    e.Datetime < endFindHistory)
-                .ToListAsync();
-
-            var timeAttendanceDict = timeAttendanceEditHistories
-                .ToDictionary(
-                    e => (
-                        e.UserCode,
-                        e.Datetime.HasValue ? e.Datetime.Value.Date : default
-                    ),
-                    e => new
-                    {
-                        e.CurrentValue,
-                        e.IsSentToHR
-                    }
-                );
-
-            var groupedResult = result
-                .GroupBy(x => new { x.NVMaNV, x.NVHoTen, x.BPTen })
-                .Select(g => new GroupedUserTimeKeeping
-                {
-                    NVMaNV = g.Key.NVMaNV,
-                    NVHoTen = g.Key.NVHoTen,
-                    BPTen = g.Key.BPTen,
-                    DataTimeKeeping = g.Select(x =>
-                    {
-                        var CustomValueTimeAttendance = timeAttendanceDict.TryGetValue((g.Key.NVMaNV, DateTime.ParseExact(x?.BCNgay ?? "", "yyyy-MM-dd", CultureInfo.InvariantCulture).Date), out var value) ? value : null;
-                        
-                        return new UserDailyRecord
-                        {
-                            thu = x.Thu,
-                            bcNgay = x.BCNgay,
-                            vao = x.BCTGDen,
-                            ra = x.BCTGVe,
-                            result = x.Results,
-                            bcGhiChu = x.BCGhiChu,
-                            CustomValueTimeAttendance = CustomValueTimeAttendance?.CurrentValue ?? null,
-                            IsSentToHR = CustomValueTimeAttendance?.IsSentToHR ?? false,
-                        };
-                    }).ToList()
-                }).ToList();
-
-            var finalResult = new PagedResults<GroupedUserTimeKeeping>
+            foreach (var group in userGroups)
             {
-                Data = groupedResult,
-                TotalItems = groupedResult.Count,
-                TotalPages = totalPages
+                // Cố gắng lấy dòng dữ liệu gốc có Datetime == NULL
+                // Nếu không tìm thấy, lấy dòng đầu tiên của nhóm làm dữ liệu gốc
+                var originalDataRow = group.FirstOrDefault(r => r.Datetime == null);
+
+                // Nếu vẫn không tìm thấy bất kỳ dòng nào, bỏ qua
+                if (originalDataRow == null)
+                {
+                    originalDataRow = group.FirstOrDefault();
+                    if (originalDataRow == null) continue;
+                }
+
+                // Tạo một đối tượng động mới
+                dynamic displayRow = new ExpandoObject();
+                var displayRowDict = (IDictionary<string, object>)displayRow;
+
+                // Gán các thuộc tính thông tin cơ bản của nhân viên
+                displayRowDict["UserCode"] = originalDataRow.NVMaNV ?? "";
+                displayRowDict["FullName"] = originalDataRow.NVHoTen ?? "";
+                displayRowDict["DepartmentName"] = originalDataRow.BoPhan ?? "";
+                // Bổ sung lại dòng JoinDate bị thiếu
+                //displayRowDict["JoinDate"] = originalDataRow.NVNgayVao2.ToString("dd/MM/yyyy");
+
+                // Tra cứu các giá trị tùy chỉnh và lưu vào Dictionary
+                var customValuesByDay = group
+                    .Where(r => r.Datetime != null)
+                    .ToDictionary(r => r.Datetime.Value.Day, r => r.CurrentValue);
+
+                // Lặp qua từng ngày, xác định giá trị và gán vào đối tượng động
+                var fieldPrefixes = new[] { "ATT", "Ca", "WH", "Den", "Ve", "OT" };
+                for (int day = 1; day <= dayInMonth; day++)
+                {
+                    foreach (var prefix in fieldPrefixes)
+                    {
+                        string fieldName = $"{prefix}{day}";
+                        string finalValue = "";
+
+                        var originalDataDict = (IDictionary<string, object>)originalDataRow;
+
+                        // Với ATT thì check custom value trước
+                        if (prefix == "ATT" && customValuesByDay.TryGetValue(day, out var customValue))
+                        {
+                            finalValue = customValue;
+                        }
+                        else
+                        {
+                            // Lấy từ originalData
+                            originalDataDict.TryGetValue(fieldName, out var originalValue);
+                            finalValue = originalValue?.ToString() ?? "";
+                        }
+
+                        // Gán vào dynamic object
+                        displayRowDict[fieldName] = finalValue;
+                    }
+                }
+
+                displayRows.Add(displayRow);
+            }
+
+            string jsonResult = JsonConvert.SerializeObject(displayRows, Formatting.Indented);
+            Console.WriteLine(jsonResult);
+
+            return new PagedResults<GroupedUserTimeKeeping>
+            {
+                Data = [],
+                TotalItems = 0,
+                TotalPages = 0
             };
 
-            return finalResult;
+
+            //var grouped = rawData
+            //    .GroupBy(r => (string)r.NVMaNV)
+            //    .ToDictionary(
+            //        g => g.Key,
+            //        g => g
+            //            .Where(r => r.Datetime != null)
+            //            .ToDictionary(
+            //                r => ((DateTime)r.Datetime).Day,
+            //                r => r.CurrentValue == null ? null : (string?)r.CurrentValue
+            //            )
+            //    );
+
+            //var result = new List<Dictionary<string, object>>();
+
+            //foreach (var (maNV, perDayDict) in grouped)
+            //{
+            //    var row = new Dictionary<string, object>();
+            //    row["MaNV"] = maNV;
+
+            //    for (int day = 1; day <= 31; day++)
+            //    {
+            //        string attKey = $"ATT{day}";
+
+            //        if (perDayDict.TryGetValue(day, out var value))
+            //        {
+            //            row[attKey] = value ?? ""; // nếu null thì để rỗng
+            //        }
+            //        else
+            //        {
+            //            row[attKey] = ""; // chưa có dữ liệu ngày đó
+            //        }
+            //    }
+
+            //    result.Add(row);
+            //}
+
+            //Console.WriteLine(result);
+
+            //foreach (var row in chamCongList)
+            //{
+            //    Console.WriteLine($"{row.NVMaNV} - {row.NVHoTen}");
+            //    for (int i = 0; i < 31; i++)
+            //    {
+            //        Console.Write($"{row.ATT[i],3} ");
+            //    }
+            //    Console.WriteLine();
+            //}
+
+            //        var editDict = editList
+            //.GroupBy(e => e.NVMaNV)
+            //.ToDictionary(
+            //    g => g.Key!,
+            //    g => g.ToDictionary(e => e.Day, e => e.CurrentValue ?? "")
+            //);
+
+            //foreach (var row in chamCongList)
+            //{
+            //    if (row.NVMaNV == null || !editDict.TryGetValue(row.NVMaNV, out var edits)) continue;
+
+            //    foreach (var kvp in edits)
+            //    {
+            //        int day = kvp.Key;
+            //        string newValue = kvp.Value;
+
+            //        if (day >= 1 && day <= 31)
+            //            row.ATT[day - 1] = newValue;
+            //    }
+            //}
+
+            //var sql = $@"
+            //    WITH Users AS (
+            //        SELECT
+            //            NV.NVMa, NV.NVMaNV, {Global.DbViClock}.dbo.funTCVN2Unicode(NV.NVHoTen) AS NVHoTen, BP.BPTen
+            //        FROM {Global.DbViClock}.dbo.tblNhanVien AS NV
+            //        LEFT JOIN {Global.DbViClock}.dbo.tblBoPhan AS BP ON NV.NVMaBP = BP.BPMa AND NV.NVNgayRa > GETDATE() AND NV.OrgUnitID IS NOT NULL
+            //        WHERE NV.OrgUnitID IN @ids
+            //            AND (@KeySearch = '' OR NV.NVMaNV = @KeySearch)
+            //        ORDER BY NV.NVMa ASC
+            //        OFFSET (@Page - 1) * @PageSize ROWS
+            //        FETCH NEXT @PageSize ROWS ONLY
+            //    )
+            //    SELECT 
+            //     U.NVMaNV,
+            //     U.NVHoTen,
+            //     U.BPTen,
+            //     CASE 
+            //            WHEN DATEPART(dw, BCNGay) = 1 THEN 'CN' 
+            //            ELSE convert(nvarchar(10),DATEPART(dw, BCNGay)) 
+            //        END AS Thu,
+            //     CONVERT(VARCHAR(10), BC.BCNgay, 120) AS BCNgay,
+            //     BC.BCTGDen,
+            //     BC.BCTGVe,
+            //        BC.BCGhiChu,
+            //     CASE
+            //      --Chủ nhật
+            //      WHEN DATEPART(dw, BCNGay) = 1 THEN 
+            //       CASE
+            //        WHEN BCTGDen IS NOT NULL AND BCTGVe IS NOT NULL AND BCGhiChu = 'CN' THEN 'CN_X'
+            //                    ELSE 'CN'
+            //       END
+
+            //      -- ngày thường
+            //      ELSE
+            //       CASE
+            //                    WHEN BC.BCGhiChu IS NOT NULL AND BC.BCGhiChu != '' THEN BC.BCGhiChu
+            //        WHEN (BC.BCTGLamNgay + BC.BCTGLamToi) = BC.BCTGQuyDinh THEN 'X'
+            //        WHEN BC.BCTGDen IS NOT NULL AND BC.BCTGVe IS NOT NULL THEN 
+            //         CASE 
+            //          WHEN 1.0 * CEILING(1.0 * (BCTGQuyDinh - (BCTGLamNgay + BCTGLamToi)) / 30.0) * 30 / NULLIF(BCTGQuyDinh, 0) = 1 THEN '?'
+            //          ELSE RTRIM(FORMAT(1.0 * CEILING(1.0 * (BCTGQuyDinh - (BCTGLamNgay + BCTGLamToi)) / 30.0) * 30 / NULLIF(BCTGQuyDinh, 0),'0.####'))
+            //         END
+            //        ELSE
+            //         '?'
+            //       END
+            //     END AS Results
+            //    FROM Users AS U
+            //    LEFT JOIN {Global.DbViClock}.dbo.tblBaoCao AS BC 
+            //        ON BC.BCMaNV = U.NVMa AND BCNgay BETWEEN @FromDate AND @ToDate AND BC.BCNgay IS NOT NULL 
+            //    WHERE DATEPART(dw, BC.BCNgay) IS NOT NULL
+            //";
+
+            //if (!string.IsNullOrWhiteSpace(keySearch))
+            //{
+            //    sql += " AND U.NVMaNV = @KeySearch";
+            //}
+
+            //sql += " ORDER BY U.NVMaNV ASC";
+
+            //var param = new
+            //{
+            //    Page = (int)page,
+            //    PageSize = (int)pageSize,
+            //    Month = month,
+            //    Year = year,
+            //    FromDate = fromDate,
+            //    ToDate = toDate,
+            //    ids = orgUnitIds,
+            //    KeySearch = keySearch
+            //};
+
+            //var result = (await connection.QueryAsync<GetUserTimeKeepingResponse>(sql, param)).ToList();
+
+            //var finalRowData = new List<RawAttendanceData>();
+
+            //var userGroups = result.GroupBy(r => r.NVMaNV);
+
+            //foreach (var group in userGroups)
+            //{
+            //    var originalDataRow = group.FirstOrDefault(r => r.Datetime == null);
+
+            //    if (originalDataRow == null) continue;
+
+            //    var exportRow = new RawAttendanceData
+            //    {
+            //        UserCode = originalDataRow.NVMaNV ?? "",
+            //        FullName = originalDataRow.NVHoTen ?? "",
+            //        DepartmentName = originalDataRow.BoPhan ?? "",
+            //        JoinDate = originalDataRow.NVNgayVao2.ToString("dd/MM/yyyy"),
+            //        DayValues = new Dictionary<int, string>()
+            //    };
+
+            //    // Tạo Dictionary để tra cứu nhanh các giá trị custom theo ngày
+            //    var customValuesByDay = group
+            //        .Where(r => r.Datetime != null)
+            //        .ToDictionary(r => r.Datetime.Value.Day, r => r.CurrentValue);
+
+            //    // **Điểm tối ưu**: Tạo Dictionary cho các giá trị gốc từ cột ATT (tránh dùng Reflection nhiều lần)
+            //    var originalAttValues = new Dictionary<int, string>();
+            //    for (int day = 1; day <= dayInMonth; day++)
+            //    {
+            //        var property = originalDataRow.GetType().GetProperty($"ATT{day}");
+            //        originalAttValues[day] = property?.GetValue(originalDataRow)?.ToString() ?? "";
+            //    }
+
+            //    // Vòng lặp chính, chỉ dùng các Dictionary để tra cứu nhanh
+            //    for (int day = 1; day <= dayInMonth; day++)
+            //    {
+            //        string displayValue = "";
+
+            //        if (customValuesByDay.TryGetValue(day, out var customValue))
+            //        {
+            //            displayValue = customValue;
+            //        }
+            //        else
+            //        {
+            //            originalAttValues.TryGetValue(day, out displayValue);
+            //        }
+
+            //        exportRow.DayValues[day] = displayValue;
+            //    }
+
+            //    finalRowData.Add(exportRow);
+            //}
+
+            //var startFindHistory = new DateTimeOffset(year, month, 1, 0, 0, 0, TimeSpan.FromHours(7));
+            //var endFindHistory = startFindHistory.AddMonths(1);
+
+            ////user của những người được chấm công
+            //var userCodes = result.Select(x => x.NVMaNV).Distinct().ToList();
+
+            //var timeAttendanceEditHistories = await _context.TimeAttendanceEditHistories
+            //    .Where(e =>
+            //        userCodes.Contains(e.UserCode) && 
+            //        e.Datetime >= startFindHistory && 
+            //        e.Datetime < endFindHistory)
+            //    .ToListAsync();
+
+            //var timeAttendanceDict = timeAttendanceEditHistories
+            //    .ToDictionary(
+            //        e => (
+            //            e.UserCode,
+            //            e.Datetime.HasValue ? e.Datetime.Value.Date : default
+            //        ),
+            //        e => new
+            //        {
+            //            e.CurrentValue,
+            //            e.IsSentToHR
+            //        }
+            //    );
+
+            //var groupedResult = result
+            //    .GroupBy(x => new { x.NVMaNV, x.NVHoTen, x.BPTen })
+            //    .Select(g => new GroupedUserTimeKeeping
+            //    {
+            //        NVMaNV = g.Key.NVMaNV,
+            //        NVHoTen = g.Key.NVHoTen,
+            //        BPTen = g.Key.BPTen,
+            //        DataTimeKeeping = g.Select(x =>
+            //        {
+            //            var CustomValueTimeAttendance = timeAttendanceDict.TryGetValue((g.Key.NVMaNV, DateTime.ParseExact(x?.BCNgay ?? "", "yyyy-MM-dd", CultureInfo.InvariantCulture).Date), out var value) ? value : null;
+
+            //            return new UserDailyRecord
+            //            {
+            //                thu = x.Thu,
+            //                bcNgay = x.BCNgay,
+            //                vao = x.BCTGDen,
+            //                ra = x.BCTGVe,
+            //                result = x.Results,
+            //                bcGhiChu = x.BCGhiChu,
+            //                CustomValueTimeAttendance = CustomValueTimeAttendance?.CurrentValue ?? null,
+            //                IsSentToHR = CustomValueTimeAttendance?.IsSentToHR ?? false,
+            //            };
+            //        }).ToList()
+            //    }).ToList();
+
+            //var finalResult = new PagedResults<GroupedUserTimeKeeping>
+            //{
+            //    Data = groupedResult,
+            //    TotalItems = groupedResult.Count,
+            //    TotalPages = totalPages
+            //};
+
+            //return finalResult;
+
+            return null;
         }
 
         //gửi chấm công cho bộ phận HR
