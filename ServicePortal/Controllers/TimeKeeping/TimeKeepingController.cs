@@ -33,7 +33,7 @@ namespace ServicePortal.Controllers.TimeKeeping
         {
             var results = await _timeKeepingService.GetManagementTimeKeeping(request);
 
-            var response = new PageResponse<GroupedUserTimeKeeping>(
+            var response = new PageResponse<dynamic>(
                 200,
                 "Success",
                 results.Data,

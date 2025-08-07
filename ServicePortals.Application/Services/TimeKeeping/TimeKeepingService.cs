@@ -1,5 +1,5 @@
 ﻿using System.Data;
-using System.Globalization;
+using System.Dynamic;
 using ClosedXML.Excel;
 using Dapper;
 using Microsoft.Data.SqlClient;
@@ -8,8 +8,6 @@ using ServicePortals.Application;
 using ServicePortals.Application.Dtos.LeaveRequest.Requests;
 using ServicePortals.Application.Dtos.TimeKeeping;
 using ServicePortals.Application.Dtos.TimeKeeping.Requests;
-using ServicePortals.Application.Dtos.TimeKeeping.Responses;
-using ServicePortals.Application.Dtos.User.Responses;
 using ServicePortals.Application.Interfaces.LeaveRequest;
 using ServicePortals.Application.Interfaces.TimeKeeping;
 using ServicePortals.Domain.Entities;
@@ -19,7 +17,6 @@ using ServicePortals.Infrastructure.Email;
 using ServicePortals.Infrastructure.Excel;
 using ServicePortals.Infrastructure.Helpers;
 using ServicePortals.Shared.Exceptions;
-using ServicePortals.Shared.SharedDto;
 
 namespace ServicePortals.Infrastructure.Services.TimeKeeping
 {
@@ -66,7 +63,7 @@ namespace ServicePortals.Infrastructure.Services.TimeKeeping
         }
 
         //màn quản lý chấm công, người quản lý chấm công quản lý chấm công của người khác
-        public async Task<PagedResults<GroupedUserTimeKeeping>> GetManagementTimeKeeping(GetManagementTimeKeepingRequest request)
+        public async Task<PagedResults<dynamic>> GetManagementTimeKeeping(GetManagementTimeKeepingRequest request)
         {
             using var connection = _context.Database.GetDbConnection();
             if (connection.State != ConnectionState.Open)
@@ -85,7 +82,7 @@ namespace ServicePortals.Infrastructure.Services.TimeKeeping
 
             if (!isTableExists)
             {
-                return new PagedResults<GroupedUserTimeKeeping>
+                return new PagedResults<dynamic>
                 {
                     Data = [],
                     TotalItems = 0,
@@ -141,7 +138,7 @@ namespace ServicePortals.Infrastructure.Services.TimeKeeping
 
             if (orgUnitIds.Count == 0)
             {
-                return new PagedResults<GroupedUserTimeKeeping>
+                return new PagedResults<dynamic>
                 {
                     Data = [],
                     TotalItems = 0,
@@ -156,138 +153,42 @@ namespace ServicePortals.Infrastructure.Services.TimeKeeping
 
             var totalPages = (int)Math.Ceiling((double)countUser / pageSize);
 
-            var sql = $@"
-                WITH Users AS (
-                    SELECT
-                        NV.NVMa, NV.NVMaNV, {Global.DbViClock}.dbo.funTCVN2Unicode(NV.NVHoTen) AS NVHoTen, BP.BPTen
-                    FROM {Global.DbViClock}.dbo.tblNhanVien AS NV
-                    LEFT JOIN {Global.DbViClock}.dbo.tblBoPhan AS BP ON NV.NVMaBP = BP.BPMa AND NV.NVNgayRa > GETDATE() AND NV.OrgUnitID IS NOT NULL
-                    WHERE NV.OrgUnitID IN @ids
-                        AND (@KeySearch = '' OR NV.NVMaNV = @KeySearch)
-                    ORDER BY NV.NVMa ASC
-                    OFFSET (@Page - 1) * @PageSize ROWS
-                    FETCH NEXT @PageSize ROWS ONLY
-                )
+            var q = $@"
                 SELECT 
-	                U.NVMaNV,
-	                U.NVHoTen,
-	                U.BPTen,
-	                CASE 
-                        WHEN DATEPART(dw, BCNGay) = 1 THEN 'CN' 
-                        ELSE convert(nvarchar(10),DATEPART(dw, BCNGay)) 
-                    END AS Thu,
-	                CONVERT(VARCHAR(10), BC.BCNgay, 120) AS BCNgay,
-	                BC.BCTGDen,
-	                BC.BCTGVe,
-                    BC.BCGhiChu,
-	                CASE
-		                --Chủ nhật
-		                WHEN DATEPART(dw, BCNGay) = 1 THEN 
-			                CASE
-				                WHEN BCTGDen IS NOT NULL AND BCTGVe IS NOT NULL AND BCGhiChu = 'CN' THEN 'CN_X'
-                                ELSE 'CN'
-			                END
-
-		                -- ngày thường
-		                ELSE
-			                CASE
-                                WHEN BC.BCGhiChu IS NOT NULL AND BC.BCGhiChu != '' THEN BC.BCGhiChu
-				                WHEN (BC.BCTGLamNgay + BC.BCTGLamToi) = BC.BCTGQuyDinh THEN 'X'
-				                WHEN BC.BCTGDen IS NOT NULL AND BC.BCTGVe IS NOT NULL THEN 
-					                CASE 
-						                WHEN 1.0 * CEILING(1.0 * (BCTGQuyDinh - (BCTGLamNgay + BCTGLamToi)) / 30.0) * 30 / NULLIF(BCTGQuyDinh, 0) = 1 THEN '?'
-						                ELSE RTRIM(FORMAT(1.0 * CEILING(1.0 * (BCTGQuyDinh - (BCTGLamNgay + BCTGLamToi)) / 30.0) * 30 / NULLIF(BCTGQuyDinh, 0),'0.####'))
-					                END
-				                ELSE
-					                '?'
-			                END
-	                END AS Results
-                FROM Users AS U
-                LEFT JOIN {Global.DbViClock}.dbo.tblBaoCao AS BC 
-                    ON BC.BCMaNV = U.NVMa AND BCNgay BETWEEN @FromDate AND @ToDate AND BC.BCNgay IS NOT NULL 
-                WHERE DATEPART(dw, BC.BCNgay) IS NOT NULL
+                    TA.Datetime, TA.CurrentValue, {Global.DbViClock}.dbo.funTCVN2Unicode(BC.NVHoTen) AS Format_NVHoTen, BC.* 
+                FROM {Global.DbViClock}.dbo.tblNhanVien AS NV
+                LEFT JOIN {tblName} AS BC ON NV.NVMaNV = BC.NVMaNV
+                LEFT JOIN {Global.DbWeb}.dbo.time_attendance_edit_histories AS TA ON TA.UserCode = BC.NVMaNV AND TA.Datetime BETWEEN @FromDate AND @ToDate
+                WHERE 1 = 1 AND NV.OrgUnitID IN @OrgUnitIds AND NV.NVNgayRa > GETDATE() AND BC.NVMaNV IS NOT NULL
             ";
 
             if (!string.IsNullOrWhiteSpace(keySearch))
             {
-                sql += " AND U.NVMaNV = @KeySearch";
+                q += " AND BC.NVMaNV = @KeySearch";
             }
 
-            sql += " ORDER BY U.NVMaNV ASC";
+            q += " ORDER BY BC.NVMaNV OFFSET (@Page - 1) * @PageSize ROWS FETCH NEXT @PageSize ROWS ONLY";
 
             var param = new
             {
                 Page = (int)page,
                 PageSize = (int)pageSize,
-                Month = month,
-                Year = year,
                 FromDate = fromDate,
                 ToDate = toDate,
-                ids = orgUnitIds,
+                OrgUnitIds = orgUnitIds,
                 KeySearch = keySearch
             };
 
-            var result = (await connection.QueryAsync<GetUserTimeKeepingResponse>(sql, param)).ToList();
+            var rawData = (await connection.QueryAsync<dynamic>(q, param)).ToList();
 
-            var startFindHistory = new DateTimeOffset(year, month, 1, 0, 0, 0, TimeSpan.FromHours(7));
-            var endFindHistory = startFindHistory.AddMonths(1);
+            var finalResults = FormatDataGetUserAndTimeKeeping(rawData, dayInMonth);
 
-            //user của những người được chấm công
-            var userCodes = result.Select(x => x.NVMaNV).Distinct().ToList();
-
-            var timeAttendanceEditHistories = await _context.TimeAttendanceEditHistories
-                .Where(e =>
-                    userCodes.Contains(e.UserCode) && 
-                    e.Datetime >= startFindHistory && 
-                    e.Datetime < endFindHistory)
-                .ToListAsync();
-
-            var timeAttendanceDict = timeAttendanceEditHistories
-                .ToDictionary(
-                    e => (
-                        e.UserCode,
-                        e.Datetime.HasValue ? e.Datetime.Value.Date : default
-                    ),
-                    e => new
-                    {
-                        e.CurrentValue,
-                        e.IsSentToHR
-                    }
-                );
-
-            var groupedResult = result
-                .GroupBy(x => new { x.NVMaNV, x.NVHoTen, x.BPTen })
-                .Select(g => new GroupedUserTimeKeeping
-                {
-                    NVMaNV = g.Key.NVMaNV,
-                    NVHoTen = g.Key.NVHoTen,
-                    BPTen = g.Key.BPTen,
-                    DataTimeKeeping = g.Select(x =>
-                    {
-                        var CustomValueTimeAttendance = timeAttendanceDict.TryGetValue((g.Key.NVMaNV, DateTime.ParseExact(x?.BCNgay ?? "", "yyyy-MM-dd", CultureInfo.InvariantCulture).Date), out var value) ? value : null;
-                        
-                        return new UserDailyRecord
-                        {
-                            thu = x.Thu,
-                            bcNgay = x.BCNgay,
-                            vao = x.BCTGDen,
-                            ra = x.BCTGVe,
-                            result = x.Results,
-                            bcGhiChu = x.BCGhiChu,
-                            CustomValueTimeAttendance = CustomValueTimeAttendance?.CurrentValue ?? null,
-                            IsSentToHR = CustomValueTimeAttendance?.IsSentToHR ?? false,
-                        };
-                    }).ToList()
-                }).ToList();
-
-            var finalResult = new PagedResults<GroupedUserTimeKeeping>
+            return new PagedResults<dynamic>
             {
-                Data = groupedResult,
-                TotalItems = groupedResult.Count,
+                Data = finalResults,
+                TotalItems = finalResults.Count(),
                 TotalPages = totalPages
             };
-
-            return finalResult;
         }
 
         //gửi chấm công cho bộ phận HR
@@ -301,19 +202,9 @@ namespace ServicePortals.Infrastructure.Services.TimeKeeping
             string fromDate = $"{year}-{month.ToString("D2")}-01";
             string toDate = $"{year}-{month.ToString("D2")}-{daysInMonth}";
 
+            string tblName = $"{Global.DbViClock}.dbo.BaoCaoVS5{year}_{month:D2}";
+
             string userCodeSendConfirm = request.UserCode ?? "";
-
-            var listEditTimeKeeping = await _context.TimeAttendanceEditHistories.Where(e => e.UserCodeUpdate == userCodeSendConfirm && e.IsSentToHR == false).ToListAsync();
-
-            foreach (var item in listEditTimeKeeping)
-            {
-                item.IsSentToHR = true;
-            }
-
-            _context.TimeAttendanceEditHistories.UpdateRange(listEditTimeKeeping);
-            await _context.SaveChangesAsync();
-
-            byte[] excelFileEditHistoryTimeKeeping = _excelService.GenerateExcelHistoryEditTimeKeeping(listEditTimeKeeping);
 
             using var connection = _context.Database.GetDbConnection();
             if (connection.State != ConnectionState.Open)
@@ -321,63 +212,57 @@ namespace ServicePortals.Infrastructure.Services.TimeKeeping
                 await connection.OpenAsync();
             }
 
-            string sqlCombinedQuery = $@"
+            string sqlOrgUnitIdQuery = $@"
                 WITH RecursiveOrg AS (
-                    SELECT o.id
-                    FROM user_mng_org_unit_id as um
-                    INNER JOIN {Global.DbWeb}.dbo.org_units as o
+                    SELECT o.id FROM user_mng_org_unit_id as um
+                    INNER JOIN [{Global.DbWeb}].dbo.org_units as o
                         ON um.OrgUnitId = o.id
                     WHERE um.UserCode = @userCode AND um.ManagementType = @type
                     UNION ALL
-                    SELECT o.id
-                    FROM {Global.DbWeb}.dbo.org_units o
-                    INNER JOIN RecursiveOrg ro ON o.ParentOrgUnitId = ro.id
-                ),
-                DistinctOrgUnits AS (
-                    SELECT DISTINCT id FROM RecursiveOrg
+                    SELECT o.id FROM  {Global.DbWeb}.dbo.org_units o INNER JOIN RecursiveOrg ro ON o.ParentOrgUnitId = ro.id
                 )
-                SELECT
-                    NV.NVMa,
-                    NV.NVMaNV,
-                    {Global.DbViClock}.dbo.funTCVN2Unicode(NV.NVHoTen) AS NVHoTen,
-                    NV.OrgUnitID,
-                    BP.BPTen,
-                    NV.NVNgayVao
-                FROM {Global.DbViClock}.[dbo].[tblNhanVien] AS NV
-                LEFT JOIN {Global.DbViClock}.[dbo].[tblBoPhan] AS BP ON BP.BPMa = NV.NVMaBP
-                JOIN DistinctOrgUnits DOU ON NV.OrgUnitID = DOU.id
+                SELECT DISTINCT id FROM RecursiveOrg
+            ";
+            var orgUnitIds = (await connection.QueryAsync<int>(sqlOrgUnitIdQuery, new { userCode = request.UserCode, type = "MNG_TIME_KEEPING"})).ToList();
+
+            var listEditTimeKeeping = await _context.TimeAttendanceEditHistories.Where(e => e.UserCodeUpdate == userCodeSendConfirm && e.IsSentToHR == false).ToListAsync();
+
+            //update edit timekeeping to status send to HR
+            await _context.TimeAttendanceEditHistories.Where(e => e.UserCodeUpdate == userCodeSendConfirm && e.IsSentToHR == false).ExecuteUpdateAsync(s => s.SetProperty(e => e.IsSentToHR, true));
+
+            //export excel list edit timekeeping
+            byte[] excelFileEditHistoryTimeKeeping = _excelService.GenerateExcelHistoryEditTimeKeeping(listEditTimeKeeping);
+
+            var q = $@"
+                SELECT 
+                    TA.Datetime, TA.CurrentValue, {Global.DbViClock}.dbo.funTCVN2Unicode(BC.NVHoTen) AS Format_NVHoTen, BC.* 
+                FROM {Global.DbViClock}.dbo.tblNhanVien AS NV
+                LEFT JOIN {tblName} AS BC ON NV.NVMaNV = BC.NVMaNV
+                LEFT JOIN {Global.DbWeb}.dbo.time_attendance_edit_histories AS TA ON TA.UserCode = BC.NVMaNV AND TA.Datetime BETWEEN @FromDate AND @ToDate
+                WHERE 1 = 1 AND NV.OrgUnitID IN @OrgUnitIds AND NV.NVNgayRa > GETDATE() AND BC.NVMaNV IS NOT NULL
             ";
 
-            var paramCombined = new
+            var param = new
             {
-                userCode = request.UserCode,
-                type = "MNG_TIME_KEEPING",
+                FromDate = fromDate,
+                ToDate = toDate,
+                OrgUnitIds = orgUnitIds,
             };
 
-            var allUsers = await connection.QueryAsync<GetMultiUserViClockByOrgUnitIdConfirmTimeKeepingResponse>(sqlCombinedQuery, paramCombined, commandTimeout: 900);
+            var rawData = (await connection.QueryAsync<dynamic>(q, param, commandTimeout: 900)).ToList();
 
-            int totalUsers = allUsers.Count();
-            int totalBatches = (int)Math.Ceiling((double)totalUsers / batchSize);
+            var finalResults = FormatDataGetUserAndTimeKeeping(rawData, daysInMonth);
+
+            int total = finalResults.Count;
+
+            int totalBatches = (int)Math.Ceiling((double)total / batchSize);
 
             using var workbook = new XLWorkbook();
+
             for (int i = 0; i < totalBatches; i++)
             {
-                var currentBatch = allUsers.Skip(i * batchSize).Take(batchSize).ToList();
-                bool isFirstBatch = (i == 0);
-
-                var userIds = currentBatch.Select(u => u.NVMa).Distinct().ToList();
-
-                var sqlGetTimeekping = StringSqlGetTimeekping();
-
-                var attendanceLists = (await connection.QueryAsync<GetUserTimeKeepingResponse>(sqlGetTimeekping, new
-                {
-                    FromDate = fromDate,
-                    ToDate = toDate,
-                    UserIds = userIds
-                }, commandTimeout: 900)).ToList();
-
-                var exportRows = BuildExportRows(currentBatch, attendanceLists, daysInMonth);
-                _excelService.GenerateExcelManagerConfirmToHR(workbook, exportRows, isFirstBatch, daysInMonth);
+                var currentBatch = finalResults.Skip(i * batchSize).Take(batchSize).ToList();
+                _excelService.GenerateExcelManagerConfirmToHR(workbook, currentBatch, i == 0, daysInMonth, month, year);
             }
 
             if (connection.State == ConnectionState.Open)
@@ -398,6 +283,17 @@ namespace ServicePortals.Infrastructure.Services.TimeKeeping
                 ($"DanhSachChinhSua.xlsx", excelFileEditHistoryTimeKeeping)
             ];
 
+            //string outputDirectory = Path.Combine(Directory.GetCurrentDirectory(), "TestOutput");
+            //Directory.CreateDirectory(outputDirectory);
+
+            //foreach (var attachment in attachments)
+            //{
+            //    string filePath = Path.Combine(outputDirectory, attachment.FileName);
+            //    await System.IO.File.WriteAllBytesAsync(filePath, attachment.FileBytes);
+            //}
+
+            //return true;
+
             var hrHavePermissionMngLeaveRequest = await _leaveRequestService.GetHrWithManagementLeavePermission();
             var emailUserSend = await _context.Users.FirstOrDefaultAsync(e => e.UserCode == userCodeSendConfirm);
             string bodyMail = $@"Dear HR Team, Please find attached the excel file containing the staff attendance list [{request.Month} - {request.Year}]";
@@ -414,109 +310,61 @@ namespace ServicePortals.Infrastructure.Services.TimeKeeping
             return true;
         }
 
-        /// <summary>
-        /// Build export rows from users and attendance data
-        /// </summary>
-        public static List<AttendanceExportRow> BuildExportRows(
-            List<GetMultiUserViClockByOrgUnitIdConfirmTimeKeepingResponse> users,
-            List<GetUserTimeKeepingResponse> attendances,
-            int daysInMonth)
+        public static List<dynamic> FormatDataGetUserAndTimeKeeping(List<dynamic> rawData, int dayInMonth)
         {
-            var exportRows = new List<AttendanceExportRow>();
+            var finalResults = new List<dynamic>();
 
-            foreach (var user in users)
+            var userGroups = rawData.GroupBy(r => r.NVMaNV);
+
+            foreach (var group in userGroups)
             {
-                var row = new AttendanceExportRow
+                var originalDataRow = group.FirstOrDefault(r => r.Datetime == null);
+
+                if (originalDataRow == null)
                 {
-                    UserCode = user.NVMaNV ?? "",
-                    FullName = user.NVHoTen ?? "",
-                    DepartmentName = user.BPTen ?? "",
-                    JoinDate = user.NVNgayVao.HasValue ? user.NVNgayVao.Value.ToString("dd/MM/yyyy") : "",
-                    DayValues = new Dictionary<int, string>()
-                };
-
-                var userAtt = attendances
-                    .Where(a => a.NVMaNV == user.NVMaNV)
-                    .ToDictionary(
-                        a => DateTime.Parse(a.BCNgay!).Day,
-                        a => (a.Results ?? "", a.CustomResult ?? ""));
-
-                for (int day = 1; day <= daysInMonth; day++)
-                {
-                    if (userAtt.TryGetValue(day, out var val))
+                    originalDataRow = group.FirstOrDefault();
+                    if (originalDataRow == null)
                     {
-                        var (results, custom) = val;
-                        string displayValue = "";
-
-                        if (!string.IsNullOrWhiteSpace(custom))
-                        {
-                            displayValue = custom;
-                        }
-                        else if (!string.IsNullOrWhiteSpace(results))
-                        {
-                            displayValue = results;
-                        }
-
-                        row.DayValues[day] = displayValue;
-                    }
-                    else
-                    {
-                        row.DayValues[day] = "";
+                        continue;
                     }
                 }
 
-                exportRows.Add(row);
+                dynamic displayRow = new ExpandoObject();
+                var displayRowDict = (IDictionary<string, object>)displayRow;
+
+                displayRowDict["UserCode"] = originalDataRow.NVMaNV ?? "";
+                displayRowDict["Name"] = originalDataRow.Format_NVHoTen ?? "";
+                displayRowDict["Department"] = originalDataRow.BoPhan ?? "";
+
+                var customValuesByDay = group.Where(r => r.Datetime != null).ToDictionary(r => r.Datetime.Day, r => r.CurrentValue);
+
+                var fieldPrefixes = new[] { "ATT", "Den", "Ve", "WH", "OT" };
+                for (int day = 1; day <= dayInMonth; day++)
+                {
+                    foreach (var prefix in fieldPrefixes)
+                    {
+                        string fieldName = $"{prefix}{day}";
+                        string finalValue = "";
+
+                        var originalDataDict = (IDictionary<string, object>)originalDataRow;
+
+                        if (prefix == "ATT" && customValuesByDay.TryGetValue(day, out var customValue))
+                        {
+                            finalValue = customValue;
+                        }
+                        else
+                        {
+                            originalDataDict.TryGetValue(fieldName, out var originalValue);
+                            finalValue = originalValue?.ToString() ?? "";
+                        }
+
+                        displayRowDict[fieldName] = finalValue;
+                    }
+                }
+                finalResults.Add(displayRow);
             }
 
-            return exportRows;
-        }
-
-        public string StringSqlGetTimeekping()
-        {
-            var sql = $@"
-                SELECT 
-	                BC.BCMaNV,
-                    NV.NVMaNV,
-                    CASE 
-                        WHEN DATEPART(dw, BC.BCNGay) = 1 THEN 'CN' 
-                        ELSE convert(nvarchar(10),DATEPART(dw, BC.BCNGay)) 
-                    END AS Thu,
-                    CONVERT(VARCHAR(10),BC.BCNgay, 120) AS BCNgay,
-                    BC.BCTGDen,
-                    BC.BCTGVe,
-                    BC.BCGhiChu,
-                    CASE
-                        --Chủ nhật
-                        WHEN DATEPART(dw, BC.BCNGay) = 1 THEN 
-                            CASE
-                                WHEN BC.BCTGDen IS NOT NULL AND BC.BCTGVe IS NOT NULL AND BC.BCGhiChu = 'CN' THEN 'CN_X'
-                                ELSE 'CN'
-                            END
-
-                        -- ngày thường
-                        ELSE
-                            CASE
-                                WHEN BC.BCGhiChu IS NOT NULL AND BC.BCGhiChu != '' THEN BCGhiChu
-                                WHEN (BC.BCTGLamNgay + BC.BCTGLamToi) = BC.BCTGQuyDinh THEN 'X'
-                                WHEN BC.BCTGDen IS NOT NULL AND BC.BCTGVe IS NOT NULL THEN 
-				                                CASE 
-					                                WHEN 1.0 * CEILING(1.0 * (BC.BCTGQuyDinh - (BC.BCTGLamNgay + BC.BCTGLamToi)) / 30.0) * 30 / NULLIF(BC.BCTGQuyDinh, 0) = 1 THEN '?'
-					                                ELSE RTRIM(FORMAT(1.0 * CEILING(1.0 * (BC.BCTGQuyDinh - (BC.BCTGLamNgay + BC.BCTGLamToi)) / 30.0) * 30 / NULLIF(BC.BCTGQuyDinh, 0),'0.####'))
-				                                END
-                                ELSE
-				                                '?'
-                            END
-                    END AS Results,
-	                H.CurrentValue AS CustomResult,
-	                H.IsSentToHR
-                FROM {Global.DbViClock}.dbo.tblBaoCao AS BC
-                LEFT JOIN {Global.DbViClock}.dbo.tblNhanVien AS NV ON BC.BCMaNV = NV.NVMa
-                LEFT JOIN {Global.DbWeb}.dbo.time_attendance_edit_histories AS H ON BC.BCMaNV = NV.NVMa AND BC.BCNgay = CAST(H.Datetime AS DATE) AND  NV.NVMaNV = H.UserCode
-                WHERE DATEPART(dw, BC.BCNgay) IS NOT NULL AND BC.BCNgay BETWEEN @FromDate AND @ToDate AND BC.BCNgay IS NOT NULL
-                AND BC.BCMaNV IN @UserIds
-            ";
-
-            return sql;
+            return finalResults;
         }
 
         //Cập nhật mới những người có quyền quản lý chấm công
