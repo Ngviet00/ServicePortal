@@ -1,13 +1,12 @@
 ﻿using ServicePortals.Application.Dtos.LeaveRequest.Requests;
 using ServicePortals.Application.Dtos.TimeKeeping;
 using ServicePortals.Application.Dtos.TimeKeeping.Requests;
-using ServicePortals.Application.Dtos.TimeKeeping.Responses;
 namespace ServicePortals.Application.Interfaces.TimeKeeping
 {
     public interface ITimeKeepingService
     {
         Task<IEnumerable<object>> GetPersonalTimeKeeping(GetPersonalTimeKeepingRequest request);
-        Task<PagedResults<GroupedUserTimeKeeping>> GetManagementTimeKeeping(GetManagementTimeKeepingRequest request);
+        Task<PagedResults<dynamic>> GetManagementTimeKeeping(GetManagementTimeKeepingRequest request);
 
         Task<object> UpdateUserHavePermissionMngTimeKeeping(List<string> userCodes);
         Task<object> GetUserHavePermissionMngTimeKeeping();

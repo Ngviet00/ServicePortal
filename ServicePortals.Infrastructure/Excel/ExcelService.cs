@@ -9,7 +9,6 @@ using System.Data;
 using ServicePortals.Shared.SharedDto;
 using ServicePortals.Domain.Entities;
 using System.Globalization;
-using DocumentFormat.OpenXml.Spreadsheet;
 
 namespace ServicePortals.Infrastructure.Excel
 {
@@ -220,10 +219,11 @@ namespace ServicePortals.Infrastructure.Excel
             }
         }
 
-        public void GenerateExcelManagerConfirmToHR(XLWorkbook workbook, List<AttendanceExportRow> rows, bool isFirstBatch, int daysInMonth)
+        public void GenerateExcelManagerConfirmToHR(XLWorkbook workbook, List<dynamic> rows, bool isFirstBatch, int daysInMonth, int month, int year)
         {
             var worksheet = workbook.Worksheets.FirstOrDefault() ?? workbook.AddWorksheet("CHẤM CÔNG");
             worksheet.TabColor = XLColor.Green;
+            int startColumn = 3;
 
             int startRow = worksheet.LastRowUsed()?.RowNumber() + 1 ?? 1;
 
@@ -232,22 +232,20 @@ namespace ServicePortals.Infrastructure.Excel
                 worksheet.Cell(startRow, 1).Value = "Mã Nhân Viên";
                 worksheet.Cell(startRow, 2).Value = "Họ Tên";
                 worksheet.Cell(startRow, 3).Value = "Bộ Phận";
-                worksheet.Cell(startRow, 4).Value = "Ngày vào làm";
 
                 worksheet.Column(1).Width = 12;
                 worksheet.Column(2).Width = 18;
                 worksheet.Column(3).Width = 13;
-                worksheet.Column(4).Width = 14;
 
                 for (int day = 1; day <= daysInMonth; day++)
                 {
-                    worksheet.Cell(startRow, 4 + day).Value = $"{day:D2}";
+                    worksheet.Cell(startRow, startColumn + day).Value = $"{day:D2}";
                 }
 
-                worksheet.Range(startRow, 1, startRow, daysInMonth + 4).Style.Border.SetOutsideBorder(XLBorderStyleValues.Thin);
-                worksheet.Range(startRow, 1, startRow, daysInMonth + 4).Style.Border.SetInsideBorder(XLBorderStyleValues.Thin);
+                worksheet.Range(startRow, 1, startRow, daysInMonth + startColumn).Style.Border.SetOutsideBorder(XLBorderStyleValues.Thin);
+                worksheet.Range(startRow, 1, startRow, daysInMonth + startColumn).Style.Border.SetInsideBorder(XLBorderStyleValues.Thin);
 
-                worksheet.Columns(5, daysInMonth + 5).Width = 6;
+                worksheet.Columns(5, daysInMonth + startColumn + 1).Width = 6;
 
                 startRow++;
             }
@@ -261,42 +259,75 @@ namespace ServicePortals.Infrastructure.Excel
 
             foreach (var row in rows)
             {
+                var rowAsDict = (IDictionary<string, object>)row;
+
                 int col = 1;
                 worksheet.Cell(startRow, col++).Value = row.UserCode;
-                worksheet.Cell(startRow, col++).Value = row.FullName;
-                worksheet.Cell(startRow, col++).Value = row.DepartmentName;
-                worksheet.Cell(startRow, col++).Value = row.JoinDate;
+                worksheet.Cell(startRow, col++).Value = row.Name;
+                worksheet.Cell(startRow, col++).Value = row.Department;
+
 
                 for (int d = 1; d <= daysInMonth; d++)
                 {
-                    var cellValue = row.DayValues.GetValueOrDefault(d, "");
+                    string bgColor = "#FFFFFF";
+                    string textColor = "#000000";
+                    bool isSunday = false;
+
+                    string value = rowAsDict[$"ATT{d}"]?.ToString() ?? "";
+                    string den = rowAsDict[$"Den{d}"]?.ToString() ?? "";
+                    string ve = rowAsDict[$"Ve{d}"]?.ToString() ?? "";
+                    string wh = rowAsDict[$"WH{d}"]?.ToString() ?? "";
+                    string ot = rowAsDict[$"OT{d}"]?.ToString() ?? "";
+
                     var currentCell = worksheet.Cell(startRow, col);
 
-                    currentCell.Value = cellValue;
+                    isSunday = DateTime.TryParseExact($"{year}-{month:D2}-{d:D2}", "yyyy-MM-dd", null, System.Globalization.DateTimeStyles.None, out var dt) && dt.DayOfWeek == DayOfWeek.Sunday;
 
-                    bool isNumber = double.TryParse(cellValue, out _);
-                    if (!isNumber)
+                    if (value == "X")
                     {
-                        switch (cellValue)
+                        if (isSunday)
                         {
-                            case "SH":
-                                currentCell.Style.Fill.SetBackgroundColor(XLColor.LightGreen);
-                                break;
-                            case "CN":
-                                currentCell.Style.Fill.SetBackgroundColor(XLColor.Gray);
-                                break;
-                            case "X":
-                                break;
-                            case "CN_X":
-                                break;
-                            default:
-                                if (!string.IsNullOrWhiteSpace(cellValue))
-                                {
-                                    currentCell.Style.Fill.SetBackgroundColor(XLColor.Yellow);
-                                }
-                                break;
+                            value = "CN_X";
+                        }
+                        else if (float.Parse(wh) == 7 || float.Parse(wh) == 8)
+                        {
+                            value = "X";
+                        }
+                        else if (float.Parse(wh) < 8)
+                        {
+                            var calculateTime = Helper.CalculateRoundedTime(8 - float.Parse(wh));
+                            value = calculateTime == "1" ? "X" : calculateTime;
                         }
                     }
+                    else if (value == "SH")
+                    {
+                        bgColor = "#3AFD13";
+                    }
+                    else if (value == "CN")
+                    {
+                        if (den != "" && ve != "" && (float.Parse(wh) != 0 || float.Parse(ot) != 0))
+                        {
+                            value = "CN_X";
+                            bgColor = "#FFFFFF";
+                            textColor = "#000000";
+                        }
+                        else
+                        {
+                            bgColor = "#858585";
+                        }
+                    }
+                    else if (value == "ABS" || value == "MISS")
+                    {
+                        bgColor = "#FD5C5E";
+                    }
+                    else if (value != "X")
+                    {
+                        bgColor = "#ffe378";
+                    }
+
+                    currentCell.Value = value;
+                    currentCell.Style.Font.FontColor = XLColor.FromHtml(textColor);
+                    currentCell.Style.Fill.SetBackgroundColor(XLColor.FromHtml(bgColor));
 
                     col++;
                 }
@@ -306,8 +337,8 @@ namespace ServicePortals.Infrastructure.Excel
                 currentRow.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
                 currentRow.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
 
-                worksheet.Range(startRow, 1, startRow, daysInMonth + 4).Style.Border.SetOutsideBorder(XLBorderStyleValues.Thin);
-                worksheet.Range(startRow, 1, startRow, daysInMonth + 4).Style.Border.SetInsideBorder(XLBorderStyleValues.Thin);
+                worksheet.Range(startRow, 1, startRow, daysInMonth + startColumn).Style.Border.SetOutsideBorder(XLBorderStyleValues.Thin);
+                worksheet.Range(startRow, 1, startRow, daysInMonth + startColumn).Style.Border.SetInsideBorder(XLBorderStyleValues.Thin);
 
                 startRow++;
             }

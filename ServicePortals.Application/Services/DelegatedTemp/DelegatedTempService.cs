@@ -7,6 +7,7 @@ using ServicePortals.Application.Interfaces.DelegatedTemp;
 using ServicePortals.Application.Mappers;
 using ServicePortals.Infrastructure.Data;
 using ServicePortals.Infrastructure.Helpers;
+using ServicePortals.Shared.Exceptions;
 
 namespace ServicePortals.Application.Services.DelegatedTemp
 {
@@ -29,7 +30,12 @@ namespace ServicePortals.Application.Services.DelegatedTemp
             {
                 var connection = _context.Database.GetDbConnection();
 
-                mainOrgUnitId = await connection.QueryFirstOrDefaultAsync<int>($@"SELECT OrgUnitId FROM vs_new.dbo.tblNhanVien AS NV WHERE NV.NVMaNV = @MainUserCode", new { MainUserCode = userCodeMain });
+                mainOrgUnitId = await connection.QueryFirstOrDefaultAsync<int?>($@"SELECT OrgUnitId FROM vs_new.dbo.tblNhanVien AS NV WHERE NV.NVMaNV = @MainUserCode", new { MainUserCode = userCodeMain });
+            
+                if (mainOrgUnitId == null)
+                {
+                    throw new NotFoundException("Chưa thiết lập vị trí của người phụ trách, liên hệ team IT");
+                }
             }
 
             var newItem = new Domain.Entities.DelegatedTemp

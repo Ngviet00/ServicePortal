@@ -198,5 +198,21 @@ namespace ServicePortals.Infrastructure.Helpers
         }
 
         #endregion
+
+        public static string CalculateRoundedTime(double durationInHours)
+        {
+            if (durationInHours < 0)
+            {
+                throw new ArgumentException("Đầu vào không hợp lệ. Vui lòng cung cấp một số không âm.");
+            }
+
+            const double STANDARD_WORK_HOURS_PER_DAY = 8;
+            double doubledDuration = durationInHours * 2;
+            double ceiledDoubledDuration = Math.Ceiling(doubledDuration);
+            double roundedHours = ceiledDoubledDuration / 2;
+            double finalRoundedTime = roundedHours / STANDARD_WORK_HOURS_PER_DAY;
+
+            return finalRoundedTime.ToString();
+        }
     }
 }
