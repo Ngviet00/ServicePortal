@@ -279,7 +279,7 @@ namespace ServicePortals.Infrastructure.Services.TimeKeeping
 
             List<(string FileName, byte[] FileBytes)> attachments =
             [
-                ($"BangChamCong_2025-{request.Month:D2}.xlsx", excelBytes),
+                ($"BangChamCong_{year}-{request.Month:D2}.xlsx", excelBytes),
                 ($"DanhSachChinhSua.xlsx", excelFileEditHistoryTimeKeeping)
             ];
 
