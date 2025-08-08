@@ -2,7 +2,8 @@
 {
     public class CountWaitApprovalInSidebarResponse
     {
-        public int CountWaitLeaveRequest { get; set; } = 0;
-        public int CountWaitNotification { get; set; } = 0;
+        public int Total { get; set; } = 0;
+        public int TotalWaitApproval { get; set; } = 0;
+        public int TotalAssigned { get; set; } = 0;
     }
 }

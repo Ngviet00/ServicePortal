@@ -283,6 +283,7 @@ namespace ServicePortals.Application.Services.MemoNotification
             {
                 Id = Guid.NewGuid(),
                 ApplicationFormId = applicationForm.Id,
+                Code = Helper.GenerateFormCode("MNT"),
                 Title = request.Title,
                 Content = request.Content,
                 Status = request.Status,

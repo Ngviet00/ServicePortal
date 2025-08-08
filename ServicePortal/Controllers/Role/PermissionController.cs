@@ -2,6 +2,7 @@
 using ServicePortals.Application.Dtos.Role.Requests;
 using ServicePortals.Application.Interfaces.Role;
 using ServicePortals.Application;
+using ServicePortal.Filters;
 
 namespace ServicePortal.Controllers.Role
 {
@@ -16,7 +17,7 @@ namespace ServicePortal.Controllers.Role
         }
 
         [HttpGet("get-all")]
-        public async Task<IActionResult> GetAll([FromQuery] SearchRoleRequest request)
+        public async Task<IActionResult> GetAll([FromQuery] SearchPermissionRequest request)
         {
             var results = await _permissionService.GetAll(request);
 
@@ -31,6 +32,38 @@ namespace ServicePortal.Controllers.Role
             );
 
             return Ok(response);
+        }
+
+        [HttpGet("get-by-id/{id}"), RoleAuthorize("superadmin")]
+        public async Task<IActionResult> GetById(int id)
+        {
+            var role = await _permissionService.GetById(id);
+
+            return Ok(new BaseResponse<ServicePortals.Domain.Entities.Permission>(200, "success", role));
+        }
+
+        [HttpPost("create"), RoleAuthorize("superadmin")]
+        public async Task<IActionResult> Create([FromBody] CreatePermissionRequest request)
+        {
+            var role = await _permissionService.Create(request);
+
+            return Ok(new BaseResponse<ServicePortals.Domain.Entities.Permission>(200, "success", role));
+        }
+
+        [HttpPut("update/{id}"), RoleAuthorize("superadmin")]
+        public async Task<IActionResult> Update(int id, [FromBody] CreatePermissionRequest request)
+        {
+            var role = await _permissionService.Update(id, request);
+
+            return Ok(new BaseResponse<ServicePortals.Domain.Entities.Permission>(200, "success", role));
+        }
+
+        [HttpDelete("delete/{id}"), RoleAuthorize("superadmin")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var role = await _permissionService.Delete(id);
+
+            return Ok(new BaseResponse<ServicePortals.Domain.Entities.Permission>(200, "success", role));
         }
     }
 }

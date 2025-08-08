@@ -181,8 +181,12 @@ namespace ServicePortal.Controllers.User
 
             CountWaitApprovalInSidebarResponse results = new();
 
-            results.CountWaitNotification = await _memoNotificationService.CountWaitApprovalMemoNotification(request?.OrgUnitId ?? -9999);
-            results.CountWaitLeaveRequest = await _leaveRequestService.CountWaitApproval(requestLeaveRq, userClaim);
+            var countWaitNoti = await _memoNotificationService.CountWaitApprovalMemoNotification(request?.OrgUnitId ?? -9999);
+            var countWaitLeaveRq = await _leaveRequestService.CountWaitApproval(requestLeaveRq, userClaim);
+
+            results.TotalWaitApproval = countWaitNoti + countWaitLeaveRq;
+            results.TotalAssigned = 0;
+            results.Total = results.TotalWaitApproval + results.TotalAssigned;
 
             return Ok(new BaseResponse<CountWaitApprovalInSidebarResponse>(200, "Success", results));
         }

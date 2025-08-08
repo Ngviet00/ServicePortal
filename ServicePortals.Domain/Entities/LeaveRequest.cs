@@ -8,6 +8,7 @@ namespace ServicePortals.Domain.Entities
     {
         public Guid Id { get; set; }
         public Guid? ApplicationFormId { get; set; }
+        public string? Code { get; set; }
         public string? RequesterUserCode { get; set; }
         public string? Name { get; set; }
         public string? Department { get; set; }

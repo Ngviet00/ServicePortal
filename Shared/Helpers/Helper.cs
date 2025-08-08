@@ -214,5 +214,14 @@ namespace ServicePortals.Infrastructure.Helpers
 
             return finalRoundedTime.ToString();
         }
+
+        public static string GenerateFormCode(string prefix)
+        {
+            DateTimeOffset now = DateTimeOffset.Now;
+            string timestampPart = now.ToString("yyMMddHHmmssfff");
+            string orderCode = $"{prefix}#{timestampPart}";
+
+            return orderCode;
+        }
     }
 }

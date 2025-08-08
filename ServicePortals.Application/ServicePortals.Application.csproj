@@ -15,6 +15,7 @@
     <Folder Include="Dtos\Department\Responses\" />
     <Folder Include="Dtos\OrgUnit\Responses\" />
     <Folder Include="Dtos\Position\Requests\" />
+    <Folder Include="Dtos\RequestType\Response\" />
     <Folder Include="Dtos\WorkFlowStep\Requests\" />
     <Folder Include="Dtos\WorkFlowStep\Responses\" />
   </ItemGroup>

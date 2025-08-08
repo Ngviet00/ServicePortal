@@ -224,6 +224,7 @@ namespace ServicePortals.Application.Services.LeaveRequest
 
             Domain.Entities.LeaveRequest newLeaveRequest = new()
             {
+                Code = Helper.GenerateFormCode("LR"),
                 ApplicationFormId = newApplicationForm.Id,
                 RequesterUserCode = request.RequesterUserCode,
                 Name = request.Name,
