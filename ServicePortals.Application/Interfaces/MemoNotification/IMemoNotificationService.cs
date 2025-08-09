@@ -1,4 +1,7 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using System.Security.Claims;
+using Microsoft.AspNetCore.Http;
+using ServicePortals.Application.Dtos.Approval.Request;
+using ServicePortals.Application.Dtos.Approval.Response;
 using ServicePortals.Application.Dtos.MemoNotification;
 using ServicePortals.Application.Dtos.MemoNotification.Requests;
 
@@ -17,5 +20,6 @@ namespace ServicePortals.Application.Interfaces.MemoNotification
         Task<Domain.Entities.File> GetFileDownload(Guid id);
         Task<object> Approval(ApprovalMemoNotifyRequest request);
         Task<int> CountWaitApprovalMemoNotification(int orgUnitId);
+        Task<PendingApprovalList> WaitApproval(ListWaitApprovalRequest request, ClaimsPrincipal userClaims);
     }
 }

@@ -6,7 +6,6 @@ using ServicePortals.Application.Dtos.LeaveRequest;
 using ServicePortals.Application.Dtos.LeaveRequest.Requests;
 using ServicePortals.Application.Dtos.LeaveRequest.Responses;
 using ServicePortals.Application.Interfaces.LeaveRequest;
-using ServicePortals.Infrastructure.Excel;
 
 namespace ServicePortal.Controllers.LeaveRequest
 {
@@ -98,27 +97,27 @@ namespace ServicePortal.Controllers.LeaveRequest
             return Ok(new BaseResponse<LeaveRequestDto>(200, "success", result));
         }
 
-        [HttpPost("approval")]
-        public async Task<IActionResult> Approval(ApprovalRequests request)
-        {
-            var userClaim = HttpContext.User;
+        //[HttpPost("approval")]
+        //public async Task<IActionResult> Approval(ApprovalRequests request)
+        //{
+        //    var userClaim = HttpContext.User;
 
-            var currentUserCode = User.FindFirst("user_code")?.Value;
+        //    var currentUserCode = User.FindFirst("user_code")?.Value;
 
-            var result = await _leaveRequestService.Approval(request, currentUserCode ?? "", userClaim);
+        //    var result = await _leaveRequestService.Approval(request, currentUserCode ?? "", userClaim);
 
-            return Ok(new BaseResponse<LeaveRequestDto>(200, "success", result));
-        }
+        //    return Ok(new BaseResponse<LeaveRequestDto>(200, "success", result));
+        //}
 
-        [HttpGet("count-wait-approval")]
-        public async Task<IActionResult> CountWaitApproval(GetAllLeaveRequestWaitApprovalRequest request)
-        {
-            var userClaim = HttpContext.User;
+        //[HttpGet("count-wait-approval")]
+        //public async Task<IActionResult> CountWaitApproval(GetAllLeaveRequestWaitApprovalRequest request)
+        //{
+        //    var userClaim = HttpContext.User;
 
-            var result = await _leaveRequestService.CountWaitApproval(request, userClaim);
+        //    var result = await _leaveRequestService.CountWaitApproval(request, userClaim);
 
-            return Ok(new BaseResponse<long>(200, "success", result));
-        }
+        //    return Ok(new BaseResponse<long>(200, "success", result));
+        //}
 
         [HttpPost("hr-register-all-leave-rq")]
         public async Task<IActionResult> HrRegisterAllLeave([FromBody] HrRegisterAllLeaveRequest request)
@@ -128,23 +127,23 @@ namespace ServicePortal.Controllers.LeaveRequest
             return Ok(new BaseResponse<object>(200, "success", result));
         }
 
-        [HttpGet("history-approval")]
-        public async Task<IActionResult> GetHistoryLeaveRequestApproval([FromQuery] GetAllLeaveRequest request)
-        {
-            var result = await _leaveRequestService.GetHistoryLeaveRequestApproval(request);
+        //[HttpGet("history-approval")]
+        //public async Task<IActionResult> GetHistoryLeaveRequestApproval([FromQuery] GetAllLeaveRequest request)
+        //{
+        //    var result = await _leaveRequestService.GetHistoryLeaveRequestApproval(request);
 
-            var response = new PageResponse<LeaveRequestDto>(
-                200,
-                "Success",
-                result.Data,
-                result.TotalPages,
-                request.Page,
-                request.PageSize,
-                result.TotalItems
-            );
+        //    var response = new PageResponse<LeaveRequestDto>(
+        //        200,
+        //        "Success",
+        //        result.Data,
+        //        result.TotalPages,
+        //        request.Page,
+        //        request.PageSize,
+        //        result.TotalItems
+        //    );
 
-            return Ok(response);
-        }
+        //    return Ok(response);
+        //}
 
         [HttpPost("update-user-have-permission-create-multiple-leave-request")]
         public async Task<IActionResult> UpdateUserHavePermissionCreateMultipleLeaveRequest([FromBody] List<string> UserCodes)
