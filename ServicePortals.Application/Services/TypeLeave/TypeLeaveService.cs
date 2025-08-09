@@ -54,8 +54,8 @@ namespace ServicePortals.Infrastructure.Services.TypeLeave
             var typeLeave = new Domain.Entities.TypeLeave
             {
                 Name = dto.Name,
-                //ModifiedBy = dto.ModifiedBy,
-                //ModifiedAt = DateTime.UtcNow,
+                NameV = dto.NameV,
+                Code = dto.Code,
             };
 
             _context.TypeLeaves.Add(typeLeave);
@@ -73,8 +73,8 @@ namespace ServicePortals.Infrastructure.Services.TypeLeave
 
             typeLeave.Id = id;
             typeLeave.Name = dto.Name;
-            //typeLeave.ModifiedBy = dto.ModifiedBy;
-            //typeLeave.ModifiedAt = DateTime.UtcNow;
+            typeLeave.NameV = dto.NameV;
+            typeLeave.Code = dto.Code;
 
             _context.TypeLeaves.Update(typeLeave);
 
