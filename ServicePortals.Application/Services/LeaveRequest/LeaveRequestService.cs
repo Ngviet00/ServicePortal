@@ -426,6 +426,7 @@ namespace ServicePortals.Application.Services.LeaveRequest
                                     a.RequestStatusId == (int)StatusApplicationFormEnum.IN_PROCESS)
                                
                           )
+                          && (l.Department == request.SelectedDepartment || request.SelectedDepartment == null)
                         select l;
 
             return query.Distinct();
