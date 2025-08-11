@@ -23,13 +23,13 @@ namespace ServicePortal.Controllers.Approval
             return Ok(new BaseResponse<CountWaitApprovalAndAssignedInSidebarResponse>(200, "success", results));
         }
 
-        [HttpPost("/approval")]
+        [HttpPost("approval")]
         public async Task<IActionResult> Approval()
         {
             return Ok();
         }
 
-        [HttpGet("/list-wait-approvals")]
+        [HttpGet("list-wait-approvals")]
         public async Task<IActionResult> ListWaitApprovals([FromQuery] ListWaitApprovalRequest request)
         {
             var results = await _approvalService.ListWaitApprovals(request, HttpContext.User);
@@ -47,13 +47,13 @@ namespace ServicePortal.Controllers.Approval
             return Ok(response);
         }
 
-        [HttpGet("/list-assigned")]
+        [HttpGet("list-assigned")]
         public async Task<IActionResult> ListAssigned()
         {
             return Ok();
         }
 
-        [HttpGet("/list-history-approval-or-processed")]
+        [HttpGet("list-history-approval-or-processed")]
         public async Task<IActionResult> ListHistoryApprovalOrProcessed()
         {
             return Ok();

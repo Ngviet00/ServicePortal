@@ -20,6 +20,5 @@ namespace ServicePortals.Application.Interfaces.MemoNotification
         Task<Domain.Entities.File> GetFileDownload(Guid id);
         Task<object> Approval(ApprovalMemoNotifyRequest request);
         Task<int> CountWaitApprovalMemoNotification(int orgUnitId);
-        Task<PendingApprovalList> WaitApproval(ListWaitApprovalRequest request, ClaimsPrincipal userClaims);
     }
 }

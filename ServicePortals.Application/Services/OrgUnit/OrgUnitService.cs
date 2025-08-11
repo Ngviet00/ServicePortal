@@ -26,7 +26,16 @@ namespace ServicePortals.Application.Services.OrgUnit
         }
 
         /// <summary>
-        /// Lấy danh sách phòng ban trong bảng orgunit, where unit_id = 3
+        /// Lấy tất cả department
+        /// </summary>
+        public async Task<List<OrgUnitDto>> GetAllDepartments()
+        {
+            var results = await _context.OrgUnits.Where(e => e.UnitId == (int)UnitEnum.Phong).ToListAsync();
+            return OrgUnitMapper.ToDtoList(results);
+        }
+
+        /// <summary>
+        /// Lấy danh sách phòng ban trong bảng orgunit, where unit_id = 3, đã format dữ liệu để hiển thị tree checkbox các màn
         /// </summary>
         public async Task<List<TreeCheckboxResponse>> GetAllDeptOfOrgUnit()
         {

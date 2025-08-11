@@ -228,7 +228,7 @@ namespace ServicePortals.Application.Services.LeaveRequest
                 ApplicationFormId = newApplicationForm.Id,
                 RequesterUserCode = request.RequesterUserCode,
                 Name = request.Name,
-                Department = request.Department,
+                DepartmentId = request.DepartmentId,
                 Position = request.Position,
                 UserCodeWriteLeaveRequest = request.WriteLeaveUserCode,
                 UserNameWriteLeaveRequest = request.UserNameWriteLeaveRequest,
@@ -315,7 +315,7 @@ namespace ServicePortals.Application.Services.LeaveRequest
             var leaveRequest = await _context.LeaveRequests.FirstOrDefaultAsync(e => e.Id == id) ?? throw new NotFoundException("Leave request not found!");
 
             leaveRequest.Id = leaveRequest.Id;
-            leaveRequest.Department = dto.Department;
+            leaveRequest.DepartmentId = dto.DepartmentId;
             leaveRequest.Position = dto.Position;
 
             leaveRequest.FromDate = dto.FromDate;
@@ -980,7 +980,7 @@ namespace ServicePortals.Application.Services.LeaveRequest
                     ApplicationFormId = applicationForm.Id,
                     RequesterUserCode = itemLeave.RequesterUserCode,
                     Name = itemLeave.Name,
-                    Department = itemLeave.Department,
+                    DepartmentId = itemLeave.DepartmentId,
                     Position = itemLeave.Position,
                     UserCodeWriteLeaveRequest = itemLeave.WriteLeaveUserCode,
                     UserNameWriteLeaveRequest = itemLeave.UserNameWriteLeaveRequest,

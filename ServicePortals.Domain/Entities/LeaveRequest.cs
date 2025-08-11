@@ -11,7 +11,7 @@ namespace ServicePortals.Domain.Entities
         public string? Code { get; set; }
         public string? RequesterUserCode { get; set; }
         public string? Name { get; set; }
-        public string? Department { get; set; }
+        public int? DepartmentId { get; set; }
         public string? Position { get; set; }
         public string? UserCodeWriteLeaveRequest { get; set; }
         public string? UserNameWriteLeaveRequest { get; set; }

@@ -147,7 +147,7 @@ namespace ServicePortals.Application.Common
 
                     <tr style=""border-bottom: 1px solid #ddd;"">
                         <td style=""background-color: #f9f9f9;""><strong>Phòng ban:</strong></td>
-                        <td>{leaveRequest?.Department}</td>
+                        <td>{leaveRequest?.DepartmentId}</td>
                     </tr>
 
                     <tr style=""border-bottom: 1px solid #ddd;"">

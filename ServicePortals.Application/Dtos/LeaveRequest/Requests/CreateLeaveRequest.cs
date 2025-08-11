@@ -7,7 +7,7 @@
         public string? WriteLeaveUserCode { get; set; } //nguoi viet yeu cau
         public string? UserNameWriteLeaveRequest { get; set; } //ten nguoi viet phep
         public string? Name { get; set; }
-        public string? Department { get; set; }
+        public int? DepartmentId { get; set; }
         public string? Position { get; set; }
         public DateTimeOffset? FromDate { get; set; }
         public DateTimeOffset? ToDate { get; set; }

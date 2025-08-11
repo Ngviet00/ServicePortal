@@ -884,52 +884,5 @@ namespace ServicePortals.Application.Services.MemoNotification
 
             return result;
         }
-
-        public async Task<PendingApprovalList> WaitApproval(ListWaitApprovalRequest request, ClaimsPrincipal userClaims)
-        {
-            int page = request.Page;
-            int pageSize = request.PageSize;
-            int orgUnitId = request.OrgUnitId ?? 0;
-
-            PendingApprovalList results = new PendingApprovalList();
-            var lists = new List<PendingApproval>();
-
-            var items = await _context.MemoNotifications
-                        .Where(e => 
-                            e.ApplicationForm != null &&
-                            e.ApplicationForm.CurrentOrgUnitId == orgUnitId &&
-                            e.ApplicationForm.RequestStatusId != (int)StatusApplicationFormEnum.COMPLETE &&
-                            e.ApplicationForm.RequestStatusId != (int)StatusApplicationFormEnum.REJECT
-                        )
-                        .Skip((page - 1) * pageSize)
-                        .Take(pageSize)
-                        .Include(e => e.ApplicationForm)
-                            .ThenInclude(e => e.RequestType)
-                        .Include(e => e.ApplicationForm)
-                            .ThenInclude(e => e.HistoryApplicationForms)
-                                .OrderByDescending(e => e.CreatedAt)
-                                .Take(1)
-                        .ToListAsync();
-
-            foreach (var item in items)
-            {
-                lists.Add(new PendingApproval
-                {
-                    Code = item.Code,
-                    Type = item?.ApplicationForm?.RequestTypeId,
-                    TypeName = item?.ApplicationForm?.RequestType?.Name,
-                    Requester = item?.CreatedBy,
-                    Registrant = item?.CreatedBy,
-                    ApprovedBy = item?.ApplicationForm?.HistoryApplicationForms.First().UserApproval,
-                    Status = item?.ApplicationForm?.RequestStatusId
-                });
-            }
-
-
-            results.Data = lists;
-            results.TotalCount = await CountWaitApprovalMemoNotification(orgUnitId);
-
-            return results;
-        }
     }
 }

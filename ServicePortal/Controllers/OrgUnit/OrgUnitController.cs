@@ -18,6 +18,14 @@ namespace ServicePortal.Controllers.OrgUnit
             _orgUnitService = orgUnitService;
         }
 
+        [HttpGet("get-all-departments")]
+        public async Task<IActionResult> GetAllDepartments()
+        {
+            var results = await _orgUnitService.GetAllDepartments();
+
+            return Ok(new BaseResponse<List<OrgUnitDto>>(200, "success", results));
+        }
+
         [HttpGet("get-all-dept-of-orgunit")]
         public async Task<IActionResult> GetAllDeptOfOrgUnit()
         {

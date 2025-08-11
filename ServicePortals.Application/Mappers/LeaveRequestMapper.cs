@@ -34,7 +34,7 @@ namespace ServicePortals.Infrastructure.Mappers
                 TypeLeave = entity?.TypeLeave,
                 TimeLeave = entity?.TimeLeave,
                 Reason = entity?.Reason,
-                Department = entity?.Department,
+                DepartmentId = entity?.DepartmentId,
                 Position = entity?.Position,
                 HaveSalary = entity?.HaveSalary,
                 Image = null,
