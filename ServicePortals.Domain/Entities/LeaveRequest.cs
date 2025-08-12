@@ -28,5 +28,6 @@ namespace ServicePortals.Domain.Entities
         public TypeLeave? TypeLeave{ get; set; }
         public DateTimeOffset? UpdateAt { get; set; }
         public DateTimeOffset? DeletedAt { get; set; }
+        public OrgUnit? Department { get; set; }
     }
 }

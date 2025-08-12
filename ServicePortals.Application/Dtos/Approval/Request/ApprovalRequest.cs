@@ -1,12 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace ServicePortals.Application.Dtos.Approval.Request
+﻿namespace ServicePortals.Application.Dtos.Approval.Request
 {
-    internal class ApprovalRequest
+    public class ApprovalRequest
     {
+        public int? RequestTypeId { get; set; } //để biết là loại đơn nào
+        public Guid? MemoNotificationId { get; set; }
+        public string? UserCodeApproval { get; set; }
+        public string? UserNameApproval { get; set; }
+        public int? OrgUnitId { get; set; }
+        public bool? Status { get; set; }
+        public string? Note { get; set; }
+        public string? UrlFrontend { get; set; }
     }
 }

@@ -1,6 +1,9 @@
-﻿namespace ServicePortals.Domain.Entities
+﻿using System.ComponentModel.DataAnnotations.Schema;
+
+namespace ServicePortals.Domain.Entities
 {
-    public class FormIT
+    [Table("it_forms")]
+    public class ITForm
     {
         public Guid? Id { get; set; }
         public string? Code { get; set; }

@@ -23,5 +23,6 @@ namespace ServicePortals.Domain.Entities
         public bool? Status { get; set; }
         public bool? ApplyAllDepartment { get; set; }
         public ICollection<MemoNotificationDepartment> MemoNotificationDepartments { get; set; } = [];
+        public OrgUnit? Department { get; set; }
     }
 }
