@@ -39,6 +39,7 @@ namespace ServicePortals.Infrastructure.Mappers
                 HaveSalary = entity?.HaveSalary,
                 Image = null,
                 CreatedAt = entity?.CreatedAt,
+                Code = entity?.Code,
                 ApplicationFormDto = applicationFormDto,
                 HistoryApplicationForm = entity?.ApplicationForm?.HistoryApplicationForms
                     .Select(h => new HistoryApplicationForm
@@ -51,7 +52,8 @@ namespace ServicePortals.Infrastructure.Mappers
                         CreatedAt = h.CreatedAt
                     })
                     ?.OrderByDescending(x => x.CreatedAt)
-                    .FirstOrDefault()
+                    .FirstOrDefault(),
+                Department = entity?.Department?.UnitId == 3 ? entity.Department : null
             };
         }
 

@@ -25,6 +25,8 @@ namespace ServicePortals.Application.Dtos.LeaveRequest
         public Domain.Entities.TypeLeave? TypeLeave { get; set; }
         public ApplicationFormDto? ApplicationFormDto { get; set; }
         public HistoryApplicationForm? HistoryApplicationForm { get; set; }
+        public string? Code { get; set; }
+        public Domain.Entities.OrgUnit? Department { get; set; }
     }
 
     public class CreateLeaveRequestForManyPeopleRequest

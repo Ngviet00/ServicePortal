@@ -147,6 +147,10 @@ namespace ServicePortals.Application.Services.Approval
             {
                 await _memoNotificationService.Approval(request);
             }
+            else if (request.RequestTypeId == (int)RequestTypeEnum.LEAVE_REQUEST)
+            {
+                await _leaveRequestService.Approval(request);
+            }
 
             return true;
         }

@@ -106,6 +106,7 @@ namespace ServicePortals.Application.Services.MemoNotification
         {
             var memoNotify = await _context.MemoNotifications
                 .Include(e => e.ApplicationForm)
+                    .ThenInclude(e => e.HistoryApplicationForms)
                 .FirstOrDefaultAsync(e => e.Id == id) ?? throw new NotFoundException("Memo Notification not found!");
 
             var departmentIds = await _context.MemoNotificationDepartments
@@ -144,7 +145,19 @@ namespace ServicePortals.Application.Services.MemoNotification
                 Priority = memoNotify.Priority,
                 DepartmentIdApply = [.. departmentIds],
                 Files = files,
-                RequestTypeId = memoNotify?.ApplicationForm?.RequestTypeId
+                RequestTypeId = memoNotify?.ApplicationForm?.RequestTypeId,
+                HistoryApplicationForm = memoNotify?.ApplicationForm?.HistoryApplicationForms
+                    .OrderByDescending(h => h.CreatedAt)
+                    .Select(x => new HistoryApplicationForm
+                    {
+                        Id = x.Id,
+                        UserApproval =  x.UserApproval,
+                        UserCodeApproval =  x.UserCodeApproval,
+                        ActionType = x.ActionType,
+                        Comment = x.Comment,
+                        CreatedAt = x.CreatedAt
+                    })
+                    .FirstOrDefault()
             };
 
             result.DepartmentNames = string.Join(", ", nameDepartmentApplies);

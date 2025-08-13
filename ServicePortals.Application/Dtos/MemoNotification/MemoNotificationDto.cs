@@ -20,5 +20,6 @@
         public List<Domain.Entities.File> Files { get; set; } = new List<Domain.Entities.File>();
         public string? DepartmentNames { get; set; }
         public int? RequestTypeId { get; set; }
+        public Domain.Entities.HistoryApplicationForm? HistoryApplicationForm { get; set; }
     }
 }

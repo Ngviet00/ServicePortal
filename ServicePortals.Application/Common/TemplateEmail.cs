@@ -125,7 +125,7 @@ namespace ServicePortals.Application.Common
             ";
         }
 
-        public static string EmailContentLeaveRequest(LeaveRequest? leaveRequest, TypeLeave? typeLeave, TimeLeave? timeLeave)
+        public static string EmailContentLeaveRequest(LeaveRequest? leaveRequest)
         {
             return $@"
                 <table cellpadding=""10"" cellspacing=""0"" style=""border-collapse: collapse; width: 100%; font-family: Arial, sans-serif; border: 1px solid #ccc;"">
@@ -147,7 +147,7 @@ namespace ServicePortals.Application.Common
 
                     <tr style=""border-bottom: 1px solid #ddd;"">
                         <td style=""background-color: #f9f9f9;""><strong>Phòng ban:</strong></td>
-                        <td>{leaveRequest?.DepartmentId}</td>
+                        <td>{leaveRequest?.Department?.Name}</td>
                     </tr>
 
                     <tr style=""border-bottom: 1px solid #ddd;"">
@@ -167,12 +167,12 @@ namespace ServicePortals.Application.Common
 
                     <tr style=""border-bottom: 1px solid #ddd;"">
                         <td style=""background-color: #f9f9f9;""><strong>Loại phép:</strong></td>
-                        <td>{typeLeave?.Name}</td>
+                        <td>{leaveRequest?.TypeLeave?.Name}</td>
                     </tr>
 
                     <tr style=""border-bottom: 1px solid #ddd;"">
                         <td style=""background-color: #f9f9f9;""><strong>Thời gian nghỉ:</strong></td>
-                        <td>{timeLeave?.Description}</td>
+                        <td>{leaveRequest?.TimeLeave?.Description}</td>
                     </tr>
 
                     <tr style=""border-bottom: 1px solid #ddd;"">
