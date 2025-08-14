@@ -193,14 +193,17 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                     b.Property<Guid?>("ApplicationFormId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("Code")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<DateTimeOffset?>("CreatedAt")
                         .HasColumnType("datetimeoffset");
 
                     b.Property<DateTimeOffset?>("DeletedAt")
                         .HasColumnType("datetimeoffset");
 
-                    b.Property<string>("Department")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int?>("DepartmentId")
+                        .HasColumnType("int");
 
                     b.Property<DateTimeOffset?>("FromDate")
                         .HasColumnType("datetimeoffset");
@@ -242,6 +245,8 @@ namespace ServicePortals.Infrastructure.Data.Migrations
 
                     b.HasIndex("ApplicationFormId");
 
+                    b.HasIndex("DepartmentId");
+
                     b.HasIndex("RequesterUserCode");
 
                     b.HasIndex("TimeLeaveId");
@@ -265,6 +270,9 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                     b.Property<bool?>("ApplyAllDepartment")
                         .HasColumnType("bit");
 
+                    b.Property<string>("Code")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Content")
                         .HasColumnType("nvarchar(max)");
 
@@ -273,6 +281,9 @@ namespace ServicePortals.Infrastructure.Data.Migrations
 
                     b.Property<string>("CreatedBy")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("DepartmentId")
+                        .HasColumnType("int");
 
                     b.Property<DateTimeOffset?>("FromDate")
                         .HasColumnType("datetimeoffset");
@@ -301,6 +312,8 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("ApplicationFormId");
+
+                    b.HasIndex("DepartmentId");
 
                     b.ToTable("memo_notifications");
                 });
@@ -511,6 +524,9 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Name")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("NameE")
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
@@ -1100,6 +1116,10 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                         .HasForeignKey("ApplicationFormId")
                         .OnDelete(DeleteBehavior.NoAction);
 
+                    b.HasOne("ServicePortals.Domain.Entities.OrgUnit", "Department")
+                        .WithMany()
+                        .HasForeignKey("DepartmentId");
+
                     b.HasOne("ServicePortals.Domain.Entities.User", "User")
                         .WithMany()
                         .HasForeignKey("RequesterUserCode")
@@ -1118,6 +1138,8 @@ namespace ServicePortals.Infrastructure.Data.Migrations
 
                     b.Navigation("ApplicationForm");
 
+                    b.Navigation("Department");
+
                     b.Navigation("TimeLeave");
 
                     b.Navigation("TypeLeave");
@@ -1132,7 +1154,13 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                         .HasForeignKey("ApplicationFormId")
                         .OnDelete(DeleteBehavior.NoAction);
 
+                    b.HasOne("ServicePortals.Domain.Entities.OrgUnit", "Department")
+                        .WithMany()
+                        .HasForeignKey("DepartmentId");
+
                     b.Navigation("ApplicationForm");
+
+                    b.Navigation("Department");
                 });
 
             modelBuilder.Entity("ServicePortals.Domain.Entities.MemoNotificationDepartment", b =>

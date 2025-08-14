@@ -227,6 +227,7 @@ namespace ServicePortals.Infrastructure.Data
             modelBuilder.Entity<HistoryApplicationForm>()
                 .HasOne(h => h.ApplicationForm)
                 .WithMany(a => a.HistoryApplicationForms)
+                .HasForeignKey(h => h.ApplicationFormId)
                 .HasPrincipalKey(a => a.Id)
                 .IsRequired(false)
                 .OnDelete(DeleteBehavior.NoAction);
@@ -284,6 +285,25 @@ namespace ServicePortals.Infrastructure.Data
                 .WithMany()
                 .HasPrincipalKey(a => a.Id)
                 .IsRequired(false)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<MemoNotificationDepartment>()
+                .HasOne(mnd => mnd.OrgUnit)
+                .WithMany()
+                .HasForeignKey(mnd => mnd.DepartmentId)
+                .HasPrincipalKey(ou => ou.DeptId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<ApplicationForm>()
+                .HasOne(a => a.Leave)
+                .WithOne(l => l.ApplicationForm)
+                .HasForeignKey<LeaveRequest>(l => l.ApplicationFormId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<ApplicationForm>()
+                .HasOne(a => a.MemoNotification)
+                .WithOne(l => l.ApplicationForm)
+                .HasForeignKey<MemoNotification>(l => l.ApplicationFormId)
                 .OnDelete(DeleteBehavior.NoAction);
         }
     }

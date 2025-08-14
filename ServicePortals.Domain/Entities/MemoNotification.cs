@@ -8,6 +8,8 @@ namespace ServicePortals.Domain.Entities
         public Guid? Id { get; set; }
         public Guid? ApplicationFormId { get; set; }
         public ApplicationForm? ApplicationForm { get; set; }
+        public int? DepartmentId { get; set;}
+        public string? Code { get; set; }
         public string? Title { get; set; }
         public string? Content { get; set; }
         public DateTimeOffset? FromDate {  get; set; }
@@ -21,5 +23,6 @@ namespace ServicePortals.Domain.Entities
         public bool? Status { get; set; }
         public bool? ApplyAllDepartment { get; set; }
         public ICollection<MemoNotificationDepartment> MemoNotificationDepartments { get; set; } = [];
+        public OrgUnit? Department { get; set; }
     }
 }

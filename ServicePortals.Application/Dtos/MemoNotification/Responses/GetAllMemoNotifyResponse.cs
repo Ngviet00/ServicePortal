@@ -1,6 +1,4 @@
-﻿using ServicePortals.Domain.Entities;
-
-namespace ServicePortals.Application.Dtos.MemoNotification.Responses
+﻿namespace ServicePortals.Application.Dtos.MemoNotification.Responses
 {
     public class GetAllMemoNotifyResponse
     {
@@ -18,7 +16,7 @@ namespace ServicePortals.Application.Dtos.MemoNotification.Responses
         public DateTimeOffset? CreatedAt { get; set; }
         public DateTimeOffset? UpdatedAt { get; set; }
         public int? Priority { get; set; } = 3; //1 normal, 2 medium, 3 high
-        public List<int?> DepartmentIdApply { get; set; } = new List<int?>();
-        public List<Domain.Entities.File> Files { get; set; } = new List<Domain.Entities.File>();
+        public Domain.Entities.ApplicationForm? ApplicationForm {  get; set; }
+        public string? MemoNotificationDepartments { get; set; }
     }
 }

@@ -48,6 +48,10 @@ using ServicePortals.Application.Services.Role;
 using ServicePortals.Application.Services.User;
 using ServicePortals.Application.Services.MemoNotification;
 using ServicePortals.Application.Services.LeaveRequest;
+using ServicePortals.Application.Interfaces.RequestType;
+using ServicePortals.Application.Services.RequestType;
+using ServicePortals.Application.Interfaces.Approval;
+using ServicePortals.Application.Services.Approval;
 
 namespace ServicePortal
 {
@@ -155,6 +159,10 @@ namespace ServicePortal
             builder.Services.AddScoped<IDelegatedTempService, DelegatedTempService>();
 
             builder.Services.AddScoped<IPermissionService, PermissionService>();
+
+            builder.Services.AddScoped<IRequestTypeService, RequestTypeService>();
+
+            builder.Services.AddScoped<IApprovalService, ApprovalService>();
 
             #endregion
 

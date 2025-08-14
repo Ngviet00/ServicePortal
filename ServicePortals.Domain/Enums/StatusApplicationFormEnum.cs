@@ -8,6 +8,7 @@
         WAIT_HR = 4,
         REJECT = 5,
         FINAL_APPROVAL = 6,
+        ASSIGNED = 7,
         ORG_UNIT_ID_HR_LEAVE_RQ = -10
     }
 

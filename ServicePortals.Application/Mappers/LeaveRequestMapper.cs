@@ -34,11 +34,12 @@ namespace ServicePortals.Infrastructure.Mappers
                 TypeLeave = entity?.TypeLeave,
                 TimeLeave = entity?.TimeLeave,
                 Reason = entity?.Reason,
-                Department = entity?.Department,
+                DepartmentId = entity?.DepartmentId,
                 Position = entity?.Position,
                 HaveSalary = entity?.HaveSalary,
                 Image = null,
                 CreatedAt = entity?.CreatedAt,
+                Code = entity?.Code,
                 ApplicationFormDto = applicationFormDto,
                 HistoryApplicationForm = entity?.ApplicationForm?.HistoryApplicationForms
                     .Select(h => new HistoryApplicationForm
@@ -51,7 +52,8 @@ namespace ServicePortals.Infrastructure.Mappers
                         CreatedAt = h.CreatedAt
                     })
                     ?.OrderByDescending(x => x.CreatedAt)
-                    .FirstOrDefault()
+                    .FirstOrDefault(),
+                Department = entity?.Department?.UnitId == 3 ? entity.Department : null
             };
         }
 

@@ -10,9 +10,8 @@
         public DateTimeOffset? DateOfBirth { get; set; }
         public string? NVHoTen { get; set; }
         public int? OrgUnitID { get; set; }
-        public int? BPMa { get; set; }
-        public string? BPTen { get; set; }
-        public string? CVTen { get; set; }
+        public int? DepartmentId { get; set; }
+        public string? DepartmentName { get; set; }
         public bool? NVGioiTinh { get; set; }
         public DateTimeOffset? DeletedAt { get; set; }
         public DateTime? NVNgayVao { get; set; }

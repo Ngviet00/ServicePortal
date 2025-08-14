@@ -3,6 +3,7 @@ using ServicePortals.Application.Dtos.Role.Requests;
 using ServicePortals.Application.Interfaces.Role;
 using ServicePortals.Domain.Entities;
 using ServicePortals.Infrastructure.Data;
+using ServicePortals.Shared.Exceptions;
 
 namespace ServicePortals.Application.Services.Role
 {
@@ -18,24 +19,18 @@ namespace ServicePortals.Application.Services.Role
             _context = context;
         }
 
-        public async Task<PagedResults<Permission>> GetAll(SearchRoleRequest request)
+        public async Task<PagedResults<Permission>> GetAll(SearchPermissionRequest request)
         {
-            string name = request.Name ?? "";
             double pageSize = request.PageSize;
             double page = request.Page;
 
             var query = _context.Permissions.AsQueryable();
 
-            if (!string.IsNullOrEmpty(name))
-            {
-                query = query.Where(r => r.Name != null && r.Name.Contains(name));
-            }
-
             var totalItems = await query.CountAsync();
 
             var totalPages = (int)Math.Ceiling(totalItems / pageSize);
 
-            var permissions = await query.Skip((int)((page - 1) * pageSize)).Take((int)pageSize).ToListAsync();
+            var permissions = await query.OrderBy(e => e.Name).Skip((int)((page - 1) * pageSize)).Take((int)pageSize).ToListAsync();
 
             var result = new PagedResults<Permission>
             {
@@ -45,6 +40,53 @@ namespace ServicePortals.Application.Services.Role
             };
 
             return result;
+        }
+
+        public async Task<Permission> GetById(int id)
+        {
+            var permission = await _context.Permissions.FirstOrDefaultAsync(e => e.Id == id) ?? throw new NotFoundException("Permission not found!");
+
+            return permission;
+        }
+
+        public async Task<Permission> Create(CreatePermissionRequest request)
+        {
+            var permission = new Permission
+            {
+                Name = request.Name,
+                Description = request.Description
+            };
+
+            _context.Permissions.Add(permission);
+
+            await _context.SaveChangesAsync();
+
+            return permission;
+        }
+
+        public async Task<Permission> Update(int id, CreatePermissionRequest request)
+        {
+            var permission = await _context.Permissions.FirstOrDefaultAsync(e => e.Id == id) ?? throw new NotFoundException("Permission not found!");
+
+            permission.Name = request.Name;
+            permission.Description = request.Description;
+
+            _context.Permissions.Update(permission);
+
+            await _context.SaveChangesAsync();
+
+            return permission;
+        }
+
+        public async Task<Permission> Delete(int id)
+        {
+            var permission = await _context.Permissions.FirstOrDefaultAsync(e => e.Id == id) ?? throw new NotFoundException("Permission not found!");
+
+            _context.Permissions.Remove(permission);
+
+            await _context.SaveChangesAsync();
+
+            return permission;
         }
     }
 }

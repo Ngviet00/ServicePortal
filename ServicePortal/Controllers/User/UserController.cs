@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Mvc;
 using ServicePortal.Filters;
 using ServicePortals.Application;
-using ServicePortals.Application.Dtos.LeaveRequest.Requests;
 using ServicePortals.Application.Dtos.User.Requests;
 using ServicePortals.Application.Dtos.User.Responses;
 using ServicePortals.Application.Interfaces.LeaveRequest;
@@ -166,25 +165,6 @@ namespace ServicePortal.Controllers.User
                 request.PageSize,
                 results.TotalItems
             ));
-        }
-
-        [HttpGet("count-wait-approval-in-sidebar")]
-        public async Task<IActionResult> CountWaitApprovalInSidebar([FromQuery] CountWaitAprrovalSidebarRequest request)
-        {
-            var userClaim = HttpContext.User;
-
-            GetAllLeaveRequestWaitApprovalRequest requestLeaveRq = new()
-            {
-                UserCode = request.UserCode,
-                OrgUnitId = request.OrgUnitId
-            };
-
-            CountWaitApprovalInSidebarResponse results = new();
-
-            results.CountWaitNotification = await _memoNotificationService.CountWaitApprovalMemoNotification(request?.OrgUnitId ?? -9999);
-            results.CountWaitLeaveRequest = await _leaveRequestService.CountWaitApproval(requestLeaveRq, userClaim);
-
-            return Ok(new BaseResponse<CountWaitApprovalInSidebarResponse>(200, "Success", results));
         }
 
         [HttpPost("import-excel-test-insert-new-user"), AllowAnonymous]

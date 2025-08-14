@@ -4,6 +4,7 @@ using ServicePortal.Filters;
 using ServicePortals.Application;
 using ServicePortals.Application.Dtos.MemoNotification;
 using ServicePortals.Application.Dtos.MemoNotification.Requests;
+using ServicePortals.Application.Dtos.MemoNotification.Responses;
 using ServicePortals.Application.Interfaces.MemoNotification;
 
 namespace ServicePortal.Controllers.MemoNotification
@@ -24,7 +25,7 @@ namespace ServicePortal.Controllers.MemoNotification
         {
             var results = await _memoNotificationService.GetAll(request);
 
-            var response = new PageResponse<MemoNotificationDto>(
+            var response = new PageResponse<GetAllMemoNotifyResponse>(
                 200,
                 "Success",
                 results.Data,
@@ -45,8 +46,7 @@ namespace ServicePortal.Controllers.MemoNotification
             return Ok(new BaseResponse<List<MemoNotificationDto>>(200, "success", result));
         }
 
-
-        [HttpGet("{id}"), AllowAnonymous]
+        [HttpGet("{id}")]
         public async Task<IActionResult> GetById(Guid id)
         {
             var result = await _memoNotificationService.GetById(id);
@@ -82,59 +82,11 @@ namespace ServicePortal.Controllers.MemoNotification
         }
 
         [HttpGet("download/{id}")]
-        [RoleOrPermission("HR", "union", "IT", "memo_notification.create")]
         public async Task<IActionResult> DownloadFile(Guid id)
         {
             var file = await _memoNotificationService.GetFileDownload(id);
 
             return File(file.FileData ?? [], file.ContentType ?? "application/octet-stream", file.FileName);
-        }
-
-        [HttpGet("get-all-wait-approval")]
-        [RoleOrPermission("HR", "union", "IT", "memo_notification.create")]
-        public async Task<IActionResult> GetAllWaitApproval([FromQuery] MemoNotifyWaitApprovalRequest request)
-        {
-            var results = await _memoNotificationService.GetWaitApproval(request);
-
-            var response = new PageResponse<MemoNotificationDto>(
-                200,
-                "Success",
-                results.Data,
-                results.TotalPages,
-                request.Page,
-                request.PageSize,
-                results.TotalItems
-            );
-
-            return Ok(response);
-        }
-
-        [HttpGet("get-all-history-approval")]
-        [RoleOrPermission("HR", "union", "IT", "memo_notification.create")]
-        public async Task<IActionResult> GetAllHistoryApproval([FromQuery] HistoryWaitApprovalMemoNotifyRequest request)
-        {
-            var results = await _memoNotificationService.GetHistoryApproval(request);
-
-            var response = new PageResponse<MemoNotificationDto>(
-                200,
-                "Success",
-                results.Data,
-                results.TotalPages,
-                request.Page,
-                request.PageSize,
-                results.TotalItems
-            );
-
-            return Ok(response);
-        }
-
-        [HttpPost("approval")]
-        [RoleOrPermission("HR", "union", "IT", "memo_notification.create")]
-        public async Task<IActionResult> Approval([FromBody] ApprovalMemoNotifyRequest request)
-        {
-            var result = await _memoNotificationService.Approval(request);
-
-            return Ok(new BaseResponse<object>(200, "success", result));
         }
     }
 }

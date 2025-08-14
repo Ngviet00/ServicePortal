@@ -19,5 +19,7 @@ namespace ServicePortals.Domain.Entities
         public string? AssignUserCode { get; set; }
         public DateTimeOffset? DeletedAt { get; set; }
         public ICollection<HistoryApplicationForm> HistoryApplicationForms { get; set; } = [];
+        public LeaveRequest? Leave { get; set; }
+        public MemoNotification? MemoNotification { get; set; }
     }
 }

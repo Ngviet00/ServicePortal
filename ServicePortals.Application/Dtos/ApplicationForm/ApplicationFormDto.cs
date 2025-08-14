@@ -15,7 +15,7 @@ namespace ServicePortals.Application.Dtos.ApplicationForm
         public int? RequestStatusId { get; set; } //PENDING, IN-PROCESS, COMPLETE
         public int? CurrentOrgUnitId { get; set; } //current org unit id will approval
         public DateTimeOffset? CreatedAt { get; set; }
-        public RequestType? RequestType { get; set; }
+        public Domain.Entities.RequestType? RequestType { get; set; }
         public RequestStatus? RequestStatus { get; set; }
         public DateTimeOffset? DeletedAt { get; set; }
     }

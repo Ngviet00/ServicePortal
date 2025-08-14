@@ -10,5 +10,6 @@ namespace ServicePortals.Domain.Entities
         public Guid? MemoNotificationId { get; set; }
         public int? DepartmentId { get; set; }
         public MemoNotification? MemoNotifications { get; set; }
+        public OrgUnit? OrgUnit { get; set; }
     }
 }
