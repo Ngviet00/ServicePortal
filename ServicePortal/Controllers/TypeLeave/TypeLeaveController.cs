@@ -18,7 +18,7 @@ namespace ServicePortal.Controllers.TypeLeave
             _typeLeaveService = typeLeaveService;
         }
 
-        [HttpGet("get-all"), Authorize, RoleAuthorize("HR", "HR_Manager", "user")]
+        [HttpGet, RoleAuthorize("HR", "HR_Manager", "user")]
         public async Task<IActionResult> GetAll([FromQuery] GetAllTypeLeaveRequest request)
         {
             var results = await _typeLeaveService.GetAll(request);
@@ -28,7 +28,7 @@ namespace ServicePortal.Controllers.TypeLeave
             return Ok(response);
         }
 
-        [HttpGet("get-by-id/{id}"), RoleAuthorize("HR", "HR_Manager")]
+        [HttpGet("{id}"), RoleAuthorize("HR", "HR_Manager")]
         public async Task<IActionResult> GetById(int id)
         {
             var result = await _typeLeaveService.GetById(id);
@@ -36,7 +36,7 @@ namespace ServicePortal.Controllers.TypeLeave
             return Ok(new BaseResponse<ServicePortals.Domain.Entities.TypeLeave>(200, "success", result));
         }
 
-        [HttpPost("create"), RoleAuthorize("HR", "HR_Manager")]
+        [HttpPost, RoleAuthorize("HR", "HR_Manager")]
         public async Task<IActionResult> Create([FromBody] TypeLeaveDto dto)
         {
             var result = await _typeLeaveService.Create(dto);
@@ -44,7 +44,7 @@ namespace ServicePortal.Controllers.TypeLeave
             return Ok(new BaseResponse<ServicePortals.Domain.Entities.TypeLeave>(200, "success", result));
         }
 
-        [HttpPut("update/{id}"), RoleAuthorize("HR", "HR_Manager")]
+        [HttpPut("{id}"), RoleAuthorize("HR", "HR_Manager")]
         public async Task<IActionResult> Update(int id, [FromBody] TypeLeaveDto dto)
         {
             var result = await _typeLeaveService.Update(id, dto);
@@ -52,7 +52,7 @@ namespace ServicePortal.Controllers.TypeLeave
             return Ok(new BaseResponse<ServicePortals.Domain.Entities.TypeLeave>(200, "success", result));
         }
 
-        [HttpDelete("delete/{id}"), RoleAuthorize("HR", "HR_Manager")]
+        [HttpDelete("{id}"), RoleAuthorize("HR", "HR_Manager")]
         public async Task<IActionResult> Delete(int id)
         {
             var result = await _typeLeaveService.Delete(id);

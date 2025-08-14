@@ -6,10 +6,10 @@ namespace ServicePortals.Application.Interfaces.DelegatedTemp
 {
     public interface IDelegatedTempService
     {
-        Task<DelegatedTempDto> AddNew(CreateDelegatedTempRequest request);
+        //Task<DelegatedTempDto> AddNew(CreateDelegatedTempRequest request);
 
-        Task<List<GetAllDelegatedTempResponse>> GetAll(DelegatedTempDto request);
+        //Task<List<GetAllDelegatedTempResponse>> GetAll(DelegatedTempDto request);
 
-        Task<DelegatedTempDto> Delete(DelegatedTempDto request);
+        //Task<DelegatedTempDto> Delete(DelegatedTempDto request);
     }
 }

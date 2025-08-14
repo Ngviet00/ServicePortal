@@ -1,9 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using ServicePortals.Application.Dtos.SystemConfig;
 using ServicePortals.Application.Interfaces.SystemConfig;
-using ServicePortals.Application.Mappers;
 using ServicePortals.Infrastructure.Data;
 using ServicePortals.Shared.Exceptions;
+using Entities = ServicePortals.Domain.Entities;
 
 namespace ServicePortals.Application.Services.SystemConfig
 {
@@ -21,11 +20,11 @@ namespace ServicePortals.Application.Services.SystemConfig
         /// lấy config theo key
         /// 
         /// </summary>
-        public async Task<SystemConfigDto?> GetByConfigKey(string configkey)
+        public async Task<Entities.SystemConfig> GetByConfigKey(string configkey)
         {
             var result = await _context.SystemConfigs.FirstOrDefaultAsync(e => e.ConfigKey == configkey) ?? throw new NotFoundException("Config not found!");
 
-            return SystemConfigMapper.ToDto(result);
+            return result;
         }
 
         /// <summary>
@@ -33,7 +32,7 @@ namespace ServicePortals.Application.Services.SystemConfig
         /// thêm mới config của hệ thống, vdu như giới hạn upload file memo, email hr,...
         /// 
         /// </summary>
-        public async Task<SystemConfigDto?> AddConfig(SystemConfigDto request)
+        public async Task<Entities.SystemConfig> AddConfig(Entities.SystemConfig request)
         {
             var newConfig = new Domain.Entities.SystemConfig
             {
@@ -53,7 +52,7 @@ namespace ServicePortals.Application.Services.SystemConfig
 
             await _context.SaveChangesAsync();
 
-            return SystemConfigMapper.ToDto(newConfig);
+            return newConfig;
         }
 
         /// <summary>
@@ -61,7 +60,7 @@ namespace ServicePortals.Application.Services.SystemConfig
         /// cập nhật config
         /// 
         /// </summary>
-        public async Task<SystemConfigDto?> UpdateConfig(string configkey, SystemConfigDto request)
+        public async Task<Entities.SystemConfig> UpdateConfig(string configkey, Entities.SystemConfig request)
         {
             var config = await _context.SystemConfigs.FirstOrDefaultAsync(e => e.ConfigKey == configkey) ?? throw new NotFoundException("Config not found!");
 
@@ -81,14 +80,14 @@ namespace ServicePortals.Application.Services.SystemConfig
 
             await _context.SaveChangesAsync();
 
-            return SystemConfigMapper.ToDto(config);
+            return config;
         }
 
-        public async Task<List<SystemConfigDto?>> GetAll()
+        public async Task<List<Entities.SystemConfig>> GetAll()
         {
             var result = await _context.SystemConfigs.ToListAsync();
 
-            return SystemConfigMapper.ToDtoList(result);
+            return result;
         }
     }
 }

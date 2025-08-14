@@ -2,15 +2,13 @@
 
 namespace ServicePortals.Domain.Entities
 {
+    //loại phép
     [Table("type_leaves")]
     public class TypeLeave
     {
         public int Id { get; set; }
-        public string? Name { get; set; }
-        public string? Note { get; set; }
-        public string? NameV {  get; set; }
-        public string? Code { get; set; }
-        public string? BgColor { get; set; }
-        public string? TextColor { get; set; }
+        public string? Name { get; set; } //tiếng việt
+        public string? NameE { get; set; } //tiếng anh
+        public string? Code { get; set; } //mã loại phép AL, MAT,...
     }
 }

@@ -11,6 +11,5 @@ namespace ServicePortals.Domain.Entities
         public string? Code { get; set; }
         public ICollection<UserRole> UserRoles { get; set; } = [];
         public ICollection<RolePermission> RolePermissions { get; set; } = [];
-        public ICollection<OrgUnitRole> OrgUnitRoles { get; set; } = [];
     }
 }

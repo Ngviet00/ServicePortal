@@ -11,8 +11,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Dtos\Department\Requests\" />
-    <Folder Include="Dtos\Department\Responses\" />
     <Folder Include="Dtos\OrgUnit\Responses\" />
     <Folder Include="Dtos\Position\Requests\" />
     <Folder Include="Dtos\RequestType\Response\" />

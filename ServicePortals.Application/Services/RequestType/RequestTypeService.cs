@@ -3,6 +3,7 @@ using ServicePortals.Application.Dtos.RequestType.Request;
 using ServicePortals.Application.Interfaces.RequestType;
 using ServicePortals.Infrastructure.Data;
 using ServicePortals.Shared.Exceptions;
+using Entities = ServicePortals.Domain.Entities;
 
 namespace ServicePortals.Application.Services.RequestType
 {
@@ -18,7 +19,7 @@ namespace ServicePortals.Application.Services.RequestType
             _context = context;
         }
 
-        public async Task<PagedResults<Domain.Entities.RequestType>> GetAll(SearchRequestTypeRequest request)
+        public async Task<PagedResults<Entities.RequestType>> GetAll(SearchRequestTypeRequest request)
         {
             double pageSize = request.PageSize;
             double page = request.Page;
@@ -31,7 +32,7 @@ namespace ServicePortals.Application.Services.RequestType
 
             var requestTypes = await query.OrderBy(e => e.Name).Skip((int)((page - 1) * pageSize)).Take((int)pageSize).ToListAsync();
 
-            var result = new PagedResults<Domain.Entities.RequestType>
+            var result = new PagedResults<Entities.RequestType>
             {
                 Data = requestTypes,
                 TotalItems = totalItems,
@@ -41,16 +42,16 @@ namespace ServicePortals.Application.Services.RequestType
             return result;
         }
 
-        public async Task<Domain.Entities.RequestType> GetById(int id)
+        public async Task<Entities.RequestType> GetById(int id)
         {
             var requestType = await _context.RequestTypes.FirstOrDefaultAsync(e => e.Id == id) ?? throw new NotFoundException("Request type not found!");
 
             return requestType;
         }
 
-        public async Task<Domain.Entities.RequestType> Create(CreateRequestTypeRequest request)
+        public async Task<Entities.RequestType> Create(CreateRequestTypeRequest request)
         {
-            var requestType = new Domain.Entities.RequestType
+            var requestType = new Entities.RequestType
             {
                 Name = request.Name,
                 NameE = request.NameE
@@ -63,7 +64,7 @@ namespace ServicePortals.Application.Services.RequestType
             return requestType;
         }
 
-        public async Task<Domain.Entities.RequestType> Update(int id, CreateRequestTypeRequest request)
+        public async Task<Entities.RequestType> Update(int id, CreateRequestTypeRequest request)
         {
             var requestType = await _context.RequestTypes.FirstOrDefaultAsync(e => e.Id == id) ?? throw new NotFoundException("Request type not found!");
 
@@ -77,7 +78,7 @@ namespace ServicePortals.Application.Services.RequestType
             return requestType;
         }
 
-        public async Task<Domain.Entities.RequestType> Delete(int id)
+        public async Task<Entities.RequestType> Delete(int id)
         {
             var requestType = await _context.RequestTypes.FirstOrDefaultAsync(e => e.Id == id) ?? throw new NotFoundException("Request type not found!");
 

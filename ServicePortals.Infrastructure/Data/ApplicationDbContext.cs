@@ -26,12 +26,13 @@ namespace ServicePortals.Infrastructure.Data
         public DbSet<AttachFile> AttachFiles { get; set; }
         public DbSet<RequestType> RequestTypes { get; set; }
         public DbSet<RequestStatus> RequestStatuses { get; set; }
-        public DbSet<WorkFlowStep> WorkFlowSteps { get; set; }
+        public DbSet<ApprovalFlow> ApprovalFlows { get; set; }
         public DbSet<UserMngOrgUnitId> UserMngOrgUnits { get; set; }
         public DbSet<SystemConfig> SystemConfigs { get; set; }
-        public DbSet<DelegatedTemp> DelegatedTemps { get; set; }
+        public DbSet<Delegation> Delegations { get; set; }
         public DbSet<Unit> Units { get; set; }
         public DbSet<OrgUnit> OrgUnits { get; set; }
+        public DbSet<Position> Positions { get; set; }
         public DbSet<TimeAttendanceEditHistory> TimeAttendanceEditHistories { get; set; }
 
         public IDbConnection CreateConnection() => Database.GetDbConnection();
@@ -45,31 +46,29 @@ namespace ServicePortals.Infrastructure.Data
                 new Role { Id = 2, Name = "HR", Code = "HR" },
                 new Role { Id = 3, Name = "IT", Code = "IT" },
                 new Role { Id = 4, Name = "Union", Code = "UNION" },
-                new Role { Id = 5, Name = "User", Code = "USER" }
+                new Role { Id = 5, Name = "User", Code = "USER" },
+                new Role { Id = 6, Name = "GM", Code = "GM" },
+                new Role { Id = 7, Name = "HR_Manager", Code = "HR_MANAGER" }
             );
 
             modelBuilder.Entity<Permission>().HasData(
-                new Permission { Id = 1, Name = "leave_request.create_leave_request", Description = "LEAVE_REQUEST" },
-                new Permission { Id = 2, Name = "leave_request.send_to_hr", Description = "LEAVE_REQUEST" },
-                new Permission { Id = 3, Name = "time_keeping.mng_time_keeping", Description = "TIME_KEEPING" },
-                new Permission { Id = 4, Name = "leave_request.create_multiple_leave_request", Description = "LEAVE_REQUEST" }
-            );
-
-            modelBuilder.Entity<RolePermission>().HasData(
-                new RolePermission { Id = 1, RoleId = 1, PermissionId = 1 },
-                new RolePermission { Id = 2, RoleId = 2, PermissionId = 1 },
-                new RolePermission { Id = 3, RoleId = 3, PermissionId = 1 },
-                new RolePermission { Id = 4, RoleId = 4, PermissionId = 1 },
-                new RolePermission { Id = 5, RoleId = 5, PermissionId = 1 }
+                new Permission { Id = 1, Name = "time_keeping.mng_time_keeping", Group = "TIME_KEEPING" },
+                new Permission { Id = 2, Name = "leave_request.create_multiple_leave_request", Group = "LEAVE_REQUEST" },
+                new Permission { Id = 3, Name = "leave_request.hr_management_leave_request", Group = "LEAVE_REQUEST" },
+                new Permission { Id = 4, Name = "memo_notification.create", Group = "MEMO_NOTIFICATION" }
             );
 
             modelBuilder.Entity<TypeLeave>().HasData(
-                new TypeLeave { Id = 1, Name = "Annual", Note = "type_leave.annual", NameV = "Nghỉ Phép Năm"  },
-                new TypeLeave { Id = 2, Name = "Personal", Note = "type_leave.personal", NameV = "Nghỉ Việc Cá Nhân" },
-                new TypeLeave { Id = 3, Name = "Sick", Note = "type_leave.sick", NameV = "Nghỉ Ốm" },
-                new TypeLeave { Id = 4, Name = "Wedding", Note = "type_leave.wedding", NameV = "Nghỉ Cưới" },
-                new TypeLeave { Id = 5, Name = "Accident", Note = "type_leave.accident", NameV = "Nghỉ TNLĐ" },
-                new TypeLeave { Id = 6, Name = "Other", Note = "type_leave.other", NameV = "Khác" }
+                new TypeLeave { Id = 1, Code = "AL", NameE = "Annual Leave", Name = "Nghỉ Phép Năm"  },
+                new TypeLeave { Id = 2, Code = "NPL", NameE = "Unpaid Leave", Name = "Nghỉ Việc Cá Nhân" },
+                new TypeLeave { Id = 3, Code = "MC", NameE = "Sick Leave", Name = "Nghỉ Ốm" },
+                new TypeLeave { Id = 4, Code = "ML", NameE = "Wedding Leave", Name = "Nghỉ Cưới" },
+                new TypeLeave { Id = 5, Code = "ACC", NameE = "Accident Leave", Name = "Nghỉ TNLĐ" },
+                new TypeLeave { Id = 6, Code = "PL", NameE = "Paternity Leave", Name = "Nghỉ vợ sinh" },
+                new TypeLeave { Id = 7, Code = "MAT", NameE = "Maternity Leave", Name = "Nghỉ đẻ" },
+                new TypeLeave { Id = 8, Code = "UL", NameE = "Compensatory Leave", Name = "Nghỉ bù" },
+                new TypeLeave { Id = 9, Code = "COMP", NameE = "Funeral Leave", Name = "Nghỉ tang lễ" },
+                new TypeLeave { Id = 10, Code = "Wo", NameE = "Working Outside", Name = "Làm ở ngoài" }
             );
 
             modelBuilder.Entity<User>().HasData(
@@ -81,7 +80,7 @@ namespace ServicePortals.Infrastructure.Data
                     IsChangePassword = 1,
                     IsActive = 1,
                     Email = "superadmin@vsvn.com.vn",
-                    Phone = "0987654321",
+                    Phone = "0999999999",
                 }
             );
 
@@ -95,65 +94,90 @@ namespace ServicePortals.Infrastructure.Data
             );
 
             modelBuilder.Entity<TimeLeave>().HasData(
-                new TimeLeave
-                {
-                    Id = 1,
-                    Description = "Cả Ngày",
-                    English = "All Day"
-                },
-                new TimeLeave
-                {
-                    Id = 2,
-                    Description = "Buổi Sáng",
-                    English = "Morning"
-                },
-                new TimeLeave
-                {
-                    Id = 3,
-                    Description = "Buổi Chiều",
-                    English = "Afternoon"
-                }
+                new TimeLeave { Id = 1, Name = "Cả Ngày", NameE = "All Day" },
+                new TimeLeave { Id = 2, Name = "Buổi sáng", NameE = "Morning" },
+                new TimeLeave { Id = 3, Name = "Buổi chiều", NameE = "Afternoon" }
             );
 
             modelBuilder.Entity<RequestStatus>().HasData(
-                new RequestStatus
-                {
-                    Id = 1,
-                    Name = "PENDING"
-                },
-                new RequestStatus
-                {
-                    Id = 2,
-                    Name = "IN_PROCESS"
-                },
-                new RequestStatus
-                {
-                    Id = 3,
-                    Name = "COMPLETE"
-                },
-                new RequestStatus
-                {
-                    Id = 4,
-                    Name = "WAIT_HR"
-                },
-                new RequestStatus
-                {
-                    Id = 5,
-                    Name = "REJECT"
-                }
+                new RequestStatus { Id = 1, Name = "Chờ duyệt", NameE = "PENDING" },
+                new RequestStatus { Id = 2, Name = "Đang xử lý", NameE = "IN_PROCESS" },
+                new RequestStatus { Id = 3, Name = "Hoàn thành", NameE = "COMPLETED" },
+                new RequestStatus { Id = 4, Name = "Chờ HR", NameE = "WAIT_HR" },
+                new RequestStatus { Id = 5, Name = "Từ chối", NameE = "REJECTED" },
+                new RequestStatus { Id = 6, Name = "Duyệt cuối cùng", NameE = "FINAL_APPROVAL" },
+                new RequestStatus { Id = 7, Name = "Đã giao", NameE = "ASSIGNED" }
             );
 
             modelBuilder.Entity<RequestType>().HasData(
-                new RequestType
-                {
-                    Id = 1,
-                    Name = "Nghỉ Phép"
-                },
-                new RequestType
-                {
-                    Id = 2,
-                    Name = "Chấm Công"
-                }
+                new RequestType { Id = 1, Name = "Nghỉ phép", NameE = "Leave request" },
+                new RequestType { Id = 2, Name = "Chấm công", NameE = "Time Keeping" },
+                new RequestType { Id = 3, Name = "Thông báo", NameE = "Memo Notification" },
+                new RequestType { Id = 4, Name = "Form IT", NameE = "Form IT" }
+            );
+
+            modelBuilder.Entity<Unit>().HasData(
+                new Unit { Id = 1, Name = "Company" },
+                new Unit { Id = 2, Name = "Manage Department" },
+                new Unit { Id = 3, Name = "Department" },
+                new Unit { Id = 4, Name = "Team" }
+            );
+
+            modelBuilder.Entity<OrgUnit>().HasData(
+                new OrgUnit { Id = 1, Name = "VS Industry VietNam", ParentOrgUnitId = null, UnitId = 1 },
+
+                new OrgUnit { Id = 2, Name = "Business Development", ParentOrgUnitId = 1, UnitId = 2 },
+                new OrgUnit { Id = 3, Name = "Finance & Admin", ParentOrgUnitId = 1, UnitId = 2 },
+                new OrgUnit { Id = 4, Name = "Operations", ParentOrgUnitId = 1, UnitId = 2 },
+                new OrgUnit { Id = 5, Name = "VS Technology", ParentOrgUnitId = 1, UnitId = 2 },
+
+                new OrgUnit { Id = 6, Name = "General Manager", ParentOrgUnitId = 1, UnitId = 3 }, //bộ phận GM boss
+                new OrgUnit { Id = 7, Name = "Production", ParentOrgUnitId = 4, UnitId = 3 },
+                new OrgUnit { Id = 8, Name = "MIS", ParentOrgUnitId = 1, UnitId = 3 },
+                new OrgUnit { Id = 9, Name = "HR", ParentOrgUnitId = 3, UnitId = 3 },
+                new OrgUnit { Id = 10, Name = "Commercial", ParentOrgUnitId = 4, UnitId = 3 },
+
+                new OrgUnit { Id = 14, Name = "12A_A", ParentOrgUnitId = 6, UnitId = 4 },
+                new OrgUnit { Id = 15, Name = "12A_B", ParentOrgUnitId = 6, UnitId = 4 },
+                new OrgUnit { Id = 16, Name = "12B_A", ParentOrgUnitId = 6, UnitId = 4 },
+                new OrgUnit { Id = 17, Name = "12B_H", ParentOrgUnitId = 6, UnitId = 4 },
+                new OrgUnit { Id = 18, Name = "Kỹ thuật A_AGH", ParentOrgUnitId = 6, UnitId = 4 },
+                new OrgUnit { Id = 19, Name = "Kỹ thuật B_BCDEF", ParentOrgUnitId = 6, UnitId = 4 }
+            );
+
+            modelBuilder.Entity<Position>().HasData(
+                new Position { Id = 1, PositionCode = "GD", Name = "General Director", OrgUnitId = 6, ParentPositionId = null },
+                new Position { Id = 2, PositionCode = "AM_GD", Name = "AM General Director", OrgUnitId = 6, ParentPositionId = 1 },
+                new Position { Id = 3, PositionCode = "BDGM", Name = "BD General Manager", OrgUnitId = 6, ParentPositionId = 1 },
+                new Position { Id = 4, PositionCode = "FGM", Name = "Finance General Manage", OrgUnitId = 6, ParentPositionId = 1 },
+                new Position { Id = 5, PositionCode = "OGM", Name = "Operations General Manager", OrgUnitId = 6, ParentPositionId = 1 },
+                new Position { Id = 6, PositionCode = "OM", Name = "Operations Manager", OrgUnitId = 6, ParentPositionId = 1 },
+                                       
+                new Position { Id = 7, PositionCode = "MIS-MGR", Name = "Manager MIS/IT", OrgUnitId = 8, ParentPositionId = null },
+                new Position { Id = 8, PositionCode = "MIS-Staff", Name = "Staff IT", OrgUnitId = 8, ParentPositionId = 7 },
+                                       
+                new Position { Id = 9, PositionCode = "COM-MGR", Name = "Manager Commercial", OrgUnitId = 10, ParentPositionId = null },
+                new Position { Id = 10, PositionCode = "COM-AM", Name = "AM Commercial", OrgUnitId = 10, ParentPositionId = 9},
+                new Position { Id = 11, PositionCode = "COM-Staff", Name = "Staff Commercial", OrgUnitId = 10, ParentPositionId = 10 },
+
+                new Position { Id = 12, PositionCode = "HR-MGR", Name = "Manager HR", OrgUnitId = 9, ParentPositionId = null },
+                new Position { Id = 13, PositionCode = "HR-AM", Name = "AM HR", OrgUnitId = 9, ParentPositionId = 12 },
+                new Position { Id = 14, PositionCode = "HR-Staff", Name = "Staff HR", OrgUnitId = 9, ParentPositionId = 13 },
+
+                new Position { Id = 15, PositionCode = "PRD-MGR", Name = "Manager Production", OrgUnitId = 7, ParentPositionId = null },
+                new Position { Id = 16, PositionCode = "PRD-S-AGH", Name = "Supervisor A_AGH", OrgUnitId = 18, ParentPositionId = 15 },
+                new Position { Id = 17, PositionCode = "PRD-S-BBCDEF", Name = "Supervisor B_BCDEF", OrgUnitId = 19, ParentPositionId = 15 },
+                new Position { Id = 18, PositionCode = "PRD-S-SA", Name = "Supervisor Shift A", OrgUnitId = 14, ParentPositionId = 15 },
+                new Position { Id = 19, PositionCode = "PRD-S-SB", Name = "Supervisor Shift B", OrgUnitId = 17, ParentPositionId = 15 },
+
+                new Position { Id = 20, PositionCode = "PRD-12AA-L", Name = "12A_A Leader", OrgUnitId = 14, ParentPositionId = 18 },
+                new Position { Id = 21, PositionCode = "PRD-12AA-OP", Name = "12A_A Operator", OrgUnitId = 14, ParentPositionId = 18 },
+
+                new Position { Id = 22, PositionCode = "PRD-12BA-L", Name = "12B_A Leader", OrgUnitId = 16, ParentPositionId = 19 },
+                new Position { Id = 23, PositionCode = "PRD-12BA-OP", Name = "12B_A Operator", OrgUnitId = 16, ParentPositionId = 19 },
+
+                new Position { Id = 24, PositionCode = "PRD-T-AAH", Name = "Technician A_AGH", OrgUnitId = 18, ParentPositionId = 16 },
+                new Position { Id = 25, PositionCode = "PRD-T-BCDEF", Name = "Technician B_BCDEF", OrgUnitId = 19, ParentPositionId = 17 }
             );
 
             //file - attach_file
@@ -269,14 +293,16 @@ namespace ServicePortals.Infrastructure.Data
                 .HasOne(lr => lr.User)
                 .WithMany()
                 .HasPrincipalKey(u => u.UserCode)
-                .HasForeignKey(lr => lr.RequesterUserCode)
+                .HasForeignKey(lr => lr.UserCodeRequestor)
                 .IsRequired(false)
                 .OnDelete(DeleteBehavior.NoAction);
 
-            modelBuilder.Entity<OrgUnitRole>()
-                .HasOne(o => o.Role)
-                .WithMany(r => r.OrgUnitRoles)
-                .HasForeignKey(o => o.RoleId)
+            modelBuilder.Entity<LeaveRequest>()
+                .HasOne(lr => lr.OrgUnit)
+                .WithMany()
+                .HasPrincipalKey(o => o.Id)
+                .HasForeignKey(lr => lr.DepartmentId)
+                .IsRequired(false)
                 .OnDelete(DeleteBehavior.NoAction);
 
             //leave_request - application_form
@@ -291,7 +317,7 @@ namespace ServicePortals.Infrastructure.Data
                 .HasOne(mnd => mnd.OrgUnit)
                 .WithMany()
                 .HasForeignKey(mnd => mnd.DepartmentId)
-                .HasPrincipalKey(ou => ou.DeptId)
+                .HasPrincipalKey(ou => ou.Id)
                 .OnDelete(DeleteBehavior.NoAction);
 
             modelBuilder.Entity<ApplicationForm>()

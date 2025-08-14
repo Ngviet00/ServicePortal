@@ -13,17 +13,16 @@ namespace ServicePortals.Application.Interfaces.User
         Task<object?> GetCustomColumnUserViclockByUserCode(string userCode, string columns);
         Task<Domain.Entities.User?> GetRoleAndPermissionByUser(string userCode);
         UserRolesAndPermissionsResponse FormatRoleAndPermissionByUser(Domain.Entities.User? user);
-        Task<UserResponse> Delete(Guid id);
+        //Task<UserResponse> Delete(Guid id);
         Task<UserResponse> ForceDelete(Guid id);
         Task<bool> UpdateUserRole(UpdateUserRoleRequest request);
         Task<bool> UpdateUserPermission(UpdateUserRoleRequest request);
         Task<UserResponse> ResetPassword(ResetPasswordRequest request);
         Task<UserResponse> Update(string userCode, UpdatePersonalInfoRequest request);
-        Task<List<GetMultiUserViClockByOrgUnitIdResponse>> GetMultipleUserViclockByOrgUnitId(int OrgUnitId);
+        //Task<List<GetMultiUserViClockByOrgUnitIdResponse>> GetMultipleUserViclockByOrgUnitId(int OrgUnitId);
         Task<List<OrgUnitNode>> BuildOrgTree(int departmentId);
         Task<dynamic?> GetUserByParentOrgUnit(int orgUnitId);
         Task<PagedResults<object>> SearchAllUserFromViClock(SearchAllUserFromViclockRequest request);
-        Task<List<NextUserInfoApprovalResponse>> GetNextUserInfoApprovalByCurrentUserCode(string userCode);
-        Task<dynamic> Test();
+        //Task<List<NextUserInfoApprovalResponse>> GetNextUserInfoApprovalByCurrentUserCode(string userCode);
     }
 }

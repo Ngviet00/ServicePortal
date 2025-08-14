@@ -7,7 +7,7 @@ namespace ServicePortals.Domain.Entities
     {
         public int? Id {  get; set; }
         public string? UserCode { get; set; }
-        public int? OrgUnitId { get; set; }
+        public int? PositionId { get; set; }
         public string? ManagementType { get; set; }
     }
 }

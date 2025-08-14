@@ -1,12 +1,12 @@
-﻿using ServicePortals.Application.Dtos.SystemConfig;
+﻿using Entities = ServicePortals.Domain.Entities;
 
 namespace ServicePortals.Application.Interfaces.SystemConfig
 {
     public interface ISystemConfigService
     {
-        Task<List<SystemConfigDto?>> GetAll();
-        Task<SystemConfigDto?> GetByConfigKey(string configkey);
-        Task<SystemConfigDto?> AddConfig(SystemConfigDto request);
-        Task<SystemConfigDto?> UpdateConfig(string configkey, SystemConfigDto request);
+        Task<List<Entities.SystemConfig>> GetAll();
+        Task<Entities.SystemConfig> GetByConfigKey(string configkey);
+        Task<Entities.SystemConfig> AddConfig(Entities.SystemConfig request);
+        Task<Entities.SystemConfig> UpdateConfig(string configkey, Entities.SystemConfig request);
     }
 }

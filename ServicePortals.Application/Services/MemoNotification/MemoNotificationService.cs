@@ -1,5 +1,6 @@
 ﻿using System.Data;
 using System.Security.Claims;
+using DocumentFormat.OpenXml.Spreadsheet;
 using Hangfire;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
@@ -16,8 +17,8 @@ using ServicePortals.Domain.Enums;
 using ServicePortals.Infrastructure.Data;
 using ServicePortals.Infrastructure.Email;
 using ServicePortals.Infrastructure.Helpers;
-using ServicePortals.Infrastructure.Mappers;
 using ServicePortals.Shared.Exceptions;
+using Entities = ServicePortals.Domain.Entities;
 
 namespace ServicePortals.Application.Services.MemoNotification
 {
@@ -29,7 +30,7 @@ namespace ServicePortals.Application.Services.MemoNotification
         private readonly IUserService _userService;
 
         public MemoNotificationService(
-            ApplicationDbContext context, 
+            ApplicationDbContext context,
             IHttpContextAccessor httpContextAccessor,
             IOrgUnitService orgService,
             IUserService userService
@@ -45,7 +46,7 @@ namespace ServicePortals.Application.Services.MemoNotification
         /// Lấy danh sách thông báo đã tạo của user, join với tblBoPhan ở bên viclock để lấy tên
         /// vì có 1 số thông báo chỉ áp dụng cho 1 vài bộ phận/phòng ban
         /// </summary>
-        public async Task<PagedResults<GetAllMemoNotifyResponse>> GetAll(GetAllMemoNotiRequest request)
+        public async Task<PagedResults<Entities.MemoNotification>> GetAll(GetAllMemoNotiRequest request)
         {
             int pageSize = request.PageSize;
             int page = request.Page;
@@ -61,37 +62,53 @@ namespace ServicePortals.Application.Services.MemoNotification
             var query = await _context.MemoNotifications
                 .Where(e => e.UserCodeCreated == userCode)
                 .OrderByDescending(e => e.CreatedAt)
-                .Select(e => new GetAllMemoNotifyResponse
+                .Select(e => new Entities.MemoNotification
                 {
                     Id = e.Id,
                     Title = e.Title,
                     Content = e.Content,
-                    ApplyAllDepartment = e.ApplyAllDepartment,
+                    Code = e.Code,
                     FromDate = e.FromDate,
                     ToDate = e.ToDate,
-                    Status = e.Status,
                     UserCodeCreated = e.UserCodeCreated,
-                    CreatedAt = e.CreatedAt,
                     CreatedBy = e.CreatedBy,
                     Priority = e.Priority,
-                    ApplicationForm = new ApplicationForm
+                    Status = e.Status,
+                    ApplyAllDepartment = e.ApplyAllDepartment,
+                    CreatedAt = e.CreatedAt,
+                    MemoNotificationDepartments = e.MemoNotificationDepartments.Select(d => new Entities.MemoNotificationDepartment
                     {
-                        Id = e.ApplicationForm != null ? e.ApplicationForm.Id : null,
-                        RequestStatusId = e.ApplicationForm != null ? e.ApplicationForm.RequestStatusId : null,
-                        HistoryApplicationForms = e.ApplicationForm != null ? e.ApplicationForm.HistoryApplicationForms.OrderByDescending(h => h.CreatedAt).Take(1).ToList() : new List<HistoryApplicationForm>()
-                    },
-                    MemoNotificationDepartments = string.Join(", ", 
-                        e.MemoNotificationDepartments
-                            .Where(md => md.OrgUnit != null && md.OrgUnit.UnitId == (int)UnitEnum.Phong)
-                            .Select(md => md.OrgUnit != null ? md.OrgUnit.Name : "")
-                            .ToList()
-                    )
+                        Id = d.Id,
+                        MemoNotificationId = d.MemoNotificationId,
+                        DepartmentId = d.DepartmentId,
+                        OrgUnit = d.OrgUnit != null ? new Entities.OrgUnit
+                        {
+                            Id = d.OrgUnit != null ? d.OrgUnit.Id : null,
+                            Name = d.OrgUnit != null ? d.OrgUnit.Name : ""
+                        } : null
+                    }).ToList(),
+                    OrgUnit = e.OrgUnit,
+                    ApplicationForm = e.ApplicationForm != null ? new ApplicationForm
+                    {
+                        Id = e.ApplicationForm.Id,
+                        RequestStatusId = e.ApplicationForm.RequestStatusId,
+                        HistoryApplicationForms = e.ApplicationForm.HistoryApplicationForms.Select(h => new Entities.HistoryApplicationForm
+                        {
+                            Id = h.Id,
+                            UserCodeApproval = h.UserCodeApproval,
+                            UserNameApproval = h.UserNameApproval,
+                            Note = h.Note,
+                            Action = h.Action,
+                            ApplicationFormId = h.ApplicationFormId,
+                            CreatedAt = h.CreatedAt,
+                        }).ToList()
+                    } : null
                 })
                 .Skip(((page - 1) * pageSize))
                 .Take(pageSize)
                 .ToListAsync();
 
-            return new PagedResults<GetAllMemoNotifyResponse>
+            return new PagedResults<Entities.MemoNotification>
             {
                 Data = query,
                 TotalItems = totalItems,
@@ -151,8 +168,8 @@ namespace ServicePortals.Application.Services.MemoNotification
                     .Select(x => new HistoryApplicationForm
                     {
                         Id = x.Id,
-                        UserApproval =  x.UserApproval,
-                        UserCodeApproval =  x.UserCodeApproval,
+                        UserApproval = x.UserApproval,
+                        UserCodeApproval = x.UserCodeApproval,
                         ActionType = x.ActionType,
                         Comment = x.Comment,
                         CreatedAt = x.CreatedAt
@@ -465,15 +482,15 @@ namespace ServicePortals.Application.Services.MemoNotification
                     x => x.memoDeptGroup.DefaultIfEmpty(),
                     (x, memoDept) => new { MemoNotification = x.memo, MemoNotificationDepartment = memoDept }
                 )
-                .Where(x => 
-                    x.MemoNotification.Status == true && 
-                    x.MemoNotification.ApplicationForm != null && 
+                .Where(x =>
+                    x.MemoNotification.Status == true &&
+                    x.MemoNotification.ApplicationForm != null &&
                     x.MemoNotification.ApplicationForm.RequestStatusId == (int)StatusApplicationFormEnum.COMPLETE &&
                     x.MemoNotification.FromDate.HasValue && x.MemoNotification.FromDate.Value.Date <= today &&
                     x.MemoNotification.ToDate.HasValue && x.MemoNotification.ToDate.Value.Date >= today &&
                     (
-                        x.MemoNotification.ApplyAllDepartment == true || 
-                        x.MemoNotificationDepartment != null && 
+                        x.MemoNotification.ApplyAllDepartment == true ||
+                        x.MemoNotificationDepartment != null &&
                         (x.MemoNotificationDepartment.DepartmentId == DepartmentId || x.MemoNotification.UserCodeCreated == userCode)
                     )
                 )
@@ -588,7 +605,7 @@ namespace ServicePortals.Application.Services.MemoNotification
                 var userRequest = await _context.Users.Where(e => e.UserCode == memoNotify.UserCodeCreated).ToListAsync();
                 bool isApproved = request.Status == true;
                 string title = isApproved ? "approved" : "reject";
-                
+
                 BackgroundJob.Enqueue<IEmailService>(job =>
                     job.EmailSendMemoNotificationHasBeenCompletedOrReject(
                         userRequest.Select(e => e.Email ?? "").ToList(),

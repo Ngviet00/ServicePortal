@@ -10,194 +10,193 @@ using Serilog;
 using ServicePortals.Domain.Enums;
 using ServicePortals.Shared.SharedDto;
 using ServicePortals.Application.Dtos.OrgUnit;
-using ServicePortals.Application.Mappers;
+using Entities = ServicePortals.Domain.Entities;
 
 namespace ServicePortals.Application.Services.OrgUnit
 {
     public class OrgUnitService : IOrgUnitService
     {
         private readonly ApplicationDbContext _context;
-        private readonly IViclockDapperContext _viclockDapperContext;
 
-        public OrgUnitService (ApplicationDbContext context, IViclockDapperContext viclockDapperContext)
+        public OrgUnitService(ApplicationDbContext context)
         {
             _context = context;
-            _viclockDapperContext = viclockDapperContext;
         }
 
         /// <summary>
         /// Lấy tất cả department
         /// </summary>
-        public async Task<List<OrgUnitDto>> GetAllDepartments()
+        public async Task<List<Entities.OrgUnit>> GetAllDepartments()
         {
-            var results = await _context.OrgUnits.Where(e => e.UnitId == (int)UnitEnum.Phong).ToListAsync();
-            return OrgUnitMapper.ToDtoList(results);
+            var results = await _context.OrgUnits.Where(e => e.UnitId == (int)UnitEnum.Department).ToListAsync();
+
+            return results;
         }
 
-        /// <summary>
-        /// Lấy danh sách phòng ban trong bảng orgunit, where unit_id = 3, đã format dữ liệu để hiển thị tree checkbox các màn
-        /// </summary>
-        public async Task<List<TreeCheckboxResponse>> GetAllDeptOfOrgUnit()
-        {
-            var results = await _context.OrgUnits.Where(e => e.UnitId == (int)UnitEnum.Phong).ToListAsync();
+        ///// <summary>
+        ///// Lấy danh sách phòng ban trong bảng orgunit, where unit_id = 3, đã format dữ liệu để hiển thị tree checkbox các màn
+        ///// </summary>
+        //public async Task<List<TreeCheckboxResponse>> GetAllDeptOfOrgUnit()
+        //{
+        //    var results = await _context.OrgUnits.Where(e => e.UnitId == (int)UnitEnum.Phong).ToListAsync();
 
-            var responseList = results.Select(e => new TreeCheckboxResponse
-            {
-                Id = e.DeptId.ToString(),
-                Label = e.Name,
-                Type = "department"
-            }).ToList();
+        //    var responseList = results.Select(e => new TreeCheckboxResponse
+        //    {
+        //        Id = e.DeptId.ToString(),
+        //        Label = e.Name,
+        //        Type = "department"
+        //    }).ToList();
 
-            return responseList;
-        }
+        //    return responseList;
+        //}
 
-        /// <summary>
-        /// Lấy org unit theo id
-        /// </summary>
-        public async Task<Domain.Entities.OrgUnit?> GetOrgUnitById(int id)
-        {
-            var result = await _context.OrgUnits.FirstOrDefaultAsync(e => e.Id == id);
-            
-            return result;
-        }
+        ///// <summary>
+        ///// Lấy org unit theo id
+        ///// </summary>
+        //public async Task<Domain.Entities.OrgUnit?> GetOrgUnitById(int id)
+        //{
+        //    var result = await _context.OrgUnits.FirstOrDefaultAsync(e => e.Id == id);
 
-        /// <summary>
-        /// Lấy tất cả phòng ban và vị trí trong phòng ban đó
-        /// </summary>
-        public async Task<dynamic?> GetAllDepartmentAndFirstOrgUnit()
-        {
-            var connection = (SqlConnection)_context.CreateConnection();
+        //    return result;
+        //}
 
-            if (connection.State != ConnectionState.Open)
-            {
-                await connection.OpenAsync();
-            }
+        ///// <summary>
+        ///// Lấy tất cả phòng ban và vị trí trong phòng ban đó
+        ///// </summary>
+        //public async Task<dynamic?> GetAllDepartmentAndFirstOrgUnit()
+        //{
+        //    var connection = (SqlConnection)_context.CreateConnection();
 
-            var sql = $@"
-                SELECT 
-                    pb.Id AS DepartmentId,
-                    pb.DeptId,
-                    pb.Name AS DepartmentName,
-                    org.Id AS OrgUnitId,
-                    org.Name AS OrgUnitName
-                FROM [{Global.DbWeb}].dbo.org_units pb
-                LEFT JOIN [{Global.DbWeb}].dbo.org_units org
-                    ON org.ParentOrgUnitId = pb.Id AND org.UnitId = @UnitId
-                WHERE pb.DeptId IS NOT NULL AND org.Id IS NOT NULL
-                ORDER BY pb.Id, org.Id
-            ";
+        //    if (connection.State != ConnectionState.Open)
+        //    {
+        //        await connection.OpenAsync();
+        //    }
 
-            var rawData = await connection.QueryAsync<dynamic>(sql, new
-            {
-                UnitId = (int)UnitEnum.To
-            });
+        //    var sql = $@"
+        //        SELECT 
+        //            pb.Id AS DepartmentId,
+        //            pb.DeptId,
+        //            pb.Name AS DepartmentName,
+        //            org.Id AS OrgUnitId,
+        //            org.Name AS OrgUnitName
+        //        FROM [{Global.DbWeb}].dbo.org_units pb
+        //        LEFT JOIN [{Global.DbWeb}].dbo.org_units org
+        //            ON org.ParentOrgUnitId = pb.Id AND org.UnitId = @UnitId
+        //        WHERE pb.DeptId IS NOT NULL AND org.Id IS NOT NULL
+        //        ORDER BY pb.Id, org.Id
+        //    ";
 
-            var result = rawData
-                .GroupBy(x => new { x.DepartmentId, x.DepartmentName })
-                .Select(group => new
-                {
-                    id = group.Key.DepartmentId.ToString(),
-                    label = group.Key.DepartmentName,
-                    type = "department",
-                    children = group.Select(x => new
-                    {
-                        id = x.OrgUnitId?.ToString() ?? "",
-                        label = x.OrgUnitName ?? "",
-                        type = "jobtitle"
-                    }).ToList()
-                })
-                .ToList();
+        //    var rawData = await connection.QueryAsync<dynamic>(sql, new
+        //    {
+        //        UnitId = (int)UnitEnum.To
+        //    });
 
-            return result;
-        }
+        //    var result = rawData
+        //        .GroupBy(x => new { x.DepartmentId, x.DepartmentName })
+        //        .Select(group => new
+        //        {
+        //            id = group.Key.DepartmentId.ToString(),
+        //            label = group.Key.DepartmentName,
+        //            type = "department",
+        //            children = group.Select(x => new
+        //            {
+        //                id = x.OrgUnitId?.ToString() ?? "",
+        //                label = x.OrgUnitName ?? "",
+        //                type = "jobtitle"
+        //            }).ToList()
+        //        })
+        //        .ToList();
 
-        /// <summary>
-        /// Lưu thay đổi vị trí người dùng
-        /// </summary>
-        public async Task<bool> SaveChangeUserOrgUnit(SaveChangeOrgUnitUserRequest request)
-        {
-            try
-            {
-                var connection = (SqlConnection)_context.CreateConnection();
+        //    return result;
+        //}
 
-                if (connection.State != ConnectionState.Open)
-                {
-                    await connection.OpenAsync();
-                }
+        ///// <summary>
+        ///// Lưu thay đổi vị trí người dùng
+        ///// </summary>
+        //public async Task<bool> SaveChangeUserOrgUnit(SaveChangeOrgUnitUserRequest request)
+        //{
+        //    try
+        //    {
+        //        var connection = (SqlConnection)_context.CreateConnection();
 
-                var sqlUpdate = $@"UPDATE {Global.DbViClock}.dbo.tblNhanVien SET OrgUnitID = @OrgUnitId WHERE NVMaNV IN @UserCodes";
+        //        if (connection.State != ConnectionState.Open)
+        //        {
+        //            await connection.OpenAsync();
+        //        }
 
-                await connection.ExecuteAsync(sqlUpdate, new
-                {
-                    OrgUnitId = request.OrgUnitId,
-                    UserCodes = request.UserCodes
-                });
+        //        var sqlUpdate = $@"UPDATE {Global.DbViClock}.dbo.tblNhanVien SET OrgUnitID = @OrgUnitId WHERE NVMaNV IN @UserCodes";
 
-                return true;
-            }
-            catch (Exception ex)
-            {
-                Log.Error($"Error can not change org unit user, error: {ex.Message}");
-                return false;
-            }
-        }
+        //        await connection.ExecuteAsync(sqlUpdate, new
+        //        {
+        //            OrgUnitId = request.OrgUnitId,
+        //            UserCodes = request.UserCodes
+        //        });
 
-        /// <summary>
-        /// Lấy danh sách id của team (các tổ) và những người dùng chưa được set vị trí (org unit id)
-        /// </summary>
-        public async Task<object> GetOrgUnitTeamAndUserNotSetOrgUnitWithDept(int departmentId)
-        {
-            var connection = (SqlConnection)_context.CreateConnection();
+        //        return true;
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        Log.Error($"Error can not change org unit user, error: {ex.Message}");
+        //        return false;
+        //    }
+        //}
 
-            if (connection.State != ConnectionState.Open)
-            {
-                await connection.OpenAsync();
-            }
+        ///// <summary>
+        ///// Lấy danh sách id của team (các tổ) và những người dùng chưa được set vị trí (org unit id)
+        ///// </summary>
+        //public async Task<object> GetOrgUnitTeamAndUserNotSetOrgUnitWithDept(int departmentId)
+        //{
+        //    var connection = (SqlConnection)_context.CreateConnection();
 
-            var sqlUserInDeptAndNotSetOrgUnit = $@"
-                SELECT
-                   NVMaNV, {Global.DbViClock}.dbo.funTCVN2Unicode(NV.NVHoTen) AS NVHoTen 
-                FROM {Global.DbViClock}.dbo.tblNhanVien AS NV
-                WHERE NV.NVMaBP = @departmentId AND NV.OrgUnitID IS NULL AND NV.NVNgayRa > GETDATE()
-            ";
+        //    if (connection.State != ConnectionState.Open)
+        //    {
+        //        await connection.OpenAsync();
+        //    }
 
-            var userData = await connection.QueryAsync<dynamic>(sqlUserInDeptAndNotSetOrgUnit, new { departmentId });
+        //    var sqlUserInDeptAndNotSetOrgUnit = $@"
+        //        SELECT
+        //           NVMaNV, {Global.DbViClock}.dbo.funTCVN2Unicode(NV.NVHoTen) AS NVHoTen 
+        //        FROM {Global.DbViClock}.dbo.tblNhanVien AS NV
+        //        WHERE NV.NVMaBP = @departmentId AND NV.OrgUnitID IS NULL AND NV.NVNgayRa > GETDATE()
+        //    ";
 
-            var orgUnitTeamData = await _context.OrgUnits.Where(e => e.DeptId == departmentId && e.UnitId == (int)UnitEnum.To).ToListAsync();
+        //    var userData = await connection.QueryAsync<dynamic>(sqlUserInDeptAndNotSetOrgUnit, new { departmentId });
 
-            List<TreeCheckboxResponse> treeCheckboxResponses = [];
+        //    var orgUnitTeamData = await _context.OrgUnits.Where(e => e.DeptId == departmentId && e.UnitId == (int)UnitEnum.To).ToListAsync();
 
-            foreach (var item in orgUnitTeamData)
-            {
-                treeCheckboxResponses.Add(new TreeCheckboxResponse
-                {
-                    Id = item.Id.ToString(),
-                    Label = item.Name,
-                    Type = "jobtitle"
-                });
-            }
+        //    List<TreeCheckboxResponse> treeCheckboxResponses = [];
 
-            foreach (var user in userData)
-            {
-                treeCheckboxResponses.Add(new TreeCheckboxResponse
-                {
-                    Id = user.NVMaNV,
-                    Label = user.NVHoTen,
-                    Type = "user"
-                });
-            }
+        //    foreach (var item in orgUnitTeamData)
+        //    {
+        //        treeCheckboxResponses.Add(new TreeCheckboxResponse
+        //        {
+        //            Id = item.Id.ToString(),
+        //            Label = item.Name,
+        //            Type = "jobtitle"
+        //        });
+        //    }
 
-            return treeCheckboxResponses;
-        }
+        //    foreach (var user in userData)
+        //    {
+        //        treeCheckboxResponses.Add(new TreeCheckboxResponse
+        //        {
+        //            Id = user.NVMaNV,
+        //            Label = user.NVHoTen,
+        //            Type = "user"
+        //        });
+        //    }
 
-        /// <summary>
-        /// Lấy danh sách vị trí của người dùng thuộc phòng ban, từ 5 trở đi là các vị trí của user
-        /// </summary>
-        public async Task<List<OrgUnitDto>> GetOrgUnitUserWithDept(int departmentId)
-        {
-            var results = await _context.OrgUnits.Where(e => e.DeptId == departmentId && e.UnitId >= 5).OrderBy(e => e.UnitId).ToListAsync();
+        //    return treeCheckboxResponses;
+        //}
 
-            return OrgUnitMapper.ToDtoList(results);
-        }
+        ///// <summary>
+        ///// Lấy danh sách vị trí của người dùng thuộc phòng ban, từ 5 trở đi là các vị trí của user
+        ///// </summary>
+        //public async Task<List<OrgUnitDto>> GetOrgUnitUserWithDept(int departmentId)
+        //{
+        //    var results = await _context.OrgUnits.Where(e => e.DeptId == departmentId && e.UnitId >= 5).OrderBy(e => e.UnitId).ToListAsync();
+
+        //    return OrgUnitMapper.ToDtoList(results);
+        //}
     }
 }

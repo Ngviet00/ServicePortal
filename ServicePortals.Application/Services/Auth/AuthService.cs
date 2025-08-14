@@ -114,7 +114,9 @@ namespace ServicePortals.Infrastructure.Services.Auth
                 {
                     newUser?.UserCode,
                     newUser?.IsChangePassword,
-                    newUser?.Email
+                    newUser?.Email,
+                    roles = formatRoleAndPermission.Roles,
+                    permissions = formatRoleAndPermission.Permissions
                 },
                 ExpiresAt = refreshTokenEntity.ExpiresAt
             };
@@ -167,7 +169,9 @@ namespace ServicePortals.Infrastructure.Services.Auth
                 {
                     userFromWebSystem?.UserCode,
                     userFromWebSystem?.IsChangePassword,
-                    userFromWebSystem?.Email
+                    userFromWebSystem?.Email,
+                    roles = formatRoleAndPermission.Roles,
+                    permissions = formatRoleAndPermission.Permissions
                 },
                 ExpiresAt = refreshTokenEntity.ExpiresAt
             };
@@ -244,6 +248,8 @@ namespace ServicePortals.Infrastructure.Services.Auth
             token.IsRevoked = true;
 
             _context.RefreshTokens.Update(token);
+
+            _cacheService.Remove($"user_info_{token.UserCode}");
 
             await _context.SaveChangesAsync();
         }
