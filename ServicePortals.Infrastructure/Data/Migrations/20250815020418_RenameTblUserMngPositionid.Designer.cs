@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ServicePortals.Infrastructure.Data;
 
@@ -11,9 +12,11 @@ using ServicePortals.Infrastructure.Data;
 namespace ServicePortals.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250815020418_RenameTblUserMngPositionid")]
+    partial class RenameTblUserMngPositionid
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1345,7 +1348,7 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                     b.ToTable("user_configs");
                 });
 
-            modelBuilder.Entity("ServicePortals.Domain.Entities.UserMngOrgUnitId", b =>
+            modelBuilder.Entity("ServicePortals.Domain.Entities.UserMngPositionId", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -1356,7 +1359,7 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                     b.Property<string>("ManagementType")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int?>("OrgUnitId")
+                    b.Property<int?>("PositionId")
                         .HasColumnType("int");
 
                     b.Property<string>("UserCode")
@@ -1364,7 +1367,7 @@ namespace ServicePortals.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("user_mng_org_unit_id");
+                    b.ToTable("user_mng_position_id");
                 });
 
             modelBuilder.Entity("ServicePortals.Domain.Entities.UserPermission", b =>

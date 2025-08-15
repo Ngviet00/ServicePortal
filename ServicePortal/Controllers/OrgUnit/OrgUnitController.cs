@@ -9,7 +9,7 @@ using Entities = ServicePortals.Domain.Entities;
 
 namespace ServicePortal.Controllers.OrgUnit
 {
-    [Authorize]
+    //[Authorize]
     [ApiController, Route("api/org-unit")]
     public class OrgUnitController : ControllerBase
     {
@@ -27,6 +27,30 @@ namespace ServicePortal.Controllers.OrgUnit
             return Ok(new BaseResponse<List<Entities.OrgUnit>>(200, "success", results));
         }
 
+        [HttpGet("get-team-by-department-id-and-user-not-set-org-position-id-by-department-name")]
+        public async Task<IActionResult> GetTeamByDeptIdAndUserNotSetOrgPositionId(int departmentId)
+        {
+            var result = await _orgUnitService.GetTeamByDeptIdAndUserNotSetOrgPositionId(departmentId);
+
+            return Ok(new BaseResponse<object>(200, "success", result));
+        }
+
+        [HttpGet("get-list-user-by-team-id")]
+        public async Task<IActionResult> GetListUserByTeamId(int teamId)
+        {
+            var result = await _orgUnitService.GetListUserByTeamId(teamId);
+
+            return Ok(new BaseResponse<object>(200, "success", result));
+        }
+
+        [HttpPost("save-change-org-unit-user")]
+        public async Task<IActionResult> SaveChangeOrgUnitUser(SaveChangeOrgUnitUserRequest request)
+        {
+            var result = await _orgUnitService.SaveChangeUserOrgUnit(request);
+
+            return Ok(new BaseResponse<bool>(200, "success", result));
+        }
+
         //[HttpGet("get-all-dept-of-orgunit")]
         //public async Task<IActionResult> GetAllDeptOfOrgUnit()
         //{
@@ -35,21 +59,14 @@ namespace ServicePortal.Controllers.OrgUnit
         //    return Ok(new BaseResponse<List<TreeCheckboxResponse>>(200, "success", results));
         //}
 
-        //[HttpGet("get-all-dept-and-first-org-unit")]
-        //public async Task<IActionResult> GetAllDepartmentAndFirstOrgUnit()
-        //{
-        //    var results = await _orgUnitService.GetAllDepartmentAndFirstOrgUnit();
+        [HttpGet("get-department-and-children-team")]
+        public async Task<IActionResult> GetDepartmentAndChildrenTeam()
+        {
+            var results = await _orgUnitService.GetDepartmentAndChildrenTeam();
 
-        //    return Ok(new BaseResponse<dynamic>(200, "success", results));
-        //}
+            return Ok(new BaseResponse<dynamic>(200, "success", results));
+        }
 
-        //[HttpGet("get-orgunit-team-and-user-not-set-orgunit-with-dept")]
-        //public async Task<IActionResult> GetOrgUnitTeamAndUserNotSetOrgUnitWithDept(int departmentId)
-        //{
-        //    var result = await _orgUnitService.GetOrgUnitTeamAndUserNotSetOrgUnitWithDept(departmentId);
-
-        //    return Ok(new BaseResponse<object>(200, "success", result));
-        //}
 
         //[HttpGet("get-orgunit-user-by-with-dept")]
         //public async Task<IActionResult> GetOrgUnitUserWithDept(int departmentId)
@@ -57,14 +74,6 @@ namespace ServicePortal.Controllers.OrgUnit
         //    var result = await _orgUnitService.GetOrgUnitUserWithDept(departmentId);
 
         //    return Ok(new BaseResponse<List<OrgUnitDto>>(200, "success", result));
-        //}
-
-        //[HttpPost("save-change-org-unit-user")]
-        //public async Task<IActionResult> SaveChangeOrgUnitUser(SaveChangeOrgUnitUserRequest request)
-        //{
-        //    var result = await _orgUnitService.SaveChangeUserOrgUnit(request);
-
-        //    return Ok(new BaseResponse<bool>(200, "success", result));
         //}
     }
 }

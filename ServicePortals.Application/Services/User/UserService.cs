@@ -1,6 +1,5 @@
 ﻿using System.Data;
 using System.Text;
-using Azure.Core;
 using Dapper;
 using Hangfire;
 using Microsoft.Data.SqlClient;
@@ -37,133 +36,31 @@ namespace ServicePortals.Application.Services.User
         //lấy danh sách user, kết hợp vs tblNhanVien bên db viclock
         public async Task<PagedResults<GetAllUserResponse>> GetAll(GetAllUserRequest request)
         {
+            var parameters = new DynamicParameters();
+
+            parameters.Add("@Page", request.Page, DbType.Int32, ParameterDirection.Input);
+            parameters.Add("@PageSize", request.PageSize, DbType.Int32, ParameterDirection.Input);
+            parameters.Add("@SearchDepartmentId", request.DepartmentId, DbType.Int32, ParameterDirection.Input);
+            parameters.Add("@SearchGender", request.Sex, DbType.Int32, ParameterDirection.Input);
+            parameters.Add("@SearchName", Helper.RemoveDiacritics(request.Name ?? ""), DbType.String, ParameterDirection.Input);
+            parameters.Add("@TotalRecords", dbType: DbType.Int32, direction: ParameterDirection.Output);
+
+            var results = await _context.Database.GetDbConnection()
+                    .QueryAsync<GetAllUserResponse>(
+                        "dbo.sp_GetAllUser",
+                        parameters,
+                        commandType: CommandType.StoredProcedure
+            );
+
+            int totalRecords = parameters.Get<int>("@TotalRecords");
+            int totalPages = (int)Math.Ceiling((double)totalRecords / request.PageSize);
+
             return new PagedResults<GetAllUserResponse>
             {
-                Data = [],
-                TotalItems = 0,
-                TotalPages = 0
+                Data = (List<GetAllUserResponse>)results,
+                TotalItems = totalRecords,
+                TotalPages = totalPages
             };
-            //string name = request.Name ?? "";
-            //double pageSize = request.PageSize;
-            //double page = request.Page;
-            //string? DepartmentName = request.DepartmentName;
-            //int? Sex = request.Sex;
-            //int? PositionId = request.PositionId;
-
-            //var param = new
-            //{
-            //    SearchName = Helper.RemoveDiacritics(name),
-            //    SearchDept = DepartmentName,
-            //    SearchSex = Sex,
-            //    SearchPosition = PositionId,
-            //    PageNumber = (int)page,
-            //    PageSize = (int)pageSize
-            //};
-
-            //var whereSql = new StringBuilder();
-
-            //whereSql.AppendLine(" WHERE 1=1 AND nv.NVNgayRa > GETDATE()");
-
-            //if (!string.IsNullOrWhiteSpace(name))
-            //{
-            //    whereSql.AppendLine($" AND (dbo.udf_RemoveDiacritics(dbo.funTCVN2Unicode(nv.NVHoTen)) LIKE '%' + @SearchName + '%' ");
-            //    whereSql.AppendLine($" OR u.UserCode LIKE '%' + @SearchName + '%' )");
-            //}
-
-            //if (DepartmentName != null)
-            //{
-            //    whereSql.AppendLine($" AND bp.BPTen = @SearchDept ");
-            //}
-
-            //if (Sex != null)
-            //{
-            //    whereSql.AppendLine($" AND nv.NVGioiTinh = @SearchSex ");
-            //}
-
-            //if (PositionId != null)
-            //{
-            //    whereSql.AppendLine($" AND nv.NVMaCV = @SearchPosition ");
-            //}
-
-            //var countSql = new StringBuilder();
-            //countSql.AppendLine($@"
-            //    SELECT COUNT(*) 
-            //    FROM [{Global.DbWeb}].dbo.users u 
-            //    INNER JOIN[{Global.DbViClock}].dbo.tblNhanVien nv ON u.UserCode = nv.NVMaNV 
-            //    LEFT JOIN [{Global.DbViClock}].dbo.tblBoPhan bp ON nv.NVMaBP = bp.BPMa
-            //    {whereSql}
-            //");
-
-            //int totalItems = await _viclockDapperContext.QueryFirstOrDefaultAsync<int>(countSql.ToString(), param);
-            //int totalPages = (int)Math.Ceiling(totalItems / pageSize);
-
-            //var dataSql = new StringBuilder();
-            //dataSql.AppendLine($@"
-            //    WITH PagedUsers AS (
-            //        SELECT
-            //            u.Id,
-            //            u.UserCode,
-            //            [{Global.DbViClock}].dbo.funTCVN2Unicode(NV.NVHoTen) AS NVHoTen,
-            //            nv.NVMaBP,
-            //            bp.BPTen,
-            //            cv.CVTen,
-            //            nv.NVMaCV,
-            //            nv.NVGioiTinh,
-            //            u.Phone,
-            //            u.Email,
-            //            u.DateOfBirth,
-            //            nv.NVNgayVao
-            //        FROM [{Global.DbWeb}].dbo.users u
-            //        INNER JOIN [{Global.DbViClock}].dbo.tblNhanVien nv ON u.UserCode = nv.NVMaNV
-            //        LEFT JOIN [{Global.DbViClock}].dbo.tblBoPhan bp ON nv.NVMaBP = bp.BPMa
-            //        LEFT JOIN [{Global.DbViClock}].dbo.tblChucVu cv ON nv.NVMaCV = cv.CVMa
-            //        {whereSql}
-            //        ORDER BY u.Id
-            //        OFFSET (@PageNumber - 1) * @PageSize ROWS FETCH NEXT @PageSize ROWS ONLY
-            //    )
-            //    SELECT 
-            //        pu.Id,
-            //        pu.UserCode,
-            //        pu.NVHoTen,
-            //        pu.NVMaBP,
-            //        pu.BPTen,
-            //        pu.CVTen,
-            //        pu.NVMaCV,
-            //        pu.NVGioiTinh,
-            //        pu.Phone,
-            //        pu.Email,
-            //        pu.NVNgayVao,
-            //        pu.DateOfBirth
-            //    FROM PagedUsers pu
-            //");
-
-            //var users = await _viclockDapperContext.QueryAsync<GetAllUserResponse>(dataSql.ToString(), param);
-
-            //var results = users
-            //    .GroupBy(x => x.Id)
-            //    .Select(g => new GetAllUserResponse
-            //    {
-            //        Id = g.First().Id,
-            //        UserCode = g.First().UserCode,
-            //        NVHoTen = g.First().NVHoTen,
-            //        NVMaBP = g.First().NVMaBP,
-            //        BPTen = g.First().BPTen,
-            //        CVTen = g.First().CVTen,
-            //        NVMaCV = g.First().NVMaCV,
-            //        NVGioiTinh = g.First().NVGioiTinh,
-            //        Phone = g.First().Phone,
-            //        Email = g.First().Email,
-            //        DateOfBirth = g.First().DateOfBirth,
-            //        NVNgayVao = g.First().NVNgayVao,
-            //    })
-            //    .ToList();
-
-            //return new PagedResults<GetAllUserResponse>
-            //{
-            //    Data = results,
-            //    TotalItems = totalItems,
-            //    TotalPages = totalPages
-            //};
         }
 
         /// <summary>
@@ -519,7 +416,7 @@ namespace ServicePortals.Application.Services.User
         }
 
         //xây dựng hierarchy sơ đồ tổ chức
-        public async Task<List<OrgUnitNode>> BuildOrgTree(int departmentId)
+        public async Task<List<TreeNode>> BuildOrgTree(int departmentId)
         {
             var connection = (SqlConnection)_context.CreateConnection();
 
@@ -528,46 +425,41 @@ namespace ServicePortals.Application.Services.User
                 await connection.OpenAsync();
             }
 
-            var sql1 = $@"SELECT TOP (1000) OU.[Id] AS OrgUnitId
-                          ,OU.[DeptId]
-                          ,OU.[Name] AS OrgUnitName
-                          ,OU.[UnitId]
-                          ,OU.[ParentOrgUnitId]
-                          ,OU.[ParentJobTitleId],
-                       NV.NVMaNV,
-                       vs_new.dbo.funTCVN2Unicode(NV.NVHoTen) AS NVHoTen,
-                       OU1.Name
-                      FROM [ServicePortal].[dbo].[org_units] AS OU
-                      LEFT JOIN vs_new.dbo.tblNhanVien AS NV ON NV.NVNgayRa > GETDATE() AND NV.OrgUnitID = OU.Id
-                      LEFT JOIN [ServicePortal].[dbo].[org_units] AS OU1 ON OU.ParentOrgUnitId = OU1.Id
-                      WHERE OU.DeptId = @departmentId
-                      AND OU.UnitId >= 5
-                      ORDER BY UnitId ASC, ParentOrgUnitId ASC";
-
-            var result = await connection.QueryAsync<OrgUnitNode>(sql1, new { departmentId });
-            var orgUnits = result.ToList();
-
-            var groupedByOrgUnitId = orgUnits?.GroupBy(x => x.OrgUnitId)?.ToDictionary(g => g.Key, g => g.ToList());
-            var dict = orgUnits?.GroupBy(x => x.OrgUnitId)?.ToDictionary(g => g.Key, g => g.First());
-
-            List<OrgUnitNode> roots = new List<OrgUnitNode>();
-
-            foreach (var node in orgUnits)
+            var param = new
             {
-                if (node.ParentJobTitleId.HasValue)
+                DepartmentId = departmentId
+            };
+
+            var sql = $@"
+                SELECT
+	                NV.NVMaNV,
+	                vs_new.dbo.funTCVN2Unicode(NV.NVHoTen) AS NVHoTen,
+	                P.Id AS ViTriToChucId,
+                    P.Name AS PositionName,
+	                P.ParentPositionId,
+	                OU.Name AS TeamName
+                FROM ServicePortal.dbo.org_units AS OU
+                INNER JOIN ServicePortal.dbo.positions AS P ON OU.Id = P.OrgUnitId
+                LEFT JOIN vs_new.dbo.tblNhanVien AS NV ON P.Id = NV.ViTriToChucId
+                WHERE (OU.ParentOrgUnitId = @DepartmentId OR P.OrgUnitId = @DepartmentId)
+            ";
+
+            var results = (await connection.QueryAsync<TreeNode>(sql, param)).ToList();
+
+            var lookup = results.Where(x => x.ViTriToChucId.HasValue).GroupBy(x => x.ViTriToChucId.Value).ToDictionary(g => g.Key, g => g.First());
+
+            var roots = results.Where(n => !n.ParentPositionId.HasValue || !lookup.ContainsKey(n.ParentPositionId.Value)).ToList();
+
+            if (roots.Count == 0 && results.Count != 0)
+            {
+                roots.Add(results.First());
+            }
+
+            foreach (var n in results)
+            {
+                if (n.ParentPositionId.HasValue && lookup.TryGetValue(n.ParentPositionId.Value, out var parent) && parent != n)
                 {
-                    if (dict.TryGetValue(node.ParentJobTitleId.Value, out var parent))
-                    {
-                        parent.Children.Add(node);
-                    }
-                    else
-                    {
-                        roots.Add(node);
-                    }
-                }
-                else
-                {
-                    roots.Add(node);
+                    parent.Children.Add(n);
                 }
             }
 

@@ -38,7 +38,7 @@ namespace ServicePortal.Controllers.User
         }
 
         [HttpGet, RoleAuthorize("HR", "HR_Manager")]
-        public async Task<IActionResult> GetAll(GetAllUserRequest request)
+        public async Task<IActionResult> GetAll([FromQuery] GetAllUserRequest request)
         {
             var results = await _userService.GetAll(request);
 
@@ -132,7 +132,7 @@ namespace ServicePortal.Controllers.User
         {
             var result = await _userService.BuildOrgTree(departmentId);
 
-            return Ok(new BaseResponse<List<OrgUnitNode>>(200, "Success", result));
+            return Ok(new BaseResponse<List<TreeNode>>(200, "Success", result));
         }
 
         [HttpGet("get-user-by-parent-org-unit-id")]

@@ -27,7 +27,7 @@ namespace ServicePortals.Infrastructure.Data
         public DbSet<RequestType> RequestTypes { get; set; }
         public DbSet<RequestStatus> RequestStatuses { get; set; }
         public DbSet<ApprovalFlow> ApprovalFlows { get; set; }
-        public DbSet<UserMngOrgUnitId> UserMngOrgUnits { get; set; }
+        public DbSet<UserMngOrgUnitId> UserMngOrgUnitId { get; set; }
         public DbSet<SystemConfig> SystemConfigs { get; set; }
         public DbSet<Delegation> Delegations { get; set; }
         public DbSet<Unit> Units { get; set; }

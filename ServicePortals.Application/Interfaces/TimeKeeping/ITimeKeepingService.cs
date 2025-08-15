@@ -5,16 +5,16 @@ namespace ServicePortals.Application.Interfaces.TimeKeeping
 {
     public interface ITimeKeepingService
     {
-        //Task<IEnumerable<object>> GetPersonalTimeKeeping(GetPersonalTimeKeepingRequest request);
-        //Task<PagedResults<dynamic>> GetManagementTimeKeeping(GetManagementTimeKeepingRequest request);
+        Task<IEnumerable<object>> GetPersonalTimeKeeping(GetPersonalTimeKeepingRequest request);
+        Task<PagedResults<dynamic>> GetManagementTimeKeeping(GetManagementTimeKeepingRequest request);
 
-        //Task<object> UpdateUserHavePermissionMngTimeKeeping(List<string> userCodes);
-        //Task<object> GetUserHavePermissionMngTimeKeeping();
+        Task<object> UpdateUserHavePermissionMngTimeKeeping(List<string> userCodes);
+        Task<object> GetUserHavePermissionMngTimeKeeping();
 
-        //Task<object> AttachUserManageOrgUnit(AttachUserManageOrgUnitRequest request);
-        //Task<object> GetOrgUnitIdAttachedByUserCode(string userCode);
+        Task<object> AttachUserManageOrgUnit(AttachUserManageOrgUnitRequest request);
+        Task<object> GetOrgUnitIdMngByUser(string userCode);
 
-        //Task<object> ChangeUserMngTimeKeeping(ChangeUserMngTimeKeepingRequest request);
+        Task<object> ChangeUserMngTimeKeeping(ChangeUserMngTimeKeepingRequest request);
 
         //Task<object> GetIdOrgUnitByUserCodeAndUnitId(string userCode, int unitId);
         //Task<object> GetDeptUserMngTimeKeeping(string userCode);

@@ -8,6 +8,6 @@ namespace ServicePortals.Application.Dtos.OrgUnit.Requests
         public List<string> UserCodes { get; set; } = [];
 
         [Required]
-        public int OrgUnitId { get; set; }
+        public int ViTriToChucId { get; set; }
     }
 }

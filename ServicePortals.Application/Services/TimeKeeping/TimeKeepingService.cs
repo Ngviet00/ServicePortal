@@ -8,6 +8,7 @@ using ServicePortals.Application;
 using ServicePortals.Application.Dtos.LeaveRequest.Requests;
 using ServicePortals.Application.Dtos.TimeKeeping;
 using ServicePortals.Application.Dtos.TimeKeeping.Requests;
+using ServicePortals.Application.Dtos.User.Responses;
 using ServicePortals.Application.Interfaces.LeaveRequest;
 using ServicePortals.Application.Interfaces.TimeKeeping;
 using ServicePortals.Domain.Entities;
@@ -22,171 +23,174 @@ namespace ServicePortals.Infrastructure.Services.TimeKeeping
 {
     public class TimeKeepingService : ITimeKeepingService
     {
-        //private readonly ApplicationDbContext _context;
-        //private readonly IEmailService _emailService;
-        //private readonly ILeaveRequestService _leaveRequestService;
-        //private readonly ExcelService _excelService;
+        private readonly ApplicationDbContext _context;
+        private readonly IEmailService _emailService;
+        private readonly ILeaveRequestService _leaveRequestService;
+        private readonly ExcelService _excelService;
 
-        //public TimeKeepingService (
-        //    ExcelService excelService,
-        //    IEmailService emailService, 
-        //    ApplicationDbContext context,
-        //    ILeaveRequestService leaveRequestService
-        //)
-        //{
-        //    _emailService = emailService;
-        //    _context = context;
-        //    _leaveRequestService = leaveRequestService;
-        //    _excelService = excelService;
-        //}
+        public TimeKeepingService(
+            ExcelService excelService,
+            IEmailService emailService,
+            ApplicationDbContext context,
+            ILeaveRequestService leaveRequestService
+        )
+        {
+            _emailService = emailService;
+            _context = context;
+            _leaveRequestService = leaveRequestService;
+            _excelService = excelService;
+        }
 
-        ////lấy sanh sách chấm công của user, tìm kiếm theo tháng, param truyền vào gồm fromdate và to date, usercode
-        //public async Task<IEnumerable<object>> GetPersonalTimeKeeping(GetPersonalTimeKeepingRequest request)
-        //{
-        //    var param = new
-        //    {
-        //        request.FromDate,
-        //        request.ToDate,
-        //        StaffCode = request.UserCode
-        //    };
+        //lấy sanh sách chấm công của user, tìm kiếm theo tháng, param truyền vào gồm fromdate và to date, usercode
+        public async Task<IEnumerable<object>> GetPersonalTimeKeeping(GetPersonalTimeKeepingRequest request)
+        {
+            var param = new
+            {
+                request.FromDate,
+                request.ToDate,
+                StaffCode = request.UserCode
+            };
 
-        //    var result = await _viclockDapperContext.QueryAsync<object>(
-        //        "[dbo].[cp_get_table_timekeeping]",
-        //        param,
-        //        CommandType.StoredProcedure
-        //    );
+            var connection = (SqlConnection)_context.CreateConnection();
 
-        //    return result;
-        //}
+            if (connection.State != ConnectionState.Open)
+            {
+                await connection.OpenAsync();
+            }
 
-        ////màn quản lý chấm công, người quản lý chấm công quản lý chấm công của người khác
-        //public async Task<PagedResults<dynamic>> GetManagementTimeKeeping(GetManagementTimeKeepingRequest request)
-        //{
-        //    using var connection = _context.Database.GetDbConnection();
-        //    if (connection.State != ConnectionState.Open)
-        //    {
-        //        await connection.OpenAsync();
-        //    }
+            var result = await _context.Database.GetDbConnection().QueryAsync<object>($"{Global.DbViClock}.dbo.cp_get_table_timekeeping", param, commandType: CommandType.StoredProcedure);
 
-        //    int month = request.Month ?? DateTime.UtcNow.Month;
-        //    int year = request.Year ?? DateTime.UtcNow.Year;
+            return result;
+        }
 
-        //    int dayInMonth = DateTime.DaysInMonth(year, month);
+        //màn quản lý chấm công, người quản lý chấm công quản lý chấm công của người khác
+        public async Task<PagedResults<dynamic>> GetManagementTimeKeeping(GetManagementTimeKeepingRequest request)
+        {
+            using var connection = _context.Database.GetDbConnection();
+            if (connection.State != ConnectionState.Open)
+            {
+                await connection.OpenAsync();
+            }
 
-        //    string tblName = $"{Global.DbViClock}.dbo.BaoCaoVS5{year}_{month:D2}";
+            int month = request.Month ?? DateTime.UtcNow.Month;
+            int year = request.Year ?? DateTime.UtcNow.Year;
 
-        //    bool isTableExists = connection.ExecuteScalar<int?>("SELECT OBJECT_ID(@tableName, 'U')", new { tableName = tblName }).HasValue;
+            int dayInMonth = DateTime.DaysInMonth(year, month);
 
-        //    if (!isTableExists)
-        //    {
-        //        return new PagedResults<dynamic>
-        //        {
-        //            Data = [],
-        //            TotalItems = 0,
-        //            TotalPages = 0
-        //        };
-        //    }
+            string tblName = $"{Global.DbViClock}.dbo.BaoCaoVS5{year}_{month:D2}";
 
-        //    double pageSize = request.PageSize > 0 ? request.PageSize : 10;
-        //    double page = request.Page > 0 ? request.Page : 1;
-        //    string keySearch = request.keySearch?.Trim() ?? "";
+            bool isTableExists = connection.ExecuteScalar<int?>("SELECT OBJECT_ID(@tableName, 'U')", new { tableName = tblName }).HasValue;
 
-        //    int? deptId = request.DeptId;
-        //    int? team = request.Team;
+            if (!isTableExists)
+            {
+                return new PagedResults<dynamic>
+                {
+                    Data = [],
+                    TotalItems = 0,
+                    TotalPages = 0
+                };
+            }
 
-        //    var fromDate = $"{year}-{month:D2}-01";
-        //    var toDate = $"{year}-{month:D2}-{dayInMonth}";
+            double pageSize = request.PageSize > 0 ? request.PageSize : 10;
+            double page = request.Page > 0 ? request.Page : 1;
+            string keySearch = request.keySearch?.Trim() ?? "";
 
-        //    string sqlOrgUnitIdQuery = $@"
-        //        WITH RecursiveOrg AS (
-        //            SELECT o.id FROM user_mng_org_unit_id as um
-        //            INNER JOIN [{Global.DbWeb}].dbo.org_units as o
-        //                ON um.OrgUnitId = o.id
-        //            WHERE um.UserCode = @userCode AND um.ManagementType = @type
-        //    ";
+            int? deptId = request.DeptId;
+            int? team = request.Team;
 
-        //    if (deptId == null)
-        //    {
-        //        sqlOrgUnitIdQuery += $@"
-        //            UNION ALL
-        //            SELECT o.id FROM  {Global.DbWeb}.dbo.org_units o INNER JOIN RecursiveOrg ro ON o.ParentOrgUnitId = ro.id
-        //        )
-        //        SELECT DISTINCT id FROM RecursiveOrg
-        //        ";
-        //    }
-        //    else
-        //    {
-        //        sqlOrgUnitIdQuery += $@"
-        //        )
-        //        SELECT 
-        //            o.id 
-        //            FROM 
-        //            {Global.DbWeb}.dbo.org_units o 
-        //            INNER JOIN RecursiveOrg ro ON o.ParentOrgUnitId = ro.id AND o.DeptId = @deptId
-        //        ";
-        //    }
+            var fromDate = $"{year}-{month:D2}-01";
+            var toDate = $"{year}-{month:D2}-{dayInMonth}";
 
-        //    var orgUnitIds = (await connection.QueryAsync<int>(sqlOrgUnitIdQuery, new
-        //    {
-        //        userCode = request.UserCode,
-        //        type = "MNG_TIME_KEEPING",
-        //        deptId
-        //    })).ToList();
+            string sqlOrgUnitIdQuery = $@"
+                WITH RecursiveOrg AS (
+                    SELECT o.id FROM user_mng_org_unit_id as um
+                    INNER JOIN [{Global.DbWeb}].dbo.org_units as o
+                        ON um.OrgUnitId = o.id
+                    WHERE um.UserCode = @userCode AND um.ManagementType = @type
+            ";
 
-        //    if (orgUnitIds.Count == 0)
-        //    {
-        //        return new PagedResults<dynamic>
-        //        {
-        //            Data = [],
-        //            TotalItems = 0,
-        //            TotalPages = 0
-        //        };
-        //    }
+            if (deptId == null)
+            {
+                sqlOrgUnitIdQuery += $@"
+                    UNION ALL
+                    SELECT o.id FROM  {Global.DbWeb}.dbo.org_units o INNER JOIN RecursiveOrg ro ON o.ParentOrgUnitId = ro.id
+                )
+                SELECT DISTINCT id FROM RecursiveOrg
+                ";
+            }
+            else
+            {
+                sqlOrgUnitIdQuery += $@"
+                )
+                SELECT 
+                    o.id 
+                    FROM 
+                    {Global.DbWeb}.dbo.org_units o 
+                    INNER JOIN RecursiveOrg ro ON o.ParentOrgUnitId = ro.id AND o.DeptId = @deptId
+                ";
+            }
 
-        //    var countUser = await connection.QuerySingleAsync<int>(
-        //        @"SELECT COUNT(*) FROM vs_new.dbo.tblNhanVien AS NV WHERE NV.NVNgayRa > GETDATE() AND NV.OrgUnitID IN @ids AND (@KeySearch = '' OR NV.NVMaNV = @KeySearch)",
-        //        new { ids = orgUnitIds, KeySearch = keySearch }
-        //    );
+            var orgUnitIds = (await connection.QueryAsync<int>(sqlOrgUnitIdQuery, new
+            {
+                userCode = request.UserCode,
+                type = "MNG_TIME_KEEPING",
+                deptId
+            })).ToList();
 
-        //    var totalPages = (int)Math.Ceiling((double)countUser / pageSize);
+            if (orgUnitIds.Count == 0)
+            {
+                return new PagedResults<dynamic>
+                {
+                    Data = [],
+                    TotalItems = 0,
+                    TotalPages = 0
+                };
+            }
 
-        //    var q = $@"
-        //        SELECT 
-        //            TA.Datetime, TA.CurrentValue, {Global.DbViClock}.dbo.funTCVN2Unicode(BC.NVHoTen) AS Format_NVHoTen, BC.* 
-        //        FROM {Global.DbViClock}.dbo.tblNhanVien AS NV
-        //        LEFT JOIN {tblName} AS BC ON NV.NVMaNV = BC.NVMaNV
-        //        LEFT JOIN {Global.DbWeb}.dbo.time_attendance_edit_histories AS TA ON TA.UserCode = BC.NVMaNV AND TA.Datetime BETWEEN @FromDate AND @ToDate
-        //        WHERE 1 = 1 AND NV.OrgUnitID IN @OrgUnitIds AND NV.NVNgayRa > GETDATE() AND BC.NVMaNV IS NOT NULL
-        //    ";
+            var countUser = await connection.QuerySingleAsync<int>(
+                @"SELECT COUNT(*) FROM vs_new.dbo.tblNhanVien AS NV WHERE NV.NVNgayRa > GETDATE() AND NV.OrgUnitID IN @ids AND (@KeySearch = '' OR NV.NVMaNV = @KeySearch)",
+                new { ids = orgUnitIds, KeySearch = keySearch }
+            );
 
-        //    if (!string.IsNullOrWhiteSpace(keySearch))
-        //    {
-        //        q += " AND BC.NVMaNV = @KeySearch";
-        //    }
+            var totalPages = (int)Math.Ceiling((double)countUser / pageSize);
 
-        //    q += " ORDER BY BC.NVMaNV OFFSET (@Page - 1) * @PageSize ROWS FETCH NEXT @PageSize ROWS ONLY";
+            var q = $@"
+                SELECT 
+                    TA.Datetime, TA.CurrentValue, {Global.DbViClock}.dbo.funTCVN2Unicode(BC.NVHoTen) AS Format_NVHoTen, BC.* 
+                FROM {Global.DbViClock}.dbo.tblNhanVien AS NV
+                LEFT JOIN {tblName} AS BC ON NV.NVMaNV = BC.NVMaNV
+                LEFT JOIN {Global.DbWeb}.dbo.time_attendance_edit_histories AS TA ON TA.UserCode = BC.NVMaNV AND TA.Datetime BETWEEN @FromDate AND @ToDate
+                WHERE 1 = 1 AND NV.OrgUnitID IN @OrgUnitIds AND NV.NVNgayRa > GETDATE() AND BC.NVMaNV IS NOT NULL
+            ";
 
-        //    var param = new
-        //    {
-        //        Page = (int)page,
-        //        PageSize = (int)pageSize,
-        //        FromDate = fromDate,
-        //        ToDate = toDate,
-        //        OrgUnitIds = orgUnitIds,
-        //        KeySearch = keySearch
-        //    };
+            if (!string.IsNullOrWhiteSpace(keySearch))
+            {
+                q += " AND BC.NVMaNV = @KeySearch";
+            }
 
-        //    var rawData = (await connection.QueryAsync<dynamic>(q, param)).ToList();
+            q += " ORDER BY BC.NVMaNV OFFSET (@Page - 1) * @PageSize ROWS FETCH NEXT @PageSize ROWS ONLY";
 
-        //    var finalResults = FormatDataGetUserAndTimeKeeping(rawData, dayInMonth);
+            var param = new
+            {
+                Page = (int)page,
+                PageSize = (int)pageSize,
+                FromDate = fromDate,
+                ToDate = toDate,
+                OrgUnitIds = orgUnitIds,
+                KeySearch = keySearch
+            };
 
-        //    return new PagedResults<dynamic>
-        //    {
-        //        Data = finalResults,
-        //        TotalItems = finalResults.Count(),
-        //        TotalPages = totalPages
-        //    };
-        //}
+            var rawData = (await connection.QueryAsync<dynamic>(q, param)).ToList();
+
+            var finalResults = FormatDataGetUserAndTimeKeeping(rawData, dayInMonth);
+
+            return new PagedResults<dynamic>
+            {
+                Data = finalResults,
+                TotalItems = finalResults.Count(),
+                TotalPages = totalPages
+            };
+        }
 
         ////gửi chấm công cho bộ phận HR
         //public async Task<object> ConfirmTimeKeepingToHr(GetManagementTimeKeepingRequest request)
@@ -307,191 +311,189 @@ namespace ServicePortals.Infrastructure.Services.TimeKeeping
         //    return true;
         //}
 
-        //public static List<dynamic> FormatDataGetUserAndTimeKeeping(List<dynamic> rawData, int dayInMonth)
-        //{
-        //    var finalResults = new List<dynamic>();
+        public static List<dynamic> FormatDataGetUserAndTimeKeeping(List<dynamic> rawData, int dayInMonth)
+        {
+            var finalResults = new List<dynamic>();
 
-        //    var userGroups = rawData.GroupBy(r => r.NVMaNV);
+            var userGroups = rawData.GroupBy(r => r.NVMaNV);
 
-        //    foreach (var group in userGroups)
-        //    {
-        //        var originalDataRow = group.FirstOrDefault(r => r.Datetime == null);
+            foreach (var group in userGroups)
+            {
+                var originalDataRow = group.FirstOrDefault(r => r.Datetime == null);
 
-        //        if (originalDataRow == null)
-        //        {
-        //            originalDataRow = group.FirstOrDefault();
-        //            if (originalDataRow == null)
-        //            {
-        //                continue;
-        //            }
-        //        }
+                if (originalDataRow == null)
+                {
+                    originalDataRow = group.FirstOrDefault();
+                    if (originalDataRow == null)
+                    {
+                        continue;
+                    }
+                }
 
-        //        dynamic displayRow = new ExpandoObject();
-        //        var displayRowDict = (IDictionary<string, object>)displayRow;
+                dynamic displayRow = new ExpandoObject();
+                var displayRowDict = (IDictionary<string, object>)displayRow;
 
-        //        displayRowDict["UserCode"] = originalDataRow.NVMaNV ?? "";
-        //        displayRowDict["Name"] = originalDataRow.Format_NVHoTen ?? "";
-        //        displayRowDict["Department"] = originalDataRow.BoPhan ?? "";
+                displayRowDict["UserCode"] = originalDataRow.NVMaNV ?? "";
+                displayRowDict["Name"] = originalDataRow.Format_NVHoTen ?? "";
+                displayRowDict["Department"] = originalDataRow.BoPhan ?? "";
 
-        //        var customValuesByDay = group.Where(r => r.Datetime != null).ToDictionary(r => r.Datetime.Day, r => r.CurrentValue);
+                var customValuesByDay = group.Where(r => r.Datetime != null).ToDictionary(r => r.Datetime.Day, r => r.CurrentValue);
 
-        //        var fieldPrefixes = new[] { "ATT", "Den", "Ve", "WH", "OT" };
-        //        for (int day = 1; day <= dayInMonth; day++)
-        //        {
-        //            foreach (var prefix in fieldPrefixes)
-        //            {
-        //                string fieldName = $"{prefix}{day}";
-        //                string finalValue = "";
+                var fieldPrefixes = new[] { "ATT", "Den", "Ve", "WH", "OT" };
+                for (int day = 1; day <= dayInMonth; day++)
+                {
+                    foreach (var prefix in fieldPrefixes)
+                    {
+                        string fieldName = $"{prefix}{day}";
+                        string finalValue = "";
 
-        //                var originalDataDict = (IDictionary<string, object>)originalDataRow;
+                        var originalDataDict = (IDictionary<string, object>)originalDataRow;
 
-        //                if (prefix == "ATT" && customValuesByDay.TryGetValue(day, out var customValue))
-        //                {
-        //                    finalValue = customValue;
-        //                }
-        //                else
-        //                {
-        //                    originalDataDict.TryGetValue(fieldName, out var originalValue);
-        //                    finalValue = originalValue?.ToString() ?? "";
-        //                }
+                        if (prefix == "ATT" && customValuesByDay.TryGetValue(day, out var customValue))
+                        {
+                            finalValue = customValue;
+                        }
+                        else
+                        {
+                            originalDataDict.TryGetValue(fieldName, out var originalValue);
+                            finalValue = originalValue?.ToString() ?? "";
+                        }
 
-        //                displayRowDict[fieldName] = finalValue;
-        //            }
-        //        }
-        //        finalResults.Add(displayRow);
-        //    }
+                        displayRowDict[fieldName] = finalValue;
+                    }
+                }
+                finalResults.Add(displayRow);
+            }
 
-        //    return finalResults;
-        //}
+            return finalResults;
+        }
 
-        ////Cập nhật mới những người có quyền quản lý chấm công
-        //public async Task<object> UpdateUserHavePermissionMngTimeKeeping(List<string> userCodes)
-        //{
-        //    var permissionMngTimekeeping = await _context.Permissions.FirstOrDefaultAsync(e => e.Name == "time_keeping.mng_time_keeping");
+        //Cập nhật mới những người có quyền quản lý chấm công
+        public async Task<object> UpdateUserHavePermissionMngTimeKeeping(List<string> userCodes)
+        {
+            var permissionMngTimekeeping = await _context.Permissions.FirstOrDefaultAsync(e => e.Name == "time_keeping.mng_time_keeping");
 
-        //    if (permissionMngTimekeeping == null)
-        //    {
-        //        throw new Exception("Chưa có quyền quản lý chấm công!");
-        //    }
+            if (permissionMngTimekeeping == null)
+            {
+                throw new Exception("Chưa có quyền quản lý chấm công!");
+            }
 
-        //    var oldUserPermissionsMngTKeeping = await _context.UserPermissions.Where(e => e.PermissionId == permissionMngTimekeeping.Id).ToListAsync();
+            var oldUserPermissionsMngTKeeping = await _context.UserPermissions.Where(e => e.PermissionId == permissionMngTimekeeping.Id).ToListAsync();
 
-        //    _context.UserPermissions.RemoveRange(oldUserPermissionsMngTKeeping);
+            _context.UserPermissions.RemoveRange(oldUserPermissionsMngTKeeping);
 
-        //    List<UserPermission> newUserPermissions = new List<UserPermission>();
+            List<UserPermission> newUserPermissions = new List<UserPermission>();
 
-        //    foreach (var code in userCodes)
-        //    {
-        //        newUserPermissions.Add(new UserPermission
-        //        {
-        //            UserCode = code,
-        //            PermissionId = permissionMngTimekeeping.Id
-        //        });
-        //    }
+            foreach (var code in userCodes)
+            {
+                newUserPermissions.Add(new UserPermission
+                {
+                    UserCode = code,
+                    PermissionId = permissionMngTimekeeping.Id
+                });
+            }
 
-        //    _context.UserPermissions.AddRange(newUserPermissions);
+            _context.UserPermissions.AddRange(newUserPermissions);
 
-        //    await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync();
 
-        //    return true;
-        //}
+            return true;
+        }
 
-        ////Lấy danh sách những người có quyền quản lý chấm công
-        //public async Task<object> GetUserHavePermissionMngTimeKeeping()
-        //{
-        //    var permissionMngTimeKeeping = await _context.Permissions.FirstOrDefaultAsync(e => e.Name == "time_keeping.mng_time_keeping");
+        //Lấy danh sách những người có quyền quản lý chấm công
+        public async Task<object> GetUserHavePermissionMngTimeKeeping()
+        {
+            var permissionMngTimeKeeping = await _context.Permissions.FirstOrDefaultAsync(e => e.Name == "time_keeping.mng_time_keeping");
 
-        //    if (permissionMngTimeKeeping == null)
-        //    {
-        //        throw new NotFoundException("Permission manage time keeping not found");
-        //    }
+            if (permissionMngTimeKeeping == null)
+            {
+                throw new NotFoundException("Permission manage time keeping not found");
+            }
 
-        //    var connection = (SqlConnection)_context.CreateConnection();
+            var connection = (SqlConnection)_context.CreateConnection();
 
-        //    if (connection.State != ConnectionState.Open)
-        //    {
-        //        await connection.OpenAsync();
-        //    }
+            if (connection.State != ConnectionState.Open)
+            {
+                await connection.OpenAsync();
+            }
 
-        //    var sql = $@"
-        //        SELECT
-        //             NV.NVMaNV,
-        //             {Global.DbViClock}.dbo.funTCVN2Unicode(NV.NVHoTen) as NVHoTen,
-        //             BP.BPMa,
-        //             {Global.DbViClock}.dbo.funTCVN2Unicode(BP.BPTen) as BPTen
-        //        FROM user_permissions AS UP
-        //        INNER JOIN {Global.DbViClock}.dbo.tblNhanVien AS NV
-        //        INNER JOIN {Global.DbViClock}.dbo.tblBoPhan as BP
-        //        ON NV.NVMaBP = BP.BPMa
-        //        On UP.UserCode = NV.NVMaNV
-        //        WHERE UP.PermissionId = @PermissionId
-        //    ";
+            var sql = $@"
+                SELECT
+                     NV.NVMaNV,
+                     {Global.DbViClock}.dbo.funTCVN2Unicode(NV.NVHoTen) as NVHoTen,
+                     BP.BPMa,
+                     {Global.DbViClock}.dbo.funTCVN2Unicode(BP.BPTen) as BPTen
+                FROM user_permissions AS UP
+                INNER JOIN {Global.DbViClock}.dbo.tblNhanVien AS NV
+                INNER JOIN {Global.DbViClock}.dbo.tblBoPhan as BP
+                ON NV.NVMaBP = BP.BPMa
+                On UP.UserCode = NV.NVMaNV
+                WHERE UP.PermissionId = @PermissionId
+            ";
 
-        //    var param = new
-        //    {
-        //        PermissionId = permissionMngTimeKeeping.Id
-        //    };
+            var param = new
+            {
+                PermissionId = permissionMngTimeKeeping.Id
+            };
 
-        //    var result = await connection.QueryAsync<object>(sql, param);
+            var result = await connection.QueryAsync<object>(sql, param);
 
-        //    return result;
-        //}
+            return result;
+        }
 
-        ////Chọn các vị trí được quản lý chấm công theo người dùng, vdu: người a qly tổ c, tổ d, thì ở màn qly chấm công người a sẽ qly chấm công của những người thuộc tổ c, tổ d
-        //public async Task<object> AttachUserManageOrgUnit(AttachUserManageOrgUnitRequest request)
-        //{
-        //    var userMngOrgUnitIds = await _context.UserMngOrgUnits
-        //        .Where(e => e.UserCode == request.UserCode && e.ManagementType == "MNG_TIME_KEEPING")
-        //        .ToListAsync();
+        //Chọn các vị trí được quản lý chấm công theo người dùng, vdu: người a qly tổ c, tổ d, thì ở màn qly chấm công người a sẽ qly chấm công của những người thuộc tổ c, tổ d
+        public async Task<object> AttachUserManageOrgUnit(AttachUserManageOrgUnitRequest request)
+        {
+            var userMngOrgUnitIds = await _context.UserMngOrgUnitId.Where(e => e.UserCode == request.UserCode && e.ManagementType == "MNG_TIME_KEEPING").ToListAsync();
 
-        //    var existingIds = userMngOrgUnitIds.Select(e => e.OrgUnitId).ToHashSet();
-        //    var newIds = request.OrgUnitIds.ToHashSet();
+            var existingIds = userMngOrgUnitIds.Select(e => e.OrgUnitId).ToHashSet();
+            var newIds = request.OrgUnitIds.ToHashSet();
 
-        //    _context.UserMngOrgUnits.RemoveRange(userMngOrgUnitIds.Where(e => !newIds.Contains((int)(e?.OrgUnitId))));
+            _context.UserMngOrgUnitId.RemoveRange(userMngOrgUnitIds.Where(e => !newIds.Contains((int)(e?.OrgUnitId))));
 
-        //    _context.UserMngOrgUnits.AddRange(request.OrgUnitIds
-        //        .Where(id => !existingIds.Contains(id))
-        //        .Select(id => new UserMngOrgUnitId
-        //        {
-        //            UserCode = request.UserCode,
-        //            OrgUnitId = id,
-        //            ManagementType = "MNG_TIME_KEEPING"
-        //        })
-        //    );
+            _context.UserMngOrgUnitId.AddRange(request.OrgUnitIds
+                .Where(id => !existingIds.Contains(id))
+                .Select(id => new UserMngOrgUnitId
+                {
+                    UserCode = request.UserCode,
+                    OrgUnitId = id,
+                    ManagementType = "MNG_TIME_KEEPING"
+                })
+            );
 
-        //    await _context.SaveChangesAsync();
-        //    return true;
-        //}
+            await _context.SaveChangesAsync();
+            return true;
+        }
 
-        ////lấy những vị trí đc quản lý theo user
-        //public async Task<object> GetOrgUnitIdAttachedByUserCode(string userCode)
-        //{
-        //    var results = await _context.UserMngOrgUnits
-        //        .Where(e => e.UserCode == userCode && e.ManagementType == "MNG_TIME_KEEPING")
-        //        .Select(e => e.OrgUnitId)
-        //        .ToListAsync();
+        //lấy những vị trí đc quản lý theo user
+        public async Task<object> GetOrgUnitIdMngByUser(string userCode)
+        {
+            var results = await _context.UserMngOrgUnitId
+                .Where(e => e.UserCode == userCode && e.ManagementType == "MNG_TIME_KEEPING")
+                .Select(e => e.OrgUnitId)
+                .ToListAsync();
 
-        //    return results;
-        //}
+            return results;
+        }
 
-        ////thay đổi người quản lý chấm công, thay thế người cũ sang người mới
-        //public async Task<object> ChangeUserMngTimeKeeping(ChangeUserMngTimeKeepingRequest request)
-        //{
-        //    var old = await _context.UserMngOrgUnits.Where(e => e.UserCode == request.OldUserCode).ToListAsync();
+        //thay đổi người quản lý chấm công, thay thế người cũ sang người mới
+        public async Task<object> ChangeUserMngTimeKeeping(ChangeUserMngTimeKeepingRequest request)
+        {
+            var old = await _context.UserMngOrgUnitId.Where(e => e.UserCode == request.OldUserCode).ToListAsync();
 
-        //    foreach (var item in old)
-        //    {
-        //        item.UserCode = request.NewUserCode;
-        //    }
+            foreach (var item in old)
+            {
+                item.UserCode = request.NewUserCode;
+            }
 
-        //    _context.UserMngOrgUnits.UpdateRange(old);
+            _context.UserMngOrgUnitId.UpdateRange(old);
 
-        //    await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync();
 
-        //    return true;
-        //}
+            return true;
+        }
 
-        
+
         ////lấy id của org unit có type = tổ theo usercode
         //public async Task<object> GetIdOrgUnitByUserCodeAndUnitId(string userCode, int unitId)
         //{
