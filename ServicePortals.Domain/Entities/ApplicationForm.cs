@@ -5,7 +5,7 @@ namespace ServicePortals.Domain.Entities
 {
     [Table("application_forms")]
     [Index(nameof(RequestStatusId))]
-    [Index(nameof(PositionId))]
+    [Index(nameof(OrgPositionId))]
     [Index(nameof(UserCodeRequestor))]
     public class ApplicationForm
     {
@@ -14,7 +14,7 @@ namespace ServicePortals.Domain.Entities
         public string? UserNameRequestor { get; set; } //tên nhân viên người yêu cầu
         public int? RequestTypeId { get; set; } //loại yêu cầu, mua bán, form it, sap
         public int? RequestStatusId { get; set; } //trạng thái của đơn như pending, complete,...
-        public int? PositionId { get; set; } //vị trí người duyệt
+        public int? OrgPositionId { get; set; } //vị trí người duyệt
         public DateTimeOffset? CreatedAt { get; set; }
         public DateTimeOffset? UpdatedAt { get; set; }
         public DateTimeOffset? DeletedAt { get; set; }
@@ -23,6 +23,6 @@ namespace ServicePortals.Domain.Entities
         public RequestStatus? RequestStatus { get; set; }
         public LeaveRequest? Leave { get; set; }
         public MemoNotification? MemoNotification { get; set; }
-        public Position? Position { get; set; }
+        public OrgPosition? OrgPosition { get; set; }
     }
 }

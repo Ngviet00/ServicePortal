@@ -15,6 +15,5 @@ namespace ServicePortals.Application.Interfaces.OrgUnit
         //Task<List<TreeCheckboxResponse>> GetAllDeptOfOrgUnit();
         //Task<Domain.Entities.OrgUnit?> GetOrgUnitById(int id);
         //Task<List<OrgUnitDto>> GetOrgUnitUserWithDept(int departmentId);
-
     }
 }

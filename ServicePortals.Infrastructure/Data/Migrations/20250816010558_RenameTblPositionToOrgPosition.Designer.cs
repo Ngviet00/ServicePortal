@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ServicePortals.Infrastructure.Data;
 
@@ -11,9 +12,11 @@ using ServicePortals.Infrastructure.Data;
 namespace ServicePortals.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250816010558_RenameTblPositionToOrgPosition")]
+    partial class RenameTblPositionToOrgPosition
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -34,7 +37,7 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                     b.Property<DateTimeOffset?>("DeletedAt")
                         .HasColumnType("datetimeoffset");
 
-                    b.Property<int?>("OrgPositionId")
+                    b.Property<int?>("PositionId")
                         .HasColumnType("int");
 
                     b.Property<int?>("RequestStatusId")
@@ -54,7 +57,7 @@ namespace ServicePortals.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("OrgPositionId");
+                    b.HasIndex("PositionId");
 
                     b.HasIndex("RequestStatusId");
 
@@ -76,7 +79,7 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                     b.Property<int?>("DepartmentId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("FromOrgPositionId")
+                    b.Property<int?>("FromPositionId")
                         .HasColumnType("int");
 
                     b.Property<bool?>("IsFinal")
@@ -91,7 +94,7 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                     b.Property<int?>("Step")
                         .HasColumnType("int");
 
-                    b.Property<int?>("ToOrgPositionId")
+                    b.Property<int?>("ToPositionId")
                         .HasColumnType("int");
 
                     b.Property<string>("ToSpecificUserCode")
@@ -102,7 +105,7 @@ namespace ServicePortals.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("FromOrgPositionId", "ToOrgPositionId");
+                    b.HasIndex("FromPositionId");
 
                     b.ToTable("approval_flows");
                 });
@@ -397,7 +400,7 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                     b.Property<int?>("OrgUnitId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("ParentOrgPositionId")
+                    b.Property<int?>("ParentPositionId")
                         .HasColumnType("int");
 
                     b.Property<string>("PositionCode")
@@ -422,7 +425,7 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                             Id = 2,
                             Name = "AM General Director",
                             OrgUnitId = 6,
-                            ParentOrgPositionId = 1,
+                            ParentPositionId = 1,
                             PositionCode = "AM_GD"
                         },
                         new
@@ -430,7 +433,7 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                             Id = 3,
                             Name = "BD General Manager",
                             OrgUnitId = 6,
-                            ParentOrgPositionId = 1,
+                            ParentPositionId = 1,
                             PositionCode = "BDGM"
                         },
                         new
@@ -438,7 +441,7 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                             Id = 4,
                             Name = "Finance General Manage",
                             OrgUnitId = 6,
-                            ParentOrgPositionId = 1,
+                            ParentPositionId = 1,
                             PositionCode = "FGM"
                         },
                         new
@@ -446,7 +449,7 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                             Id = 5,
                             Name = "Operations General Manager",
                             OrgUnitId = 6,
-                            ParentOrgPositionId = 1,
+                            ParentPositionId = 1,
                             PositionCode = "OGM"
                         },
                         new
@@ -454,7 +457,7 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                             Id = 6,
                             Name = "Operations Manager",
                             OrgUnitId = 6,
-                            ParentOrgPositionId = 1,
+                            ParentPositionId = 1,
                             PositionCode = "OM"
                         },
                         new
@@ -469,7 +472,7 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                             Id = 8,
                             Name = "Staff IT",
                             OrgUnitId = 8,
-                            ParentOrgPositionId = 7,
+                            ParentPositionId = 7,
                             PositionCode = "MIS-Staff"
                         },
                         new
@@ -484,7 +487,7 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                             Id = 10,
                             Name = "AM Commercial",
                             OrgUnitId = 10,
-                            ParentOrgPositionId = 9,
+                            ParentPositionId = 9,
                             PositionCode = "COM-AM"
                         },
                         new
@@ -492,7 +495,7 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                             Id = 11,
                             Name = "Staff Commercial",
                             OrgUnitId = 10,
-                            ParentOrgPositionId = 10,
+                            ParentPositionId = 10,
                             PositionCode = "COM-Staff"
                         },
                         new
@@ -507,7 +510,7 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                             Id = 13,
                             Name = "AM HR",
                             OrgUnitId = 9,
-                            ParentOrgPositionId = 12,
+                            ParentPositionId = 12,
                             PositionCode = "HR-AM"
                         },
                         new
@@ -515,7 +518,7 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                             Id = 14,
                             Name = "Staff HR",
                             OrgUnitId = 9,
-                            ParentOrgPositionId = 13,
+                            ParentPositionId = 13,
                             PositionCode = "HR-Staff"
                         },
                         new
@@ -530,7 +533,7 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                             Id = 16,
                             Name = "Supervisor A_AGH",
                             OrgUnitId = 18,
-                            ParentOrgPositionId = 15,
+                            ParentPositionId = 15,
                             PositionCode = "PRD-S-AGH"
                         },
                         new
@@ -538,7 +541,7 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                             Id = 17,
                             Name = "Supervisor B_BCDEF",
                             OrgUnitId = 19,
-                            ParentOrgPositionId = 15,
+                            ParentPositionId = 15,
                             PositionCode = "PRD-S-BBCDEF"
                         },
                         new
@@ -546,7 +549,7 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                             Id = 18,
                             Name = "Supervisor Shift A",
                             OrgUnitId = 14,
-                            ParentOrgPositionId = 15,
+                            ParentPositionId = 15,
                             PositionCode = "PRD-S-SA"
                         },
                         new
@@ -554,7 +557,7 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                             Id = 19,
                             Name = "Supervisor Shift B",
                             OrgUnitId = 17,
-                            ParentOrgPositionId = 15,
+                            ParentPositionId = 15,
                             PositionCode = "PRD-S-SB"
                         },
                         new
@@ -562,7 +565,7 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                             Id = 20,
                             Name = "12A_A Leader",
                             OrgUnitId = 14,
-                            ParentOrgPositionId = 18,
+                            ParentPositionId = 18,
                             PositionCode = "PRD-12AA-L"
                         },
                         new
@@ -570,7 +573,7 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                             Id = 21,
                             Name = "12A_A Operator",
                             OrgUnitId = 14,
-                            ParentOrgPositionId = 18,
+                            ParentPositionId = 18,
                             PositionCode = "PRD-12AA-OP"
                         },
                         new
@@ -578,7 +581,7 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                             Id = 22,
                             Name = "12B_A Leader",
                             OrgUnitId = 16,
-                            ParentOrgPositionId = 19,
+                            ParentPositionId = 19,
                             PositionCode = "PRD-12BA-L"
                         },
                         new
@@ -586,7 +589,7 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                             Id = 23,
                             Name = "12B_A Operator",
                             OrgUnitId = 16,
-                            ParentOrgPositionId = 19,
+                            ParentPositionId = 19,
                             PositionCode = "PRD-12BA-OP"
                         },
                         new
@@ -594,7 +597,7 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                             Id = 24,
                             Name = "Technician A_AGH",
                             OrgUnitId = 18,
-                            ParentOrgPositionId = 16,
+                            ParentPositionId = 16,
                             PositionCode = "PRD-T-AAH"
                         },
                         new
@@ -602,7 +605,7 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                             Id = 25,
                             Name = "Technician B_BCDEF",
                             OrgUnitId = 19,
-                            ParentOrgPositionId = 17,
+                            ParentPositionId = 17,
                             PositionCode = "PRD-T-BCDEF"
                         });
                 });
@@ -1423,9 +1426,9 @@ namespace ServicePortals.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("ServicePortals.Domain.Entities.ApplicationForm", b =>
                 {
-                    b.HasOne("ServicePortals.Domain.Entities.OrgPosition", "OrgPosition")
+                    b.HasOne("ServicePortals.Domain.Entities.OrgPosition", "Position")
                         .WithMany()
-                        .HasForeignKey("OrgPositionId");
+                        .HasForeignKey("PositionId");
 
                     b.HasOne("ServicePortals.Domain.Entities.RequestStatus", "RequestStatus")
                         .WithMany()
@@ -1435,7 +1438,7 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                         .WithMany()
                         .HasForeignKey("RequestTypeId");
 
-                    b.Navigation("OrgPosition");
+                    b.Navigation("Position");
 
                     b.Navigation("RequestStatus");
 

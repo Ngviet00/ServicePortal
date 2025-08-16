@@ -148,7 +148,8 @@ namespace ServicePortal
             builder.Services.AddScoped<IRequestTypeService, RequestTypeService>();
 
             builder.Services.AddScoped<IApprovalService, ApprovalService>();
-            builder.Services.AddScoped<IPositionService, PositionService>();
+
+            builder.Services.AddScoped<IOrgPositionService, OrgPositionService>();
 
             #endregion
 

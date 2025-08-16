@@ -5,18 +5,18 @@ using ServicePortals.Infrastructure.Data;
 
 namespace ServicePortals.Application.Services.OrgUnit
 {
-    public class PositionService : IPositionService
+    public class OrgPositionService : IOrgPositionService
     {
         private readonly ApplicationDbContext _context;
 
-        public PositionService (ApplicationDbContext context)
+        public OrgPositionService (ApplicationDbContext context)
         {
             _context = context;
         }
 
-        public async Task<List<Position>> GetPositionsByDepartmentId(int departmentId)
+        public async Task<List<OrgPosition>> GetOrgPositionsByDepartmentId(int departmentId)
         {
-            var results = await _context.Positions.Where(e => e.OrgUnit != null && (e.OrgUnit.Id == departmentId || e.OrgUnit.ParentOrgUnitId == departmentId)).ToListAsync();
+            var results = await _context.OrgPositions.Where(e => e.OrgUnit != null && (e.OrgUnit.Id == departmentId || e.OrgUnit.ParentOrgUnitId == departmentId)).ToListAsync();
 
             return results;
         }

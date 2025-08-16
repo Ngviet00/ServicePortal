@@ -4,7 +4,7 @@
     {
         public Guid? Id { get; set; }
         public int? RequestTypeId { get; set; }
-        public int? CurrentOrgUnitId { get; set; }
+        public int? OrgPositionId { get; set; }
         public DateTimeOffset? CreatedAt { get; set; }
         public Domain.Entities.RequestType? RequestType { get; set; }
         public Domain.Entities.HistoryApplicationForm? HistoryApplicationForm { get; set; }

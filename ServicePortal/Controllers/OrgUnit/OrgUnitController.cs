@@ -1,15 +1,13 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ServicePortals.Application;
-using ServicePortals.Application.Dtos.OrgUnit;
 using ServicePortals.Application.Dtos.OrgUnit.Requests;
 using ServicePortals.Application.Interfaces.OrgUnit;
-using ServicePortals.Shared.SharedDto;
 using Entities = ServicePortals.Domain.Entities;
 
 namespace ServicePortal.Controllers.OrgUnit
 {
-    //[Authorize]
+    [Authorize]
     [ApiController, Route("api/org-unit")]
     public class OrgUnitController : ControllerBase
     {
@@ -51,14 +49,6 @@ namespace ServicePortal.Controllers.OrgUnit
             return Ok(new BaseResponse<bool>(200, "success", result));
         }
 
-        //[HttpGet("get-all-dept-of-orgunit")]
-        //public async Task<IActionResult> GetAllDeptOfOrgUnit()
-        //{
-        //    var results = await _orgUnitService.GetAllDeptOfOrgUnit();
-
-        //    return Ok(new BaseResponse<List<TreeCheckboxResponse>>(200, "success", results));
-        //}
-
         [HttpGet("get-department-and-children-team")]
         public async Task<IActionResult> GetDepartmentAndChildrenTeam()
         {
@@ -66,14 +56,5 @@ namespace ServicePortal.Controllers.OrgUnit
 
             return Ok(new BaseResponse<dynamic>(200, "success", results));
         }
-
-
-        //[HttpGet("get-orgunit-user-by-with-dept")]
-        //public async Task<IActionResult> GetOrgUnitUserWithDept(int departmentId)
-        //{
-        //    var result = await _orgUnitService.GetOrgUnitUserWithDept(departmentId);
-
-        //    return Ok(new BaseResponse<List<OrgUnitDto>>(200, "success", result));
-        //}
     }
 }

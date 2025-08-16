@@ -24,5 +24,8 @@ namespace ServicePortals.Domain.Entities
         public ICollection<MemoNotificationDepartment> MemoNotificationDepartments { get; set; } = [];
         public ApplicationForm? ApplicationForm { get; set; }
         public OrgUnit? OrgUnit { get; set; }
+
+        [NotMapped]
+        public List<File> Files { get; set; } = [];
     }
 }

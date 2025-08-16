@@ -66,16 +66,16 @@ namespace ServicePortals.Application.Services.OrgUnit
             }
 
             //case user thuộc bộ phận, k thuộc tổ nào
-            var positionIds = await _context.Positions.Where(e => e.OrgUnitId == departmentId).Select(e => e.Id).ToListAsync();
+            var orgPositionIds = await _context.OrgPositions.Where(e => e.OrgUnitId == departmentId).Select(e => e.Id).ToListAsync();
 
             var sqlUserInDepartment = $@"
                 SELECT
                    NVMaNV, {Global.DbViClock}.dbo.funTCVN2Unicode(NV.NVHoTen) AS NVHoTen 
                 FROM {Global.DbViClock}.dbo.tblNhanVien AS NV
-                WHERE ViTriToChucId IN @positionIds AND NV.NVNgayRa > GETDATE()
+                WHERE ViTriToChucId IN @orgPositionIds AND NV.NVNgayRa > GETDATE()
             ";
 
-            var resultsUserInDepartment = await connection.QueryAsync<dynamic>(sqlUserInDepartment, new { positionIds });
+            var resultsUserInDepartment = await connection.QueryAsync<dynamic>(sqlUserInDepartment, new { orgPositionIds });
 
             foreach (var item in resultsUserInDepartment)
             {
@@ -112,7 +112,7 @@ namespace ServicePortals.Application.Services.OrgUnit
         }
         public async Task<object> GetListUserByTeamId(int teamId)
         {
-            var positions = await _context.Positions.Where(e => e.OrgUnitId == teamId).Select(e => e.Id).ToListAsync();
+            var orgPositions = await _context.OrgPositions.Where(e => e.OrgUnitId == teamId).Select(e => e.Id).ToListAsync();
 
             List<TreeCheckboxResponse> treeCheckboxResponses = [];
 
@@ -127,10 +127,10 @@ namespace ServicePortals.Application.Services.OrgUnit
                 SELECT 
                     NV.NVMaNV, vs_new.dbo.funTCVN2Unicode(NV.NVHoTen) AS NVHoTen 
                 FROM {Global.DbViClock}.dbo.tblNhanVien AS NV
-                WHERE ViTriToChucId IN @positions AND NV.NVNgayRa > GETDATE()
+                WHERE ViTriToChucId IN @orgPositions AND NV.NVNgayRa > GETDATE()
             ";
 
-            var results = await connection.QueryAsync<dynamic>(sql, new { positions });
+            var results = await connection.QueryAsync<dynamic>(sql, new { orgPositions });
 
             foreach (var item in results)
             {
@@ -159,11 +159,11 @@ namespace ServicePortals.Application.Services.OrgUnit
                     await connection.OpenAsync();
                 }
 
-                var sqlUpdate = $@"UPDATE {Global.DbViClock}.dbo.tblNhanVien SET ViTriToChucId = @ViTriToChucId WHERE NVMaNV IN @UserCodes";
+                var sqlUpdate = $@"UPDATE {Global.DbViClock}.dbo.tblNhanVien SET ViTriToChucId = @OrgPositionId WHERE NVMaNV IN @UserCodes";
 
                 await connection.ExecuteAsync(sqlUpdate, new
                 {
-                    request.ViTriToChucId,
+                    request.OrgPositionId,
                     request.UserCodes
                 });
 

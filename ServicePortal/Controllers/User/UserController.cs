@@ -165,5 +165,13 @@ namespace ServicePortal.Controllers.User
             await _excelService.InsertFromExcelAsync(file);
             return Ok("Nhập dữ liệu thành công");
         }
+
+        [HttpGet("test"), AllowAnonymous]
+        public async Task<IActionResult> Test()
+        {
+            var results = await _userService.GetMultipleUserViclockByOrgPositionId(7);
+
+            return Ok(results);
+        }
     }
 }

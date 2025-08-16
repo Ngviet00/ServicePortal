@@ -16,9 +16,9 @@ namespace ServicePortals.Application.Services.ApprovalFlow
         /// <summary>
         /// Lấy luồng duyệt theo vị trí của người dùng và loại yêu cầu
         /// </summary>
-        public async Task<Domain.Entities.ApprovalFlow?> GetWorkFlowByFromOrgUnitIdAndRequestType(int? fromPositionid, int? requestTypeId)
+        public async Task<Domain.Entities.ApprovalFlow?> GetWorkFlowByFromOrgUnitIdAndRequestType(int? fromOrgPositionid, int? requestTypeId)
         {
-            return await _context.ApprovalFlows.FirstOrDefaultAsync(e => e.FromPositionId == fromPositionid && e.RequestTypeId == requestTypeId);
+            return await _context.ApprovalFlows.FirstOrDefaultAsync(e => e.FromOrgPositionId == fromOrgPositionid && e.RequestTypeId == requestTypeId);
         }
     }
 }

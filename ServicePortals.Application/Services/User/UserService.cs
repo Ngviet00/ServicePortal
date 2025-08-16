@@ -389,7 +389,7 @@ namespace ServicePortals.Application.Services.User
         /// <summary>
         /// Lấy những người theo orgUnitId kết hợp bảng user vs tblNhanVien bên db viclock
         /// </summary>
-        public async Task<List<GetMultiUserViClockByOrgUnitIdResponse>> GetMultipleUserViclockByOrgUnitId(int OrgUnitId)
+        public async Task<List<GetMultiUserViClockByOrgPositionIdResponse>> GetMultipleUserViclockByOrgPositionId(int OrgPositionId)
         {
             var connection = (SqlConnection)_context.CreateConnection();
 
@@ -402,17 +402,17 @@ namespace ServicePortals.Application.Services.User
                             NVMa,
                             NVMaNV,
                             {Global.DbViClock}.dbo.funTCVN2Unicode(NVHoTen) AS NVHoTen,
-                            OrgUnitID,
+                            ViTriToChucId AS OrgPositionId,
 	                        COALESCE(NULLIF(Email, ''), NVEmail, '') AS Email
                         FROM {Global.DbViClock}.[dbo].[tblNhanVien] AS NV
-                        RIGHT JOIN {Global.DbWeb}.dbo.users as U
+                        LEFT JOIN {Global.DbWeb}.dbo.users as U
 	                        ON NV.NVMaNV = U.UserCode
                         WHERE
-                            NV.OrgUnitID = @OrgUnitId AND NV.NVNgayRa > GETDATE()";
+                            NV.ViTriToChucId = @OrgPositionId AND NV.NVNgayRa > GETDATE()";
 
-            var result = await connection.QueryAsync<GetMultiUserViClockByOrgUnitIdResponse>(sql, new { OrgUnitID = OrgUnitId });
+            var result = await connection.QueryAsync<GetMultiUserViClockByOrgPositionIdResponse>(sql, new { OrgPositionId });
 
-            return (List<GetMultiUserViClockByOrgUnitIdResponse>)result;
+            return (List<GetMultiUserViClockByOrgPositionIdResponse>)result;
         }
 
         //xây dựng hierarchy sơ đồ tổ chức
@@ -432,23 +432,23 @@ namespace ServicePortals.Application.Services.User
 
             var sql = $@"
                 SELECT
-	                NV.NVMaNV,
-	                vs_new.dbo.funTCVN2Unicode(NV.NVHoTen) AS NVHoTen,
-	                P.Id AS ViTriToChucId,
-                    P.Name AS PositionName,
-	                P.ParentPositionId,
-	                OU.Name AS TeamName
+                    NV.NVMaNV,
+                    vs_new.dbo.funTCVN2Unicode(NV.NVHoTen) AS NVHoTen,
+                    OP.Id AS OrgPositionId,
+                    OP.Name AS PositionName,
+                    OP.ParentOrgPositionId,
+                    OU.Name AS TeamName
                 FROM ServicePortal.dbo.org_units AS OU
-                INNER JOIN ServicePortal.dbo.positions AS P ON OU.Id = P.OrgUnitId
-                LEFT JOIN vs_new.dbo.tblNhanVien AS NV ON P.Id = NV.ViTriToChucId
-                WHERE (OU.ParentOrgUnitId = @DepartmentId OR P.OrgUnitId = @DepartmentId)
+                INNER JOIN ServicePortal.dbo.org_positions AS OP ON OU.Id = OP.OrgUnitId
+                LEFT JOIN vs_new.dbo.tblNhanVien AS NV ON OP.Id = NV.ViTriToChucId
+                WHERE (OU.ParentOrgUnitId = @DepartmentId OR OP.OrgUnitId = @DepartmentId)
             ";
 
             var results = (await connection.QueryAsync<TreeNode>(sql, param)).ToList();
 
-            var lookup = results.Where(x => x.ViTriToChucId.HasValue).GroupBy(x => x.ViTriToChucId.Value).ToDictionary(g => g.Key, g => g.First());
+            var lookup = results.Where(x => x.OrgPositionId.HasValue).GroupBy(x => x.OrgPositionId.Value).ToDictionary(g => g.Key, g => g.First());
 
-            var roots = results.Where(n => !n.ParentPositionId.HasValue || !lookup.ContainsKey(n.ParentPositionId.Value)).ToList();
+            var roots = results.Where(n => !n.ParentOrgPositionId.HasValue || !lookup.ContainsKey(n.ParentOrgPositionId.Value)).ToList();
 
             if (roots.Count == 0 && results.Count != 0)
             {
@@ -457,7 +457,7 @@ namespace ServicePortals.Application.Services.User
 
             foreach (var n in results)
             {
-                if (n.ParentPositionId.HasValue && lookup.TryGetValue(n.ParentPositionId.Value, out var parent) && parent != n)
+                if (n.ParentOrgPositionId.HasValue && lookup.TryGetValue(n.ParentOrgPositionId.Value, out var parent) && parent != n)
                 {
                     parent.Children.Add(n);
                 }

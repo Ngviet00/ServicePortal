@@ -16,17 +16,14 @@ namespace ServicePortals.Application.Interfaces.TimeKeeping
 
         Task<object> ChangeUserMngTimeKeeping(ChangeUserMngTimeKeepingRequest request);
 
-        //Task<object> GetIdOrgUnitByUserCodeAndUnitId(string userCode, int unitId);
-        //Task<object> GetDeptUserMngTimeKeeping(string userCode);
+        Task<object> EditTimeKeeping(CreateTimeAttendanceRequest request); //old value, new value
 
-        //Task<object> EditTimeKeeping(CreateTimeAttendanceRequest request); //old value, new value
+        Task<PagedResults<TimeAttendanceHistoryDto>> GetListHistoryEditTimeKeeping(GetListHistoryEditTimeKeepingRequest request);
 
-        //Task<PagedResults<TimeAttendanceHistoryDto>> GetListHistoryEditTimeKeeping(GetListHistoryEditTimeKeepingRequest request);
+        Task<object> DeleteHistoryEditTimeKeeping(int id); //chỉ xóa được những cái chưa gửi cho hr
 
-        //Task<object> DeleteHistoryEditTimeKeeping(int id); //chỉ xóa được những cái chưa gửi cho hr
+        Task<int> CountHistoryEditTimeKeepingNotSendHR(string userCode);
 
-        //Task<int> CountHistoryEditTimeKeepingNotSendHR(string userCode);
-
-        //Task<object> ConfirmTimeKeepingToHr(GetManagementTimeKeepingRequest request);
+        Task<object> ConfirmTimeKeepingToHr(GetManagementTimeKeepingRequest request);
     }
 }

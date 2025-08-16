@@ -4,7 +4,7 @@
     {
         public string? NVMaNV { get; set; }
         public string? NVHoTen { get; set; }
-        public int? ViTriToChucId { get; set; }
+        public int? OrgPositionId { get; set; }
         public int? DepartmentId { get; set; }
         public string? DepartmentName { get; set; }
         public string? NVGioiTinh { get; set; }

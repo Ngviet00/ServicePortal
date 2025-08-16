@@ -32,7 +32,7 @@ namespace ServicePortals.Infrastructure.Data
         public DbSet<Delegation> Delegations { get; set; }
         public DbSet<Unit> Units { get; set; }
         public DbSet<OrgUnit> OrgUnits { get; set; }
-        public DbSet<Position> Positions { get; set; }
+        public DbSet<OrgPosition> OrgPositions { get; set; }
         public DbSet<TimeAttendanceEditHistory> TimeAttendanceEditHistories { get; set; }
 
         public IDbConnection CreateConnection() => Database.GetDbConnection();
@@ -145,39 +145,39 @@ namespace ServicePortals.Infrastructure.Data
                 new OrgUnit { Id = 19, Name = "Kỹ thuật B_BCDEF", ParentOrgUnitId = 6, UnitId = 4 }
             );
 
-            modelBuilder.Entity<Position>().HasData(
-                new Position { Id = 1, PositionCode = "GD", Name = "General Director", OrgUnitId = 6, ParentPositionId = null },
-                new Position { Id = 2, PositionCode = "AM_GD", Name = "AM General Director", OrgUnitId = 6, ParentPositionId = 1 },
-                new Position { Id = 3, PositionCode = "BDGM", Name = "BD General Manager", OrgUnitId = 6, ParentPositionId = 1 },
-                new Position { Id = 4, PositionCode = "FGM", Name = "Finance General Manage", OrgUnitId = 6, ParentPositionId = 1 },
-                new Position { Id = 5, PositionCode = "OGM", Name = "Operations General Manager", OrgUnitId = 6, ParentPositionId = 1 },
-                new Position { Id = 6, PositionCode = "OM", Name = "Operations Manager", OrgUnitId = 6, ParentPositionId = 1 },
+            modelBuilder.Entity<OrgPosition>().HasData(
+                new OrgPosition { Id = 1, PositionCode = "GD", Name = "General Director", OrgUnitId = 6, ParentOrgPositionId = null },
+                new OrgPosition { Id = 2, PositionCode = "AM_GD", Name = "AM General Director", OrgUnitId = 6, ParentOrgPositionId = 1 },
+                new OrgPosition { Id = 3, PositionCode = "BDGM", Name = "BD General Manager", OrgUnitId = 6, ParentOrgPositionId = 1 },
+                new OrgPosition { Id = 4, PositionCode = "FGM", Name = "Finance General Manage", OrgUnitId = 6, ParentOrgPositionId = 1 },
+                new OrgPosition { Id = 5, PositionCode = "OGM", Name = "Operations General Manager", OrgUnitId = 6, ParentOrgPositionId = 1 },
+                new OrgPosition { Id = 6, PositionCode = "OM", Name = "Operations Manager", OrgUnitId = 6, ParentOrgPositionId = 1 },
                                        
-                new Position { Id = 7, PositionCode = "MIS-MGR", Name = "Manager MIS/IT", OrgUnitId = 8, ParentPositionId = null },
-                new Position { Id = 8, PositionCode = "MIS-Staff", Name = "Staff IT", OrgUnitId = 8, ParentPositionId = 7 },
+                new OrgPosition { Id = 7, PositionCode = "MIS-MGR", Name = "Manager MIS/IT", OrgUnitId = 8, ParentOrgPositionId = null },
+                new OrgPosition { Id = 8, PositionCode = "MIS-Staff", Name = "Staff IT", OrgUnitId = 8, ParentOrgPositionId = 7 },
                                        
-                new Position { Id = 9, PositionCode = "COM-MGR", Name = "Manager Commercial", OrgUnitId = 10, ParentPositionId = null },
-                new Position { Id = 10, PositionCode = "COM-AM", Name = "AM Commercial", OrgUnitId = 10, ParentPositionId = 9},
-                new Position { Id = 11, PositionCode = "COM-Staff", Name = "Staff Commercial", OrgUnitId = 10, ParentPositionId = 10 },
+                new OrgPosition { Id = 9, PositionCode = "COM-MGR", Name = "Manager Commercial", OrgUnitId = 10, ParentOrgPositionId = null },
+                new OrgPosition { Id = 10, PositionCode = "COM-AM", Name = "AM Commercial", OrgUnitId = 10, ParentOrgPositionId = 9},
+                new OrgPosition { Id = 11, PositionCode = "COM-Staff", Name = "Staff Commercial", OrgUnitId = 10, ParentOrgPositionId = 10 },
 
-                new Position { Id = 12, PositionCode = "HR-MGR", Name = "Manager HR", OrgUnitId = 9, ParentPositionId = null },
-                new Position { Id = 13, PositionCode = "HR-AM", Name = "AM HR", OrgUnitId = 9, ParentPositionId = 12 },
-                new Position { Id = 14, PositionCode = "HR-Staff", Name = "Staff HR", OrgUnitId = 9, ParentPositionId = 13 },
+                new OrgPosition { Id = 12, PositionCode = "HR-MGR", Name = "Manager HR", OrgUnitId = 9, ParentOrgPositionId = null },
+                new OrgPosition { Id = 13, PositionCode = "HR-AM", Name = "AM HR", OrgUnitId = 9, ParentOrgPositionId = 12 },
+                new OrgPosition { Id = 14, PositionCode = "HR-Staff", Name = "Staff HR", OrgUnitId = 9, ParentOrgPositionId = 13 },
 
-                new Position { Id = 15, PositionCode = "PRD-MGR", Name = "Manager Production", OrgUnitId = 7, ParentPositionId = null },
-                new Position { Id = 16, PositionCode = "PRD-S-AGH", Name = "Supervisor A_AGH", OrgUnitId = 18, ParentPositionId = 15 },
-                new Position { Id = 17, PositionCode = "PRD-S-BBCDEF", Name = "Supervisor B_BCDEF", OrgUnitId = 19, ParentPositionId = 15 },
-                new Position { Id = 18, PositionCode = "PRD-S-SA", Name = "Supervisor Shift A", OrgUnitId = 14, ParentPositionId = 15 },
-                new Position { Id = 19, PositionCode = "PRD-S-SB", Name = "Supervisor Shift B", OrgUnitId = 17, ParentPositionId = 15 },
+                new OrgPosition { Id = 15, PositionCode = "PRD-MGR", Name = "Manager Production", OrgUnitId = 7, ParentOrgPositionId = null },
+                new OrgPosition { Id = 16, PositionCode = "PRD-S-AGH", Name = "Supervisor A_AGH", OrgUnitId = 18, ParentOrgPositionId = 15 },
+                new OrgPosition { Id = 17, PositionCode = "PRD-S-BBCDEF", Name = "Supervisor B_BCDEF", OrgUnitId = 19, ParentOrgPositionId = 15 },
+                new OrgPosition { Id = 18, PositionCode = "PRD-S-SA", Name = "Supervisor Shift A", OrgUnitId = 14, ParentOrgPositionId = 15 },
+                new OrgPosition { Id = 19, PositionCode = "PRD-S-SB", Name = "Supervisor Shift B", OrgUnitId = 17, ParentOrgPositionId = 15 },
 
-                new Position { Id = 20, PositionCode = "PRD-12AA-L", Name = "12A_A Leader", OrgUnitId = 14, ParentPositionId = 18 },
-                new Position { Id = 21, PositionCode = "PRD-12AA-OP", Name = "12A_A Operator", OrgUnitId = 14, ParentPositionId = 18 },
+                new OrgPosition { Id = 20, PositionCode = "PRD-12AA-L", Name = "12A_A Leader", OrgUnitId = 14, ParentOrgPositionId = 18 },
+                new OrgPosition { Id = 21, PositionCode = "PRD-12AA-OP", Name = "12A_A Operator", OrgUnitId = 14, ParentOrgPositionId = 18 },
 
-                new Position { Id = 22, PositionCode = "PRD-12BA-L", Name = "12B_A Leader", OrgUnitId = 16, ParentPositionId = 19 },
-                new Position { Id = 23, PositionCode = "PRD-12BA-OP", Name = "12B_A Operator", OrgUnitId = 16, ParentPositionId = 19 },
+                new OrgPosition { Id = 22, PositionCode = "PRD-12BA-L", Name = "12B_A Leader", OrgUnitId = 16, ParentOrgPositionId = 19 },
+                new OrgPosition { Id = 23, PositionCode = "PRD-12BA-OP", Name = "12B_A Operator", OrgUnitId = 16, ParentOrgPositionId = 19 },
 
-                new Position { Id = 24, PositionCode = "PRD-T-AAH", Name = "Technician A_AGH", OrgUnitId = 18, ParentPositionId = 16 },
-                new Position { Id = 25, PositionCode = "PRD-T-BCDEF", Name = "Technician B_BCDEF", OrgUnitId = 19, ParentPositionId = 17 }
+                new OrgPosition { Id = 24, PositionCode = "PRD-T-AAH", Name = "Technician A_AGH", OrgUnitId = 18, ParentOrgPositionId = 16 },
+                new OrgPosition { Id = 25, PositionCode = "PRD-T-BCDEF", Name = "Technician B_BCDEF", OrgUnitId = 19, ParentOrgPositionId = 17 }
             );
 
             //file - attach_file
@@ -311,6 +311,13 @@ namespace ServicePortals.Infrastructure.Data
                 .WithMany()
                 .HasPrincipalKey(a => a.Id)
                 .IsRequired(false)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<MemoNotification>()
+                .HasOne(mnd => mnd.OrgUnit)
+                .WithMany()
+                .HasForeignKey(mnd => mnd.DepartmentId)
+                .HasPrincipalKey(ou => ou.Id)
                 .OnDelete(DeleteBehavior.NoAction);
 
             modelBuilder.Entity<MemoNotificationDepartment>()

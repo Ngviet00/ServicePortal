@@ -38,55 +38,55 @@ namespace ServicePortal.Controllers.MemoNotification
             return Ok(response);
         }
 
-        //[HttpGet("get-all-in-homepage")]
-        //public async Task<IActionResult> GetAllInHomePage([FromQuery] int? DepartmentId)
-        //{
-        //    var result = await _memoNotificationService.GetAllInHomePage(DepartmentId);
+        [HttpGet("get-all-in-homepage")]
+        public async Task<IActionResult> GetAllInHomePage([FromQuery] int? DepartmentId)
+        {
+            var result = await _memoNotificationService.GetAllInHomePage(DepartmentId);
 
-        //    return Ok(new BaseResponse<List<MemoNotificationDto>>(200, "success", result));
-        //}
+            return Ok(new BaseResponse<List<MemoNotificationDto>>(200, "success", result));
+        }
 
-        //[HttpGet("{id}")]
-        //public async Task<IActionResult> GetById(Guid id)
-        //{
-        //    var result = await _memoNotificationService.GetById(id);
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetById(Guid id)
+        {
+            var result = await _memoNotificationService.GetById(id);
 
-        //    return Ok(new BaseResponse<MemoNotificationDto>(200, "success", result));
-        //}
+            return Ok(new BaseResponse<Entities.MemoNotification>(200, "success", result));
+        }
 
-        //[HttpPost]
-        //[RoleOrPermission("HR", "union", "IT", "memo_notification.create")]
-        //public async Task<IActionResult> Create([FromForm] CreateMemoNotiRequest request, [FromForm] IFormFile[] files)
-        //{
-        //    var result = await _memoNotificationService.Create(request, files);
+        [HttpPost]
+        [RoleOrPermission("HR", "union", "IT", "memo_notification.create")]
+        public async Task<IActionResult> Create([FromForm] CreateMemoNotiRequest request, [FromForm] IFormFile[] files)
+        {
+            var result = await _memoNotificationService.Create(request, files);
 
-        //    return Ok(new BaseResponse<MemoNotificationDto>(200, "success", result));
-        //}
+            return Ok(new BaseResponse<object>(200, "success", result));
+        }
 
-        //[HttpPut("{id}")]
-        //[RoleOrPermission("HR", "union", "IT", "memo_notification.create")]
-        //public async Task<IActionResult> Update(Guid id, [FromForm] CreateMemoNotiRequest request, [FromForm] IFormFile[] files)
-        //{
-        //    var result = await _memoNotificationService.Update(id, request, files);
+        [HttpPut("{id}")]
+        [RoleOrPermission("HR", "union", "IT", "memo_notification.create")]
+        public async Task<IActionResult> Update(Guid id, [FromForm] CreateMemoNotiRequest request, [FromForm] IFormFile[] files)
+        {
+            var result = await _memoNotificationService.Update(id, request, files);
 
-        //    return Ok(new BaseResponse<MemoNotificationDto>(200, "success", result));
-        //}
+            return Ok(new BaseResponse<MemoNotificationDto>(200, "success", result));
+        }
 
-        //[HttpDelete("{id}")]
-        //[RoleOrPermission("HR", "union", "IT", "memo_notification.create")]
-        //public async Task<IActionResult> Delete(Guid id)
-        //{
-        //    var result = await _memoNotificationService.Delete(id);
+        [HttpDelete("{id}")]
+        [RoleOrPermission("HR", "union", "IT", "memo_notification.create")]
+        public async Task<IActionResult> Delete(Guid id)
+        {
+            var result = await _memoNotificationService.Delete(id);
 
-        //    return Ok(new BaseResponse<MemoNotificationDto>(200, "success", result));
-        //}
+            return Ok(new BaseResponse<MemoNotificationDto>(200, "success", result));
+        }
 
-        //[HttpGet("download/{id}")]
-        //public async Task<IActionResult> DownloadFile(Guid id)
-        //{
-        //    var file = await _memoNotificationService.GetFileDownload(id);
+        [HttpGet("download/{id}")]
+        public async Task<IActionResult> DownloadFile(Guid id)
+        {
+            var file = await _memoNotificationService.GetFileDownload(id);
 
-        //    return File(file.FileData ?? [], file.ContentType ?? "application/octet-stream", file.FileName);
-        //}
+            return File(file.FileData ?? [], file.ContentType ?? "application/octet-stream", file.FileName);
+        }
     }
 }

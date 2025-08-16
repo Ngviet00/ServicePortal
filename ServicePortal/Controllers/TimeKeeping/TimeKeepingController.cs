@@ -46,12 +46,12 @@ namespace ServicePortal.Controllers.TimeKeeping
             return Ok(response);
         }
 
-        //[HttpPost("confirm-timekeeping-to-hr")]
-        //public IActionResult ConfirmTimeKeepingToHr([FromBody] GetManagementTimeKeepingRequest request)
-        //{
-        //    BackgroundJob.Enqueue<ITimeKeepingService>(job => job.ConfirmTimeKeepingToHr(request));
-        //    return Ok("Hệ thống đang xử lý, HR sẽ nhận được email khi xong.");
-        //}
+        [HttpPost("confirm-timekeeping-to-hr")]
+        public IActionResult ConfirmTimeKeepingToHr([FromBody] GetManagementTimeKeepingRequest request)
+        {
+            BackgroundJob.Enqueue<ITimeKeepingService>(job => job.ConfirmTimeKeepingToHr(request));
+            return Ok("Hệ thống đang xử lý, HR sẽ nhận được email khi xong.");
+        }
 
         [HttpPost("update-user-have-permission-mng-timekeeping")]
         public async Task<IActionResult> UpdateUserHavePermissionMngTimeKeeping([FromBody] List<string> userCodes)
@@ -93,62 +93,46 @@ namespace ServicePortal.Controllers.TimeKeeping
             return Ok(new BaseResponse<object>(200, "success", results));
         }
 
-        //[HttpGet("get-id-org-unit-by-usercode-and-unit-id")]
-        //public async Task<IActionResult> GetIdOrgUnitByUserCodeAndUnitId([FromQuery] string userCode)
-        //{
-        //    var result = await _timeKeepingService.GetIdOrgUnitByUserCodeAndUnitId(userCode, 4); //unit = 4 -> tổ
+        [HttpPost("edit-time-keeping")]
+        public async Task<IActionResult> EditTimeKeeping([FromBody] CreateTimeAttendanceRequest request)
+        {
+            var result = await _timeKeepingService.EditTimeKeeping(request);
 
-        //    return Ok(new BaseResponse<object>(200, "success", result));
-        //}
+            return Ok(new BaseResponse<object>(200, "success", result));
+        }
 
-        //[HttpGet("get-dept-user-mng-timekeeping")]
-        //public async Task<IActionResult> GetDeptUserMngTimeKeeping([FromQuery] string userCode)
-        //{
-        //    var result = await _timeKeepingService.GetDeptUserMngTimeKeeping(userCode);
+        [HttpGet("count-history-edit-timekeeping-not-send-hr")]
+        public async Task<IActionResult> CountHistoryEditTimeKeepingNotSendHR([FromQuery] string userCode)
+        {
+            var result = await _timeKeepingService.CountHistoryEditTimeKeepingNotSendHR(userCode);
 
-        //    return Ok(new BaseResponse<object>(200, "success", result));
-        //}
+            return Ok(new BaseResponse<int>(200, "success", result));
+        }
 
-        //[HttpPost("edit-time-keeping")]
-        //public async Task<IActionResult> EditTimeKeeping([FromBody] CreateTimeAttendanceRequest request)
-        //{
-        //    var result = await _timeKeepingService.EditTimeKeeping(request);
+        [HttpGet("get-list-history-edit-timekeeping")]
+        public async Task<IActionResult> GetListHistoryEditTimeKeeping([FromQuery] GetListHistoryEditTimeKeepingRequest request)
+        {
+            var results = await _timeKeepingService.GetListHistoryEditTimeKeeping(request);
 
-        //    return Ok(new BaseResponse<object>(200, "success", result));
-        //}
+            var response = new PageResponse<TimeAttendanceHistoryDto>(
+                200,
+                "Success",
+                results.Data,
+                results.TotalPages,
+                request.Page,
+                request.PageSize,
+                results.TotalItems
+            );
 
-        //[HttpGet("count-history-edit-timekeeping-not-send-hr")]
-        //public async Task<IActionResult> CountHistoryEditTimeKeepingNotSendHR([FromQuery] string userCode)
-        //{
-        //    var result = await _timeKeepingService.CountHistoryEditTimeKeepingNotSendHR(userCode);
+            return Ok(response);
+        }
 
-        //    return Ok(new BaseResponse<int>(200, "success", result));
-        //}
+        [HttpDelete("delete-history-edit-timekeeping/{id}")]
+        public async Task<IActionResult> DeleteHistoryEditTimeKeeping(int id)
+        {
+            var result = await _timeKeepingService.DeleteHistoryEditTimeKeeping(id);
 
-        //[HttpGet("get-list-history-edit-timekeeping")]
-        //public async Task<IActionResult> GetListHistoryEditTimeKeeping([FromQuery] GetListHistoryEditTimeKeepingRequest request)
-        //{
-        //    var results = await _timeKeepingService.GetListHistoryEditTimeKeeping(request);
-
-        //    var response = new PageResponse<TimeAttendanceHistoryDto>(
-        //        200,
-        //        "Success",
-        //        results.Data,
-        //        results.TotalPages,
-        //        request.Page,
-        //        request.PageSize,
-        //        results.TotalItems
-        //    );
-
-        //    return Ok(response);
-        //}
-
-        //[HttpDelete("delete-history-edit-timekeeping/{id}")]
-        //public async Task<IActionResult> DeleteHistoryEditTimeKeeping(int id)
-        //{
-        //    var result = await _timeKeepingService.DeleteHistoryEditTimeKeeping(id);
-
-        //    return Ok(new BaseResponse<object>(200, "success", result));
-        //}
+            return Ok(new BaseResponse<object>(200, "success", result));
+        }
     }
 }

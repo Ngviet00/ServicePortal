@@ -9,7 +9,7 @@
         public string? Phone { get; set; }
         public DateTimeOffset? DateOfBirth { get; set; }
         public string? NVHoTen { get; set; }
-        public int? ViTriToChucId { get; set; }
+        public int? OrgPositionId { get; set; }
         public int? DepartmentId { get; set; }
         public string? DepartmentName { get; set; }
         public bool? NVGioiTinh { get; set; }
