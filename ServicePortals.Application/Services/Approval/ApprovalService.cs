@@ -221,6 +221,7 @@ namespace ServicePortals.Application.Services.Approval
             var results = await query
                 .Skip((int)((page - 1) * pageSize))
                 .Take((int)pageSize)
+                .OrderByDescending(e => e.CreatedAt)
                 .Select(x => new HistoryApprovalProcessResponse
                 {
                     CreatedAt = x.CreatedAt,

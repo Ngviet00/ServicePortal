@@ -50,15 +50,13 @@ namespace ServicePortal.Controllers.LeaveRequest
             return Ok(new BaseResponse<ServicePortals.Domain.Entities.LeaveRequest>(200, "success", result));
         }
 
-        //[HttpPost]
-        //public async Task<IActionResult> Create([FromBody] CreateLeaveRequest request)
-        //{
-        //    var userClaim = HttpContext.User;
+        [HttpPost]
+        public async Task<IActionResult> Create([FromBody] CreateLeaveRequest request)
+        {
+            var result = await _leaveRequestService.Create(request);
 
-        //    var result = await _leaveRequestService.Create(request, userClaim);
-
-        //    return Ok(new BaseResponse<LeaveRequestDto>(200, "success", result));
-        //}
+            return Ok(new BaseResponse<object>(200, "success", result));
+        }
 
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(Guid id, LeaveRequestDto dto)
@@ -76,13 +74,13 @@ namespace ServicePortal.Controllers.LeaveRequest
             return Ok(new BaseResponse<object>(200, "success", result));
         }
 
-        //[HttpPost("hr-register-all-leave-rq")]
-        //public async Task<IActionResult> HrRegisterAllLeave([FromBody] HrRegisterAllLeaveRequest request)
-        //{
-        //    var result = await _leaveRequestService.HrRegisterAllLeave(request);
+        [HttpPost("hr-register-all-leave-rq")]
+        public async Task<IActionResult> HrRegisterAllLeave([FromBody] HrRegisterAllLeaveRequest request)
+        {
+            var result = await _leaveRequestService.HrRegisterAllLeave(request);
 
-        //    return Ok(new BaseResponse<object>(200, "success", result));
-        //}
+            return Ok(new BaseResponse<object>(200, "success", result));
+        }
 
         [HttpPost("update-user-have-permission-create-multiple-leave-request")]
         public async Task<IActionResult> UpdateUserHavePermissionCreateMultipleLeaveRequest([FromBody] List<string> UserCodes)
@@ -116,21 +114,21 @@ namespace ServicePortal.Controllers.LeaveRequest
             return Ok(new BaseResponse<object>(200, "success", result));
         }
 
-        //[HttpPost("create-leave-for-others")]
-        //public async Task<IActionResult> CreateLeaveForOther([FromBody] CreateLeaveRequestForManyPeopleRequest request)
-        //{
-        //    var result = await _leaveRequestService.CreateLeaveForManyPeople(request);
+        [HttpPost("create-leave-for-others")]
+        public async Task<IActionResult> CreateLeaveForOther([FromBody] CreateLeaveRequestForManyPeopleRequest request)
+        {
+            var result = await _leaveRequestService.CreateLeaveForManyPeople(request);
 
-        //    return Ok(new BaseResponse<object>(200, "success", result));
-        //}
+            return Ok(new BaseResponse<object>(200, "success", result));
+        }
 
-        //[HttpGet("search-user-register-leave-request")]
-        //public async Task<IActionResult> SearchUserRegisterLeaveRequest([FromQuery] SearchUserRegisterLeaveRequest request)
-        //{
-        //    var result = await _leaveRequestService.SearchUserRegisterLeaveRequest(request);
+        [HttpGet("search-user-register-leave-request")]
+        public async Task<IActionResult> SearchUserRegisterLeaveRequest([FromQuery] SearchUserRegisterLeaveRequest request)
+        {
+            var result = await _leaveRequestService.SearchUserRegisterLeaveRequest(request);
 
-        //    return Ok(new BaseResponse<object>(200, "success", result));
-        //}
+            return Ok(new BaseResponse<object>(200, "success", result));
+        }
 
         [HttpPost("update-user-have-permission-hr-mng-leave-request")]
         public async Task<IActionResult> UpdateUserHavePermissionHrMngLeaveRequest([FromBody] List<string> userCodes)

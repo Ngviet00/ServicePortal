@@ -91,7 +91,8 @@ namespace ServicePortals.Application.Services.MemoNotification
                     {
                         Id = e.ApplicationForm.Id,
                         RequestStatusId = e.ApplicationForm.RequestStatusId,
-                        HistoryApplicationForms = e.ApplicationForm.HistoryApplicationForms.Select(h => new Entities.HistoryApplicationForm
+                        RequestTypeId = e.ApplicationForm.RequestTypeId,
+                        HistoryApplicationForms = e.ApplicationForm.HistoryApplicationForms.OrderByDescending(h => h.CreatedAt).Select(h => new Entities.HistoryApplicationForm
                         {
                             Id = h.Id,
                             UserCodeApproval = h.UserCodeApproval,
@@ -152,7 +153,8 @@ namespace ServicePortals.Application.Services.MemoNotification
                     {
                         Id = e.ApplicationForm.Id,
                         RequestStatusId = e.ApplicationForm.RequestStatusId,
-                        HistoryApplicationForms = e.ApplicationForm.HistoryApplicationForms.Select(h => new Entities.HistoryApplicationForm
+                        RequestTypeId = e.ApplicationForm.RequestTypeId,
+                        HistoryApplicationForms = e.ApplicationForm.HistoryApplicationForms.OrderByDescending(h => h.CreatedAt).Select(h => new Entities.HistoryApplicationForm
                         {
                             Id = h.Id,
                             UserCodeApproval = h.UserCodeApproval,
@@ -200,12 +202,21 @@ namespace ServicePortals.Application.Services.MemoNotification
             var roleClaims = userClaims?.Claims.Where(c => c.Type == ClaimTypes.Role).Select(c => c.Value).ToHashSet(StringComparer.OrdinalIgnoreCase);
 
             var isUnion = roleClaims?.Contains("UNION") ?? false;
+            var isGM = roleClaims?.Contains("GM") ?? false;
 
             int? nextOrgPositionId = -1;
             int statusApplicationForm = -1;
 
-            //công đoàn
-            if (isUnion)
+            if (isGM)
+            {
+                if (orgPositionId == null)
+                {
+                    throw new ValidationException("Thông tin vị trí chưa được cập nhật đủ, liên hệ bộ phận HR");
+                }
+                nextOrgPositionId = orgPositionId;
+                statusApplicationForm = (int)StatusApplicationFormEnum.FINAL_APPROVAL;
+            }
+            else if (isUnion) //công đoàn
             {
                 var approvalFlow = await _context.ApprovalFlows.FirstOrDefaultAsync(e => e.RequestTypeId == requestTypeId && e.PositonContext == "ROLE_UNION");
                 nextOrgPositionId = approvalFlow?.ToOrgPositionId;
@@ -231,7 +242,7 @@ namespace ServicePortals.Application.Services.MemoNotification
 
                     if (approvalFlowStaff != null)
                     {
-                        statusApplicationForm = (int)StatusApplicationFormEnum.IN_PROCESS;
+                        statusApplicationForm = (int)StatusApplicationFormEnum.PENDING;
                         nextOrgPositionId = approvalFlowStaff?.ToOrgPositionId ?? orgPositionId;
                     }
                     else

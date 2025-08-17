@@ -3,7 +3,7 @@
     public class CreateLeaveRequest
     {
         public Guid? Id { get; set; }
-        public int? OrgUnitId { get; set; }
+        public int? OrgPositionId { get; set; }
         public string? RequesterUserCode { get; set; } //nguoi yeu cau
         public string? WriteLeaveUserCode { get; set; } //nguoi viet yeu cau
         public string? UserNameWriteLeaveRequest { get; set; } //ten nguoi viet phep
