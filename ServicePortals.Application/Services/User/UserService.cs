@@ -14,7 +14,6 @@ using ServicePortals.Domain.Entities;
 using ServicePortals.Infrastructure.Data;
 using ServicePortals.Infrastructure.Email;
 using ServicePortals.Infrastructure.Helpers;
-using ServicePortals.Infrastructure.Hubs;
 using ServicePortals.Infrastructure.Mappers;
 using ServicePortals.Shared.Exceptions;
 
@@ -23,143 +22,43 @@ namespace ServicePortals.Application.Services.User
     public class UserService : IUserService
     {
         private readonly ApplicationDbContext _context;
-        private readonly IViclockDapperContext _viclockDapperContext;
         private readonly ICacheService _cacheService;
 
         public UserService(
             ApplicationDbContext context,
-            NotificationService notificationService,
-            IViclockDapperContext viclockDapperContext,
             ICacheService cacheService
         )
         {
             _context = context;
-            _viclockDapperContext = viclockDapperContext;
             _cacheService = cacheService;
         }
 
         //lấy danh sách user, kết hợp vs tblNhanVien bên db viclock
         public async Task<PagedResults<GetAllUserResponse>> GetAll(GetAllUserRequest request)
         {
-            string name = request.Name ?? "";
-            double pageSize = request.PageSize;
-            double page = request.Page;
-            string? DepartmentName = request.DepartmentName;
-            int? Sex = request.Sex;
-            int? PositionId = request.PositionId;
+            var parameters = new DynamicParameters();
 
-            var param = new
-            {
-                SearchName = Helper.RemoveDiacritics(name),
-                SearchDept = DepartmentName,
-                SearchSex = Sex,
-                SearchPosition = PositionId,
-                PageNumber = (int)page,
-                PageSize = (int)pageSize
-            };
+            parameters.Add("@Page", request.Page, DbType.Int32, ParameterDirection.Input);
+            parameters.Add("@PageSize", request.PageSize, DbType.Int32, ParameterDirection.Input);
+            parameters.Add("@SearchDepartmentId", request.DepartmentId, DbType.Int32, ParameterDirection.Input);
+            parameters.Add("@SearchGender", request.Sex, DbType.Int32, ParameterDirection.Input);
+            parameters.Add("@SearchName", Helper.RemoveDiacritics(request.Name ?? ""), DbType.String, ParameterDirection.Input);
+            parameters.Add("@TotalRecords", dbType: DbType.Int32, direction: ParameterDirection.Output);
 
-            var whereSql = new StringBuilder();
+            var results = await _context.Database.GetDbConnection()
+                    .QueryAsync<GetAllUserResponse>(
+                        "dbo.sp_GetAllUser",
+                        parameters,
+                        commandType: CommandType.StoredProcedure
+            );
 
-            whereSql.AppendLine(" WHERE 1=1 AND nv.NVNgayRa > GETDATE()");
-
-            if (!string.IsNullOrWhiteSpace(name))
-            {
-                whereSql.AppendLine($" AND (dbo.udf_RemoveDiacritics(dbo.funTCVN2Unicode(nv.NVHoTen)) LIKE '%' + @SearchName + '%' ");
-                whereSql.AppendLine($" OR u.UserCode LIKE '%' + @SearchName + '%' )");
-            }
-
-            if (DepartmentName != null)
-            {
-                whereSql.AppendLine($" AND bp.BPTen = @SearchDept ");
-            }
-
-            if (Sex != null)
-            {
-                whereSql.AppendLine($" AND nv.NVGioiTinh = @SearchSex ");
-            }
-
-            if (PositionId != null)
-            {
-                whereSql.AppendLine($" AND nv.NVMaCV = @SearchPosition ");
-            }
-
-            var countSql = new StringBuilder();
-            countSql.AppendLine($@"
-                SELECT COUNT(*) 
-                FROM [{Global.DbWeb}].dbo.users u 
-                INNER JOIN[{Global.DbViClock}].dbo.tblNhanVien nv ON u.UserCode = nv.NVMaNV 
-                LEFT JOIN [{Global.DbViClock}].dbo.tblBoPhan bp ON nv.NVMaBP = bp.BPMa
-                {whereSql}
-            ");
-
-            int totalItems = await _viclockDapperContext.QueryFirstOrDefaultAsync<int>(countSql.ToString(), param);
-            int totalPages = (int)Math.Ceiling(totalItems / pageSize);
-
-            var dataSql = new StringBuilder();
-            dataSql.AppendLine($@"
-                WITH PagedUsers AS (
-                    SELECT
-                        u.Id,
-                        u.UserCode,
-                        [{Global.DbViClock}].dbo.funTCVN2Unicode(NV.NVHoTen) AS NVHoTen,
-                        nv.NVMaBP,
-                        bp.BPTen,
-                        cv.CVTen,
-                        nv.NVMaCV,
-                        nv.NVGioiTinh,
-                        u.Phone,
-                        u.Email,
-                        u.DateOfBirth,
-                        nv.NVNgayVao
-                    FROM [{Global.DbWeb}].dbo.users u
-                    INNER JOIN [{Global.DbViClock}].dbo.tblNhanVien nv ON u.UserCode = nv.NVMaNV
-                    LEFT JOIN [{Global.DbViClock}].dbo.tblBoPhan bp ON nv.NVMaBP = bp.BPMa
-                    LEFT JOIN [{Global.DbViClock}].dbo.tblChucVu cv ON nv.NVMaCV = cv.CVMa
-                    {whereSql}
-                    ORDER BY u.Id
-                    OFFSET (@PageNumber - 1) * @PageSize ROWS FETCH NEXT @PageSize ROWS ONLY
-                )
-                SELECT 
-                    pu.Id,
-                    pu.UserCode,
-                    pu.NVHoTen,
-                    pu.NVMaBP,
-                    pu.BPTen,
-                    pu.CVTen,
-                    pu.NVMaCV,
-                    pu.NVGioiTinh,
-                    pu.Phone,
-                    pu.Email,
-                    pu.NVNgayVao,
-                    pu.DateOfBirth
-                FROM PagedUsers pu
-            ");
-
-            var users = await _viclockDapperContext.QueryAsync<GetAllUserResponse>(dataSql.ToString(), param);
-
-            var results = users
-                .GroupBy(x => x.Id)
-                .Select(g => new GetAllUserResponse
-                {
-                    Id = g.First().Id,
-                    UserCode = g.First().UserCode,
-                    NVHoTen = g.First().NVHoTen,
-                    NVMaBP = g.First().NVMaBP,
-                    BPTen = g.First().BPTen,
-                    CVTen = g.First().CVTen,
-                    NVMaCV = g.First().NVMaCV,
-                    NVGioiTinh = g.First().NVGioiTinh,
-                    Phone = g.First().Phone,
-                    Email = g.First().Email,
-                    DateOfBirth = g.First().DateOfBirth,
-                    NVNgayVao = g.First().NVNgayVao,
-                })
-                .ToList();
+            int totalRecords = parameters.Get<int>("@TotalRecords");
+            int totalPages = (int)Math.Ceiling((double)totalRecords / request.PageSize);
 
             return new PagedResults<GetAllUserResponse>
             {
-                Data = results,
-                TotalItems = totalItems,
+                Data = (List<GetAllUserResponse>)results,
+                TotalItems = totalRecords,
                 TotalPages = totalPages
             };
         }
@@ -225,7 +124,7 @@ namespace ServicePortals.Application.Services.User
                 return false;
             }
         }
-        
+
         //cập nhật user permission
         public async Task<bool> UpdateUserPermission(UpdateUserRoleRequest dto)
         {
@@ -354,21 +253,20 @@ namespace ServicePortals.Application.Services.User
         {
             var result = await _cacheService.GetOrCreateAsync($"user_info_{userCode}", async () =>
             {
-                var info = await _context.Database.GetDbConnection()
+                var infoFromDb = await _context.Database.GetDbConnection()
                     .QueryFirstOrDefaultAsync<PersonalInfoResponse>(
                         "dbo.GetUserInfoBetweenWebSystemAndViclock",
                         new { userCode },
                         commandType: CommandType.StoredProcedure
                     );
 
+                var info = infoFromDb ?? new PersonalInfoResponse();
+
                 var roleAndPermissionUser = await GetRoleAndPermissionByUser(userCode);
                 var formatRoleAndPermission = FormatRoleAndPermissionByUser(roleAndPermissionUser);
 
-                if (info != null)
-                {
-                    info.Roles = formatRoleAndPermission.Roles;
-                    info.Permissions = formatRoleAndPermission.Permissions;
-                }
+                info.Roles = formatRoleAndPermission.Roles;
+                info.Permissions = formatRoleAndPermission.Permissions;
 
                 return info;
             }, expireMinutes: 2);
@@ -379,6 +277,13 @@ namespace ServicePortals.Application.Services.User
         //lấy thông tin user theo mã nhân viên ở db viclock, có thể tùy chỉnh thêm cột nếu muốn
         public async Task<object?> GetCustomColumnUserViclockByUserCode(string userCode, string columns)
         {
+            var connection = (SqlConnection)_context.CreateConnection();
+
+            if (connection.State != ConnectionState.Open)
+            {
+                await connection.OpenAsync();
+            }
+
             var sql = $@"SELECT
                             NVMa,
                             NVMaNV,
@@ -388,7 +293,9 @@ namespace ServicePortals.Application.Services.User
                         WHERE
                             NVMaNV = @UserCode";
 
-            return await _viclockDapperContext.QueryFirstOrDefaultAsync<object?>(sql, new { UserCode = userCode });
+            var result = await connection.QueryFirstAsync<object>(sql, new { UserCode = userCode });
+
+            return result;
         }
 
         //lấy role và permission theo usercode
@@ -482,7 +389,7 @@ namespace ServicePortals.Application.Services.User
         /// <summary>
         /// Lấy những người theo orgUnitId kết hợp bảng user vs tblNhanVien bên db viclock
         /// </summary>
-        public async Task<List<GetMultiUserViClockByOrgUnitIdResponse>> GetMultipleUserViclockByOrgUnitId(int OrgUnitId)
+        public async Task<List<GetMultiUserViClockByOrgPositionIdResponse>> GetMultipleUserViclockByOrgPositionId(int OrgPositionId)
         {
             var connection = (SqlConnection)_context.CreateConnection();
 
@@ -495,21 +402,21 @@ namespace ServicePortals.Application.Services.User
                             NVMa,
                             NVMaNV,
                             {Global.DbViClock}.dbo.funTCVN2Unicode(NVHoTen) AS NVHoTen,
-                            OrgUnitID,
+                            ViTriToChucId AS OrgPositionId,
 	                        COALESCE(NULLIF(Email, ''), NVEmail, '') AS Email
                         FROM {Global.DbViClock}.[dbo].[tblNhanVien] AS NV
-                        RIGHT JOIN {Global.DbWeb}.dbo.users as U
+                        LEFT JOIN {Global.DbWeb}.dbo.users as U
 	                        ON NV.NVMaNV = U.UserCode
                         WHERE
-                            NV.OrgUnitID = @OrgUnitId AND NV.NVNgayRa > GETDATE()";
+                            NV.ViTriToChucId = @OrgPositionId AND NV.NVNgayRa > GETDATE()";
 
-            var result = await connection.QueryAsync<GetMultiUserViClockByOrgUnitIdResponse>(sql, new { OrgUnitID = OrgUnitId });
+            var result = await connection.QueryAsync<GetMultiUserViClockByOrgPositionIdResponse>(sql, new { OrgPositionId });
 
-            return (List<GetMultiUserViClockByOrgUnitIdResponse>)result;
+            return (List<GetMultiUserViClockByOrgPositionIdResponse>)result;
         }
 
         //xây dựng hierarchy sơ đồ tổ chức
-        public async Task<List<OrgUnitNode>> BuildOrgTree(int departmentId)
+        public async Task<List<TreeNode>> BuildOrgTree(int departmentId)
         {
             var connection = (SqlConnection)_context.CreateConnection();
 
@@ -518,46 +425,41 @@ namespace ServicePortals.Application.Services.User
                 await connection.OpenAsync();
             }
 
-            var sql1 = $@"SELECT TOP (1000) OU.[Id] AS OrgUnitId
-                          ,OU.[DeptId]
-                          ,OU.[Name] AS OrgUnitName
-                          ,OU.[UnitId]
-                          ,OU.[ParentOrgUnitId]
-                          ,OU.[ParentJobTitleId],
-                       NV.NVMaNV,
-                       vs_new.dbo.funTCVN2Unicode(NV.NVHoTen) AS NVHoTen,
-                       OU1.Name
-                      FROM [ServicePortal].[dbo].[org_units] AS OU
-                      LEFT JOIN vs_new.dbo.tblNhanVien AS NV ON NV.NVNgayRa > GETDATE() AND NV.OrgUnitID = OU.Id
-                      LEFT JOIN [ServicePortal].[dbo].[org_units] AS OU1 ON OU.ParentOrgUnitId = OU1.Id
-                      WHERE OU.DeptId = @departmentId
-                      AND OU.UnitId >= 5
-                      ORDER BY UnitId ASC, ParentOrgUnitId ASC";
-
-            var result = await connection.QueryAsync<OrgUnitNode>(sql1, new { departmentId });
-            var orgUnits = result.ToList();
-
-            var groupedByOrgUnitId = orgUnits?.GroupBy(x => x.OrgUnitId)?.ToDictionary(g => g.Key, g => g.ToList());
-            var dict = orgUnits?.GroupBy(x => x.OrgUnitId)?.ToDictionary(g => g.Key, g => g.First());
-
-            List<OrgUnitNode> roots = new List<OrgUnitNode>();
-
-            foreach (var node in orgUnits)
+            var param = new
             {
-                if (node.ParentJobTitleId.HasValue)
+                DepartmentId = departmentId
+            };
+
+            var sql = $@"
+                SELECT
+                    NV.NVMaNV,
+                    vs_new.dbo.funTCVN2Unicode(NV.NVHoTen) AS NVHoTen,
+                    OP.Id AS OrgPositionId,
+                    OP.Name AS PositionName,
+                    OP.ParentOrgPositionId,
+                    OU.Name AS TeamName
+                FROM ServicePortal.dbo.org_units AS OU
+                INNER JOIN ServicePortal.dbo.org_positions AS OP ON OU.Id = OP.OrgUnitId
+                LEFT JOIN vs_new.dbo.tblNhanVien AS NV ON OP.Id = NV.ViTriToChucId
+                WHERE (OU.ParentOrgUnitId = @DepartmentId OR OP.OrgUnitId = @DepartmentId)
+            ";
+
+            var results = (await connection.QueryAsync<TreeNode>(sql, param)).ToList();
+
+            var lookup = results.Where(x => x.OrgPositionId.HasValue).GroupBy(x => x.OrgPositionId.Value).ToDictionary(g => g.Key, g => g.First());
+
+            var roots = results.Where(n => !n.ParentOrgPositionId.HasValue || !lookup.ContainsKey(n.ParentOrgPositionId.Value)).ToList();
+
+            if (roots.Count == 0 && results.Count != 0)
+            {
+                roots.Add(results.First());
+            }
+
+            foreach (var n in results)
+            {
+                if (n.ParentOrgPositionId.HasValue && lookup.TryGetValue(n.ParentOrgPositionId.Value, out var parent) && parent != n)
                 {
-                    if (dict.TryGetValue(node.ParentJobTitleId.Value, out var parent))
-                    {
-                        parent.Children.Add(node);
-                    }
-                    else
-                    {
-                        roots.Add(node);
-                    }
-                }
-                else
-                {
-                    roots.Add(node);
+                    parent.Children.Add(n);
                 }
             }
 
@@ -567,13 +469,17 @@ namespace ServicePortals.Application.Services.User
         //lấy thông tin của người quản lý tiếp theo
         public async Task<dynamic?> GetUserByParentOrgUnit(int parentOrgUnitId)
         {
+            var connection = (SqlConnection)_context.CreateConnection();
+
+            if (connection.State != ConnectionState.Open)
+            {
+                await connection.OpenAsync();
+            }
+
             string sql = $@"
                 SELECT NV.NVMaNV, [{Global.DbViClock}].dbo.funTCVN2Unicode(NV.NVHoTen) as NVHoTen
-
                 FROM [{Global.DbWeb}].dbo.org_units AS OG
-
                 INNER JOIN [{Global.DbViClock}].dbo.tblNhanVien AS NV On OG.Id = NV.OrgUnitID
-
                 WHERE OG.ParentOrgUnitId = @ParentOrgUnitId
             ";
 
@@ -582,7 +488,7 @@ namespace ServicePortals.Application.Services.User
                 ParentOrgUnitId = parentOrgUnitId,
             };
 
-            var data = await _viclockDapperContext.QueryAsync<dynamic>(sql, param);
+            var data = await connection.QueryAsync<dynamic>(sql, param);
 
             return data;
         }
@@ -660,52 +566,6 @@ namespace ServicePortals.Application.Services.User
                 TotalItems = totalItems,
                 TotalPages = totalPages
             };
-        }
-
-        //lấy thông tin người tiếp theo approval theo usercode
-        public async Task<List<NextUserInfoApprovalResponse>> GetNextUserInfoApprovalByCurrentUserCode(string userCode)
-        {
-            var connection = (SqlConnection)_context.CreateConnection();
-
-            if (connection.State != ConnectionState.Open)
-            {
-                await connection.OpenAsync();
-            }
-
-            var sql = $@"
-                WITH CurrentOrgUnitUser AS (
-                    SELECT
-		                NV.OrgUnitID
-	                FROM {Global.DbViClock}.dbo.tblNhanVien AS NV
-	                WHERE NV.NVMaNV = @userCode
-                ),
-                NextOrgUnitUser AS (
-	                SELECT 
-		                ORG.ParentJobTitleId
-	                FROM {Global.DbWeb}.dbo.org_units AS ORG
-	                INNER JOIN CurrentOrgUnitUser AS CORG ON CORG.OrgUnitID = ORG.Id
-                )
-                SELECT
-	                NV.NVMaNV,
-	                {Global.DbViClock}.dbo.funTCVN2Unicode(NV.NVHoTen) AS NVHoTen,
-	                BP.BPTen,
-	                CV.CVTen,
-                    COALESCE(U.Email, NV.NVEmail, '') AS Email,
-	                NV.OrgUnitID
-                FROM NextOrgUnitUser AS NORG
-                INNER JOIN {Global.DbViClock}.dbo.tblNhanVien AS NV ON NORG.ParentJobTitleId = NV.OrgUnitID
-                LEFT JOIN {Global.DbWeb}.dbo.users AS U ON NV.NVMaNV = U.UserCode
-                LEFT JOIN {Global.DbViClock}.dbo.tblBoPhan AS BP ON NV.NVMaBP = BP.BPMa
-                LEFT JOIN {Global.DbViClock}.dbo.tblChucVu AS CV On NV.NVMaCV = CV.CVMa
-            ";
-
-            var result = await connection.QueryAsync<NextUserInfoApprovalResponse>(sql, new { userCode });
-
-            return (List<NextUserInfoApprovalResponse>)result;
-        }
-        public async Task<dynamic> Test()
-        {
-            return null;
         }
     }
 }

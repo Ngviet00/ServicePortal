@@ -19,11 +19,9 @@ namespace ServicePortals.Application.Interfaces.User
         Task<bool> UpdateUserPermission(UpdateUserRoleRequest request);
         Task<UserResponse> ResetPassword(ResetPasswordRequest request);
         Task<UserResponse> Update(string userCode, UpdatePersonalInfoRequest request);
-        Task<List<GetMultiUserViClockByOrgUnitIdResponse>> GetMultipleUserViclockByOrgUnitId(int OrgUnitId);
-        Task<List<OrgUnitNode>> BuildOrgTree(int departmentId);
+        Task<List<GetMultiUserViClockByOrgPositionIdResponse>> GetMultipleUserViclockByOrgPositionId(int OrgPositionId);
+        Task<List<TreeNode>> BuildOrgTree(int departmentId);
         Task<dynamic?> GetUserByParentOrgUnit(int orgUnitId);
         Task<PagedResults<object>> SearchAllUserFromViClock(SearchAllUserFromViclockRequest request);
-        Task<List<NextUserInfoApprovalResponse>> GetNextUserInfoApprovalByCurrentUserCode(string userCode);
-        Task<dynamic> Test();
     }
 }

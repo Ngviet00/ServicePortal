@@ -8,9 +8,10 @@ using ServicePortals.Application.Interfaces.User;
 using ServicePortals.Domain.Entities;
 using ServicePortals.Infrastructure.Data;
 using ServicePortals.Infrastructure.Helpers;
+using ServicePortals.Infrastructure.Services.Auth;
 using ServicePortals.Shared.Exceptions;
 
-namespace ServicePortals.Infrastructure.Services.Auth
+namespace ServicePortals.Application.Services.Auth
 {
     public class AuthService : IAuthService
     {
@@ -114,7 +115,9 @@ namespace ServicePortals.Infrastructure.Services.Auth
                 {
                     newUser?.UserCode,
                     newUser?.IsChangePassword,
-                    newUser?.Email
+                    newUser?.Email,
+                    roles = formatRoleAndPermission.Roles,
+                    permissions = formatRoleAndPermission.Permissions
                 },
                 ExpiresAt = refreshTokenEntity.ExpiresAt
             };
@@ -167,7 +170,9 @@ namespace ServicePortals.Infrastructure.Services.Auth
                 {
                     userFromWebSystem?.UserCode,
                     userFromWebSystem?.IsChangePassword,
-                    userFromWebSystem?.Email
+                    userFromWebSystem?.Email,
+                    roles = formatRoleAndPermission.Roles,
+                    permissions = formatRoleAndPermission.Permissions
                 },
                 ExpiresAt = refreshTokenEntity.ExpiresAt
             };
@@ -244,6 +249,8 @@ namespace ServicePortals.Infrastructure.Services.Auth
             token.IsRevoked = true;
 
             _context.RefreshTokens.Update(token);
+
+            _cacheService.Remove($"user_info_{token.UserCode}");
 
             await _context.SaveChangesAsync();
         }

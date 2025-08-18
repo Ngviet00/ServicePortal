@@ -4,8 +4,8 @@ using ServicePortal.Filters;
 using ServicePortals.Application;
 using ServicePortals.Application.Dtos.MemoNotification;
 using ServicePortals.Application.Dtos.MemoNotification.Requests;
-using ServicePortals.Application.Dtos.MemoNotification.Responses;
 using ServicePortals.Application.Interfaces.MemoNotification;
+using Entities = ServicePortals.Domain.Entities;
 
 namespace ServicePortal.Controllers.MemoNotification
 {
@@ -19,13 +19,13 @@ namespace ServicePortal.Controllers.MemoNotification
             _memoNotificationService = memoNotificationService;
         }
 
-        [HttpGet("get-all")]
+        [HttpGet]
         [RoleOrPermission("HR", "union", "IT", "memo_notification.create")]
         public async Task<IActionResult> GetAll([FromQuery] GetAllMemoNotiRequest request)
         {
             var results = await _memoNotificationService.GetAll(request);
 
-            var response = new PageResponse<GetAllMemoNotifyResponse>(
+            var response = new PageResponse<Entities.MemoNotification>(
                 200,
                 "Success",
                 results.Data,
@@ -51,19 +51,19 @@ namespace ServicePortal.Controllers.MemoNotification
         {
             var result = await _memoNotificationService.GetById(id);
 
-            return Ok(new BaseResponse<MemoNotificationDto>(200, "success", result));
+            return Ok(new BaseResponse<Entities.MemoNotification>(200, "success", result));
         }
 
-        [HttpPost("create")]
+        [HttpPost]
         [RoleOrPermission("HR", "union", "IT", "memo_notification.create")]
         public async Task<IActionResult> Create([FromForm] CreateMemoNotiRequest request, [FromForm] IFormFile[] files)
         {
             var result = await _memoNotificationService.Create(request, files);
 
-            return Ok(new BaseResponse<MemoNotificationDto>(200, "success", result));
+            return Ok(new BaseResponse<object>(200, "success", result));
         }
 
-        [HttpPut("update/{id}")]
+        [HttpPut("{id}")]
         [RoleOrPermission("HR", "union", "IT", "memo_notification.create")]
         public async Task<IActionResult> Update(Guid id, [FromForm] CreateMemoNotiRequest request, [FromForm] IFormFile[] files)
         {
@@ -72,7 +72,7 @@ namespace ServicePortal.Controllers.MemoNotification
             return Ok(new BaseResponse<MemoNotificationDto>(200, "success", result));
         }
 
-        [HttpDelete("delete/{id}")]
+        [HttpDelete("{id}")]
         [RoleOrPermission("HR", "union", "IT", "memo_notification.create")]
         public async Task<IActionResult> Delete(Guid id)
         {

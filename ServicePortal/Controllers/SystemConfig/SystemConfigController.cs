@@ -1,12 +1,12 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ServicePortals.Application;
-using ServicePortals.Application.Dtos.SystemConfig;
 using ServicePortals.Application.Interfaces.SystemConfig;
+using Entities = ServicePortals.Domain.Entities;
 
 namespace ServicePortal.Controllers.SystemConfig
 {
-    //[Authorize]
+    [Authorize]
     [ApiController, Route("api/system-config")]
     public class SystemConfigController : ControllerBase
     {
@@ -16,36 +16,36 @@ namespace ServicePortal.Controllers.SystemConfig
             _systemConfigService = systemConfigService;
         }
 
-        [HttpGet("get-all")]
+        [HttpGet]
         public async Task<IActionResult> GetAll()
         {
             var results = await _systemConfigService.GetAll();
 
-            return Ok(new BaseResponse<List<SystemConfigDto?>>(200, "success", results));
+            return Ok(new BaseResponse<List<Entities.SystemConfig>>(200, "success", results));
         }
 
-        [HttpGet("get-config-by-key")]
+        [HttpGet("{configKey}")]
         public async Task<IActionResult> GetByConfigKey(string configkey)
         {
-            var results = await _systemConfigService.GetByConfigKey(configkey);
+            var result = await _systemConfigService.GetByConfigKey(configkey);
 
-            return Ok(new BaseResponse<SystemConfigDto?>(200, "success", results));
+            return Ok(new BaseResponse<Entities.SystemConfig>(200, "success", result));
         }
 
-        [HttpPost("add-config")]
-        public async Task<IActionResult> AddConfig(SystemConfigDto request)
+        [HttpPost]
+        public async Task<IActionResult> AddConfig(Entities.SystemConfig request)
         {
-            var results = await _systemConfigService.AddConfig(request);
+            var result = await _systemConfigService.AddConfig(request);
 
-            return Ok(new BaseResponse<SystemConfigDto?>(200, "success", results));
+            return Ok(new BaseResponse<Entities.SystemConfig>(200, "success", result));
         }
 
-        [HttpPut("update-config/{configkey}")]
-        public async Task<IActionResult> UpdateConfig(string configkey, SystemConfigDto request)
+        [HttpPut("{configkey}")]
+        public async Task<IActionResult> UpdateConfig(string configkey, Entities.SystemConfig request)
         {
             var results = await _systemConfigService.UpdateConfig(configkey, request);
 
-            return Ok(new BaseResponse<SystemConfigDto?>(200, "success", results));
+            return Ok(new BaseResponse<Entities.SystemConfig>(200, "success", results));
         }
     }
 }

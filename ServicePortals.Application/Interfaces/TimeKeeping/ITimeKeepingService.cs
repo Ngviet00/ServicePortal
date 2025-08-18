@@ -12,12 +12,9 @@ namespace ServicePortals.Application.Interfaces.TimeKeeping
         Task<object> GetUserHavePermissionMngTimeKeeping();
 
         Task<object> AttachUserManageOrgUnit(AttachUserManageOrgUnitRequest request);
-        Task<object> GetOrgUnitIdAttachedByUserCode(string userCode);
+        Task<object> GetOrgUnitIdMngByUser(string userCode);
 
         Task<object> ChangeUserMngTimeKeeping(ChangeUserMngTimeKeepingRequest request);
-
-        Task<object> GetIdOrgUnitByUserCodeAndUnitId(string userCode, int unitId);
-        Task<object> GetDeptUserMngTimeKeeping(string userCode);
 
         Task<object> EditTimeKeeping(CreateTimeAttendanceRequest request); //old value, new value
 

@@ -6,7 +6,7 @@ using ServicePortals.Application.Interfaces.TypeLeave;
 using ServicePortals.Infrastructure.Data;
 using ServicePortals.Shared.Exceptions;
 
-namespace ServicePortals.Infrastructure.Services.TypeLeave
+namespace ServicePortals.Application.Services.TypeLeave
 {
     /// <summary>
     /// 
@@ -46,15 +46,10 @@ namespace ServicePortals.Infrastructure.Services.TypeLeave
 
         public async Task<Domain.Entities.TypeLeave> Create(TypeLeaveDto dto)
         {
-            if (string.IsNullOrWhiteSpace(dto.Name))
-            {
-                throw new ValidationException("Name can not empty!");
-            }
-
             var typeLeave = new Domain.Entities.TypeLeave
             {
                 Name = dto.Name,
-                NameV = dto.NameV,
+                NameE = dto.NameE,
                 Code = dto.Code,
             };
 
@@ -73,7 +68,7 @@ namespace ServicePortals.Infrastructure.Services.TypeLeave
 
             typeLeave.Id = id;
             typeLeave.Name = dto.Name;
-            typeLeave.NameV = dto.NameV;
+            typeLeave.NameE = dto.NameE;
             typeLeave.Code = dto.Code;
 
             _context.TypeLeaves.Update(typeLeave);

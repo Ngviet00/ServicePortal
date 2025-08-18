@@ -22,12 +22,12 @@ namespace ServicePortal.Controllers.LeaveRequest
             _leaveRequestService = leaveRequestService;
         }
 
-        [HttpGet("get-all")]
+        [HttpGet]
         public async Task<IActionResult> GetAll(GetAllLeaveRequest request)
         {
             var results = await _leaveRequestService.GetAll(request);
 
-            var response = new PageResponse<LeaveRequestDto>(
+            var response = new PageResponse<ServicePortals.Domain.Entities.LeaveRequest>(
                 200,
                 "Success",
                 results.Data,
@@ -42,7 +42,7 @@ namespace ServicePortal.Controllers.LeaveRequest
             return Ok(response);
         }
 
-        [HttpGet("get-by-id/{id}")]
+        [HttpGet("{id}")]
         public async Task<IActionResult> GetById(Guid id)
         {
             var result = await _leaveRequestService.GetById(id);
@@ -50,30 +50,28 @@ namespace ServicePortal.Controllers.LeaveRequest
             return Ok(new BaseResponse<ServicePortals.Domain.Entities.LeaveRequest>(200, "success", result));
         }
 
-        [HttpPost("create")]
+        [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateLeaveRequest request)
         {
-            var userClaim = HttpContext.User;
+            var result = await _leaveRequestService.Create(request);
 
-            var result = await _leaveRequestService.Create(request, userClaim);
-
-            return Ok(new BaseResponse<LeaveRequestDto>(200, "success", result));
+            return Ok(new BaseResponse<object>(200, "success", result));
         }
 
-        [HttpPut("update/{id}")]
+        [HttpPut("{id}")]
         public async Task<IActionResult> Update(Guid id, LeaveRequestDto dto)
         {
             var result = await _leaveRequestService.Update(id, dto);
 
-            return Ok(new BaseResponse<LeaveRequestDto>(200, "success", result));
+            return Ok(new BaseResponse<object>(200, "success", result));
         }
 
-        [HttpDelete("delete/{id}")]
+        [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(Guid id)
         {
             var result = await _leaveRequestService.Delete(id);
 
-            return Ok(new BaseResponse<LeaveRequestDto>(200, "success", result));
+            return Ok(new BaseResponse<object>(200, "success", result));
         }
 
         [HttpPost("hr-register-all-leave-rq")]

@@ -17,7 +17,6 @@ namespace ServicePortals.Infrastructure.Mappers
                 UserCodeCreated = entity?.UserCodeCreated,
                 CreatedBy = entity?.CreatedBy,
                 CreatedAt = entity?.CreatedAt,
-                UpdatedBy = entity?.UpdatedBy,
                 UpdatedAt = entity?.UpdatedAt,
                 Priority = entity?.Priority,
                 Status = entity?.Status,

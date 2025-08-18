@@ -1,17 +1,13 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
+﻿using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ServicePortals.Domain.Entities
 {
+    //thời gian nghỉ - cả ngày, buổi sáng, buổi chiều
     [Table("time_leaves")]
     public class TimeLeave
     {
         public int? Id { get; set; }
-
-        [StringLength(30)]
-        public string? Description { get; set; }
-
-        [StringLength(30)]
-        public string? English { get; set; }
+        public string? Name { get; set; } //tiếng việt
+        public string? NameE{ get; set; } //tiếng anh
     }
 }

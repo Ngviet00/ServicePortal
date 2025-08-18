@@ -5,7 +5,6 @@ using ServicePortals.Application;
 using ServicePortals.Application.Dtos.LeaveRequest.Requests;
 using ServicePortals.Application.Dtos.TimeKeeping;
 using ServicePortals.Application.Dtos.TimeKeeping.Requests;
-using ServicePortals.Application.Dtos.TimeKeeping.Responses;
 using ServicePortals.Application.Interfaces.TimeKeeping;
 
 namespace ServicePortal.Controllers.TimeKeeping
@@ -78,9 +77,9 @@ namespace ServicePortal.Controllers.TimeKeeping
         }
 
         [HttpGet("get-org-unit-id-attach-by-usercode")]
-        public async Task<IActionResult> GetOrgUnitIdAttachedByUserCode([FromQuery] string userCode)
+        public async Task<IActionResult> GetOrgUnitIdMngByUser([FromQuery] string userCode)
         {
-            var result = await _timeKeepingService.GetOrgUnitIdAttachedByUserCode(userCode);
+            var result = await _timeKeepingService.GetOrgUnitIdMngByUser(userCode);
 
             return Ok(new BaseResponse<object>(200, "success", result));
         }
@@ -91,22 +90,6 @@ namespace ServicePortal.Controllers.TimeKeeping
             var results = await _timeKeepingService.ChangeUserMngTimeKeeping(request);
 
             return Ok(new BaseResponse<object>(200, "success", results));
-        }
-
-        [HttpGet("get-id-org-unit-by-usercode-and-unit-id")]
-        public async Task<IActionResult> GetIdOrgUnitByUserCodeAndUnitId([FromQuery] string userCode)
-        {
-            var result = await _timeKeepingService.GetIdOrgUnitByUserCodeAndUnitId(userCode, 4); //unit = 4 -> tổ
-
-            return Ok(new BaseResponse<object>(200, "success", result));
-        }
-
-        [HttpGet("get-dept-user-mng-timekeeping")]
-        public async Task<IActionResult> GetDeptUserMngTimeKeeping([FromQuery] string userCode)
-        {
-            var result = await _timeKeepingService.GetDeptUserMngTimeKeeping(userCode);
-
-            return Ok(new BaseResponse<object>(200, "success", result));
         }
 
         [HttpPost("edit-time-keeping")]

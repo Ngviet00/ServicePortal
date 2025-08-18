@@ -2,15 +2,14 @@
 using ServicePortals.Application.Dtos.Approval.Request;
 using ServicePortals.Application.Dtos.MemoNotification;
 using ServicePortals.Application.Dtos.MemoNotification.Requests;
-using ServicePortals.Application.Dtos.MemoNotification.Responses;
 
 namespace ServicePortals.Application.Interfaces.MemoNotification
 {
     public interface IMemoNotificationService
     {
-        Task<PagedResults<GetAllMemoNotifyResponse>> GetAll(GetAllMemoNotiRequest request);
-        Task<MemoNotificationDto> GetById(Guid id);
-        Task<MemoNotificationDto> Create(CreateMemoNotiRequest dto, IFormFile[] files);
+        Task<PagedResults<Domain.Entities.MemoNotification>> GetAll(GetAllMemoNotiRequest request);
+        Task<Domain.Entities.MemoNotification?> GetById(Guid id);
+        Task<object> Create(CreateMemoNotiRequest dto, IFormFile[] files);
         Task<MemoNotificationDto> Update(Guid id, CreateMemoNotiRequest dto, IFormFile[] files);
         Task<MemoNotificationDto> Delete(Guid id);
         Task<List<MemoNotificationDto>> GetAllInHomePage(int? DepartmentId);

@@ -1,5 +1,4 @@
 ﻿using System.Security.Claims;
-using Azure.Core;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using ServicePortals.Application.Dtos.Approval.Request;
@@ -20,7 +19,7 @@ namespace ServicePortals.Application.Services.Approval
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly ILeaveRequestService _leaveRequestService;
         private readonly IMemoNotificationService _memoNotificationService;
-        
+
         public ApprovalService
         (
             ApplicationDbContext context,
@@ -57,7 +56,7 @@ namespace ServicePortals.Application.Services.Approval
 
             if (isHR)
             {
-                query = query.Where(e => e.CurrentOrgUnitId == request.OrgUnitId &&
+                query = query.Where(e => e.OrgPositionId == request.OrgPositionId &&
                     (
                         e.RequestStatusId == (int)StatusApplicationFormEnum.PENDING ||
                         e.RequestStatusId == (int)StatusApplicationFormEnum.IN_PROCESS
@@ -72,8 +71,8 @@ namespace ServicePortals.Application.Services.Approval
             }
             else
             {
-                query = query.Where(e => 
-                    e.CurrentOrgUnitId == request.OrgUnitId &&
+                query = query.Where(e =>
+                    e.OrgPositionId == request.OrgPositionId &&
                     e.RequestStatusId != (int)StatusApplicationFormEnum.COMPLETE &&
                     e.RequestStatusId != (int)StatusApplicationFormEnum.REJECT
                 );
@@ -90,7 +89,7 @@ namespace ServicePortals.Application.Services.Approval
                 {
                     Id = r.Id,
                     RequestTypeId = r.RequestTypeId,
-                    CurrentOrgUnitId = r.CurrentOrgUnitId,
+                    OrgPositionId = r.OrgPositionId,
                     CreatedAt = r.CreatedAt,
 
                     RequestType = _context.RequestTypes
@@ -101,7 +100,7 @@ namespace ServicePortals.Application.Services.Approval
                         .OrderByDescending(h => h.CreatedAt)
                         .Select(h => new HistoryApplicationForm
                         {
-                            UserApproval = h.UserApproval
+                            UserNameApproval = h.UserNameApproval
                         })
                         .FirstOrDefault(),
                     LeaveRequest = _context.LeaveRequests
@@ -110,8 +109,8 @@ namespace ServicePortals.Application.Services.Approval
                         {
                             Id = l.Id,
                             Code = l.Code,
-                            Name = l.Name,
-                            UserNameWriteLeaveRequest = l.UserNameWriteLeaveRequest
+                            UserNameRequestor = l.UserNameRequestor,
+                            CreatedBy = l.CreatedBy
                         })
                         .FirstOrDefault(),
 
@@ -119,7 +118,7 @@ namespace ServicePortals.Application.Services.Approval
                         .Where(mn => mn.ApplicationFormId == r.Id)
                         .Select(mn => new Domain.Entities.MemoNotification
                         {
-                            Id =  mn.Id,
+                            Id = mn.Id,
                             Code = mn.Code,
                             CreatedBy = mn.CreatedBy
                         })
@@ -168,7 +167,7 @@ namespace ServicePortals.Application.Services.Approval
 
             if (isHR)
             {
-                query = query.Where(e => e.CurrentOrgUnitId == request.OrgUnitId &&
+                query = query.Where(e => e.OrgPositionId == request.OrgPositionId &&
                     (
                         e.RequestStatusId != (int)StatusApplicationFormEnum.COMPLETE &&
                         e.RequestStatusId != (int)StatusApplicationFormEnum.REJECT
@@ -179,7 +178,7 @@ namespace ServicePortals.Application.Services.Approval
             else
             {
                 query = query.Where(e =>
-                    e.CurrentOrgUnitId == request.OrgUnitId &&
+                    e.OrgPositionId == request.OrgPositionId &&
                     e.RequestStatusId != (int)StatusApplicationFormEnum.COMPLETE &&
                     e.RequestStatusId != (int)StatusApplicationFormEnum.REJECT
                 );
@@ -221,10 +220,11 @@ namespace ServicePortals.Application.Services.Approval
             var results = await query
                 .Skip((int)((page - 1) * pageSize))
                 .Take((int)pageSize)
+                .OrderByDescending(e => e.CreatedAt)
                 .Select(x => new HistoryApprovalProcessResponse
                 {
                     CreatedAt = x.CreatedAt,
-                    ActionType  = x.ActionType,
+                    Action = x.Action,
                     RequestStatusId = x.ApplicationForm != null ? x.ApplicationForm.RequestStatusId : null,
                     RequestType = x.ApplicationForm != null && x.ApplicationForm.RequestType == null ? null : new Domain.Entities.RequestType
                     {
@@ -236,7 +236,7 @@ namespace ServicePortals.Application.Services.Approval
                     {
                         Id = x.ApplicationForm.Leave.Id,
                         Code = x.ApplicationForm.Leave.Code,
-                        Name = x.ApplicationForm.Leave.Name
+                        UserNameRequestor = x.ApplicationForm.Leave.UserNameRequestor
                     },
                     MemoNotification = x.ApplicationForm.MemoNotification == null ? null : new Domain.Entities.MemoNotification
                     {

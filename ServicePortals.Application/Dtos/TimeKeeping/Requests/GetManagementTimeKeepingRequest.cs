@@ -9,7 +9,6 @@
         public int Page { get; set; } = 1;
         public int PageSize { get; set; } = 20;
         public string? keySearch { get; set; }
-        public int? Team { get; set; }
         public int? DeptId { get; set; }
     }
 }

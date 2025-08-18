@@ -9,13 +9,6 @@
         REJECT = 5,
         FINAL_APPROVAL = 6,
         ASSIGNED = 7,
-        ORG_UNIT_ID_HR_LEAVE_RQ = -10
-    }
-
-    public enum StatusLeaveRequestStepEnum
-    {
-        PENDING = 1,
-        APPROVAL = 2,
-        REJECT = 3
+        ORG_POSITION_ID_HR_LEAVE_RQ = -10
     }
 }

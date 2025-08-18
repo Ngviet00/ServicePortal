@@ -28,17 +28,14 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("AssignUserCode")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<DateTimeOffset?>("CreatedAt")
                         .HasColumnType("datetimeoffset");
 
-                    b.Property<int?>("CurrentOrgUnitId")
-                        .HasColumnType("int");
-
                     b.Property<DateTimeOffset?>("DeletedAt")
                         .HasColumnType("datetimeoffset");
+
+                    b.Property<int?>("OrgPositionId")
+                        .HasColumnType("int");
 
                     b.Property<int?>("RequestStatusId")
                         .HasColumnType("int");
@@ -46,23 +43,68 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                     b.Property<int?>("RequestTypeId")
                         .HasColumnType("int");
 
-                    b.Property<string>("RequesterUserCode")
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("UserCodeRequestor")
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<Guid?>("UserId")
-                        .HasColumnType("uniqueidentifier");
+                    b.Property<string>("UserNameRequestor")
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
+                    b.HasIndex("OrgPositionId");
+
+                    b.HasIndex("RequestStatusId");
+
                     b.HasIndex("RequestTypeId");
 
-                    b.HasIndex("RequesterUserCode");
-
-                    b.HasIndex("UserId");
-
-                    b.HasIndex("RequestStatusId", "CurrentOrgUnitId");
+                    b.HasIndex("UserCodeRequestor");
 
                     b.ToTable("application_forms");
+                });
+
+            modelBuilder.Entity("ServicePortals.Domain.Entities.ApprovalFlow", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("DepartmentId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("FromOrgPositionId")
+                        .HasColumnType("int");
+
+                    b.Property<bool?>("IsFinal")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("PositonContext")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("RequestTypeId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("Step")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("ToOrgPositionId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ToSpecificUserCode")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("UnitId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FromOrgPositionId", "ToOrgPositionId");
+
+                    b.ToTable("approval_flows");
                 });
 
             modelBuilder.Entity("ServicePortals.Domain.Entities.AttachFile", b =>
@@ -89,7 +131,7 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                     b.ToTable("attach_files");
                 });
 
-            modelBuilder.Entity("ServicePortals.Domain.Entities.DelegatedTemp", b =>
+            modelBuilder.Entity("ServicePortals.Domain.Entities.Delegation", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -100,27 +142,27 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                     b.Property<DateTimeOffset?>("FromDate")
                         .HasColumnType("datetimeoffset");
 
+                    b.Property<string>("FromUserCode")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<bool?>("IsActive")
                         .HasColumnType("bit");
 
                     b.Property<bool?>("IsPermanent")
                         .HasColumnType("bit");
 
-                    b.Property<int?>("MainOrgUnitId")
+                    b.Property<int?>("PositionId")
                         .HasColumnType("int");
-
-                    b.Property<int?>("RequestTypeId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("TempUserCode")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTimeOffset?>("ToDate")
                         .HasColumnType("datetimeoffset");
 
+                    b.Property<string>("ToUserCode")
+                        .HasColumnType("nvarchar(max)");
+
                     b.HasKey("Id");
 
-                    b.ToTable("delegated_temp");
+                    b.ToTable("delegations");
                 });
 
             modelBuilder.Entity("ServicePortals.Domain.Entities.File", b =>
@@ -154,32 +196,27 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("ActionType")
+                    b.Property<string>("Action")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<Guid?>("ApplicationFormId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("Comment")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<DateTimeOffset?>("CreatedAt")
                         .HasColumnType("datetimeoffset");
 
-                    b.Property<string>("UserApproval")
-                        .HasColumnType("nvarchar(450)");
+                    b.Property<string>("Note")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("UserCodeApproval")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<Guid?>("UserId")
-                        .HasColumnType("uniqueidentifier");
+                    b.Property<string>("UserNameApproval")
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId");
-
-                    b.HasIndex("ApplicationFormId", "UserApproval");
+                    b.HasIndex("ApplicationFormId");
 
                     b.ToTable("history_application_forms");
                 });
@@ -199,6 +236,9 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                     b.Property<DateTimeOffset?>("CreatedAt")
                         .HasColumnType("datetimeoffset");
 
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<DateTimeOffset?>("DeletedAt")
                         .HasColumnType("datetimeoffset");
 
@@ -211,17 +251,11 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                     b.Property<byte?>("HaveSalary")
                         .HasColumnType("tinyint");
 
-                    b.Property<string>("Name")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("Position")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Reason")
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("RequesterUserCode")
-                        .HasColumnType("nvarchar(450)");
 
                     b.Property<int?>("TimeLeaveId")
                         .HasColumnType("int");
@@ -235,25 +269,30 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                     b.Property<DateTimeOffset?>("UpdateAt")
                         .HasColumnType("datetimeoffset");
 
-                    b.Property<string>("UserCodeWriteLeaveRequest")
+                    b.Property<string>("UserCodeCreated")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("UserNameWriteLeaveRequest")
+                    b.Property<string>("UserCodeRequestor")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("UserNameRequestor")
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ApplicationFormId");
+                    b.HasIndex("ApplicationFormId")
+                        .IsUnique()
+                        .HasFilter("[ApplicationFormId] IS NOT NULL");
 
                     b.HasIndex("DepartmentId");
-
-                    b.HasIndex("RequesterUserCode");
 
                     b.HasIndex("TimeLeaveId");
 
                     b.HasIndex("TypeLeaveId");
 
-                    b.HasIndex("Id", "RequesterUserCode");
+                    b.HasIndex("UserCodeRequestor");
+
+                    b.HasIndex("Id", "UserCodeRequestor");
 
                     b.ToTable("leave_requests");
                 });
@@ -282,6 +321,9 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                     b.Property<string>("CreatedBy")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("datetimeoffset");
+
                     b.Property<int?>("DepartmentId")
                         .HasColumnType("int");
 
@@ -303,15 +345,14 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                     b.Property<DateTimeOffset?>("UpdatedAt")
                         .HasColumnType("datetimeoffset");
 
-                    b.Property<string>("UpdatedBy")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("UserCodeCreated")
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ApplicationFormId");
+                    b.HasIndex("ApplicationFormId")
+                        .IsUnique()
+                        .HasFilter("[ApplicationFormId] IS NOT NULL");
 
                     b.HasIndex("DepartmentId");
 
@@ -332,9 +373,235 @@ namespace ServicePortals.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("DepartmentId");
+
                     b.HasIndex("MemoNotificationId", "DepartmentId");
 
                     b.ToTable("memo_notification_departments");
+                });
+
+            modelBuilder.Entity("ServicePortals.Domain.Entities.OrgPosition", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Name")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("OrgUnitId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("ParentOrgPositionId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("PositionCode")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrgUnitId");
+
+                    b.ToTable("org_positions");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Name = "General Director",
+                            OrgUnitId = 6,
+                            PositionCode = "GD"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Name = "AM General Director",
+                            OrgUnitId = 6,
+                            ParentOrgPositionId = 1,
+                            PositionCode = "AM_GD"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Name = "BD General Manager",
+                            OrgUnitId = 6,
+                            ParentOrgPositionId = 1,
+                            PositionCode = "BDGM"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Name = "Finance General Manage",
+                            OrgUnitId = 6,
+                            ParentOrgPositionId = 1,
+                            PositionCode = "FGM"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Name = "Operations General Manager",
+                            OrgUnitId = 6,
+                            ParentOrgPositionId = 1,
+                            PositionCode = "OGM"
+                        },
+                        new
+                        {
+                            Id = 6,
+                            Name = "Operations Manager",
+                            OrgUnitId = 6,
+                            ParentOrgPositionId = 1,
+                            PositionCode = "OM"
+                        },
+                        new
+                        {
+                            Id = 7,
+                            Name = "Manager MIS/IT",
+                            OrgUnitId = 8,
+                            PositionCode = "MIS-MGR"
+                        },
+                        new
+                        {
+                            Id = 8,
+                            Name = "Staff IT",
+                            OrgUnitId = 8,
+                            ParentOrgPositionId = 7,
+                            PositionCode = "MIS-Staff"
+                        },
+                        new
+                        {
+                            Id = 9,
+                            Name = "Manager Commercial",
+                            OrgUnitId = 10,
+                            PositionCode = "COM-MGR"
+                        },
+                        new
+                        {
+                            Id = 10,
+                            Name = "AM Commercial",
+                            OrgUnitId = 10,
+                            ParentOrgPositionId = 9,
+                            PositionCode = "COM-AM"
+                        },
+                        new
+                        {
+                            Id = 11,
+                            Name = "Staff Commercial",
+                            OrgUnitId = 10,
+                            ParentOrgPositionId = 10,
+                            PositionCode = "COM-Staff"
+                        },
+                        new
+                        {
+                            Id = 12,
+                            Name = "Manager HR",
+                            OrgUnitId = 9,
+                            PositionCode = "HR-MGR"
+                        },
+                        new
+                        {
+                            Id = 13,
+                            Name = "AM HR",
+                            OrgUnitId = 9,
+                            ParentOrgPositionId = 12,
+                            PositionCode = "HR-AM"
+                        },
+                        new
+                        {
+                            Id = 14,
+                            Name = "Staff HR",
+                            OrgUnitId = 9,
+                            ParentOrgPositionId = 13,
+                            PositionCode = "HR-Staff"
+                        },
+                        new
+                        {
+                            Id = 15,
+                            Name = "Manager Production",
+                            OrgUnitId = 7,
+                            PositionCode = "PRD-MGR"
+                        },
+                        new
+                        {
+                            Id = 16,
+                            Name = "Supervisor A_AGH",
+                            OrgUnitId = 18,
+                            ParentOrgPositionId = 15,
+                            PositionCode = "PRD-S-AGH"
+                        },
+                        new
+                        {
+                            Id = 17,
+                            Name = "Supervisor B_BCDEF",
+                            OrgUnitId = 19,
+                            ParentOrgPositionId = 15,
+                            PositionCode = "PRD-S-BBCDEF"
+                        },
+                        new
+                        {
+                            Id = 18,
+                            Name = "Supervisor Shift A",
+                            OrgUnitId = 14,
+                            ParentOrgPositionId = 15,
+                            PositionCode = "PRD-S-SA"
+                        },
+                        new
+                        {
+                            Id = 19,
+                            Name = "Supervisor Shift B",
+                            OrgUnitId = 17,
+                            ParentOrgPositionId = 15,
+                            PositionCode = "PRD-S-SB"
+                        },
+                        new
+                        {
+                            Id = 20,
+                            Name = "12A_A Leader",
+                            OrgUnitId = 14,
+                            ParentOrgPositionId = 18,
+                            PositionCode = "PRD-12AA-L"
+                        },
+                        new
+                        {
+                            Id = 21,
+                            Name = "12A_A Operator",
+                            OrgUnitId = 14,
+                            ParentOrgPositionId = 18,
+                            PositionCode = "PRD-12AA-OP"
+                        },
+                        new
+                        {
+                            Id = 22,
+                            Name = "12B_A Leader",
+                            OrgUnitId = 16,
+                            ParentOrgPositionId = 19,
+                            PositionCode = "PRD-12BA-L"
+                        },
+                        new
+                        {
+                            Id = 23,
+                            Name = "12B_A Operator",
+                            OrgUnitId = 16,
+                            ParentOrgPositionId = 19,
+                            PositionCode = "PRD-12BA-OP"
+                        },
+                        new
+                        {
+                            Id = 24,
+                            Name = "Technician A_AGH",
+                            OrgUnitId = 18,
+                            ParentOrgPositionId = 16,
+                            PositionCode = "PRD-T-AAH"
+                        },
+                        new
+                        {
+                            Id = 25,
+                            Name = "Technician B_BCDEF",
+                            OrgUnitId = 19,
+                            ParentOrgPositionId = 17,
+                            PositionCode = "PRD-T-BCDEF"
+                        });
                 });
 
             modelBuilder.Entity("ServicePortals.Domain.Entities.OrgUnit", b =>
@@ -345,20 +612,8 @@ namespace ServicePortals.Infrastructure.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("DeptId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("DeputyUserCode")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ManagerUserCode")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("Name")
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<int?>("ParentJobTitleId")
-                        .HasColumnType("int");
 
                     b.Property<int?>("ParentOrgUnitId")
                         .HasColumnType("int");
@@ -368,28 +623,122 @@ namespace ServicePortals.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("UnitId");
+
                     b.ToTable("org_units");
-                });
 
-            modelBuilder.Entity("ServicePortals.Domain.Entities.OrgUnitRole", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int?>("OrgUnitId")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("RoleId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("RoleId");
-
-                    b.ToTable("org_unit_roles");
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Name = "VS Industry VietNam",
+                            UnitId = 1
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Name = "Business Development",
+                            ParentOrgUnitId = 1,
+                            UnitId = 2
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Name = "Finance & Admin",
+                            ParentOrgUnitId = 1,
+                            UnitId = 2
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Name = "Operations",
+                            ParentOrgUnitId = 1,
+                            UnitId = 2
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Name = "VS Technology",
+                            ParentOrgUnitId = 1,
+                            UnitId = 2
+                        },
+                        new
+                        {
+                            Id = 6,
+                            Name = "General Manager",
+                            ParentOrgUnitId = 1,
+                            UnitId = 3
+                        },
+                        new
+                        {
+                            Id = 7,
+                            Name = "Production",
+                            ParentOrgUnitId = 4,
+                            UnitId = 3
+                        },
+                        new
+                        {
+                            Id = 8,
+                            Name = "MIS",
+                            ParentOrgUnitId = 1,
+                            UnitId = 3
+                        },
+                        new
+                        {
+                            Id = 9,
+                            Name = "HR",
+                            ParentOrgUnitId = 3,
+                            UnitId = 3
+                        },
+                        new
+                        {
+                            Id = 10,
+                            Name = "Commercial",
+                            ParentOrgUnitId = 4,
+                            UnitId = 3
+                        },
+                        new
+                        {
+                            Id = 14,
+                            Name = "12A_A",
+                            ParentOrgUnitId = 6,
+                            UnitId = 4
+                        },
+                        new
+                        {
+                            Id = 15,
+                            Name = "12A_B",
+                            ParentOrgUnitId = 6,
+                            UnitId = 4
+                        },
+                        new
+                        {
+                            Id = 16,
+                            Name = "12B_A",
+                            ParentOrgUnitId = 6,
+                            UnitId = 4
+                        },
+                        new
+                        {
+                            Id = 17,
+                            Name = "12B_H",
+                            ParentOrgUnitId = 6,
+                            UnitId = 4
+                        },
+                        new
+                        {
+                            Id = 18,
+                            Name = "Kỹ thuật A_AGH",
+                            ParentOrgUnitId = 6,
+                            UnitId = 4
+                        },
+                        new
+                        {
+                            Id = 19,
+                            Name = "Kỹ thuật B_BCDEF",
+                            ParentOrgUnitId = 6,
+                            UnitId = 4
+                        });
                 });
 
             modelBuilder.Entity("ServicePortals.Domain.Entities.Permission", b =>
@@ -400,7 +749,7 @@ namespace ServicePortals.Infrastructure.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("Description")
+                    b.Property<string>("Group")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name")
@@ -416,26 +765,26 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                         new
                         {
                             Id = 1,
-                            Description = "LEAVE_REQUEST",
-                            Name = "leave_request.create_leave_request"
-                        },
-                        new
-                        {
-                            Id = 2,
-                            Description = "LEAVE_REQUEST",
-                            Name = "leave_request.send_to_hr"
-                        },
-                        new
-                        {
-                            Id = 3,
-                            Description = "TIME_KEEPING",
+                            Group = "TIME_KEEPING",
                             Name = "time_keeping.mng_time_keeping"
                         },
                         new
                         {
-                            Id = 4,
-                            Description = "LEAVE_REQUEST",
+                            Id = 2,
+                            Group = "LEAVE_REQUEST",
                             Name = "leave_request.create_multiple_leave_request"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Group = "LEAVE_REQUEST",
+                            Name = "leave_request.hr_management_leave_request"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Group = "MEMO_NOTIFICATION",
+                            Name = "memo_notification.create"
                         });
                 });
 
@@ -480,8 +829,10 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Name")
-                        .HasMaxLength(30)
-                        .HasColumnType("nvarchar(30)");
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("NameE")
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
@@ -491,27 +842,44 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                         new
                         {
                             Id = 1,
-                            Name = "PENDING"
+                            Name = "Chờ duyệt",
+                            NameE = "PENDING"
                         },
                         new
                         {
                             Id = 2,
-                            Name = "IN_PROCESS"
+                            Name = "Đang xử lý",
+                            NameE = "IN_PROCESS"
                         },
                         new
                         {
                             Id = 3,
-                            Name = "COMPLETE"
+                            Name = "Hoàn thành",
+                            NameE = "COMPLETED"
                         },
                         new
                         {
                             Id = 4,
-                            Name = "WAIT_HR"
+                            Name = "Chờ HR",
+                            NameE = "WAIT_HR"
                         },
                         new
                         {
                             Id = 5,
-                            Name = "REJECT"
+                            Name = "Từ chối",
+                            NameE = "REJECTED"
+                        },
+                        new
+                        {
+                            Id = 6,
+                            Name = "Duyệt cuối cùng",
+                            NameE = "FINAL_APPROVAL"
+                        },
+                        new
+                        {
+                            Id = 7,
+                            Name = "Đã giao",
+                            NameE = "ASSIGNED"
                         });
                 });
 
@@ -537,12 +905,26 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                         new
                         {
                             Id = 1,
-                            Name = "Nghỉ Phép"
+                            Name = "Nghỉ phép",
+                            NameE = "Leave request"
                         },
                         new
                         {
                             Id = 2,
-                            Name = "Chấm Công"
+                            Name = "Chấm công",
+                            NameE = "Time Keeping"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Name = "Thông báo",
+                            NameE = "Memo Notification"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Name = "Form IT",
+                            NameE = "Form IT"
                         });
                 });
 
@@ -596,6 +978,18 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                             Id = 5,
                             Code = "USER",
                             Name = "User"
+                        },
+                        new
+                        {
+                            Id = 6,
+                            Code = "GM",
+                            Name = "GM"
+                        },
+                        new
+                        {
+                            Id = 7,
+                            Code = "HR_MANAGER",
+                            Name = "HR_Manager"
                         });
                 });
 
@@ -620,38 +1014,6 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                     b.HasIndex("RoleId", "PermissionId");
 
                     b.ToTable("role_permissions");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            PermissionId = 1,
-                            RoleId = 1
-                        },
-                        new
-                        {
-                            Id = 2,
-                            PermissionId = 1,
-                            RoleId = 2
-                        },
-                        new
-                        {
-                            Id = 3,
-                            PermissionId = 1,
-                            RoleId = 3
-                        },
-                        new
-                        {
-                            Id = 4,
-                            PermissionId = 1,
-                            RoleId = 4
-                        },
-                        new
-                        {
-                            Id = 5,
-                            PermissionId = 1,
-                            RoleId = 5
-                        });
                 });
 
             modelBuilder.Entity("ServicePortals.Domain.Entities.SystemConfig", b =>
@@ -726,7 +1088,10 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                     b.Property<string>("UserCode")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("UserCodeUpdate")
+                    b.Property<string>("UserCodeUpdated")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UserName")
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
@@ -742,13 +1107,11 @@ namespace ServicePortals.Infrastructure.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("Description")
-                        .HasMaxLength(30)
-                        .HasColumnType("nvarchar(30)");
+                    b.Property<string>("Name")
+                        .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("English")
-                        .HasMaxLength(30)
-                        .HasColumnType("nvarchar(30)");
+                    b.Property<string>("NameE")
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
@@ -758,20 +1121,20 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                         new
                         {
                             Id = 1,
-                            Description = "Cả Ngày",
-                            English = "All Day"
+                            Name = "Cả Ngày",
+                            NameE = "All Day"
                         },
                         new
                         {
                             Id = 2,
-                            Description = "Buổi Sáng",
-                            English = "Morning"
+                            Name = "Buổi sáng",
+                            NameE = "Morning"
                         },
                         new
                         {
                             Id = 3,
-                            Description = "Buổi Chiều",
-                            English = "Afternoon"
+                            Name = "Buổi chiều",
+                            NameE = "Afternoon"
                         });
                 });
 
@@ -783,22 +1146,13 @@ namespace ServicePortals.Infrastructure.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("BgColor")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("Code")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("NameV")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Note")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("TextColor")
+                    b.Property<string>("NameE")
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
@@ -809,44 +1163,72 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                         new
                         {
                             Id = 1,
-                            Name = "Annual",
-                            NameV = "Nghỉ Phép Năm",
-                            Note = "type_leave.annual"
+                            Code = "AL",
+                            Name = "Nghỉ Phép Năm",
+                            NameE = "Annual Leave"
                         },
                         new
                         {
                             Id = 2,
-                            Name = "Personal",
-                            NameV = "Nghỉ Việc Cá Nhân",
-                            Note = "type_leave.personal"
+                            Code = "NPL",
+                            Name = "Nghỉ Việc Cá Nhân",
+                            NameE = "Unpaid Leave"
                         },
                         new
                         {
                             Id = 3,
-                            Name = "Sick",
-                            NameV = "Nghỉ Ốm",
-                            Note = "type_leave.sick"
+                            Code = "MC",
+                            Name = "Nghỉ Ốm",
+                            NameE = "Sick Leave"
                         },
                         new
                         {
                             Id = 4,
-                            Name = "Wedding",
-                            NameV = "Nghỉ Cưới",
-                            Note = "type_leave.wedding"
+                            Code = "ML",
+                            Name = "Nghỉ Cưới",
+                            NameE = "Wedding Leave"
                         },
                         new
                         {
                             Id = 5,
-                            Name = "Accident",
-                            NameV = "Nghỉ TNLĐ",
-                            Note = "type_leave.accident"
+                            Code = "ACC",
+                            Name = "Nghỉ TNLĐ",
+                            NameE = "Accident Leave"
                         },
                         new
                         {
                             Id = 6,
-                            Name = "Other",
-                            NameV = "Khác",
-                            Note = "type_leave.other"
+                            Code = "PL",
+                            Name = "Nghỉ vợ sinh",
+                            NameE = "Paternity Leave"
+                        },
+                        new
+                        {
+                            Id = 7,
+                            Code = "MAT",
+                            Name = "Nghỉ đẻ",
+                            NameE = "Maternity Leave"
+                        },
+                        new
+                        {
+                            Id = 8,
+                            Code = "UL",
+                            Name = "Nghỉ bù",
+                            NameE = "Compensatory Leave"
+                        },
+                        new
+                        {
+                            Id = 9,
+                            Code = "COMP",
+                            Name = "Nghỉ tang lễ",
+                            NameE = "Funeral Leave"
+                        },
+                        new
+                        {
+                            Id = 10,
+                            Code = "Wo",
+                            Name = "Làm ở ngoài",
+                            NameE = "Working Outside"
                         });
                 });
 
@@ -864,6 +1246,28 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("units");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Name = "Company"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Name = "Manage Department"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Name = "Department"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Name = "Team"
+                        });
                 });
 
             modelBuilder.Entity("ServicePortals.Domain.Entities.User", b =>
@@ -911,7 +1315,7 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                             IsActive = (byte)1,
                             IsChangePassword = (byte)1,
                             Password = "$2a$12$GAJGsDDQUCEPfSqOLbPwmu5agSkYoaH6eUzLPJLRx2hnA89LSkiey",
-                            Phone = "0987654321",
+                            Phone = "0999999999",
                             UserCode = "0"
                         });
                 });
@@ -1014,56 +1418,12 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                         });
                 });
 
-            modelBuilder.Entity("ServicePortals.Domain.Entities.WorkFlowStep", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int?>("DepartmentId")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("FromOrgUnitId")
-                        .HasColumnType("int");
-
-                    b.Property<bool?>("IsFinal")
-                        .HasColumnType("bit");
-
-                    b.Property<bool?>("IsNeedHighLevel")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("OrgUnitContext")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int?>("RequestTypeId")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("Step")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("ToSpecificDeptId")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("ToSpecificOrgUnitId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("ToSpecificUserCode")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int?>("UnitId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("FromOrgUnitId");
-
-                    b.ToTable("work_flow_steps");
-                });
-
             modelBuilder.Entity("ServicePortals.Domain.Entities.ApplicationForm", b =>
                 {
+                    b.HasOne("ServicePortals.Domain.Entities.OrgPosition", "OrgPosition")
+                        .WithMany()
+                        .HasForeignKey("OrgPositionId");
+
                     b.HasOne("ServicePortals.Domain.Entities.RequestStatus", "RequestStatus")
                         .WithMany()
                         .HasForeignKey("RequestStatusId");
@@ -1072,15 +1432,11 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                         .WithMany()
                         .HasForeignKey("RequestTypeId");
 
-                    b.HasOne("ServicePortals.Domain.Entities.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId");
+                    b.Navigation("OrgPosition");
 
                     b.Navigation("RequestStatus");
 
                     b.Navigation("RequestType");
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("ServicePortals.Domain.Entities.AttachFile", b =>
@@ -1100,30 +1456,19 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                         .HasForeignKey("ApplicationFormId")
                         .OnDelete(DeleteBehavior.NoAction);
 
-                    b.HasOne("ServicePortals.Domain.Entities.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId");
-
                     b.Navigation("ApplicationForm");
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("ServicePortals.Domain.Entities.LeaveRequest", b =>
                 {
                     b.HasOne("ServicePortals.Domain.Entities.ApplicationForm", "ApplicationForm")
-                        .WithMany()
-                        .HasForeignKey("ApplicationFormId")
+                        .WithOne("Leave")
+                        .HasForeignKey("ServicePortals.Domain.Entities.LeaveRequest", "ApplicationFormId")
                         .OnDelete(DeleteBehavior.NoAction);
 
-                    b.HasOne("ServicePortals.Domain.Entities.OrgUnit", "Department")
+                    b.HasOne("ServicePortals.Domain.Entities.OrgUnit", "OrgUnit")
                         .WithMany()
-                        .HasForeignKey("DepartmentId");
-
-                    b.HasOne("ServicePortals.Domain.Entities.User", "User")
-                        .WithMany()
-                        .HasForeignKey("RequesterUserCode")
-                        .HasPrincipalKey("UserCode")
+                        .HasForeignKey("DepartmentId")
                         .OnDelete(DeleteBehavior.NoAction);
 
                     b.HasOne("ServicePortals.Domain.Entities.TimeLeave", "TimeLeave")
@@ -1136,9 +1481,15 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                         .HasForeignKey("TypeLeaveId")
                         .OnDelete(DeleteBehavior.NoAction);
 
+                    b.HasOne("ServicePortals.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserCodeRequestor")
+                        .HasPrincipalKey("UserCode")
+                        .OnDelete(DeleteBehavior.NoAction);
+
                     b.Navigation("ApplicationForm");
 
-                    b.Navigation("Department");
+                    b.Navigation("OrgUnit");
 
                     b.Navigation("TimeLeave");
 
@@ -1150,37 +1501,53 @@ namespace ServicePortals.Infrastructure.Data.Migrations
             modelBuilder.Entity("ServicePortals.Domain.Entities.MemoNotification", b =>
                 {
                     b.HasOne("ServicePortals.Domain.Entities.ApplicationForm", "ApplicationForm")
-                        .WithMany()
-                        .HasForeignKey("ApplicationFormId")
+                        .WithOne("MemoNotification")
+                        .HasForeignKey("ServicePortals.Domain.Entities.MemoNotification", "ApplicationFormId")
                         .OnDelete(DeleteBehavior.NoAction);
 
-                    b.HasOne("ServicePortals.Domain.Entities.OrgUnit", "Department")
+                    b.HasOne("ServicePortals.Domain.Entities.OrgUnit", "OrgUnit")
                         .WithMany()
-                        .HasForeignKey("DepartmentId");
+                        .HasForeignKey("DepartmentId")
+                        .OnDelete(DeleteBehavior.NoAction);
 
                     b.Navigation("ApplicationForm");
 
-                    b.Navigation("Department");
+                    b.Navigation("OrgUnit");
                 });
 
             modelBuilder.Entity("ServicePortals.Domain.Entities.MemoNotificationDepartment", b =>
                 {
+                    b.HasOne("ServicePortals.Domain.Entities.OrgUnit", "OrgUnit")
+                        .WithMany()
+                        .HasForeignKey("DepartmentId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
                     b.HasOne("ServicePortals.Domain.Entities.MemoNotification", "MemoNotifications")
                         .WithMany("MemoNotificationDepartments")
                         .HasForeignKey("MemoNotificationId")
                         .OnDelete(DeleteBehavior.NoAction);
 
                     b.Navigation("MemoNotifications");
+
+                    b.Navigation("OrgUnit");
                 });
 
-            modelBuilder.Entity("ServicePortals.Domain.Entities.OrgUnitRole", b =>
+            modelBuilder.Entity("ServicePortals.Domain.Entities.OrgPosition", b =>
                 {
-                    b.HasOne("ServicePortals.Domain.Entities.Role", "Role")
-                        .WithMany("OrgUnitRoles")
-                        .HasForeignKey("RoleId")
-                        .OnDelete(DeleteBehavior.NoAction);
+                    b.HasOne("ServicePortals.Domain.Entities.OrgUnit", "OrgUnit")
+                        .WithMany()
+                        .HasForeignKey("OrgUnitId");
 
-                    b.Navigation("Role");
+                    b.Navigation("OrgUnit");
+                });
+
+            modelBuilder.Entity("ServicePortals.Domain.Entities.OrgUnit", b =>
+                {
+                    b.HasOne("ServicePortals.Domain.Entities.Unit", "Unit")
+                        .WithMany()
+                        .HasForeignKey("UnitId");
+
+                    b.Navigation("Unit");
                 });
 
             modelBuilder.Entity("ServicePortals.Domain.Entities.RolePermission", b =>
@@ -1250,6 +1617,10 @@ namespace ServicePortals.Infrastructure.Data.Migrations
             modelBuilder.Entity("ServicePortals.Domain.Entities.ApplicationForm", b =>
                 {
                     b.Navigation("HistoryApplicationForms");
+
+                    b.Navigation("Leave");
+
+                    b.Navigation("MemoNotification");
                 });
 
             modelBuilder.Entity("ServicePortals.Domain.Entities.MemoNotification", b =>
@@ -1266,8 +1637,6 @@ namespace ServicePortals.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("ServicePortals.Domain.Entities.Role", b =>
                 {
-                    b.Navigation("OrgUnitRoles");
-
                     b.Navigation("RolePermissions");
 
                     b.Navigation("UserRoles");

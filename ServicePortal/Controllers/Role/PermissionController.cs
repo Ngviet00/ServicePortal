@@ -3,6 +3,7 @@ using ServicePortals.Application.Dtos.Role.Requests;
 using ServicePortals.Application.Interfaces.Role;
 using ServicePortals.Application;
 using ServicePortal.Filters;
+using Entities = ServicePortals.Domain.Entities;
 
 namespace ServicePortal.Controllers.Role
 {
@@ -16,12 +17,12 @@ namespace ServicePortal.Controllers.Role
             _permissionService = permissionService;
         }
 
-        [HttpGet("get-all")]
+        [HttpGet]
         public async Task<IActionResult> GetAll([FromQuery] SearchPermissionRequest request)
         {
             var results = await _permissionService.GetAll(request);
 
-            var response = new PageResponse<ServicePortals.Domain.Entities.Permission>(
+            var response = new PageResponse<Entities.Permission>(
                 200,
                 "Success",
                 results.Data,
@@ -34,36 +35,36 @@ namespace ServicePortal.Controllers.Role
             return Ok(response);
         }
 
-        [HttpGet("get-by-id/{id}"), RoleAuthorize("superadmin")]
+        [HttpGet("{id}"), RoleAuthorize("superadmin")]
         public async Task<IActionResult> GetById(int id)
         {
             var role = await _permissionService.GetById(id);
 
-            return Ok(new BaseResponse<ServicePortals.Domain.Entities.Permission>(200, "success", role));
+            return Ok(new BaseResponse<Entities.Permission>(200, "success", role));
         }
 
-        [HttpPost("create"), RoleAuthorize("superadmin")]
+        [HttpPost, RoleAuthorize("superadmin")]
         public async Task<IActionResult> Create([FromBody] CreatePermissionRequest request)
         {
             var role = await _permissionService.Create(request);
 
-            return Ok(new BaseResponse<ServicePortals.Domain.Entities.Permission>(200, "success", role));
+            return Ok(new BaseResponse<Entities.Permission>(200, "success", role));
         }
 
-        [HttpPut("update/{id}"), RoleAuthorize("superadmin")]
+        [HttpPut("{id}"), RoleAuthorize("superadmin")]
         public async Task<IActionResult> Update(int id, [FromBody] CreatePermissionRequest request)
         {
             var role = await _permissionService.Update(id, request);
 
-            return Ok(new BaseResponse<ServicePortals.Domain.Entities.Permission>(200, "success", role));
+            return Ok(new BaseResponse<Entities.Permission>(200, "success", role));
         }
 
-        [HttpDelete("delete/{id}"), RoleAuthorize("superadmin")]
+        [HttpDelete("{id}"), RoleAuthorize("superadmin")]
         public async Task<IActionResult> Delete(int id)
         {
             var role = await _permissionService.Delete(id);
 
-            return Ok(new BaseResponse<ServicePortals.Domain.Entities.Permission>(200, "success", role));
+            return Ok(new BaseResponse<Entities.Permission>(200, "success", role));
         }
     }
 }

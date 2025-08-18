@@ -54,7 +54,7 @@ namespace ServicePortals.Application.Services.Role
             var permission = new Permission
             {
                 Name = request.Name,
-                Description = request.Description
+                Group = request.Group
             };
 
             _context.Permissions.Add(permission);
@@ -69,7 +69,7 @@ namespace ServicePortals.Application.Services.Role
             var permission = await _context.Permissions.FirstOrDefaultAsync(e => e.Id == id) ?? throw new NotFoundException("Permission not found!");
 
             permission.Name = request.Name;
-            permission.Description = request.Description;
+            permission.Group = request.Group;
 
             _context.Permissions.Update(permission);
 

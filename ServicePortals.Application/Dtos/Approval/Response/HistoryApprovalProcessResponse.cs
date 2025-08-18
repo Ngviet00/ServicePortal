@@ -3,7 +3,7 @@
     public class HistoryApprovalProcessResponse
     {
         public DateTimeOffset? CreatedAt { get; set; }
-        public string? ActionType { get; set; }
+        public string? Action { get; set; }
         public int? RequestStatusId { get; set; }
         public Domain.Entities.RequestType? RequestType { get; set; }
         public Domain.Entities.LeaveRequest? LeaveRequest { get; set; }

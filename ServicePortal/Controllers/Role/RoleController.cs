@@ -1,9 +1,9 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using ServicePortal.Filters;
 using ServicePortals.Application;
 using ServicePortals.Application.Dtos.Role.Requests;
 using ServicePortals.Application.Interfaces.Role;
+using Entities = ServicePortals.Domain.Entities;
 
 namespace ServicePortal.Controllers.Role
 {
@@ -17,17 +17,17 @@ namespace ServicePortal.Controllers.Role
             _roleService = roleService;
         }
 
-        [HttpGet("get-all")]
+        [HttpGet]
         public async Task<IActionResult> GetAll([FromQuery] SearchRoleRequest request)
         {
             var results = await _roleService.GetAll(request);
 
-            var response = new PageResponse<ServicePortals.Domain.Entities.Role>(
-                200, 
-                "Success", 
-                results.Data, 
+            var response = new PageResponse<Entities.Role>(
+                200,
+                "Success",
+                results.Data,
                 results.TotalPages,
-                request.Page, 
+                request.Page,
                 request.PageSize,
                 results.TotalItems
             );
@@ -35,36 +35,36 @@ namespace ServicePortal.Controllers.Role
             return Ok(response);
         }
 
-        [HttpGet("get-by-id/{id}"), RoleAuthorize("superadmin")]
+        [HttpGet("{id}"), RoleAuthorize("superadmin")]
         public async Task<IActionResult> GetById(int id)
         {
             var role = await _roleService.GetById(id);
 
-            return Ok(new BaseResponse<ServicePortals.Domain.Entities.Role>(200, "success", role));
+            return Ok(new BaseResponse<Entities.Role>(200, "success", role));
         }
 
-        [HttpPost("create"), RoleAuthorize("superadmin")]
+        [HttpPost, RoleAuthorize("superadmin")]
         public async Task<IActionResult> Create([FromBody] CreateRoleRequest request)
         {
             var role = await _roleService.Create(request);
 
-            return Ok(new BaseResponse<ServicePortals.Domain.Entities.Role>(200, "success", role));
+            return Ok(new BaseResponse<Entities.Role>(200, "success", role));
         }
 
-        [HttpPut("update/{id}"), RoleAuthorize("superadmin")]
+        [HttpPut("{id}"), RoleAuthorize("superadmin")]
         public async Task<IActionResult> Update(int id, [FromBody] CreateRoleRequest request)
         {
             var role = await _roleService.Update(id, request);
 
-            return Ok(new BaseResponse<ServicePortals.Domain.Entities.Role>(200, "success", role));
+            return Ok(new BaseResponse<Entities.Role>(200, "success", role));
         }
 
-        [HttpDelete("delete/{id}"), RoleAuthorize("superadmin")]
+        [HttpDelete("{id}"), RoleAuthorize("superadmin")]
         public async Task<IActionResult> Delete(int id)
         {
             var role = await _roleService.Delete(id);
 
-            return Ok(new BaseResponse<ServicePortals.Domain.Entities.Role>(200, "success", role));
+            return Ok(new BaseResponse<Entities.Role>(200, "success", role));
         }
     }
 }

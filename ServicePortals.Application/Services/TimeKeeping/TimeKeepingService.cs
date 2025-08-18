@@ -11,7 +11,6 @@ using ServicePortals.Application.Dtos.TimeKeeping.Requests;
 using ServicePortals.Application.Interfaces.LeaveRequest;
 using ServicePortals.Application.Interfaces.TimeKeeping;
 using ServicePortals.Domain.Entities;
-using ServicePortals.Domain.Enums;
 using ServicePortals.Infrastructure.Data;
 using ServicePortals.Infrastructure.Email;
 using ServicePortals.Infrastructure.Excel;
@@ -23,20 +22,17 @@ namespace ServicePortals.Infrastructure.Services.TimeKeeping
     public class TimeKeepingService : ITimeKeepingService
     {
         private readonly ApplicationDbContext _context;
-        private readonly IViclockDapperContext _viclockDapperContext;
         private readonly IEmailService _emailService;
         private readonly ILeaveRequestService _leaveRequestService;
         private readonly ExcelService _excelService;
 
-        public TimeKeepingService (
+        public TimeKeepingService(
             ExcelService excelService,
-            IViclockDapperContext viclockDapperContext, 
-            IEmailService emailService, 
+            IEmailService emailService,
             ApplicationDbContext context,
             ILeaveRequestService leaveRequestService
         )
         {
-            _viclockDapperContext = viclockDapperContext;
             _emailService = emailService;
             _context = context;
             _leaveRequestService = leaveRequestService;
@@ -53,11 +49,14 @@ namespace ServicePortals.Infrastructure.Services.TimeKeeping
                 StaffCode = request.UserCode
             };
 
-            var result = await _viclockDapperContext.QueryAsync<object>(
-                "[dbo].[cp_get_table_timekeeping]",
-                param,
-                CommandType.StoredProcedure
-            );
+            var connection = (SqlConnection)_context.CreateConnection();
+
+            if (connection.State != ConnectionState.Open)
+            {
+                await connection.OpenAsync();
+            }
+
+            var result = await _context.Database.GetDbConnection().QueryAsync<object>($"{Global.DbViClock}.dbo.cp_get_table_timekeeping", param, commandType: CommandType.StoredProcedure);
 
             return result;
         }
@@ -65,128 +64,45 @@ namespace ServicePortals.Infrastructure.Services.TimeKeeping
         //màn quản lý chấm công, người quản lý chấm công quản lý chấm công của người khác
         public async Task<PagedResults<dynamic>> GetManagementTimeKeeping(GetManagementTimeKeepingRequest request)
         {
-            using var connection = _context.Database.GetDbConnection();
-            if (connection.State != ConnectionState.Open)
-            {
-                await connection.OpenAsync();
-            }
-
             int month = request.Month ?? DateTime.UtcNow.Month;
             int year = request.Year ?? DateTime.UtcNow.Year;
-
             int dayInMonth = DateTime.DaysInMonth(year, month);
-
-            string tblName = $"{Global.DbViClock}.dbo.BaoCaoVS5{year}_{month:D2}";
-
-            bool isTableExists = connection.ExecuteScalar<int?>("SELECT OBJECT_ID(@tableName, 'U')", new { tableName = tblName }).HasValue;
-
-            if (!isTableExists)
-            {
-                return new PagedResults<dynamic>
-                {
-                    Data = [],
-                    TotalItems = 0,
-                    TotalPages = 0
-                };
-            }
 
             double pageSize = request.PageSize > 0 ? request.PageSize : 10;
             double page = request.Page > 0 ? request.Page : 1;
             string keySearch = request.keySearch?.Trim() ?? "";
-
             int? deptId = request.DeptId;
-            int? team = request.Team;
 
-            var fromDate = $"{year}-{month:D2}-01";
-            var toDate = $"{year}-{month:D2}-{dayInMonth}";
+            string tableName = $"BaoCaoVS5{year}_{month:D2}";
 
-            string sqlOrgUnitIdQuery = $@"
-                WITH RecursiveOrg AS (
-                    SELECT o.id FROM user_mng_org_unit_id as um
-                    INNER JOIN [{Global.DbWeb}].dbo.org_units as o
-                        ON um.OrgUnitId = o.id
-                    WHERE um.UserCode = @userCode AND um.ManagementType = @type
-            ";
+            var parameters = new DynamicParameters();
 
-            if (deptId == null)
-            {
-                sqlOrgUnitIdQuery += $@"
-                    UNION ALL
-                    SELECT o.id FROM  {Global.DbWeb}.dbo.org_units o INNER JOIN RecursiveOrg ro ON o.ParentOrgUnitId = ro.id
-                )
-                SELECT DISTINCT id FROM RecursiveOrg
-                ";
-            }
-            else
-            {
-                sqlOrgUnitIdQuery += $@"
-                )
-                SELECT 
-                    o.id 
-                    FROM 
-                    {Global.DbWeb}.dbo.org_units o 
-                    INNER JOIN RecursiveOrg ro ON o.ParentOrgUnitId = ro.id AND o.DeptId = @deptId
-                ";
-            }
+            parameters.Add("@UserCode", request.UserCode, DbType.String, ParameterDirection.Input);
+            parameters.Add("@MngType", "MNG_TIME_KEEPING", DbType.String, ParameterDirection.Input);
+            parameters.Add("@KeySearch", request.keySearch?.Trim() ?? "", DbType.String, ParameterDirection.Input);
+            parameters.Add("@DepartmentId", request.DeptId, DbType.Int32, ParameterDirection.Input);
+            parameters.Add("@Page", request.Page, DbType.Int32, ParameterDirection.Input);
+            parameters.Add("@PageSize", request.PageSize, DbType.Int32, ParameterDirection.Input);
+            parameters.Add("@TableName", tableName, DbType.String, ParameterDirection.Input);
+            parameters.Add("@TotalCount", dbType: DbType.Int32, direction: ParameterDirection.Output);
 
-            var orgUnitIds = (await connection.QueryAsync<int>(sqlOrgUnitIdQuery, new
-            {
-                userCode = request.UserCode,
-                type = "MNG_TIME_KEEPING",
-                deptId
-            })).ToList();
-
-            if (orgUnitIds.Count == 0)
-            {
-                return new PagedResults<dynamic>
-                {
-                    Data = [],
-                    TotalItems = 0,
-                    TotalPages = 0
-                };
-            }
-
-            var countUser = await connection.QuerySingleAsync<int>(
-                @"SELECT COUNT(*) FROM vs_new.dbo.tblNhanVien AS NV WHERE NV.NVNgayRa > GETDATE() AND NV.OrgUnitID IN @ids AND (@KeySearch = '' OR NV.NVMaNV = @KeySearch)",
-                new { ids = orgUnitIds, KeySearch = keySearch }
+            var results = await _context.Database.GetDbConnection()
+                    .QueryAsync<dynamic>(
+                        "dbo.usp_GetMngTimeKeepingData",
+                        parameters,
+                        commandType: CommandType.StoredProcedure,
+                        commandTimeout: 900
             );
 
-            var totalPages = (int)Math.Ceiling((double)countUser / pageSize);
+            int totalCount = parameters.Get<int>("@TotalCount");
+            int totalPages = (int)Math.Ceiling((double)totalCount / request.PageSize);
 
-            var q = $@"
-                SELECT 
-                    TA.Datetime, TA.CurrentValue, {Global.DbViClock}.dbo.funTCVN2Unicode(BC.NVHoTen) AS Format_NVHoTen, BC.* 
-                FROM {Global.DbViClock}.dbo.tblNhanVien AS NV
-                LEFT JOIN {tblName} AS BC ON NV.NVMaNV = BC.NVMaNV
-                LEFT JOIN {Global.DbWeb}.dbo.time_attendance_edit_histories AS TA ON TA.UserCode = BC.NVMaNV AND TA.Datetime BETWEEN @FromDate AND @ToDate
-                WHERE 1 = 1 AND NV.OrgUnitID IN @OrgUnitIds AND NV.NVNgayRa > GETDATE() AND BC.NVMaNV IS NOT NULL
-            ";
-
-            if (!string.IsNullOrWhiteSpace(keySearch))
-            {
-                q += " AND BC.NVMaNV = @KeySearch";
-            }
-
-            q += " ORDER BY BC.NVMaNV OFFSET (@Page - 1) * @PageSize ROWS FETCH NEXT @PageSize ROWS ONLY";
-
-            var param = new
-            {
-                Page = (int)page,
-                PageSize = (int)pageSize,
-                FromDate = fromDate,
-                ToDate = toDate,
-                OrgUnitIds = orgUnitIds,
-                KeySearch = keySearch
-            };
-
-            var rawData = (await connection.QueryAsync<dynamic>(q, param)).ToList();
-
-            var finalResults = FormatDataGetUserAndTimeKeeping(rawData, dayInMonth);
+            var finalResults = FormatDataGetUserAndTimeKeeping((List<dynamic>)results, dayInMonth);
 
             return new PagedResults<dynamic>
             {
                 Data = finalResults,
-                TotalItems = finalResults.Count(),
+                TotalItems = totalCount,
                 TotalPages = totalPages
             };
         }
@@ -199,59 +115,32 @@ namespace ServicePortals.Infrastructure.Services.TimeKeeping
             int month = request.Month ?? DateTime.Now.Month;
             int year = request.Year ?? DateTime.Now.Year;
             int daysInMonth = DateTime.DaysInMonth(year, month);
-            string fromDate = $"{year}-{month.ToString("D2")}-01";
-            string toDate = $"{year}-{month.ToString("D2")}-{daysInMonth}";
 
-            string tblName = $"{Global.DbViClock}.dbo.BaoCaoVS5{year}_{month:D2}";
-
-            string userCodeSendConfirm = request.UserCode ?? "";
-
-            using var connection = _context.Database.GetDbConnection();
-            if (connection.State != ConnectionState.Open)
-            {
-                await connection.OpenAsync();
-            }
-
-            string sqlOrgUnitIdQuery = $@"
-                WITH RecursiveOrg AS (
-                    SELECT o.id FROM user_mng_org_unit_id as um
-                    INNER JOIN [{Global.DbWeb}].dbo.org_units as o
-                        ON um.OrgUnitId = o.id
-                    WHERE um.UserCode = @userCode AND um.ManagementType = @type
-                    UNION ALL
-                    SELECT o.id FROM  {Global.DbWeb}.dbo.org_units o INNER JOIN RecursiveOrg ro ON o.ParentOrgUnitId = ro.id
-                )
-                SELECT DISTINCT id FROM RecursiveOrg
-            ";
-            var orgUnitIds = (await connection.QueryAsync<int>(sqlOrgUnitIdQuery, new { userCode = request.UserCode, type = "MNG_TIME_KEEPING"})).ToList();
-
-            var listEditTimeKeeping = await _context.TimeAttendanceEditHistories.Where(e => e.UserCodeUpdate == userCodeSendConfirm && e.IsSentToHR == false).ToListAsync();
-
+            var parameters = new DynamicParameters();
+            parameters.Add("@UserCode", request.UserCode, DbType.String, ParameterDirection.Input);
+            parameters.Add("@MngType", "MNG_TIME_KEEPING", DbType.String, ParameterDirection.Input);
+            parameters.Add("@KeySearch", null, DbType.String, ParameterDirection.Input);
+            parameters.Add("@DepartmentId", null, DbType.Int32, ParameterDirection.Input);
+            parameters.Add("@Page", 1, DbType.Int32, ParameterDirection.Input);
+            parameters.Add("@PageSize", 100000, DbType.Int32, ParameterDirection.Input);
+            parameters.Add("@TableName", $"BaoCaoVS5{year}_{month:D2}", DbType.String, ParameterDirection.Input);
+            parameters.Add("@TotalCount", dbType: DbType.Int32, direction: ParameterDirection.Output);
+            
+            var listEditTimeKeeping = await _context.TimeAttendanceEditHistories.Where(e => e.UserCodeUpdated == request.UserCode && e.IsSentToHR == false).ToListAsync();
             //update edit timekeeping to status send to HR
-            await _context.TimeAttendanceEditHistories.Where(e => e.UserCodeUpdate == userCodeSendConfirm && e.IsSentToHR == false).ExecuteUpdateAsync(s => s.SetProperty(e => e.IsSentToHR, true));
-
+            await _context.TimeAttendanceEditHistories.Where(e => e.UserCodeUpdated == request.UserCode && e.IsSentToHR == false).ExecuteUpdateAsync(s => s.SetProperty(e => e.IsSentToHR, true));
             //export excel list edit timekeeping
             byte[] excelFileEditHistoryTimeKeeping = _excelService.GenerateExcelHistoryEditTimeKeeping(listEditTimeKeeping);
 
-            var q = $@"
-                SELECT 
-                    TA.Datetime, TA.CurrentValue, {Global.DbViClock}.dbo.funTCVN2Unicode(BC.NVHoTen) AS Format_NVHoTen, BC.* 
-                FROM {Global.DbViClock}.dbo.tblNhanVien AS NV
-                LEFT JOIN {tblName} AS BC ON NV.NVMaNV = BC.NVMaNV
-                LEFT JOIN {Global.DbWeb}.dbo.time_attendance_edit_histories AS TA ON TA.UserCode = BC.NVMaNV AND TA.Datetime BETWEEN @FromDate AND @ToDate
-                WHERE 1 = 1 AND NV.OrgUnitID IN @OrgUnitIds AND NV.NVNgayRa > GETDATE() AND BC.NVMaNV IS NOT NULL
-            ";
+            var results = await _context.Database.GetDbConnection()
+                .QueryAsync<dynamic>(
+                    "dbo.usp_GetMngTimeKeepingData",
+                    parameters,
+                    commandType: CommandType.StoredProcedure,
+                    commandTimeout: 900
+            );
 
-            var param = new
-            {
-                FromDate = fromDate,
-                ToDate = toDate,
-                OrgUnitIds = orgUnitIds,
-            };
-
-            var rawData = (await connection.QueryAsync<dynamic>(q, param, commandTimeout: 900)).ToList();
-
-            var finalResults = FormatDataGetUserAndTimeKeeping(rawData, daysInMonth);
+            var finalResults = FormatDataGetUserAndTimeKeeping((List<dynamic>)results, daysInMonth);
 
             int total = finalResults.Count;
 
@@ -263,11 +152,6 @@ namespace ServicePortals.Infrastructure.Services.TimeKeeping
             {
                 var currentBatch = finalResults.Skip(i * batchSize).Take(batchSize).ToList();
                 _excelService.GenerateExcelManagerConfirmToHR(workbook, currentBatch, i == 0, daysInMonth, month, year);
-            }
-
-            if (connection.State == ConnectionState.Open)
-            {
-                await connection.CloseAsync();
             }
 
             byte[] excelBytes;
@@ -295,7 +179,7 @@ namespace ServicePortals.Infrastructure.Services.TimeKeeping
             //return true;
 
             var hrHavePermissionMngLeaveRequest = await _leaveRequestService.GetHrWithManagementLeavePermission();
-            var emailUserSend = await _context.Users.FirstOrDefaultAsync(e => e.UserCode == userCodeSendConfirm);
+            var emailUserSend = await _context.Users.FirstOrDefaultAsync(e => e.UserCode == request.UserCode);
             string bodyMail = $@"Dear HR Team, Please find attached the excel file containing the staff attendance list [{request.Month} - {request.Year}]";
 
             await _emailService.EmailSendTimeKeepingToHR(
@@ -334,7 +218,7 @@ namespace ServicePortals.Infrastructure.Services.TimeKeeping
 
                 displayRowDict["UserCode"] = originalDataRow.NVMaNV ?? "";
                 displayRowDict["Name"] = originalDataRow.Format_NVHoTen ?? "";
-                displayRowDict["Department"] = originalDataRow.BoPhan ?? "";
+                displayRowDict["Department"] = originalDataRow.DepartmentName ?? "";
 
                 var customValuesByDay = group.Where(r => r.Datetime != null).ToDictionary(r => r.Datetime.Day, r => r.CurrentValue);
 
@@ -443,16 +327,14 @@ namespace ServicePortals.Infrastructure.Services.TimeKeeping
         //Chọn các vị trí được quản lý chấm công theo người dùng, vdu: người a qly tổ c, tổ d, thì ở màn qly chấm công người a sẽ qly chấm công của những người thuộc tổ c, tổ d
         public async Task<object> AttachUserManageOrgUnit(AttachUserManageOrgUnitRequest request)
         {
-            var userMngOrgUnitIds = await _context.UserMngOrgUnits
-                .Where(e => e.UserCode == request.UserCode && e.ManagementType == "MNG_TIME_KEEPING")
-                .ToListAsync();
+            var userMngOrgUnitIds = await _context.UserMngOrgUnitId.Where(e => e.UserCode == request.UserCode && e.ManagementType == "MNG_TIME_KEEPING").ToListAsync();
 
             var existingIds = userMngOrgUnitIds.Select(e => e.OrgUnitId).ToHashSet();
             var newIds = request.OrgUnitIds.ToHashSet();
 
-            _context.UserMngOrgUnits.RemoveRange(userMngOrgUnitIds.Where(e => !newIds.Contains((int)(e?.OrgUnitId))));
+            _context.UserMngOrgUnitId.RemoveRange(userMngOrgUnitIds.Where(e => !newIds.Contains((int)(e?.OrgUnitId))));
 
-            _context.UserMngOrgUnits.AddRange(request.OrgUnitIds
+            _context.UserMngOrgUnitId.AddRange(request.OrgUnitIds
                 .Where(id => !existingIds.Contains(id))
                 .Select(id => new UserMngOrgUnitId
                 {
@@ -467,9 +349,9 @@ namespace ServicePortals.Infrastructure.Services.TimeKeeping
         }
 
         //lấy những vị trí đc quản lý theo user
-        public async Task<object> GetOrgUnitIdAttachedByUserCode(string userCode)
+        public async Task<object> GetOrgUnitIdMngByUser(string userCode)
         {
-            var results = await _context.UserMngOrgUnits
+            var results = await _context.UserMngOrgUnitId
                 .Where(e => e.UserCode == userCode && e.ManagementType == "MNG_TIME_KEEPING")
                 .Select(e => e.OrgUnitId)
                 .ToListAsync();
@@ -480,38 +362,18 @@ namespace ServicePortals.Infrastructure.Services.TimeKeeping
         //thay đổi người quản lý chấm công, thay thế người cũ sang người mới
         public async Task<object> ChangeUserMngTimeKeeping(ChangeUserMngTimeKeepingRequest request)
         {
-            var old = await _context.UserMngOrgUnits.Where(e => e.UserCode == request.OldUserCode).ToListAsync();
+            var old = await _context.UserMngOrgUnitId.Where(e => e.UserCode == request.OldUserCode).ToListAsync();
 
             foreach (var item in old)
             {
                 item.UserCode = request.NewUserCode;
             }
 
-            _context.UserMngOrgUnits.UpdateRange(old);
+            _context.UserMngOrgUnitId.UpdateRange(old);
 
             await _context.SaveChangesAsync();
 
             return true;
-        }
-
-        
-        //lấy id của org unit có type = tổ theo usercode
-        public async Task<object> GetIdOrgUnitByUserCodeAndUnitId(string userCode, int unitId)
-        {
-            var data = await GetOrgUnitIdAttachedByUserCode(userCode) as List<int?>;
-
-            var results = await _context.OrgUnits.Where(e => data != null && data.Contains(e.Id) && e.UnitId == unitId).ToListAsync();
-
-            return results;
-        }
-
-        public async Task<object> GetDeptUserMngTimeKeeping(string userCode)
-        {
-            var data = await GetOrgUnitIdAttachedByUserCode(userCode) as List<int?>;
-
-            var results = await _context.OrgUnits.Where(e => data != null && data.Contains(e.Id) && e.UnitId == (int)UnitEnum.Phong).ToListAsync();
-
-            return results;
         }
 
         /// <summary>
@@ -525,7 +387,7 @@ namespace ServicePortals.Infrastructure.Services.TimeKeeping
             {
                 itemAttendance.OldValue = request.OldValue;
                 itemAttendance.CurrentValue = request.CurrentValue;
-                itemAttendance.UserCodeUpdate = request.UserCodeUpdate;
+                itemAttendance.UserCodeUpdated = request.UserCodeUpdate;
                 itemAttendance.UpdatedBy = request.UpdatedBy;
                 itemAttendance.UpdatedAt = DateTimeOffset.Now;
                 itemAttendance.IsSentToHR = false;
@@ -540,7 +402,7 @@ namespace ServicePortals.Infrastructure.Services.TimeKeeping
                     UserCode = request.UserCode,
                     OldValue = request.OldValue,
                     CurrentValue = request.CurrentValue,
-                    UserCodeUpdate = request.UserCodeUpdate,
+                    UserCodeUpdated = request.UserCodeUpdate,
                     UpdatedBy = request.UpdatedBy,
                     UpdatedAt = DateTimeOffset.Now,
                     IsSentToHR = false
@@ -570,18 +432,18 @@ namespace ServicePortals.Infrastructure.Services.TimeKeeping
 
             var sql = $@"
                 SELECT 
-                    TA.Id, TA.Datetime, TA.UserCode, TA.OldValue, TA.CurrentValue, TA.UserCodeUpdate, TA.UpdatedBy, TA.UpdatedAt, TA.IsSentToHR,
+                    TA.Id, TA.Datetime, TA.UserCode, TA.OldValue, TA.CurrentValue, TA.UserCodeUpdated, TA.UpdatedBy, TA.UpdatedAt, TA.IsSentToHR,
                     {Global.DbViClock}.dbo.funTCVN2Unicode(NV.NVHoTen) AS NVHoTen 
                 FROM {Global.DbWeb}.dbo.time_attendance_edit_histories AS TA
                 INNER JOIN 
                     {Global.DbViClock}.dbo.tblNhanVien AS NV 
-                ON TA.UserCode = NV.NVMaNV AND UserCodeUpdate = @UserCodeUpdated
+                ON TA.UserCode = NV.NVMaNV AND UserCodeUpdated = @UserCodeUpdated
                 ORDER BY TA.UpdatedAt DESC
                 OFFSET (@Page - 1) * @PageSize ROWS
                 FETCH NEXT @PageSize ROWS ONLY
             ";
 
-            var totalItems = await _context.TimeAttendanceEditHistories.Where(e => e.UserCodeUpdate == request.UserCodeUpdated).CountAsync();
+            var totalItems = await _context.TimeAttendanceEditHistories.Where(e => e.UserCodeUpdated == request.UserCodeUpdated).CountAsync();
             var totalPages = (int)Math.Ceiling(totalItems / pageSize);
 
             var result = (await connection.QueryAsync<TimeAttendanceHistoryDto>(sql, new
@@ -618,7 +480,7 @@ namespace ServicePortals.Infrastructure.Services.TimeKeeping
         /// </summary>
         public async Task<int> CountHistoryEditTimeKeepingNotSendHR(string userCode)
         {
-            return await _context.TimeAttendanceEditHistories.Where(e => e.UserCodeUpdate == userCode && e.IsSentToHR == false).CountAsync();
+            return await _context.TimeAttendanceEditHistories.Where(e => e.UserCodeUpdated == userCode && e.IsSentToHR == false).CountAsync();
         }
     }
 }

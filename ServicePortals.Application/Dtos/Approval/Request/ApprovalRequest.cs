@@ -11,7 +11,7 @@ namespace ServicePortals.Application.Dtos.Approval.Request
         public string? UserCodeApproval { get; set; }
         public string? UserNameApproval { get; set; }
         [Required]
-        public int? OrgUnitId { get; set; }
+        public int? OrgPositionId { get; set; }
         public bool? Status { get; set; }
         public string? Note { get; set; }
         public string? UrlFrontend { get; set; }

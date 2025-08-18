@@ -3,23 +3,26 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ServicePortals.Domain.Entities
 {
-    [Table("application_forms"), Index(nameof(RequesterUserCode))]
-    [Index(nameof(RequestStatusId), nameof(CurrentOrgUnitId))]
+    [Table("application_forms")]
+    [Index(nameof(RequestStatusId))]
+    [Index(nameof(OrgPositionId))]
+    [Index(nameof(UserCodeRequestor))]
     public class ApplicationForm
     {
         public Guid? Id { get; set; }
-        public string? RequesterUserCode { get; set; }
-        public int? RequestTypeId { get; set; }
-        public int? RequestStatusId { get; set; } //PENDING, IN-PROCESS, COMPLETE
-        public int? CurrentOrgUnitId { get; set; } //current org unit id will approval
+        public string? UserCodeRequestor { get; set; } //mã nhân viên người yêu cầu
+        public string? UserNameRequestor { get; set; } //tên nhân viên người yêu cầu
+        public int? RequestTypeId { get; set; } //loại yêu cầu, mua bán, form it, sap
+        public int? RequestStatusId { get; set; } //trạng thái của đơn như pending, complete,...
+        public int? OrgPositionId { get; set; } //vị trí người duyệt
         public DateTimeOffset? CreatedAt { get; set; }
-        public User? User { get; set; }
-        public RequestType? RequestType { get; set; }
-        public RequestStatus? RequestStatus { get; set; }
-        public string? AssignUserCode { get; set; }
+        public DateTimeOffset? UpdatedAt { get; set; }
         public DateTimeOffset? DeletedAt { get; set; }
         public ICollection<HistoryApplicationForm> HistoryApplicationForms { get; set; } = [];
+        public RequestType? RequestType { get; set; }
+        public RequestStatus? RequestStatus { get; set; }
         public LeaveRequest? Leave { get; set; }
         public MemoNotification? MemoNotification { get; set; }
+        public OrgPosition? OrgPosition { get; set; }
     }
 }

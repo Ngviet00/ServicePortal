@@ -22,7 +22,7 @@ namespace ServicePortals.Application.Dtos.MemoNotification.Requests
         public string? UpdatedBy { get; set; }
         public DateTimeOffset? UpdatedAt { get; set; }
         public List<string>? DeleteFiles { get; set; }
-        public int? OrgUnitId { get; set; }
+        public int? OrgPositionId { get; set; }
         public string? UrlFrontend { get; set; }
     }
 }

@@ -4,8 +4,6 @@ using ServicePortal.Filters;
 using ServicePortals.Application;
 using ServicePortals.Application.Dtos.User.Requests;
 using ServicePortals.Application.Dtos.User.Responses;
-using ServicePortals.Application.Interfaces.LeaveRequest;
-using ServicePortals.Application.Interfaces.MemoNotification;
 using ServicePortals.Application.Interfaces.User;
 using ServicePortals.Infrastructure.Excel;
 
@@ -16,20 +14,14 @@ namespace ServicePortal.Controllers.User
     public class UserController : ControllerBase
     {
         private readonly IUserService _userService;
-        private readonly ILeaveRequestService _leaveRequestService;
-        private readonly IMemoNotificationService _memoNotificationService;
         private readonly ExcelService _excelService;
 
         public UserController(
             IUserService userService,
-            ILeaveRequestService leaveRequestService,
-            IMemoNotificationService memoNotificationService,
             ExcelService excelService
         )
         {
             _userService = userService;
-            _leaveRequestService = leaveRequestService;
-            _memoNotificationService = memoNotificationService;
             _excelService = excelService;
         }
 
@@ -45,8 +37,8 @@ namespace ServicePortal.Controllers.User
             return Ok(response);
         }
 
-        [HttpGet("get-all"), RoleAuthorize("HR", "HR_Manager")]
-        public async Task<IActionResult> GetAll(GetAllUserRequest request)
+        [HttpGet, RoleAuthorize("HR", "HR_Manager")]
+        public async Task<IActionResult> GetAll([FromQuery] GetAllUserRequest request)
         {
             var results = await _userService.GetAll(request);
 
@@ -54,7 +46,7 @@ namespace ServicePortal.Controllers.User
                 200,
                 "Success",
                 results.Data,
-                results.TotalPages, 
+                results.TotalPages,
                 request.Page,
                 request.PageSize,
                 results.TotalItems
@@ -63,7 +55,7 @@ namespace ServicePortal.Controllers.User
             return Ok(response);
         }
 
-        [HttpGet("get-by-id/{id}")]
+        [HttpGet("{id}")]
         public async Task<IActionResult> GetById(Guid id)
         {
             UserResponse? userDto = await _userService.GetById(id);
@@ -79,7 +71,7 @@ namespace ServicePortal.Controllers.User
             return Ok(new BaseResponse<UserResponse>(200, "success", userDto));
         }
 
-        [HttpDelete("delete/{id}"), RoleAuthorize("superadmin")]
+        [HttpDelete("{id}"), RoleAuthorize("superadmin")]
         public async Task<IActionResult> Delete(Guid id)
         {
             await _userService.ForceDelete(id);
@@ -127,7 +119,7 @@ namespace ServicePortal.Controllers.User
             return Ok(new BaseResponse<UserResponse>(200, "Success", result));
         }
 
-        [HttpPut("update/{userCode}")]
+        [HttpPut("{userCode}")]
         public async Task<IActionResult> Update(string userCode, [FromBody] UpdatePersonalInfoRequest request)
         {
             var result = await _userService.Update(userCode, request);
@@ -140,7 +132,7 @@ namespace ServicePortal.Controllers.User
         {
             var result = await _userService.BuildOrgTree(departmentId);
 
-            return Ok(new BaseResponse<List<OrgUnitNode>>(200, "Success", result));
+            return Ok(new BaseResponse<List<TreeNode>>(200, "Success", result));
         }
 
         [HttpGet("get-user-by-parent-org-unit-id")]
@@ -177,7 +169,9 @@ namespace ServicePortal.Controllers.User
         [HttpGet("test"), AllowAnonymous]
         public async Task<IActionResult> Test()
         {
-            return Ok(await _userService.Test());
+            var results = await _userService.GetMultipleUserViclockByOrgPositionId(7);
+
+            return Ok(results);
         }
     }
 }

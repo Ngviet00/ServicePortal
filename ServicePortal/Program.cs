@@ -15,18 +15,11 @@ using ServicePortals.Application.Interfaces.Role;
 using ServicePortals.Application.Interfaces.TypeLeave;
 using ServicePortals.Application.Interfaces.LeaveRequest;
 using ServicePortals.Application.Interfaces.MemoNotification;
-using ServicePortals.Application.Interfaces.Position;
-using ServicePortals.Application.Interfaces.Department;
 using ServicePortals.Infrastructure.Data;
 using ServicePortals.Infrastructure.Services.Auth;
 using ServicePortals.Infrastructure.Services.Role;
-using ServicePortals.Infrastructure.Services.TypeLeave;
 using ServicePortals.Infrastructure.Email;
-using ServicePortals.Infrastructure.Hubs;
-using ServicePortals.Infrastructure.Services.UserConfig;
 using ServicePortals.Infrastructure.Services.TimeKeeping;
-using ServicePortals.Infrastructure.Services.Department;
-using ServicePortals.Infrastructure.Services.Position;
 using ServicePortal.Infrastructure.Cache;
 using ServicePortals.Infrastructure.Excel;
 using ServicePortals.Application.Interfaces.TimeKeeping;
@@ -34,8 +27,6 @@ using ServicePortals.Application.Interfaces.UserConfig;
 using ServicePortals.Application.ScheduleJob;
 using ServicePortals.Application.Interfaces.OrgUnit;
 using ServicePortals.Application.Services.OrgUnit;
-using ServicePortals.Application.Interfaces.WorkFlowStep;
-using ServicePortals.Application.Services.WorkFlowStep;
 using ServicePortals.Application.Interfaces;
 using ServicePortals.Application.Services;
 using Microsoft.OpenApi.Models;
@@ -43,7 +34,6 @@ using ServicePortals.Application.Interfaces.SystemConfig;
 using ServicePortals.Application.Services.SystemConfig;
 using ServicePortals.Application.Interfaces.DelegatedTemp;
 using ServicePortals.Application.Services.DelegatedTemp;
-using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
 using ServicePortals.Application.Services.Role;
 using ServicePortals.Application.Services.User;
 using ServicePortals.Application.Services.MemoNotification;
@@ -52,6 +42,10 @@ using ServicePortals.Application.Interfaces.RequestType;
 using ServicePortals.Application.Services.RequestType;
 using ServicePortals.Application.Interfaces.Approval;
 using ServicePortals.Application.Services.Approval;
+using ServicePortals.Application.Services.TypeLeave;
+using ServicePortals.Application.Interfaces.ApprovalFlow;
+using ServicePortals.Application.Services.ApprovalFlow;
+using ServicePortals.Application.Services.Auth;
 
 namespace ServicePortal
 {
@@ -116,8 +110,6 @@ namespace ServicePortal
 
             #region DI
 
-            builder.Services.AddScoped<IViclockDapperContext, ViclockDapperContext>();
-
             builder.Services.AddScoped<IAuthService, AuthService>();
 
             builder.Services.AddScoped<IUserService, UserService>();
@@ -134,23 +126,17 @@ namespace ServicePortal
 
             builder.Services.AddSingleton<ICacheService, CacheService>();
 
-            builder.Services.AddScoped<IDepartmentService, DepartmentService>();
-
-            builder.Services.AddScoped<IPositionService, PositionService>();
-
             builder.Services.AddScoped<IUserConfigService, UserConfigService>();
 
             builder.Services.AddScoped<ITimeKeepingService, TimeKeepingService>();
 
             builder.Services.AddScoped<JwtService>();
 
-            builder.Services.AddScoped<NotificationService>();
-
             builder.Services.AddScoped<ExcelService>();
 
             builder.Services.AddScoped<IOrgUnitService, OrgUnitService>();
 
-            builder.Services.AddScoped<IWorkFlowStepService, WorkFlowStepService>();
+            builder.Services.AddScoped<IApprovalFlowService, ApprovalFlowService>();
 
             builder.Services.AddScoped<ICommonDataService, CommonDataService>();
 
@@ -164,11 +150,12 @@ namespace ServicePortal
 
             builder.Services.AddScoped<IApprovalService, ApprovalService>();
 
+            builder.Services.AddScoped<IOrgPositionService, OrgPositionService>();
+
             #endregion
 
             builder.Services.AddHttpContextAccessor();
 
-            // Add services to the container.
             builder.Services.AddControllers();
 
             #region Multiple language
@@ -301,9 +288,6 @@ namespace ServicePortal
             app.UseMiddleware<GlobalExceptionMiddleware>();
 
             app.UseRouting();
-
-            //signalR realtime
-            app.MapHub<NotificationHub>("/notificationHub");
 
             //check app is running
             app.MapHealthChecks("/health");

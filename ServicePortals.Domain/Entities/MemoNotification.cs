@@ -7,7 +7,6 @@ namespace ServicePortals.Domain.Entities
     {
         public Guid? Id { get; set; }
         public Guid? ApplicationFormId { get; set; }
-        public ApplicationForm? ApplicationForm { get; set; }
         public int? DepartmentId { get; set;}
         public string? Code { get; set; }
         public string? Title { get; set; }
@@ -16,13 +15,17 @@ namespace ServicePortals.Domain.Entities
         public DateTimeOffset? ToDate { get; set; }
         public string? UserCodeCreated { get; set; }
         public string? CreatedBy { get; set; }
-        public DateTimeOffset? CreatedAt { get; set; }
-        public string? UpdatedBy { get; set; }
-        public DateTimeOffset? UpdatedAt { get; set; }
         public int? Priority { get; set; } = 3; //1 normal, 2 medium, 3 high
         public bool? Status { get; set; }
         public bool? ApplyAllDepartment { get; set; }
+        public DateTimeOffset? CreatedAt { get; set; }
+        public DateTimeOffset? UpdatedAt { get; set; }
+        public DateTimeOffset? DeletedAt { get; set; }
         public ICollection<MemoNotificationDepartment> MemoNotificationDepartments { get; set; } = [];
-        public OrgUnit? Department { get; set; }
+        public ApplicationForm? ApplicationForm { get; set; }
+        public OrgUnit? OrgUnit { get; set; }
+
+        [NotMapped]
+        public List<File> Files { get; set; } = [];
     }
 }

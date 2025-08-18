@@ -3,6 +3,7 @@ using ServicePortal.Filters;
 using ServicePortals.Application;
 using ServicePortals.Application.Dtos.RequestType.Request;
 using ServicePortals.Application.Interfaces.RequestType;
+using Entities = ServicePortals.Domain.Entities;
 
 namespace ServicePortal.Controllers.RequestType
 {
@@ -16,12 +17,12 @@ namespace ServicePortal.Controllers.RequestType
             _requestTypeService = requestTypeService;
         }
 
-        [HttpGet("get-all")]
+        [HttpGet]
         public async Task<IActionResult> GetAll([FromQuery] SearchRequestTypeRequest request)
         {
             var results = await _requestTypeService.GetAll(request);
 
-            var response = new PageResponse<ServicePortals.Domain.Entities.RequestType>(
+            var response = new PageResponse<Entities.RequestType>(
                 200,
                 "Success",
                 results.Data,
@@ -34,36 +35,36 @@ namespace ServicePortal.Controllers.RequestType
             return Ok(response);
         }
 
-        [HttpGet("get-by-id/{id}"), RoleAuthorize("superadmin")]
+        [HttpGet("{id}"), RoleAuthorize("superadmin")]
         public async Task<IActionResult> GetById(int id)
         {
             var role = await _requestTypeService.GetById(id);
 
-            return Ok(new BaseResponse<ServicePortals.Domain.Entities.RequestType>(200, "success", role));
+            return Ok(new BaseResponse<Entities.RequestType>(200, "success", role));
         }
 
-        [HttpPost("create"), RoleAuthorize("superadmin")]
+        [HttpPost, RoleAuthorize("superadmin")]
         public async Task<IActionResult> Create([FromBody] CreateRequestTypeRequest request)
         {
             var role = await _requestTypeService.Create(request);
 
-            return Ok(new BaseResponse<ServicePortals.Domain.Entities.RequestType>(200, "success", role));
+            return Ok(new BaseResponse<Entities.RequestType>(200, "success", role));
         }
 
-        [HttpPut("update/{id}"), RoleAuthorize("superadmin")]
+        [HttpPut("{id}"), RoleAuthorize("superadmin")]
         public async Task<IActionResult> Update(int id, [FromBody] CreateRequestTypeRequest request)
         {
             var role = await _requestTypeService.Update(id, request);
 
-            return Ok(new BaseResponse<ServicePortals.Domain.Entities.RequestType>(200, "success", role));
+            return Ok(new BaseResponse<Entities.RequestType>(200, "success", role));
         }
 
-        [HttpDelete("delete/{id}"), RoleAuthorize("superadmin")]
+        [HttpDelete("{id}"), RoleAuthorize("superadmin")]
         public async Task<IActionResult> Delete(int id)
         {
             var role = await _requestTypeService.Delete(id);
 
-            return Ok(new BaseResponse<ServicePortals.Domain.Entities.RequestType>(200, "success", role));
+            return Ok(new BaseResponse<Entities.RequestType>(200, "success", role));
         }
     }
 }

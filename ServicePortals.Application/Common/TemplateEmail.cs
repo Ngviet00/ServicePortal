@@ -106,7 +106,6 @@ namespace ServicePortals.Application.Common
 
         #endregion
 
-
         public static string EmailResetPassword(string password)
         {
             return $@"
@@ -137,17 +136,17 @@ namespace ServicePortals.Application.Common
 
                     <tr style=""border-bottom: 1px solid #ddd;"">
                         <td style=""background-color: #f9f9f9;""><strong>Tên nhân viên:</strong></td>
-                        <td>{leaveRequest?.Name}</td>
+                        <td>{leaveRequest?.UserNameRequestor}</td>
                     </tr>
 
                     <tr style=""border-bottom: 1px solid #ddd;"">
                         <td style=""background-color: #f9f9f9;""><strong>Mã nhân viên:</strong></td>
-                        <td>{leaveRequest?.RequesterUserCode}</td>
+                        <td>{leaveRequest?.UserCodeRequestor}</td>
                     </tr>
 
                     <tr style=""border-bottom: 1px solid #ddd;"">
                         <td style=""background-color: #f9f9f9;""><strong>Phòng ban:</strong></td>
-                        <td>{leaveRequest?.Department?.Name}</td>
+                        <td>{leaveRequest?.OrgUnit?.Name}</td>
                     </tr>
 
                     <tr style=""border-bottom: 1px solid #ddd;"">
@@ -172,7 +171,7 @@ namespace ServicePortals.Application.Common
 
                     <tr style=""border-bottom: 1px solid #ddd;"">
                         <td style=""background-color: #f9f9f9;""><strong>Thời gian nghỉ:</strong></td>
-                        <td>{leaveRequest?.TimeLeave?.Description}</td>
+                        <td>{leaveRequest?.TimeLeave?.Name}</td>
                     </tr>
 
                     <tr style=""border-bottom: 1px solid #ddd;"">

@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace ServicePortals.Application.Dtos.DelegatedTemp
+﻿namespace ServicePortals.Application.Dtos.DelegatedTemp
 {
     public class DelegatedTempDto
     {
