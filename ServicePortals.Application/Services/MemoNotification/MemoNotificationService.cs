@@ -8,7 +8,6 @@ using ServicePortals.Application.Dtos.Approval.Request;
 using ServicePortals.Application.Dtos.MemoNotification;
 using ServicePortals.Application.Dtos.MemoNotification.Requests;
 using ServicePortals.Application.Interfaces.MemoNotification;
-using ServicePortals.Application.Interfaces.OrgUnit;
 using ServicePortals.Application.Interfaces.User;
 using ServicePortals.Domain.Entities;
 using ServicePortals.Domain.Enums;
@@ -25,19 +24,17 @@ namespace ServicePortals.Application.Services.MemoNotification
     {
         private readonly ApplicationDbContext _context;
         private readonly IHttpContextAccessor _httpContextAccessor;
-        private readonly IOrgUnitService _orgService;
         private readonly IUserService _userService;
+        private readonly int GM_Department = 6;
 
         public MemoNotificationService(
             ApplicationDbContext context,
             IHttpContextAccessor httpContextAccessor,
-            IOrgUnitService orgService,
             IUserService userService
         )
         {
             _context = context;
             _httpContextAccessor = httpContextAccessor;
-            _orgService = orgService;
             _userService = userService;
         }
 
@@ -492,6 +489,7 @@ namespace ServicePortals.Application.Services.MemoNotification
                     x.MemoNotification.FromDate.HasValue && x.MemoNotification.FromDate.Value.Date <= today &&
                     x.MemoNotification.ToDate.HasValue && x.MemoNotification.ToDate.Value.Date >= today &&
                     (
+                        DepartmentId == GM_Department ||
                         x.MemoNotification.ApplyAllDepartment == true ||
                         x.MemoNotificationDepartment != null &&
                         (x.MemoNotificationDepartment.DepartmentId == DepartmentId || x.MemoNotification.UserCodeCreated == userCode)

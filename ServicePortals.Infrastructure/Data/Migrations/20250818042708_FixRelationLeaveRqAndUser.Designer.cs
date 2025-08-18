@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ServicePortals.Infrastructure.Data;
 
@@ -11,9 +12,11 @@ using ServicePortals.Infrastructure.Data;
 namespace ServicePortals.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250818042708_FixRelationLeaveRqAndUser")]
+    partial class FixRelationLeaveRqAndUser
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -273,7 +276,9 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("UserCodeRequestor")
-                        .HasColumnType("nvarchar(450)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)")
+                        .HasColumnName("UserCodeRequestor");
 
                     b.Property<string>("UserNameRequestor")
                         .HasColumnType("nvarchar(max)");
@@ -290,11 +295,9 @@ namespace ServicePortals.Infrastructure.Data.Migrations
 
                     b.HasIndex("TypeLeaveId");
 
-                    b.HasIndex("UserCodeRequestor");
-
                     b.HasIndex("Id", "UserCodeRequestor");
 
-                    b.ToTable("leave_requests");
+                    b.ToTable("leave_requests", (string)null);
                 });
 
             modelBuilder.Entity("ServicePortals.Domain.Entities.MemoNotification", b =>
@@ -1481,12 +1484,6 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                         .HasForeignKey("TypeLeaveId")
                         .OnDelete(DeleteBehavior.NoAction);
 
-                    b.HasOne("ServicePortals.Domain.Entities.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserCodeRequestor")
-                        .HasPrincipalKey("UserCode")
-                        .OnDelete(DeleteBehavior.NoAction);
-
                     b.Navigation("ApplicationForm");
 
                     b.Navigation("OrgUnit");
@@ -1494,8 +1491,6 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                     b.Navigation("TimeLeave");
 
                     b.Navigation("TypeLeave");
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("ServicePortals.Domain.Entities.MemoNotification", b =>

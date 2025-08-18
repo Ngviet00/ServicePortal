@@ -9,11 +9,8 @@ using ServicePortals.Application.Dtos.OrgUnit.Requests;
 using Serilog;
 using ServicePortals.Domain.Enums;
 using ServicePortals.Shared.SharedDto;
-using ServicePortals.Application.Dtos.OrgUnit;
 using Entities = ServicePortals.Domain.Entities;
 using ServicePortals.Shared.Exceptions;
-using DocumentFormat.OpenXml.Bibliography;
-using DocumentFormat.OpenXml.Spreadsheet;
 
 namespace ServicePortals.Application.Services.OrgUnit
 {
@@ -210,42 +207,5 @@ namespace ServicePortals.Application.Services.OrgUnit
 
             return roots;
         }
-
-        ///// <summary>
-        ///// Lấy danh sách phòng ban trong bảng orgunit, where unit_id = 3, đã format dữ liệu để hiển thị tree checkbox các màn
-        ///// </summary>
-        //public async Task<List<TreeCheckboxResponse>> GetAllDeptOfOrgUnit()
-        //{
-        //    var results = await _context.OrgUnits.Where(e => e.UnitId == (int)UnitEnum.Phong).ToListAsync();
-
-        //    var responseList = results.Select(e => new TreeCheckboxResponse
-        //    {
-        //        Id = e.DeptId.ToString(),
-        //        Label = e.Name,
-        //        Type = "department"
-        //    }).ToList();
-
-        //    return responseList;
-        //}
-
-        ///// <summary>
-        ///// Lấy org unit theo id
-        ///// </summary>
-        //public async Task<Domain.Entities.OrgUnit?> GetOrgUnitById(int id)
-        //{
-        //    var result = await _context.OrgUnits.FirstOrDefaultAsync(e => e.Id == id);
-
-        //    return result;
-        //}
-
-        ///// <summary>
-        ///// Lấy danh sách vị trí của người dùng thuộc phòng ban, từ 5 trở đi là các vị trí của user
-        ///// </summary>
-        //public async Task<List<OrgUnitDto>> GetOrgUnitUserWithDept(int departmentId)
-        //{
-        //    var results = await _context.OrgUnits.Where(e => e.DeptId == departmentId && e.UnitId >= 5).OrderBy(e => e.UnitId).ToListAsync();
-
-        //    return OrgUnitMapper.ToDtoList(results);
-        //}
     }
 }

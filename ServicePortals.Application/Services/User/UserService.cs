@@ -567,47 +567,5 @@ namespace ServicePortals.Application.Services.User
                 TotalPages = totalPages
             };
         }
-
-        //lấy thông tin người tiếp theo approval theo usercode
-        public async Task<List<NextUserInfoApprovalResponse>> GetNextUserInfoApprovalByCurrentUserCode(string userCode)
-        {
-            var connection = (SqlConnection)_context.CreateConnection();
-
-            if (connection.State != ConnectionState.Open)
-            {
-                await connection.OpenAsync();
-            }
-
-            var sql = $@"
-                WITH CurrentOrgUnitUser AS (
-                    SELECT
-		                NV.OrgUnitID
-	                FROM {Global.DbViClock}.dbo.tblNhanVien AS NV
-	                WHERE NV.NVMaNV = @userCode
-                ),
-                NextOrgUnitUser AS (
-	                SELECT 
-		                ORG.ParentJobTitleId
-	                FROM {Global.DbWeb}.dbo.org_units AS ORG
-	                INNER JOIN CurrentOrgUnitUser AS CORG ON CORG.OrgUnitID = ORG.Id
-                )
-                SELECT
-	                NV.NVMaNV,
-	                {Global.DbViClock}.dbo.funTCVN2Unicode(NV.NVHoTen) AS NVHoTen,
-	                BP.BPTen,
-	                CV.CVTen,
-                    COALESCE(U.Email, NV.NVEmail, '') AS Email,
-	                NV.OrgUnitID
-                FROM NextOrgUnitUser AS NORG
-                INNER JOIN {Global.DbViClock}.dbo.tblNhanVien AS NV ON NORG.ParentJobTitleId = NV.OrgUnitID
-                LEFT JOIN {Global.DbWeb}.dbo.users AS U ON NV.NVMaNV = U.UserCode
-                LEFT JOIN {Global.DbViClock}.dbo.tblBoPhan AS BP ON NV.NVMaBP = BP.BPMa
-                LEFT JOIN {Global.DbViClock}.dbo.tblChucVu AS CV On NV.NVMaCV = CV.CVMa
-            ";
-
-            var result = await connection.QueryAsync<NextUserInfoApprovalResponse>(sql, new { userCode });
-
-            return (List<NextUserInfoApprovalResponse>)result;
-        }
     }
 }

@@ -1,4 +1,5 @@
-﻿using ServicePortals.Application.Dtos.ApplicationForm;
+﻿using System.ComponentModel.DataAnnotations;
+using ServicePortals.Application.Dtos.ApplicationForm;
 using ServicePortals.Domain.Entities;
 
 namespace ServicePortals.Application.Dtos.LeaveRequest
@@ -6,10 +7,10 @@ namespace ServicePortals.Application.Dtos.LeaveRequest
     public class LeaveRequestDto
     {
         public Guid? Id { get; set; }
-        public string? RequesterUserCode { get; set; } //nguoi yeu cau
+        public string? UserCodeRequestor { get; set; } //nguoi yeu cau
+        public string? UserNameRequestor { get; set; }
         public string? WriteLeaveUserCode { get; set; } //nguoi viet yeu cau
         public string? UserNameWriteLeaveRequest { get; set; } //ten nguoi viet phep
-        public string? Name { get; set; }
         public int? DepartmentId { get; set; }
         public string? Position { get; set; }
         public DateTimeOffset? FromDate { get; set; }
@@ -31,6 +32,8 @@ namespace ServicePortals.Application.Dtos.LeaveRequest
 
     public class CreateLeaveRequestForManyPeopleRequest
     {
+        [Required]
+        public int OrgPositionId { get; set; }
         public List<LeaveRequestDto>? Leaves { get; set; }
     }
 }

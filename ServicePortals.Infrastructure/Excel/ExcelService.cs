@@ -38,7 +38,7 @@ namespace ServicePortals.Infrastructure.Excel
 
             var insertBuilder = new StringBuilder();
             insertBuilder.Append($@"INSERT INTO {Global.DbViClock}.dbo.tblNhanVien
-                (NVMaNV, NVHoTen, NVMaBP, NVMaCV, NVGioiTinh, NVNgaySinh, NVNgayVao, NVNgayRa, OrgUnitID)
+                (NVMaNV, NVHoTen, NVMaBP, NVMaCV, NVGioiTinh, NVNgaySinh, NVNgayVao, NVNgayRa, ViTriToChucId)
                 VALUES ");
 
             var valuesList = new List<string>();
@@ -90,7 +90,7 @@ namespace ServicePortals.Infrastructure.Excel
 
                         int orgUnitId = row.Cell(13).TryGetValue<int>(out var ouid) ? ouid : 0;
 
-                        valuesList.Add($"({prefix}maNV, {prefix}hoTen, {prefix}maBP, {prefix}maCV, {prefix}gioiTinh, {prefix}ngaySinh, {prefix}ngayVao, {prefix}ngayRa, {prefix}orgUnitId)");
+                        valuesList.Add($"({prefix}maNV, {prefix}hoTen, {prefix}maBP, {prefix}maCV, {prefix}gioiTinh, {prefix}ngaySinh, {prefix}ngayVao, {prefix}ngayRa, {prefix}vi_tri_to_chuc_id)");
 
                         parameters.Add($"{prefix}maNV", maNV);
                         parameters.Add($"{prefix}hoTen", Helper.UnicodeToTCVN(hoTen));
@@ -100,7 +100,7 @@ namespace ServicePortals.Infrastructure.Excel
                         parameters.Add($"{prefix}ngaySinh", ngaySinh);
                         parameters.Add($"{prefix}ngayVao", ngayVao);
                         parameters.Add($"{prefix}ngayRa", ngayRa);
-                        parameters.Add($"{prefix}orgUnitId", orgUnitId);
+                        parameters.Add($"{prefix}vi_tri_to_chuc_id", orgUnitId);
 
                         index++;
                     }

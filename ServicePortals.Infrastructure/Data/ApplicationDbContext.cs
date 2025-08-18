@@ -288,14 +288,17 @@ namespace ServicePortals.Infrastructure.Data
                 .IsRequired(false)
                 .OnDelete(DeleteBehavior.NoAction);
 
-            //leave_request - user
             modelBuilder.Entity<LeaveRequest>()
                 .HasOne(lr => lr.User)
                 .WithMany()
-                .HasPrincipalKey(u => u.UserCode)
+                .HasPrincipalKey(u => u.UserCode) 
                 .HasForeignKey(lr => lr.UserCodeRequestor)
-                .IsRequired(false)
-                .OnDelete(DeleteBehavior.NoAction);
+                .OnDelete(DeleteBehavior.NoAction)
+                .IsRequired(false);
+
+            modelBuilder.Entity<LeaveRequest>()
+                .Navigation(lr => lr.User)
+                .AutoInclude();
 
             modelBuilder.Entity<LeaveRequest>()
                 .HasOne(lr => lr.OrgUnit)

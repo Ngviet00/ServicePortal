@@ -45,6 +45,7 @@ using ServicePortals.Application.Services.Approval;
 using ServicePortals.Application.Services.TypeLeave;
 using ServicePortals.Application.Interfaces.ApprovalFlow;
 using ServicePortals.Application.Services.ApprovalFlow;
+using ServicePortals.Application.Services.Auth;
 
 namespace ServicePortal
 {
@@ -155,7 +156,6 @@ namespace ServicePortal
 
             builder.Services.AddHttpContextAccessor();
 
-            // Add services to the container.
             builder.Services.AddControllers();
 
             #region Multiple language

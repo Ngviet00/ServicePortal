@@ -8,9 +8,10 @@ using ServicePortals.Application.Interfaces.User;
 using ServicePortals.Domain.Entities;
 using ServicePortals.Infrastructure.Data;
 using ServicePortals.Infrastructure.Helpers;
+using ServicePortals.Infrastructure.Services.Auth;
 using ServicePortals.Shared.Exceptions;
 
-namespace ServicePortals.Infrastructure.Services.Auth
+namespace ServicePortals.Application.Services.Auth
 {
     public class AuthService : IAuthService
     {
