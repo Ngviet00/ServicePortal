@@ -8,5 +8,7 @@ namespace ServicePortals.Domain.Entities
         public int? Id { get; set; }
         public Guid? ITFormId { get; set; }
         public int? ITCategoryId { get; set; }
+        public ITForm? ITForm { get; set; }
+        public ITCategory? ITCategory { get; set; }
     }
 }

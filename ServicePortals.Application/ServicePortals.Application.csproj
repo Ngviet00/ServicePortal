@@ -11,8 +11,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Dtos\ITForm\Responses\ITCategory\" />
     <Folder Include="Dtos\OrgUnit\Responses\" />
     <Folder Include="Dtos\Position\Requests\" />
+    <Folder Include="Dtos\Priority\Responses\" />
     <Folder Include="Dtos\RequestType\Response\" />
     <Folder Include="Dtos\WorkFlowStep\Requests\" />
     <Folder Include="Dtos\WorkFlowStep\Responses\" />

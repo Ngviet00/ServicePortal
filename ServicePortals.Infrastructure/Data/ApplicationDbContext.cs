@@ -34,7 +34,9 @@ namespace ServicePortals.Infrastructure.Data
         public DbSet<OrgUnit> OrgUnits { get; set; }
         public DbSet<OrgPosition> OrgPositions { get; set; }
         public DbSet<TimeAttendanceEditHistory> TimeAttendanceEditHistories { get; set; }
-
+        public DbSet<ITCategory> ITCategories { get; set; }
+        public DbSet<Priority> Priorities { get; set; }
+        public DbSet<ITForm> ITForms { get; set; }
         public IDbConnection CreateConnection() => Database.GetDbConnection();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -178,6 +180,21 @@ namespace ServicePortals.Infrastructure.Data
 
                 new OrgPosition { Id = 24, PositionCode = "PRD-T-AAH", Name = "Technician A_AGH", OrgUnitId = 18, ParentOrgPositionId = 16 },
                 new OrgPosition { Id = 25, PositionCode = "PRD-T-BCDEF", Name = "Technician B_BCDEF", OrgUnitId = 19, ParentOrgPositionId = 17 }
+            );
+
+            modelBuilder.Entity<Priority>().HasData(
+                new Priority { Id = 1, Name = "Thấp", NameE = "Low" },
+                new Priority { Id = 2, Name = "Trung bình", NameE = "Medium" },
+                new Priority { Id = 3, Name = "Cao", NameE = "High" }
+            );
+
+            modelBuilder.Entity<ITCategory>().HasData(
+                new ITCategory { Id = 1, Name = "Server Login Id"},
+                new ITCategory { Id = 2, Name = "Network device"},
+                new ITCategory { Id = 3, Name = "Email"},
+                new ITCategory { Id = 4, Name = "Software Installation" },
+                new ITCategory { Id = 5, Name = "ERP Login Id" },
+                new ITCategory { Id = 6, Name = "Other" }
             );
 
             //file - attach_file
@@ -340,6 +357,36 @@ namespace ServicePortals.Infrastructure.Data
                 .HasOne(a => a.MemoNotification)
                 .WithOne(l => l.ApplicationForm)
                 .HasForeignKey<MemoNotification>(l => l.ApplicationFormId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<ITForm>()
+                .HasOne(it => it.Priority)
+                .WithMany()
+                .HasPrincipalKey(t => t.Id)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<ITForm>()
+                .HasOne(lr => lr.OrgUnit)
+                .WithMany()
+                .HasPrincipalKey(o => o.Id)
+                .HasForeignKey(lr => lr.DepartmentId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<ITForm>()
+                .HasOne(it => it.ApplicationForm)
+                .WithMany()
+                .HasPrincipalKey(a => a.Id)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<ITForm>()
+                .HasOne(it => it.UserRelationCreated)
+                .WithMany()
+                .HasPrincipalKey(u => u.UserCode)
+                .HasForeignKey(it => it.UserCodeCreated)
+                .IsRequired(false)
                 .OnDelete(DeleteBehavior.NoAction);
         }
     }

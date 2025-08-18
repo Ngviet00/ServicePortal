@@ -2,11 +2,11 @@
 
 namespace ServicePortals.Domain.Entities
 {
-    [Table("it_categories")]
-    public class ITCategory
+    [Table("priorities")]
+    public class Priority
     {
         public int Id { get; set; }
         public string? Name { get; set; }
-        public string? Description { get; set; }
+        public string? NameE {  get; set; }
     }
 }

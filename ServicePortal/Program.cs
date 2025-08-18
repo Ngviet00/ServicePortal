@@ -46,6 +46,10 @@ using ServicePortals.Application.Services.TypeLeave;
 using ServicePortals.Application.Interfaces.ApprovalFlow;
 using ServicePortals.Application.Services.ApprovalFlow;
 using ServicePortals.Application.Services.Auth;
+using ServicePortals.Application.Interfaces.ITForm;
+using ServicePortals.Application.Services.ITForm;
+using ServicePortals.Application.Interfaces.Priority;
+using ServicePortals.Application.Services.Priority;
 
 namespace ServicePortal
 {
@@ -152,6 +156,11 @@ namespace ServicePortal
 
             builder.Services.AddScoped<IOrgPositionService, OrgPositionService>();
 
+            builder.Services.AddScoped<ITFormService, ITFormServiceImpl>();
+
+            builder.Services.AddScoped<ITCategoryService, ITCategoryServiceImpl>();
+
+            builder.Services.AddScoped<IPriorityService, PriorityService>();
             #endregion
 
             builder.Services.AddHttpContextAccessor();
