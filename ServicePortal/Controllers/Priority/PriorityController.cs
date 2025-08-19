@@ -19,7 +19,7 @@ namespace ServicePortal.Controllers.Priority
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAll(GetAllPriorityRequest request)
+        public async Task<IActionResult> GetAll([FromQuery] GetAllPriorityRequest request)
         {
             var results = await _priorityService.GetAll(request);
 

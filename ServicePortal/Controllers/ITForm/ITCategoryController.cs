@@ -1,7 +1,9 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using ServicePortals.Application;
 using ServicePortals.Application.Dtos.ITForm.Requests.ITCategory;
 using ServicePortals.Application.Interfaces.ITForm;
+using Entity = ServicePortals.Domain.Entities;
 
 namespace ServicePortal.Controllers.ITForm
 {
@@ -17,11 +19,11 @@ namespace ServicePortal.Controllers.ITForm
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAll(GetAllITCategoryRequest request)
+        public async Task<IActionResult> GetAll([FromQuery] GetAllITCategoryRequest request)
         {
             var results = await _iTCategoryService.GetAll(request);
 
-            return Ok(request);
+            return Ok(new BaseResponse<List<Entity.ITCategory>>(200, "success", results));
         }
 
         [HttpGet("{Id}")]

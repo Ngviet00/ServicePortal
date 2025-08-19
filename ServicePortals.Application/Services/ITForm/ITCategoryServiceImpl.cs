@@ -1,11 +1,19 @@
-﻿using ServicePortals.Application.Dtos.ITForm.Requests.ITCategory;
+﻿using Microsoft.EntityFrameworkCore;
+using ServicePortals.Application.Dtos.ITForm.Requests.ITCategory;
 using ServicePortals.Application.Interfaces.ITForm;
 using ServicePortals.Domain.Entities;
+using ServicePortals.Infrastructure.Data;
 
 namespace ServicePortals.Application.Services.ITForm
 {
     public class ITCategoryServiceImpl : ITCategoryService
     {
+        private readonly ApplicationDbContext _context;
+        public ITCategoryServiceImpl(ApplicationDbContext context)
+        {
+            _context = context;
+        }
+
         public Task<object> Create(CreateITCategoryRequest request)
         {
             throw new NotImplementedException();
@@ -16,9 +24,9 @@ namespace ServicePortals.Application.Services.ITForm
             throw new NotImplementedException();
         }
 
-        public Task<List<ITCategory>> GetAll(GetAllITCategoryRequest request)
+        public async Task<List<ITCategory>> GetAll(GetAllITCategoryRequest request)
         {
-            throw new NotImplementedException();
+            return await _context.ITCategories.ToListAsync();
         }
 
         public Task<ITCategory> GetById(int Id)
