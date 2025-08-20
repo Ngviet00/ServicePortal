@@ -16,5 +16,6 @@ namespace ServicePortals.Domain.Entities
         public int? ToOrgPositionId { get; set; }
         public string? ToSpecificUserCode { get; set; }
         public bool? IsFinal { get; set; }
+        public string? Condition { get; set; } = "{}";
     }
 }

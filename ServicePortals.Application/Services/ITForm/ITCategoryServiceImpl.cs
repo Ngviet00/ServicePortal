@@ -3,6 +3,7 @@ using ServicePortals.Application.Dtos.ITForm.Requests.ITCategory;
 using ServicePortals.Application.Interfaces.ITForm;
 using ServicePortals.Domain.Entities;
 using ServicePortals.Infrastructure.Data;
+using ServicePortals.Shared.Exceptions;
 
 namespace ServicePortals.Application.Services.ITForm
 {
@@ -14,14 +15,34 @@ namespace ServicePortals.Application.Services.ITForm
             _context = context;
         }
 
-        public Task<object> Create(CreateITCategoryRequest request)
+        public async Task<object> Create(CreateITCategoryRequest request)
         {
-            throw new NotImplementedException();
+            var newItem = new ITCategory
+            {
+                Name = request.Name,
+                Code = request.Code
+            };
+
+            _context.ITCategories.Add(newItem);
+
+            await _context.SaveChangesAsync();
+
+            return true;
         }
 
-        public Task<object> Delete(int Id)
+        public async Task<object> Delete(int Id)
         {
-            throw new NotImplementedException();
+            var item = await GetById(Id);
+
+            if (item != null)
+            {
+                _context.ITCategories.Remove(item);
+                await _context.SaveChangesAsync();
+                
+                return true;
+            }
+
+            return false;
         }
 
         public async Task<List<ITCategory>> GetAll(GetAllITCategoryRequest request)
@@ -29,14 +50,27 @@ namespace ServicePortals.Application.Services.ITForm
             return await _context.ITCategories.ToListAsync();
         }
 
-        public Task<ITCategory> GetById(int Id)
+        public async Task<ITCategory?> GetById(int Id)
         {
-            throw new NotImplementedException();
+            return await _context.ITCategories.FirstOrDefaultAsync(e => e.Id == Id) ?? throw new NotFoundException("IT Category not found");
         }
 
-        public Task<object> Update(int Id, UpdateITCategoryRequest request)
+        public async Task<object> Update(int Id, UpdateITCategoryRequest request)
         {
-            throw new NotImplementedException();
+            var item = await GetById(Id);
+
+            if (item != null)
+            {
+                item.Name = request.Name;
+                item.Code = request.Code;
+
+                _context.ITCategories.Update(item);
+                await _context.SaveChangesAsync();
+
+                return true;
+            }
+
+            return false;
         }
     }
 }

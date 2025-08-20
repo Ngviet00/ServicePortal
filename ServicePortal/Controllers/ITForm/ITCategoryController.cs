@@ -31,7 +31,7 @@ namespace ServicePortal.Controllers.ITForm
         {
             var result = await _iTCategoryService.GetById(Id);
 
-            return Ok(result);
+            return Ok(new BaseResponse<Entity.ITCategory>(200, "success", result));
         }
 
         [HttpPost]
@@ -39,7 +39,7 @@ namespace ServicePortal.Controllers.ITForm
         {
             var result = await _iTCategoryService.Create(request);
 
-            return Ok(result);
+            return Ok(new BaseResponse<object>(200, "success", result));
         }
 
         [HttpPut("{Id}")]
@@ -47,7 +47,7 @@ namespace ServicePortal.Controllers.ITForm
         {
             var result = await _iTCategoryService.Update(Id, request);
 
-            return Ok(result);
+            return Ok(new BaseResponse<object>(200, "success", result));
         }
 
         [HttpDelete("{Id}")]
@@ -55,7 +55,7 @@ namespace ServicePortal.Controllers.ITForm
         {
             var result = await _iTCategoryService.Delete(Id);
 
-            return Ok(result);
+            return Ok(new BaseResponse<object>(200, "success", result));
         }
     }
 }

@@ -11,6 +11,7 @@ using ServicePortals.Application.Dtos.User.Requests;
 using ServicePortals.Application.Dtos.User.Responses;
 using ServicePortals.Application.Interfaces.User;
 using ServicePortals.Domain.Entities;
+using ServicePortals.Domain.Enums;
 using ServicePortals.Infrastructure.Data;
 using ServicePortals.Infrastructure.Email;
 using ServicePortals.Infrastructure.Helpers;
@@ -47,7 +48,7 @@ namespace ServicePortals.Application.Services.User
 
             var results = await _context.Database.GetDbConnection()
                     .QueryAsync<GetAllUserResponse>(
-                        "dbo.sp_GetAllUser",
+                        "dbo.sp_GetListUser",
                         parameters,
                         commandType: CommandType.StoredProcedure
             );
@@ -255,7 +256,7 @@ namespace ServicePortals.Application.Services.User
             {
                 var infoFromDb = await _context.Database.GetDbConnection()
                     .QueryFirstOrDefaultAsync<PersonalInfoResponse>(
-                        "dbo.GetUserInfoBetweenWebSystemAndViclock",
+                        "dbo.GetUserByUserCode",
                         new { userCode },
                         commandType: CommandType.StoredProcedure
                     );
@@ -466,33 +467,6 @@ namespace ServicePortals.Application.Services.User
             return roots;
         }
 
-        //lấy thông tin của người quản lý tiếp theo
-        public async Task<dynamic?> GetUserByParentOrgUnit(int parentOrgUnitId)
-        {
-            var connection = (SqlConnection)_context.CreateConnection();
-
-            if (connection.State != ConnectionState.Open)
-            {
-                await connection.OpenAsync();
-            }
-
-            string sql = $@"
-                SELECT NV.NVMaNV, [{Global.DbViClock}].dbo.funTCVN2Unicode(NV.NVHoTen) as NVHoTen
-                FROM [{Global.DbWeb}].dbo.org_units AS OG
-                INNER JOIN [{Global.DbViClock}].dbo.tblNhanVien AS NV On OG.Id = NV.OrgUnitID
-                WHERE OG.ParentOrgUnitId = @ParentOrgUnitId
-            ";
-
-            var param = new
-            {
-                ParentOrgUnitId = parentOrgUnitId,
-            };
-
-            var data = await connection.QueryAsync<dynamic>(sql, param);
-
-            return data;
-        }
-
         //tìm kiếm tất cả người dùng ở bên viclock
         public async Task<PagedResults<object>> SearchAllUserFromViClock(SearchAllUserFromViclockRequest request)
         {
@@ -566,6 +540,27 @@ namespace ServicePortals.Application.Services.User
                 TotalItems = totalItems,
                 TotalPages = totalPages
             };
+        }
+
+        public async Task<PersonalInfoResponse> SearchUserCombineViClockAndWebSystem(string userCode)
+        {
+            var infoFromDb = await _context.Database.GetDbConnection()
+                    .QueryFirstOrDefaultAsync<PersonalInfoResponse>(
+                        "dbo.GetUserByUserCode",
+                        new { userCode },
+                        commandType: CommandType.StoredProcedure
+                    );
+
+            var info = infoFromDb ?? new PersonalInfoResponse();
+
+            return info;
+        }
+
+        public async Task<object> Test()
+        {
+            var approvalFlows = await _context.ApprovalFlows.Where(e => e.RequestTypeId == (int)RequestTypeEnum.FORM_IT && e.PositonContext == "MANAGER").ToListAsync();
+
+            return approvalFlows;
         }
     }
 }

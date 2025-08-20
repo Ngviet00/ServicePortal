@@ -37,6 +37,7 @@ namespace ServicePortals.Infrastructure.Data
         public DbSet<ITCategory> ITCategories { get; set; }
         public DbSet<Priority> Priorities { get; set; }
         public DbSet<ITForm> ITForms { get; set; }
+        public DbSet<ITFormCategory> ITFormCategories { get; set; }
         public IDbConnection CreateConnection() => Database.GetDbConnection();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -189,12 +190,12 @@ namespace ServicePortals.Infrastructure.Data
             );
 
             modelBuilder.Entity<ITCategory>().HasData(
-                new ITCategory { Id = 1, Name = "Server Login Id"},
-                new ITCategory { Id = 2, Name = "Network device"},
-                new ITCategory { Id = 3, Name = "Email"},
-                new ITCategory { Id = 4, Name = "Software Installation" },
-                new ITCategory { Id = 5, Name = "ERP Login Id" },
-                new ITCategory { Id = 6, Name = "Other" }
+                new ITCategory { Id = 1, Name = "Server Login Id", Code = "SERVER"},
+                new ITCategory { Id = 2, Name = "Network device", Code = "NETWORK"},
+                new ITCategory { Id = 3, Name = "Email", Code = "EMAIL" },
+                new ITCategory { Id = 4, Name = "Software Installation", Code = "SOFTWARE" },
+                new ITCategory { Id = 5, Name = "ERP Login Id", Code = "ERP" },
+                new ITCategory { Id = 6, Name = "Other", Code = "OTHER" }
             );
 
             //file - attach_file

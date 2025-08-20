@@ -21,7 +21,8 @@ namespace ServicePortals.Application.Interfaces.User
         Task<UserResponse> Update(string userCode, UpdatePersonalInfoRequest request);
         Task<List<GetMultiUserViClockByOrgPositionIdResponse>> GetMultipleUserViclockByOrgPositionId(int OrgPositionId);
         Task<List<TreeNode>> BuildOrgTree(int departmentId);
-        Task<dynamic?> GetUserByParentOrgUnit(int orgUnitId);
         Task<PagedResults<object>> SearchAllUserFromViClock(SearchAllUserFromViclockRequest request);
+        Task<PersonalInfoResponse> SearchUserCombineViClockAndWebSystem(string userCode); //hàm tìm kiếm theo usercode theo dữ liệu mới ở web system
+        Task<object> Test();
     }
 }

@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using ServicePortals.Application;
 using ServicePortals.Application.Dtos.ITForm.Requests;
 using ServicePortals.Application.Interfaces.ITForm;
 
@@ -37,7 +38,7 @@ namespace ServicePortal.Controllers.ITForm
         {
             var result = await _iITFormService.Create(request);
 
-            return Ok(result);
+            return Ok(new BaseResponse<object>(200, "success", result));
         }
 
         [HttpPut("{Id}")]
