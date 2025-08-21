@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ServicePortals.Infrastructure.Data;
 
@@ -11,9 +12,11 @@ using ServicePortals.Infrastructure.Data;
 namespace ServicePortals.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250821022301_AddColumnDeleteAtInTblHistoryApplicationForm")]
+    partial class AddColumnDeleteAtInTblHistoryApplicationForm
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -314,6 +317,9 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                     b.Property<string>("NoteManagerIT")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("OtherCategory")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Position")
                         .HasColumnType("nvarchar(max)");
 
@@ -339,12 +345,6 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("UserCodeRequestor")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("UserNameCreated")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("UserNameRequestor")
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");

@@ -8,5 +8,6 @@
         public Domain.Entities.RequestType? RequestType { get; set; }
         public Domain.Entities.LeaveRequest? LeaveRequest { get; set; }
         public Domain.Entities.MemoNotification? MemoNotification { get; set; }
+        public Domain.Entities.ITForm? ITForm { get; set; }
     }
 }

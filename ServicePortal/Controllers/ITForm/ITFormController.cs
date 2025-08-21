@@ -1,12 +1,12 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using ServicePortals.Application;
 using ServicePortals.Application.Dtos.ITForm.Requests;
+using ServicePortals.Application.Dtos.ITForm.Responses;
 using ServicePortals.Application.Interfaces.ITForm;
 
 namespace ServicePortal.Controllers.ITForm
 {
-    [Authorize]
+    //[Authorize]
     [ApiController, Route("api/it-form")]
     public class ITFormController : ControllerBase
     {
@@ -18,11 +18,21 @@ namespace ServicePortal.Controllers.ITForm
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAll(GetAllITFormRequest request)
+        public async Task<IActionResult> GetAll([FromQuery] GetAllITFormRequest request)
         {
             var results = await _iITFormService.GetAll(request);
 
-            return Ok(request);
+            var response = new PageResponse<ITFormResponse>(
+                200,
+                "Success",
+                results.Data,
+                results.TotalPages,
+                request.Page,
+                request.PageSize,
+                results.TotalItems
+            );
+
+            return Ok(response);
         }
 
         [HttpGet("{Id}")]
@@ -30,7 +40,7 @@ namespace ServicePortal.Controllers.ITForm
         {
             var result = await _iITFormService.GetById(Id);
 
-            return Ok(result);
+            return Ok(new BaseResponse<ITFormResponse>(200, "success", result));
         }
 
         [HttpPost]
@@ -46,7 +56,7 @@ namespace ServicePortal.Controllers.ITForm
         {
             var result = await _iITFormService.Update(Id, request);
 
-            return Ok(result);
+            return Ok(new BaseResponse<object>(200, "success", result));
         }
 
         [HttpDelete("{Id}")]
@@ -54,7 +64,7 @@ namespace ServicePortal.Controllers.ITForm
         {
             var result = await _iITFormService.Delete(Id);
 
-            return Ok(result);
+            return Ok(new BaseResponse<object>(200, "success", result));
         }
     }
 }

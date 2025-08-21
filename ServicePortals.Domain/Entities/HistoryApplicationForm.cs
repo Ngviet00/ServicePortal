@@ -13,6 +13,7 @@ namespace ServicePortals.Domain.Entities
         public string? Action { get; set; } //APPROVED or REJECT
         public string? Note { get; set; } //ghi chú
         public DateTimeOffset? CreatedAt { get; set; }
+        public DateTimeOffset? DeletedAt { get; set; }
         public ApplicationForm? ApplicationForm { get; set; }
     }
 }

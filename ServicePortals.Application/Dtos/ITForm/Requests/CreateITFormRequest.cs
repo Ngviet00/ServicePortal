@@ -1,13 +1,11 @@
-﻿using System.ComponentModel.DataAnnotations;
-
-namespace ServicePortals.Application.Dtos.ITForm.Requests
+﻿namespace ServicePortals.Application.Dtos.ITForm.Requests
 {
     public class CreateITFormRequest
     {
-        public Guid? ApplicationFormId { get; set; }
-        public string? Code { get; set; }
         public string? UserCodeRequestor { get; set; }
+        public string? UserNameRequestor { get; set; }
         public string? UserCodeCreated { get; set; }
+        public string? UserNameCreated { get; set; }
         public int? DepartmentId { get; set; }
         public string? Email { get; set; }
         public string? Position { get; set; }

@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Dapper;
+using Microsoft.EntityFrameworkCore;
 using ServicePortals.Application.Interfaces.OrgUnit;
 using ServicePortals.Domain.Entities;
 using ServicePortals.Infrastructure.Data;
@@ -16,22 +17,20 @@ namespace ServicePortals.Application.Services.OrgUnit
 
         public async Task<OrgPosition?> GetManagerOrgPostionIdByOrgPositionId(int orgPostionId)
         {
-            var manager = await _context.OrgPositions
-                .FromSqlRaw(@"
+            var result = await _context.Database.GetDbConnection().QueryFirstOrDefaultAsync<OrgPosition>($@"
                     WITH ParentPositions AS (
                         SELECT Id, PositionCode, Name, ParentOrgPositionId
                         FROM org_positions
-                        WHERE Id = {0}
+                        WHERE Id = @OrgPositionId
                         UNION ALL
                         SELECT o.Id, o.PositionCode, o.Name, o.ParentOrgPositionId
                         FROM org_positions o
                         INNER JOIN ParentPositions p ON o.Id = p.ParentOrgPositionId
                     )
                     SELECT TOP 1 * FROM ParentPositions WHERE ParentOrgPositionId IS NULL
-                ", orgPostionId)
-                .FirstOrDefaultAsync();
+                    ", new { OrgPositionId = orgPostionId });
 
-            return manager;
+            return result;
         }
 
         public async Task<List<OrgPosition>> GetOrgPositionsByDepartmentId(int departmentId)

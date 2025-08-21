@@ -9,14 +9,15 @@ namespace ServicePortals.Domain.Entities
         public Guid? ApplicationFormId { get; set; }
         public string? Code { get; set; }
         public string? UserCodeRequestor { get; set; }
+        public string? UserNameRequestor { get; set;}
         public string? UserCodeCreated { get; set; }
+        public string? UserNameCreated { get; set; }
         public int? DepartmentId { get; set; }
         public string? Email { get; set; }
         public string? Position { get; set; }
         public string? Reason { get; set; }
         public int? PriorityId { get; set; }
         public string? NoteManagerIT { get; set; }
-        public string? OtherCategory { get; set; }
         public DateTimeOffset? RequestDate { get; set; }
         public DateTimeOffset? RequiredCompletionDate { get; set; }
         public DateTimeOffset? TargetCompletionDate { get; set; }

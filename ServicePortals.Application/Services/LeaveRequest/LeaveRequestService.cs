@@ -817,6 +817,7 @@ namespace ServicePortals.Application.Services.LeaveRequest
                 .ToList();
 
             var leaveRequestsWaitHrApproval = await _context.LeaveRequests
+                .AsNoTrackingWithIdentityResolution()
                 .Include(e => e.OrgUnit)
                 .Include(e => e.TimeLeave)
                 .Include(e => e.TypeLeave)

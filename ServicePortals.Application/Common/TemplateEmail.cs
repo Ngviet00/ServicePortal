@@ -180,5 +180,37 @@ namespace ServicePortals.Application.Common
                     </tr>
                 </table>";
         }
+
+        public static string EmailFormIT()
+        {
+            return $@"
+                <table style=""width: 100%; border-collapse: collapse; margin-top: 15px; margin-bottom: 20px; font-family: Arial, sans-serif; font-size: 14px;"">
+                    <tr>
+                        <th style=""border: 1px solid #cccccc; padding: 8px; background-color: #f2f2f2; text-align: left;"">Thông tin</th>
+                        <th style=""border: 1px solid #cccccc; padding: 8px; background-color: #f2f2f2; text-align: left;"">Chi tiết</th>
+                    </tr>
+                    <tr>
+                        <td style=""border: 1px solid #cccccc; padding: 8px;"">Ngày yêu cầu</td>
+                        <td style=""border: 1px solid #cccccc; padding: 8px;"">{{Ngày Yêu Cầu}}</td>
+                    </tr>
+                    <tr>
+                        <td style=""border: 1px solid #cccccc; padding: 8px;"">Ngày hoàn thành dự kiến</td>
+                        <td style=""border: 1px solid #cccccc; padding: 8px;"">{{Ngày Hoàn Thành}}</td>
+                    </tr>
+                    <tr>
+                        <td style=""border: 1px solid #cccccc; padding: 8px;"">Loại IT</td>
+                        <td style=""border: 1px solid #cccccc; padding: 8px;"">{{Danh sách IT Category}}</td>
+                    </tr>
+                    <tr>
+                        <td style=""border: 1px solid #cccccc; padding: 8px;"">Mức ưu tiên</td>
+                        <td style=""border: 1px solid #cccccc; padding: 8px;"">{{Mức ưu tiên}}</td>
+                    </tr>
+                    <tr>
+                        <td style=""border: 1px solid #cccccc; padding: 8px;"">Lý do</td>
+                        <td style=""border: 1px solid #cccccc; padding: 8px;"">{{Lý do chi tiết}}</td>
+                    </tr>
+                </table>
+            ";
+        }
     }
 }

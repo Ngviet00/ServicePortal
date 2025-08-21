@@ -1,12 +1,17 @@
 ﻿using System.Text.Json;
+using Hangfire;
 using Microsoft.EntityFrameworkCore;
+using ServicePortals.Application.Common;
 using ServicePortals.Application.Dtos.Approval.Request;
 using ServicePortals.Application.Dtos.ITForm.Requests;
+using ServicePortals.Application.Dtos.ITForm.Responses;
 using ServicePortals.Application.Interfaces.OrgUnit;
 using ServicePortals.Application.Interfaces.User;
+using ServicePortals.Application.Mappers;
 using ServicePortals.Domain.Entities;
 using ServicePortals.Domain.Enums;
 using ServicePortals.Infrastructure.Data;
+using ServicePortals.Infrastructure.Email;
 using ServicePortals.Infrastructure.Helpers;
 using ServicePortals.Shared.Exceptions;
 
@@ -24,14 +29,70 @@ namespace ServicePortals.Application.Services.ITForm
             _orgPositionService = orgPositionService;
         }
 
-        public Task<object> Approval(ApprovalRequest request)
+        public async Task<PagedResults<ITFormResponse>> GetAll(GetAllITFormRequest request)
         {
-            throw new NotImplementedException();
+            string? userCode = request.UserCode;
+            int page = request.Page;
+            int pageSize = request.PageSize;
+
+            if (string.IsNullOrWhiteSpace(userCode))
+            {
+                throw new ValidationException("UserCode is required");
+            }
+
+            var query = _context.ITForms.Where(e => (e.UserCodeRequestor == userCode || e.UserCodeCreated == userCode) && e.DeletedAt == null).AsQueryable();
+
+            var totalItems = await query.CountAsync();
+
+            var totalPages = (int)Math.Ceiling((double)totalItems / pageSize);
+
+            var result = await query
+                .Include(x => x.Priority)
+                .Include(x => x.OrgUnit)
+                .Include(x => x.ApplicationForm)
+                    .ThenInclude(haf => haf.HistoryApplicationForms)
+                .Include(x => x.ApplicationForm)
+                    .ThenInclude(af => af.RequestStatus)
+                .Include(x => x.ApplicationForm)
+                    .ThenInclude(af => af.RequestType)
+                .Include(x => x.ItFormCategories)
+                    .ThenInclude(ift => ift.ITCategory)
+                .Skip(((page - 1) * pageSize)).Take(pageSize)
+                .ToListAsync();
+
+            var resultDtos = ITFormMapper.ToDtoList(result);
+
+            return new PagedResults<ITFormResponse>
+            {
+                Data = resultDtos,
+                TotalItems = totalItems,
+                TotalPages = totalPages
+            };
+        }
+
+        public async Task<ITFormResponse?> GetById(Guid Id)
+        {
+            var result = await _context.ITForms
+                .Include(x => x.Priority)
+                .Include(x => x.OrgUnit)
+                .Include(x => x.ApplicationForm)
+                    .ThenInclude(haf => haf.HistoryApplicationForms)
+                .Include(x => x.ApplicationForm)
+                    .ThenInclude(af => af.RequestStatus)
+                .Include(x => x.ApplicationForm)
+                    .ThenInclude(af => af.RequestType)
+                .Include(x => x.ItFormCategories)
+                    .ThenInclude(ift => ift.ITCategory)
+                .FirstOrDefaultAsync(e => e.Id == Id && e.DeletedAt == null);
+
+            var resultDto = ITFormMapper.ToDto(result);
+
+            return resultDto;
         }
 
         public async Task<object> Create(CreateITFormRequest request)
         {
-            if (request.DepartmentId == null || request.OrgPositionId <= 0) // || orgPosition == null
+            if (request.DepartmentId == null || request.OrgPositionId <= 0)
             {
                 throw new ValidationException("Bạn chưa được cập nhật vị trí, liên hệ với HR");
             }
@@ -44,11 +105,15 @@ namespace ServicePortals.Application.Services.ITForm
 
             var approvalFlowCurrentPositionId = await _context.ApprovalFlows.FirstOrDefaultAsync(e => e.RequestTypeId == (int)RequestTypeEnum.FORM_IT && e.FromOrgPositionId == orgPosition.Id);
 
-            //GM
+            //nếu có custom approval flow
             if (approvalFlowCurrentPositionId != null)
             {
-                nextOrgPositionId = approvalFlowCurrentPositionId.ToOrgPositionId; //manager IT
-                status = (int)StatusApplicationFormEnum.FINAL_APPROVAL;
+                nextOrgPositionId = approvalFlowCurrentPositionId.ToOrgPositionId;
+                
+                if (approvalFlowCurrentPositionId.IsFinal == true)
+                {
+                    status = (int)StatusApplicationFormEnum.FINAL_APPROVAL;
+                }
             }
             else
             {
@@ -97,7 +162,9 @@ namespace ServicePortals.Application.Services.ITForm
                 ApplicationFormId = applicationForm.Id,
                 Code = Helper.GenerateFormCode("FIT"),
                 UserCodeRequestor = request.UserCodeRequestor,
+                UserNameRequestor = request.UserNameRequestor,
                 UserCodeCreated = request.UserCodeCreated,
+                UserNameCreated = request.UserNameCreated,
                 DepartmentId = request.DepartmentId,
                 Email = request.Email,
                 Position = request.Position,
@@ -119,38 +186,60 @@ namespace ServicePortals.Application.Services.ITForm
                 });
             }
 
+            _context.ApplicationForms.Add(applicationForm);
+            _context.ITForms.Add(formIT);
             _context.ITFormCategories.AddRange(itFormCategories);
 
             await _context.SaveChangesAsync();
 
             var nextUserInfo = await _userService.GetMultipleUserViclockByOrgPositionId(nextOrgPositionId ?? -1);
 
-            //send email
-
-            //add new application form
-            //save to db
-            //find next user
-            //send email
+            BackgroundJob.Enqueue<IEmailService>(job =>
+                job.SendEmailFormIT(
+                    nextUserInfo.Select(e => e.Email ?? "").ToList(),
+                    null,
+                    "New approval request form IT",
+                    TemplateEmail.EmailFormIT(),
+                    null,
+                    true
+                )
+            );
 
             return true;
         }
 
-        public Task<object> Delete(Guid Id)
+        public async Task<object> Delete(Guid Id)
         {
-            throw new NotImplementedException();
+            var item = await _context.ITForms.FirstOrDefaultAsync(e => e.Id == Id && e.DeletedAt == null) ?? throw new NotFoundException("Form IT not found");
+
+            await _context.HistoryApplicationForms.Where(e => e.ApplicationFormId == item.ApplicationFormId).ExecuteUpdateAsync(s => s.SetProperty(e => e.DeletedAt, DateTimeOffset.Now));
+
+            await _context.ApplicationForms.Where(e => e.Id == item.ApplicationFormId).ExecuteUpdateAsync(s => s.SetProperty(e => e.DeletedAt, DateTimeOffset.Now));
+
+            await _context.ITForms.Where(e => e.Id == item.Id).ExecuteUpdateAsync(s => s.SetProperty(e => e.DeletedAt, DateTimeOffset.Now));
+
+            return true;
         }
 
-        public Task<object> GetAll(GetAllITFormRequest request)
+        public async Task<object> Update(Guid Id, UpdateITFormRequest request)
         {
-            throw new NotImplementedException();
+            var item = await _context.ITForms.FirstOrDefaultAsync(e => e.Id == Id && e.DeletedAt == null) ?? throw new NotFoundException("Form IT not found");
+
+            item.Position = request.Position;
+            item.Email = request.Email;
+            item.RequestDate = request.RequestDate;
+            item.RequiredCompletionDate = request.RequiredCompletionDate;
+            item.Reason = request.Reason;
+            item.PriorityId = request.PriorityId;
+
+            _context.ITForms.Update(item);
+
+            await _context.SaveChangesAsync();
+
+            return true;
         }
 
-        public Task<object> GetById(Guid Id)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<object> Update(Guid Id, UpdateITFormRequest request)
+        public Task<object> Approval(ApprovalRequest request)
         {
             throw new NotImplementedException();
         }

@@ -174,10 +174,10 @@ namespace ServicePortals.Infrastructure.Data
                 new OrgPosition { Id = 19, PositionCode = "PRD-S-SB", Name = "Supervisor Shift B", OrgUnitId = 17, ParentOrgPositionId = 15 },
 
                 new OrgPosition { Id = 20, PositionCode = "PRD-12AA-L", Name = "12A_A Leader", OrgUnitId = 14, ParentOrgPositionId = 18 },
-                new OrgPosition { Id = 21, PositionCode = "PRD-12AA-OP", Name = "12A_A Operator", OrgUnitId = 14, ParentOrgPositionId = 18 },
+                new OrgPosition { Id = 21, PositionCode = "PRD-12AA-OP", Name = "12A_A Operator", OrgUnitId = 14, ParentOrgPositionId = 20 },
 
                 new OrgPosition { Id = 22, PositionCode = "PRD-12BA-L", Name = "12B_A Leader", OrgUnitId = 16, ParentOrgPositionId = 19 },
-                new OrgPosition { Id = 23, PositionCode = "PRD-12BA-OP", Name = "12B_A Operator", OrgUnitId = 16, ParentOrgPositionId = 19 },
+                new OrgPosition { Id = 23, PositionCode = "PRD-12BA-OP", Name = "12B_A Operator", OrgUnitId = 16, ParentOrgPositionId = 23 },
 
                 new OrgPosition { Id = 24, PositionCode = "PRD-T-AAH", Name = "Technician A_AGH", OrgUnitId = 18, ParentOrgPositionId = 16 },
                 new OrgPosition { Id = 25, PositionCode = "PRD-T-BCDEF", Name = "Technician B_BCDEF", OrgUnitId = 19, ParentOrgPositionId = 17 }
@@ -360,6 +360,12 @@ namespace ServicePortals.Infrastructure.Data
                 .HasForeignKey<MemoNotification>(l => l.ApplicationFormId)
                 .OnDelete(DeleteBehavior.NoAction);
 
+            modelBuilder.Entity<ApplicationForm>()
+                .HasOne(a => a.ITForm)
+                .WithOne(it => it.ApplicationForm)
+                .HasForeignKey<ITForm>(it => it.ApplicationFormId)
+                .OnDelete(DeleteBehavior.NoAction);
+
             modelBuilder.Entity<ITForm>()
                 .HasOne(it => it.Priority)
                 .WithMany()
@@ -372,13 +378,6 @@ namespace ServicePortals.Infrastructure.Data
                 .WithMany()
                 .HasPrincipalKey(o => o.Id)
                 .HasForeignKey(lr => lr.DepartmentId)
-                .IsRequired(false)
-                .OnDelete(DeleteBehavior.NoAction);
-
-            modelBuilder.Entity<ITForm>()
-                .HasOne(it => it.ApplicationForm)
-                .WithMany()
-                .HasPrincipalKey(a => a.Id)
                 .IsRequired(false)
                 .OnDelete(DeleteBehavior.NoAction);
 

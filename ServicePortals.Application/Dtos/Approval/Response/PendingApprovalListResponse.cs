@@ -8,7 +8,17 @@
         public DateTimeOffset? CreatedAt { get; set; }
         public Domain.Entities.RequestType? RequestType { get; set; }
         public Domain.Entities.HistoryApplicationForm? HistoryApplicationForm { get; set; }
-        public Domain.Entities.LeaveRequest? LeaveRequest { get; set; }
-        public Domain.Entities.MemoNotification? MemoNotification  { get; set; }
+        public CommonDataPendingApproval? LeaveRequest { get; set; }
+        public CommonDataPendingApproval? MemoNotification  { get; set; }
+        public CommonDataPendingApproval? ITForm { get; set; }
+    }
+
+    public class CommonDataPendingApproval
+    {
+        public Guid? Id { get; set; }
+        public string? Code { get; set; }
+        public string? UserNameRequestor { get; set; }
+        public string? UserNameCreated { get; set; }
+        public string? DepartmentName { get; set; }
     }
 }

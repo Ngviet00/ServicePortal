@@ -47,6 +47,7 @@ namespace ServicePortals.Application.Services.Approval
 
             var query = _context.ApplicationForms
                 .OrderByDescending(e => e.CreatedAt)
+                .Where(e => e.DeletedAt == null)
                 .AsQueryable();
 
             if (request.RequestTypeId != null)
@@ -83,7 +84,7 @@ namespace ServicePortals.Application.Services.Approval
             var totalPages = (int)Math.Ceiling(totalItems / pageSize);
 
             var results = await query
-                .Skip((int)((page - 1) * pageSize))
+                .Skip((int)(page - 1) * (int)pageSize)
                 .Take((int)pageSize)
                 .Select(r => new PendingApproval
                 {
@@ -91,39 +92,35 @@ namespace ServicePortals.Application.Services.Approval
                     RequestTypeId = r.RequestTypeId,
                     OrgPositionId = r.OrgPositionId,
                     CreatedAt = r.CreatedAt,
-
-                    RequestType = _context.RequestTypes
-                        .Where(rt => rt.Id == r.RequestTypeId)
-                        .FirstOrDefault(),
-
+                    RequestType = r.RequestType,
                     HistoryApplicationForm = r.HistoryApplicationForms
                         .OrderByDescending(h => h.CreatedAt)
-                        .Select(h => new HistoryApplicationForm
-                        {
-                            UserNameApproval = h.UserNameApproval
-                        })
+                        .Select(h => new HistoryApplicationForm { UserNameApproval = h.UserNameApproval })
                         .FirstOrDefault(),
-                    LeaveRequest = _context.LeaveRequests
-                        .Where(l => l.ApplicationFormId == r.Id)
-                        .Select(l => new Domain.Entities.LeaveRequest
-                        {
-                            Id = l.Id,
-                            Code = l.Code,
-                            UserNameRequestor = l.UserNameRequestor,
-                            CreatedBy = l.CreatedBy
-                        })
-                        .FirstOrDefault(),
-
-                    MemoNotification = _context.MemoNotifications
-                        .Where(mn => mn.ApplicationFormId == r.Id)
-                        .Select(mn => new Domain.Entities.MemoNotification
-                        {
-                            Id = mn.Id,
-                            Code = mn.Code,
-                            CreatedBy = mn.CreatedBy
-                        })
-                        .FirstOrDefault()
-
+                    LeaveRequest = r.Leave == null ? null : new CommonDataPendingApproval
+                    {
+                        Id = r.Leave.Id,
+                        Code = r.Leave.Code,
+                        UserNameRequestor = r.Leave.UserNameRequestor,
+                        UserNameCreated = r.Leave.CreatedBy,
+                        DepartmentName = r.Leave.OrgUnit == null ? "" : r.Leave.OrgUnit.Name
+                    },
+                    MemoNotification = r.MemoNotification == null ? null : new CommonDataPendingApproval
+                    {
+                        Id = r.MemoNotification.Id,
+                        Code = r.MemoNotification.Code,
+                        UserNameRequestor = r.MemoNotification.CreatedBy,
+                        UserNameCreated = r.MemoNotification.CreatedBy,
+                        DepartmentName = r.MemoNotification.OrgUnit == null ? "" : r.MemoNotification.OrgUnit.Name
+                    },
+                    ITForm = r.ITForm == null ? null : new CommonDataPendingApproval
+                    {
+                        Id = r.ITForm.Id,
+                        Code = r.ITForm.Code,
+                        UserNameRequestor = r.ITForm.UserNameRequestor,
+                        UserNameCreated = r.ITForm.UserNameCreated,
+                        DepartmentName = r.ITForm.OrgUnit == null ? "" : r.ITForm.OrgUnit.Name
+                    }
                 })
                 .ToListAsync();
 
@@ -162,6 +159,7 @@ namespace ServicePortals.Application.Services.Approval
             bool isHR = roleClaims?.Contains("HR") == true && permissionClaims?.Contains("leave_request.hr_management_leave_request") == true;
 
             var query = _context.ApplicationForms
+                .Where(e => e.DeletedAt == null)
                 .OrderByDescending(e => e.CreatedAt)
                 .AsQueryable();
 
@@ -206,7 +204,7 @@ namespace ServicePortals.Application.Services.Approval
                 throw new ValidationException("UserCode is required");
             }
 
-            var query = _context.HistoryApplicationForms.Where(e => e.UserCodeApproval == userCode);
+            var query = _context.HistoryApplicationForms.Where(e => e.UserCodeApproval == userCode && e.DeletedAt == null && e.ApplicationForm != null && e.ApplicationForm.DeletedAt == null);
 
             if (requestTypeId != null)
             {
@@ -243,13 +241,20 @@ namespace ServicePortals.Application.Services.Approval
                         Id = x.ApplicationForm.MemoNotification.Id,
                         Code = x.ApplicationForm.MemoNotification.Code,
                         CreatedBy = x.ApplicationForm.MemoNotification.CreatedBy
+                    },
+                    ITForm = x.ApplicationForm.ITForm == null ? null : new Domain.Entities.ITForm
+                    {
+                        Id = x.ApplicationForm.ITForm.Id,
+                        Code = x.ApplicationForm.ITForm.Code,
+                        UserNameRequestor = x.ApplicationForm.ITForm.UserNameRequestor,
+                        UserNameCreated = x.ApplicationForm.ITForm.UserNameCreated
                     }
                 })
                 .ToListAsync();
 
             return new PagedResults<HistoryApprovalProcessResponse>
             {
-                Data = results,
+                Data = [],
                 TotalItems = totalItems,
                 TotalPages = totalPages,
             };

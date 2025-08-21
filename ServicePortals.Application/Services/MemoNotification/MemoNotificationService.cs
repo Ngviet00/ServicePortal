@@ -449,10 +449,19 @@ namespace ServicePortals.Application.Services.MemoNotification
 
             var memoNotify = await _context.MemoNotifications.FirstOrDefaultAsync(e => e.Id == id) ?? throw new NotFoundException("Notification not found to delete!");
 
+            var applicationForm = await _context.ApplicationForms.FirstOrDefaultAsync(e => e.Id == memoNotify.ApplicationFormId) ?? throw new NotFoundException("Notification not found to delete!");
+
+            var historyApplicationForm = await _context.HistoryApplicationForms.Where(e => e.ApplicationFormId == applicationForm.Id).ToListAsync();
+
             _context.MemoNotificationDepartments.RemoveRange(memoNotifyDept);
 
             _context.MemoNotifications.Remove(memoNotify);
+
             _context.AttachFiles.RemoveRange(attachFiles);
+
+            _context.ApplicationForms.Remove(applicationForm);
+
+            _context.HistoryApplicationForms.RemoveRange(historyApplicationForm);
 
             await _context.SaveChangesAsync();
 

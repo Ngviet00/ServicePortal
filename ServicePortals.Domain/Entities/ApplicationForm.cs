@@ -24,5 +24,6 @@ namespace ServicePortals.Domain.Entities
         public LeaveRequest? Leave { get; set; }
         public MemoNotification? MemoNotification { get; set; }
         public OrgPosition? OrgPosition { get; set; }
+        public ITForm? ITForm { get; set; }
     }
 }
