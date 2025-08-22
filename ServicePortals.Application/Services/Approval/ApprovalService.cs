@@ -270,7 +270,7 @@ namespace ServicePortals.Application.Services.Approval
 
             return new PagedResults<HistoryApprovalProcessResponse>
             {
-                Data = [],
+                Data = results,
                 TotalItems = totalItems,
                 TotalPages = totalPages,
             };
