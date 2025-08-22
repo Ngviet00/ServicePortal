@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using ServicePortals.Application.Dtos.Approval.Request;
 using ServicePortals.Application.Dtos.Approval.Response;
 using ServicePortals.Application.Interfaces.Approval;
+using ServicePortals.Application.Interfaces.ITForm;
 using ServicePortals.Application.Interfaces.LeaveRequest;
 using ServicePortals.Application.Interfaces.MemoNotification;
 using ServicePortals.Domain.Entities;
@@ -18,6 +19,7 @@ namespace ServicePortals.Application.Services.Approval
         private readonly ApplicationDbContext _context;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly ILeaveRequestService _leaveRequestService;
+        private readonly ITFormService _IitFormService;
         private readonly IMemoNotificationService _memoNotificationService;
 
         public ApprovalService
@@ -25,13 +27,15 @@ namespace ServicePortals.Application.Services.Approval
             ApplicationDbContext context,
             IHttpContextAccessor httpContextAccessor,
             ILeaveRequestService leaveRequestService,
-            IMemoNotificationService memoNotificationService
+            IMemoNotificationService memoNotificationService,
+            ITFormService IitFormService
         )
         {
             _context = context;
             _httpContextAccessor = httpContextAccessor;
             _leaveRequestService = leaveRequestService;
             _memoNotificationService = memoNotificationService;
+            _IitFormService = IitFormService;
         }
 
         public async Task<PagedResults<PendingApproval>> ListWaitApprovals(ListWaitApprovalRequest request)
@@ -147,6 +151,10 @@ namespace ServicePortals.Application.Services.Approval
             {
                 await _leaveRequestService.Approval(request);
             }
+            else if (request.RequestTypeId == (int)RequestTypeEnum.FORM_IT)
+            {
+                await _IitFormService.Approval(request);
+            }
 
             return true;
         }
@@ -184,10 +192,18 @@ namespace ServicePortals.Application.Services.Approval
 
             var totalItems = await query.CountAsync();
 
+            var queryCountAssigned = await _context.ApplicationForms
+                .Where(e => 
+                    e.AssignedTasks.Any(at => at.UserCode == request.UserCode) && 
+                    e.RequestStatusId != (int)StatusApplicationFormEnum.COMPLETE &&
+                    e.RequestStatusId != (int)StatusApplicationFormEnum.REJECT
+                )
+                .CountAsync();
+
             CountWaitApprovalAndAssignedInSidebarResponse results = new CountWaitApprovalAndAssignedInSidebarResponse();
 
             results.TotalWaitApproval = totalItems;
-            results.TotalAssigned = 0;
+            results.TotalAssigned = queryCountAssigned;
 
             return results;
         }
@@ -260,9 +276,70 @@ namespace ServicePortals.Application.Services.Approval
             };
         }
 
-        public Task<object> ListAssigned()
+        public async Task<PagedResults<PendingApproval>> ListAssigned(ListAssignedTaskRequest request)
         {
-            throw new NotImplementedException();
+            double page = request.Page;
+            double pageSize = request.PageSize;
+
+            var query = _context.ApplicationForms
+                .Where(e =>
+                    e.AssignedTasks.Any(at => at.UserCode == request.UserCode) &&
+                    e.RequestStatusId != (int)StatusApplicationFormEnum.COMPLETE &&
+                    e.RequestStatusId != (int)StatusApplicationFormEnum.REJECT
+                )
+                .AsQueryable();
+
+            var totalItems = await query.CountAsync();
+
+            var totalPages = (int)Math.Ceiling(totalItems / pageSize);
+
+            var results = await query
+                .Skip((int)(page - 1) * (int)pageSize)
+                .Take((int)pageSize)
+                .Select(r => new PendingApproval
+                {
+                    Id = r.Id,
+                    RequestTypeId = r.RequestTypeId,
+                    OrgPositionId = r.OrgPositionId,
+                    CreatedAt = r.CreatedAt,
+                    RequestType = r.RequestType,
+                    HistoryApplicationForm = r.HistoryApplicationForms
+                        .OrderByDescending(h => h.CreatedAt)
+                        .Select(h => new HistoryApplicationForm { UserNameApproval = h.UserNameApproval })
+                        .FirstOrDefault(),
+                    LeaveRequest = r.Leave == null ? null : new CommonDataPendingApproval
+                    {
+                        Id = r.Leave.Id,
+                        Code = r.Leave.Code,
+                        UserNameRequestor = r.Leave.UserNameRequestor,
+                        UserNameCreated = r.Leave.CreatedBy,
+                        DepartmentName = r.Leave.OrgUnit == null ? "" : r.Leave.OrgUnit.Name
+                    },
+                    MemoNotification = r.MemoNotification == null ? null : new CommonDataPendingApproval
+                    {
+                        Id = r.MemoNotification.Id,
+                        Code = r.MemoNotification.Code,
+                        UserNameRequestor = r.MemoNotification.CreatedBy,
+                        UserNameCreated = r.MemoNotification.CreatedBy,
+                        DepartmentName = r.MemoNotification.OrgUnit == null ? "" : r.MemoNotification.OrgUnit.Name
+                    },
+                    ITForm = r.ITForm == null ? null : new CommonDataPendingApproval
+                    {
+                        Id = r.ITForm.Id,
+                        Code = r.ITForm.Code,
+                        UserNameRequestor = r.ITForm.UserNameRequestor,
+                        UserNameCreated = r.ITForm.UserNameCreated,
+                        DepartmentName = r.ITForm.OrgUnit == null ? "" : r.ITForm.OrgUnit.Name
+                    }
+                })
+                .ToListAsync();
+
+            return new PagedResults<PendingApproval>
+            {
+                Data = results,
+                TotalItems = totalItems,
+                TotalPages = totalPages,
+            };
         }
     }
 }

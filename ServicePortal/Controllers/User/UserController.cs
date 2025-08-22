@@ -157,6 +157,7 @@ namespace ServicePortal.Controllers.User
         public async Task<IActionResult> ImportExcelTestInsertNewUser(IFormFile file)
         {
             await _excelService.InsertFromExcelAsync(file);
+
             return Ok("Nhập dữ liệu thành công");
         }
 
@@ -168,57 +169,18 @@ namespace ServicePortal.Controllers.User
             return Ok(new BaseResponse<PersonalInfoResponse>(200, "Success", result));
         }
 
+        [HttpGet("get-multiple-user-by-org-position-id/{orgPositionId}")]
+        public async Task<IActionResult> GetMultipleUserViclockByOrgPositionId(int orgPositionId)
+        {
+            var results = await _userService.GetMultipleUserViclockByOrgPositionId(orgPositionId);
+
+            return Ok(new BaseResponse<List<GetMultiUserViClockByOrgPositionIdResponse>>(200, "Success", results));
+        }
+
         [HttpGet("test"), AllowAnonymous]
         public async Task<IActionResult> Test()
         {
-            var requestIds = new[] { 6 };
-
-            // Giả sử dbSteps là list từ DB
-            var dbSteps = new List<ApprovalFlow>
-            {
-                new ApprovalFlow { Id = 9, Condition = "{ \"it_category\": [ { \"id\": 1 }, { \"id\": 2 }, { \"id\": 3 } ] }", ToOrgPositionId = 5 },
-                new ApprovalFlow { Id = 11, Condition = null, ToOrgPositionId = 7 }
-            };
-
-            var finalStep = dbSteps
-                .FirstOrDefault(step => !string.IsNullOrEmpty(step.Condition) &&
-                    JsonDocument.Parse(step.Condition)
-                        .RootElement.GetProperty("it_category")
-                        .EnumerateArray()
-                        .Select(e => e.GetProperty("id").GetInt32())
-                        .Any(id => requestIds.Contains(id)))
-                ?? dbSteps.FirstOrDefault(step => step.Condition == null);
-
-            // Nếu không match, lấy step condition null
-            //var finalStep = matchedStep ?? dbSteps.FirstOrDefault(s => s.Condition == null);
-            //var requestIds = new[] { 1, 3 };
-
-            ////var results = await _userService.Test();
-
-            //List<ServicePortals.Domain.Entities.ApprovalFlow> approvalFlows = await _userService.Test();
-
-            //foreach (var step in approvalFlows)
-            //{
-            //    if (string.IsNullOrEmpty(step.Condition)) continue;
-
-            //    var jsonDoc = JsonDocument.Parse(step.Condition);
-            //    if (!jsonDoc.RootElement.TryGetProperty("it_category", out var itCategories)) continue;
-
-            //    var idsInStep = itCategories.EnumerateArray()
-            //        .Select(e => e.GetProperty("id").GetInt32())
-            //        .ToList();
-
-            //    if (requestIds.Any(id => idsInStep.Contains(id)))
-            //    {
-            //        matchedStep = step;
-            //        break;
-            //    }
-            //}
-
-            //// Nếu không match, lấy step condition null
-            //var finalStep = matchedStep ?? dbSteps.FirstOrDefault(s => s.Condition == null);
-
-            return Ok(finalStep);
+            return Ok("OK");
         }
     }
 }

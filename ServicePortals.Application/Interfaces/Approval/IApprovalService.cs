@@ -8,7 +8,7 @@ namespace ServicePortals.Application.Interfaces.Approval
         Task<object> Approval(ApprovalRequest request);
         Task<CountWaitApprovalAndAssignedInSidebarResponse> CountWaitAprrovalAndAssignedInSidebar(CountWaitAprrovalAndAssignedInSidebarRequest request);
         Task<PagedResults<PendingApproval>> ListWaitApprovals(ListWaitApprovalRequest request);
-        Task<object> ListAssigned();
+        Task<PagedResults<PendingApproval>> ListAssigned(ListAssignedTaskRequest request);
         Task<PagedResults<HistoryApprovalProcessResponse>> ListHistoryApprovedOrProcessed(ListHistoryApprovalProcessedRequest request);
     }
 }

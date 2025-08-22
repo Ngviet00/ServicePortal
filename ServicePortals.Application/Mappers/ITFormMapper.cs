@@ -60,13 +60,22 @@ namespace ServicePortals.Application.Mappers
                         Name = x.ApplicationForm.RequestStatus.Name,
                         NameE = x.ApplicationForm.RequestStatus.NameE,
                     },
-                    RequestType = x.ApplicationForm.RequestType == null ? null : new Domain.Entities.RequestType
+                    RequestType = x.ApplicationForm.RequestType == null ? null : new RequestType
                     {
                         Id = x.ApplicationForm.RequestType.Id,
                         Name = x.ApplicationForm.RequestType.Name,
                         NameE = x.ApplicationForm.RequestType.NameE,
                     },
-                    HistoryApplicationForms = x.ApplicationForm.HistoryApplicationForms.OrderByDescending(e => e.CreatedAt).ToList()
+                    HistoryApplicationForms =  x.ApplicationForm.HistoryApplicationForms.OrderByDescending(e => e.CreatedAt).Select(itemHistory => new HistoryApplicationForm
+                    {
+                        Id = itemHistory.Id,
+                        UserNameApproval = itemHistory.UserNameApproval,
+                        UserCodeApproval = itemHistory.UserCodeApproval,
+                        Action = itemHistory.Action,
+                        Note = itemHistory.Note,
+                        CreatedAt = itemHistory.CreatedAt
+                    }).ToList(),
+                    AssignedTasks = x.ApplicationForm.AssignedTasks.ToList(),
                 },
                 ItFormCategories = x.ItFormCategories.Select(ift => new ITFormCategory
                 {

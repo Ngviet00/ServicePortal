@@ -76,6 +76,8 @@ namespace ServicePortals.Application.Services.ITForm
                 .Include(x => x.Priority)
                 .Include(x => x.OrgUnit)
                 .Include(x => x.ApplicationForm)
+                    .ThenInclude(ast => ast.AssignedTasks)
+                .Include(x => x.ApplicationForm)
                     .ThenInclude(haf => haf.HistoryApplicationForms)
                 .Include(x => x.ApplicationForm)
                     .ThenInclude(af => af.RequestStatus)
@@ -97,7 +99,7 @@ namespace ServicePortals.Application.Services.ITForm
                 throw new ValidationException("Bạn chưa được cập nhật vị trí, liên hệ với HR");
             }
 
-            int? nextOrgPositionId = 0;
+            int? nextOrgPositionId = -1;
 
             int status = (int)StatusApplicationFormEnum.PENDING;
 
@@ -239,9 +241,214 @@ namespace ServicePortals.Application.Services.ITForm
             return true;
         }
 
-        public Task<object> Approval(ApprovalRequest request)
+        public async Task<object> Approval(ApprovalRequest request)
         {
-            throw new NotImplementedException();
+            var itemITForm = await GetById(request?.ITFormId ?? Guid.Empty) ?? throw new NotFoundException("IT Form not found");
+
+            var applicationForm = await _context.ApplicationForms.FirstOrDefaultAsync(e => e.Id == itemITForm.ApplicationFormId) ?? throw new NotFoundException("Item application form not found");
+
+            var historyApplicationForm = new HistoryApplicationForm
+            {
+                UserCodeApproval = request?.UserCodeApproval,
+                UserNameApproval = request?.UserNameApproval,
+                ApplicationFormId = applicationForm?.Id,
+                Note = request?.Note,
+                CreatedAt = DateTimeOffset.Now
+            };
+
+            List<int?> ITFormCategoryIds = itemITForm.ItFormCategories.Select(e => e.ITCategoryId)?.ToList();
+
+            if (request?.Status == false)
+            {
+                applicationForm.RequestStatusId = (int)StatusApplicationFormEnum.REJECT;
+                applicationForm.UpdatedAt = DateTimeOffset.Now;
+                historyApplicationForm.Action = "REJECT";
+
+                _context.ApplicationForms.Update(applicationForm);
+                _context.HistoryApplicationForms.Add(historyApplicationForm);
+
+                await _context.SaveChangesAsync();
+
+                BackgroundJob.Enqueue<IEmailService>(job =>
+                    job.SendEmailFormIT(
+                        new List<string> { itemITForm.Email ?? "" },
+                        null,
+                        "IT Form has been reject",
+                        TemplateEmail.EmailFormIT(),
+                        null,
+                        true
+                    )
+                );
+
+                return true;
+            }
+
+            int? nextOrgPositionId = 0;
+
+            int status = (int)StatusApplicationFormEnum.IN_PROCESS;
+
+            var orgPosition = await _context.OrgPositions.FirstOrDefaultAsync(e => e.Id == request.OrgPositionId) ?? throw new ValidationException("Bạn chưa được cập nhật vị trí, liên hệ với HR");
+
+            var approvalFlowCurrentPositionId = await _context.ApprovalFlows.FirstOrDefaultAsync(e => e.RequestTypeId == (int)RequestTypeEnum.FORM_IT && e.FromOrgPositionId == orgPosition.Id);
+
+            //nếu có custom approval flow
+            if (approvalFlowCurrentPositionId != null)
+            {
+                nextOrgPositionId = approvalFlowCurrentPositionId.ToOrgPositionId;
+
+                if (approvalFlowCurrentPositionId.IsFinal == true)
+                {
+                    status = (int)StatusApplicationFormEnum.FINAL_APPROVAL;
+                }
+            }
+            else
+            {
+                //manager các bộ phận
+                if (orgPosition?.ParentOrgPositionId == null)
+                {
+                    var approvalFlows = await _context.ApprovalFlows.Where(e => e.RequestTypeId == (int)RequestTypeEnum.FORM_IT && e.PositonContext == "MANAGER").ToListAsync();
+
+                    //nếu như đơn có các trạng thái như Server,... thì cần qua sếp trên, nếu k thì qua luôn manager IT
+                    var finalStep = approvalFlows
+                        .FirstOrDefault(step => !string.IsNullOrEmpty(step.Condition) &&
+                            JsonDocument.Parse(step.Condition)
+                                .RootElement.GetProperty("it_category")
+                                .EnumerateArray()
+                                .Select(e => e.GetProperty("id").GetInt32())
+                                .Any(id => ITFormCategoryIds != null && ITFormCategoryIds.Contains(id)))
+                        ?? approvalFlows.FirstOrDefault(step => step.Condition == null);
+
+                    nextOrgPositionId = finalStep?.ToOrgPositionId;
+
+                    if (finalStep?.IsFinal == true)
+                    {
+                        status = (int)StatusApplicationFormEnum.FINAL_APPROVAL;
+                    }
+                }
+                else
+                {
+                    var getManagerOrgPostionId = await _orgPositionService.GetManagerOrgPostionIdByOrgPositionId(request?.OrgPositionId ?? -1);
+                    nextOrgPositionId = getManagerOrgPostionId?.Id;
+                }
+            }
+
+            applicationForm.RequestStatusId = status;
+            applicationForm.OrgPositionId = nextOrgPositionId;
+            applicationForm.UpdatedAt = DateTimeOffset.Now;
+            historyApplicationForm.Action = "APPROVAL";
+            
+            _context.ApplicationForms.Update(applicationForm);
+            _context.HistoryApplicationForms.Add(historyApplicationForm);
+
+            await _context.SaveChangesAsync();
+
+            var nextUserInfo = await _userService.GetMultipleUserViclockByOrgPositionId(nextOrgPositionId ?? -1);
+
+            BackgroundJob.Enqueue<IEmailService>(job =>
+                job.SendEmailFormIT(
+                    nextUserInfo.Select(e => e.Email ?? "").ToList(),
+                    null,
+                    "New approval request form IT",
+                    TemplateEmail.EmailFormIT(),
+                    null,
+                    true
+                )
+            );
+
+            return true;
+        }
+
+        public async Task<object> AssignedTask(AssignedTaskRequest request)
+        {
+            var itemITForm = await _context.ITForms.FirstOrDefaultAsync(e => e.Id == request.ITFormId) ?? throw new NotFoundException("IT Form not found");
+
+            var applicationForm = await _context.ApplicationForms.FirstOrDefaultAsync(e => e.Id == itemITForm.ApplicationFormId) ?? throw new NotFoundException("Application form not found");
+            applicationForm.UpdatedAt = DateTimeOffset.Now;
+            applicationForm.RequestStatusId = (int)StatusApplicationFormEnum.ASSIGNED; //set sang trạng thái là đẫ được gắn task
+            applicationForm.OrgPositionId = (int)StatusApplicationFormEnum.ORG_POSITION_ID_AFTER_ASSIGNED_TASK; //SET -1 để không còn ai, dựa vào usercode để xử lý tiếp theo
+            _context.ApplicationForms.Update(applicationForm);
+
+            itemITForm.NoteManagerIT = request.NoteManager;
+            _context.ITForms.Update(itemITForm);
+
+            List<AssignedTask> assignedTasks = [];
+            foreach (var itemUserAssigned in request.UserAssignedTasks)
+            {
+                assignedTasks.Add(new AssignedTask
+                {
+                    ApplicationFormId = applicationForm.Id,
+                    UserCode = itemUserAssigned.UserCode
+                });
+            }
+            _context.AssignTasks.AddRange(assignedTasks);
+
+            var historyApplicationForm = new HistoryApplicationForm
+            {
+                UserCodeApproval = request.UserCodeApproval,
+                UserNameApproval = request.UserNameApproval,
+                ApplicationFormId = applicationForm.Id,
+                Action = "APPROVAL",
+                Note = request.NoteManager,
+                CreatedAt = DateTimeOffset.Now
+            };
+
+            _context.HistoryApplicationForms.Add(historyApplicationForm);
+
+            await _context.SaveChangesAsync();
+
+            //chỗ này trong email có ghi chú của manager
+
+            //send email
+            BackgroundJob.Enqueue<IEmailService>(job =>
+                job.SendEmailFormIT(
+                    request.UserAssignedTasks.Select(e => e.Email ?? "").ToList(),
+                    null,
+                    "New assign task form IT",
+                    TemplateEmail.EmailFormIT(),
+                    null,
+                    true
+                )
+            );
+
+            return true;
+        }
+
+        public async Task<object> ResolvedTask(ResolvedTaskRequest request)
+        {
+            var itemFormIT = await GetById(request.ITFormId ?? Guid.Empty);
+
+            var applicationForm = await _context.ApplicationForms.FirstOrDefaultAsync(e => e.Id == itemFormIT.ApplicationFormId);
+
+            applicationForm.RequestStatusId = (int)StatusApplicationFormEnum.COMPLETE;
+            applicationForm.UpdatedAt = DateTimeOffset.Now;
+            _context.ApplicationForms.Update(applicationForm);
+
+            var historyApplicationForm = new HistoryApplicationForm
+            {
+                UserCodeApproval = request.UserCodeApproval,
+                UserNameApproval = request.UserNameApproval,
+                ApplicationFormId = applicationForm.Id,
+                Action = "RESOLVED",
+                CreatedAt = DateTimeOffset.Now
+            };
+
+            _context.HistoryApplicationForms.Add(historyApplicationForm);
+
+            await _context.SaveChangesAsync();
+
+            //send email
+            BackgroundJob.Enqueue<IEmailService>(job =>
+                job.SendEmailFormIT(
+                    new List<string> { itemFormIT.Email ?? "" },
+                    null,
+                    "Your request form IT has been resolved",
+                    TemplateEmail.EmailFormIT(),
+                    null,
+                    true
+                )
+            );
+
+            return true;
         }
     }
 }

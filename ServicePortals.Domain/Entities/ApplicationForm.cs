@@ -25,5 +25,6 @@ namespace ServicePortals.Domain.Entities
         public MemoNotification? MemoNotification { get; set; }
         public OrgPosition? OrgPosition { get; set; }
         public ITForm? ITForm { get; set; }
+        public ICollection<AssignedTask> AssignedTasks { get; set; } = [];
     }
 }

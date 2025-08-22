@@ -12,5 +12,7 @@ namespace ServicePortals.Application.Interfaces.ITForm
         Task<object> Update(Guid Id, UpdateITFormRequest request);
         Task<object> Delete(Guid Id);
         Task<object> Approval(ApprovalRequest request);
+        Task<object> AssignedTask(AssignedTaskRequest request);
+        Task<object> ResolvedTask(ResolvedTaskRequest request);
     }
 }

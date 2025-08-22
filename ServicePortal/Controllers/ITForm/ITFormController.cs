@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using ServicePortals.Application;
 using ServicePortals.Application.Dtos.ITForm.Requests;
 using ServicePortals.Application.Dtos.ITForm.Responses;
@@ -6,7 +7,7 @@ using ServicePortals.Application.Interfaces.ITForm;
 
 namespace ServicePortal.Controllers.ITForm
 {
-    //[Authorize]
+    [Authorize]
     [ApiController, Route("api/it-form")]
     public class ITFormController : ControllerBase
     {
@@ -63,6 +64,22 @@ namespace ServicePortal.Controllers.ITForm
         public async Task<IActionResult> Delete(Guid Id)
         {
             var result = await _iITFormService.Delete(Id);
+
+            return Ok(new BaseResponse<object>(200, "success", result));
+        }
+
+        [HttpPost("assigned-task")]
+        public async Task<IActionResult> AssignedTask([FromBody] AssignedTaskRequest request)
+        {
+            var result = await _iITFormService.AssignedTask(request);
+
+            return Ok(new BaseResponse<object>(200, "success", result));
+        }
+
+        [HttpPost("resolved-task")]
+        public async Task<IActionResult> ResolvedTask([FromBody] ResolvedTaskRequest request)
+        {
+            var result = await _iITFormService.ResolvedTask(request);
 
             return Ok(new BaseResponse<object>(200, "success", result));
         }

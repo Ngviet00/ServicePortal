@@ -8,6 +8,7 @@ namespace ServicePortals.Application.Dtos.Approval.Request
         public int? RequestTypeId { get; set; } //để biết là loại đơn nào
         public Guid? MemoNotificationId { get; set; }
         public Guid? LeaveRequestId { get; set; }
+        public Guid? ITFormId { get; set; }
         public string? UserCodeApproval { get; set; }
         public string? UserNameApproval { get; set; }
         [Required]

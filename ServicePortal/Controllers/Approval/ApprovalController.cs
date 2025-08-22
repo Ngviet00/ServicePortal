@@ -1,4 +1,5 @@
 ﻿using System.Security.Claims;
+using Azure.Core;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ServicePortals.Application;
@@ -57,9 +58,21 @@ namespace ServicePortal.Controllers.Approval
         }
 
         [HttpGet("list-assigned")]
-        public async Task<IActionResult> ListAssigned()
+        public async Task<IActionResult> ListAssigned([FromQuery] ListAssignedTaskRequest request)
         {
-            return Ok();
+            var results = await _approvalService.ListAssigned(request);
+
+            var response = new PageResponse<PendingApproval>(
+                200,
+                "Success",
+                results.Data,
+                results.TotalPages,
+                request.Page,
+                request.PageSize,
+                results.TotalItems
+            );
+
+            return Ok(response);
         }
 
         [HttpGet("list-history-approval-or-processed"), AllowAnonymous]

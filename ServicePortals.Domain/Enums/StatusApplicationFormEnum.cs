@@ -9,6 +9,7 @@
         REJECT = 5,
         FINAL_APPROVAL = 6,
         ASSIGNED = 7,
-        ORG_POSITION_ID_HR_LEAVE_RQ = -10
+        ORG_POSITION_ID_HR_LEAVE_RQ = -10,
+        ORG_POSITION_ID_AFTER_ASSIGNED_TASK = 0
     }
 }

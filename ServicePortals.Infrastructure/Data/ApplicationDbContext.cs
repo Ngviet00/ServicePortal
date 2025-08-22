@@ -38,6 +38,7 @@ namespace ServicePortals.Infrastructure.Data
         public DbSet<Priority> Priorities { get; set; }
         public DbSet<ITForm> ITForms { get; set; }
         public DbSet<ITFormCategory> ITFormCategories { get; set; }
+        public DbSet<AssignedTask> AssignTasks { get; set; }
         public IDbConnection CreateConnection() => Database.GetDbConnection();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -197,6 +198,15 @@ namespace ServicePortals.Infrastructure.Data
                 new ITCategory { Id = 5, Name = "ERP Login Id", Code = "ERP" },
                 new ITCategory { Id = 6, Name = "Other", Code = "OTHER" }
             );
+
+            modelBuilder.Entity<ApplicationForm>()
+                .HasQueryFilter(e => e.DeletedAt == null);
+
+            modelBuilder.Entity<ITForm>()
+                .HasQueryFilter(e => e.DeletedAt == null);
+
+            modelBuilder.Entity<HistoryApplicationForm>()
+                .HasQueryFilter(e => e.DeletedAt == null);
 
             //file - attach_file
             modelBuilder.Entity<AttachFile>()
