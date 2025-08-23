@@ -11,7 +11,9 @@ namespace ServicePortals.Application.Dtos.ITForm.Requests
         public string? UserCodeApproval { get; set; }
         public string? UserNameApproval { get; set; }
         public int? OrgPositionId { get; set; }
-        public Guid? ITFormId { get; set; }
+        public Guid ITFormId { get; set; }
         public string? UrlFrontend { get; set; }
+        public DateTimeOffset? TargetCompletionDate { get; set; }
+        public DateTimeOffset? ActualCompletionDate { get; set; }
     }
 }

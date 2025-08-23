@@ -181,33 +181,37 @@ namespace ServicePortals.Application.Common
                 </table>";
         }
 
-        public static string EmailFormIT()
+        public static string EmailFormIT(ITForm? itForm)
         {
             return $@"
                 <table style=""width: 100%; border-collapse: collapse; margin-top: 15px; margin-bottom: 20px; font-family: Arial, sans-serif; font-size: 14px;"">
                     <tr>
-                        <th style=""border: 1px solid #cccccc; padding: 8px; background-color: #f2f2f2; text-align: left;"">Thông tin</th>
-                        <th style=""border: 1px solid #cccccc; padding: 8px; background-color: #f2f2f2; text-align: left;"">Chi tiết</th>
+                        <th style=""border: 1px solid #cccccc; padding: 8px; background-color: #f2f2f2; text-align: left;"">Information</th>
+                        <th style=""border: 1px solid #cccccc; padding: 8px; background-color: #f2f2f2; text-align: left;"">Detail</th>
                     </tr>
                     <tr>
-                        <td style=""border: 1px solid #cccccc; padding: 8px;"">Ngày yêu cầu</td>
-                        <td style=""border: 1px solid #cccccc; padding: 8px;"">{{Ngày Yêu Cầu}}</td>
+                        <td style=""border: 1px solid #cccccc; padding: 8px;"">UserCode</td>
+                        <td style=""border: 1px solid #cccccc; padding: 8px;"">{itForm?.UserCodeRequestor}</td>
                     </tr>
                     <tr>
-                        <td style=""border: 1px solid #cccccc; padding: 8px;"">Ngày hoàn thành dự kiến</td>
-                        <td style=""border: 1px solid #cccccc; padding: 8px;"">{{Ngày Hoàn Thành}}</td>
+                        <td style=""border: 1px solid #cccccc; padding: 8px;"">UserName</td>
+                        <td style=""border: 1px solid #cccccc; padding: 8px;"">{itForm?.UserNameRequestor}</td>
                     </tr>
                     <tr>
-                        <td style=""border: 1px solid #cccccc; padding: 8px;"">Loại IT</td>
-                        <td style=""border: 1px solid #cccccc; padding: 8px;"">{{Danh sách IT Category}}</td>
+                        <td style=""border: 1px solid #cccccc; padding: 8px;"">Date request</td>
+                        <td style=""border: 1px solid #cccccc; padding: 8px;"">{itForm?.RequestDate?.ToString("yyyy-MM-dd")}</td>
                     </tr>
                     <tr>
-                        <td style=""border: 1px solid #cccccc; padding: 8px;"">Mức ưu tiên</td>
-                        <td style=""border: 1px solid #cccccc; padding: 8px;"">{{Mức ưu tiên}}</td>
+                        <td style=""border: 1px solid #cccccc; padding: 8px;"">IT Category</td>
+                        <td style=""border: 1px solid #cccccc; padding: 8px;"">{string.Join(", ", itForm.ItFormCategories.Select(e => e.ITCategory?.Name ?? "").ToList())}</td>
                     </tr>
                     <tr>
-                        <td style=""border: 1px solid #cccccc; padding: 8px;"">Lý do</td>
-                        <td style=""border: 1px solid #cccccc; padding: 8px;"">{{Lý do chi tiết}}</td>
+                        <td style=""border: 1px solid #cccccc; padding: 8px;"">Reason</td>
+                        <td style=""border: 1px solid #cccccc; padding: 8px;"">{itForm?.Reason}</td>
+                    </tr>
+                    <tr>
+                        <td style=""border: 1px solid #cccccc; padding: 8px;"">Priority</td>
+                        <td style=""border: 1px solid #cccccc; padding: 8px;"">{itForm?.Priority?.NameE}</td>
                     </tr>
                 </table>
             ";

@@ -19,7 +19,7 @@ namespace ServicePortals.Application.Interfaces.User
         Task<bool> UpdateUserPermission(UpdateUserRoleRequest request);
         Task<UserResponse> ResetPassword(ResetPasswordRequest request);
         Task<UserResponse> Update(string userCode, UpdatePersonalInfoRequest request);
-        Task<List<GetMultiUserViClockByOrgPositionIdResponse>> GetMultipleUserViclockByOrgPositionId(int OrgPositionId);
+        Task<List<GetMultiUserViClockByOrgPositionIdResponse>> GetMultipleUserViclockByOrgPositionId(int OrgPositionId, List<string>? UserCodes = null);
         Task<List<TreeNode>> BuildOrgTree(int departmentId);
         Task<PagedResults<object>> SearchAllUserFromViClock(SearchAllUserFromViclockRequest request);
         Task<PersonalInfoResponse> SearchUserCombineViClockAndWebSystem(string userCode); //hàm tìm kiếm theo usercode theo dữ liệu mới ở web system

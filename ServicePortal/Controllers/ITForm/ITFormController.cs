@@ -18,6 +18,14 @@ namespace ServicePortal.Controllers.ITForm
             _iITFormService = iITFormService;
         }
 
+        [HttpGet("statistical-form-it")]
+        public async Task<IActionResult> StatisticalFormIT()
+        {
+            var results = await _iITFormService.StatisticalFormIT();
+
+            return Ok(new BaseResponse<object>(200, "success", results));
+        }
+
         [HttpGet]
         public async Task<IActionResult> GetAll([FromQuery] GetAllITFormRequest request)
         {

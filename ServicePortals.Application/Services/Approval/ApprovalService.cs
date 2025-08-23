@@ -294,6 +294,7 @@ namespace ServicePortals.Application.Services.Approval
             var totalPages = (int)Math.Ceiling(totalItems / pageSize);
 
             var results = await query
+                .OrderByDescending(r => r.CreatedAt)
                 .Skip((int)(page - 1) * (int)pageSize)
                 .Take((int)pageSize)
                 .Select(r => new PendingApproval

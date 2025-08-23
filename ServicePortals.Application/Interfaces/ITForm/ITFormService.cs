@@ -6,6 +6,7 @@ namespace ServicePortals.Application.Interfaces.ITForm
 {
     public interface ITFormService
     {
+        Task<StatisticalFormITResponse> StatisticalFormIT();
         Task<PagedResults<ITFormResponse>> GetAll(GetAllITFormRequest request);
         Task<ITFormResponse?> GetById(Guid Id);
         Task<object> Create(CreateITFormRequest request);

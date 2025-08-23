@@ -17,5 +17,6 @@
         public DateTimeOffset? RequiredCompletionDate { get; set; }
         public DateTimeOffset? TargetCompletionDate { get; set; }
         public DateTimeOffset? ActualCompletionDate { get; set; }
+        public string? UrlFrontend { get; set; }
     }
 }

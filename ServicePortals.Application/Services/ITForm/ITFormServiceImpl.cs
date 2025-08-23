@@ -1,10 +1,16 @@
-﻿using System.Text.Json;
+﻿using System.Data;
+using System.Text.Json;
+using Azure.Core;
+using Dapper;
+using DocumentFormat.OpenXml.Bibliography;
+using DocumentFormat.OpenXml.Vml;
 using Hangfire;
 using Microsoft.EntityFrameworkCore;
 using ServicePortals.Application.Common;
 using ServicePortals.Application.Dtos.Approval.Request;
 using ServicePortals.Application.Dtos.ITForm.Requests;
 using ServicePortals.Application.Dtos.ITForm.Responses;
+using ServicePortals.Application.Dtos.User.Responses;
 using ServicePortals.Application.Interfaces.OrgUnit;
 using ServicePortals.Application.Interfaces.User;
 using ServicePortals.Application.Mappers;
@@ -34,19 +40,48 @@ namespace ServicePortals.Application.Services.ITForm
             string? userCode = request.UserCode;
             int page = request.Page;
             int pageSize = request.PageSize;
+            int? departmentId = request.DepartmentId;
+            int? statusId = request.RequestStatusId;
 
-            if (string.IsNullOrWhiteSpace(userCode))
+            var query = _context.ITForms.AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(userCode))
             {
-                throw new ValidationException("UserCode is required");
+                query = query.Where(e => (e.UserCodeRequestor == userCode || e.UserCodeCreated == userCode) && e.DeletedAt == null);
             }
 
-            var query = _context.ITForms.Where(e => (e.UserCodeRequestor == userCode || e.UserCodeCreated == userCode) && e.DeletedAt == null).AsQueryable();
+            if (departmentId != null)
+            {
+                query = query.Where(e => e.DepartmentId == departmentId);
+            }
+
+            if (statusId != null)
+            {
+                if (statusId == (int)StatusApplicationFormEnum.PENDING || statusId == (int)StatusApplicationFormEnum.FINAL_APPROVAL)
+                {
+                    query = query.Where(e => e.ApplicationForm != null &&
+                        (e.ApplicationForm.RequestStatusId == (int)StatusApplicationFormEnum.PENDING ||
+                         e.ApplicationForm.RequestStatusId == (int)StatusApplicationFormEnum.FINAL_APPROVAL));
+                }
+                else if (statusId == (int)StatusApplicationFormEnum.IN_PROCESS || statusId == (int)StatusApplicationFormEnum.ASSIGNED)
+                {
+                    query = query.Where(e => e.ApplicationForm != null &&
+                        (e.ApplicationForm.RequestStatusId == (int)StatusApplicationFormEnum.IN_PROCESS ||
+                         e.ApplicationForm.RequestStatusId == (int)StatusApplicationFormEnum.ASSIGNED));
+                }
+                else
+                {
+                    query = query.Where(e => e.ApplicationForm != null &&
+                        e.ApplicationForm.RequestStatusId == statusId);
+                }
+            }
 
             var totalItems = await query.CountAsync();
 
             var totalPages = (int)Math.Ceiling((double)totalItems / pageSize);
 
             var result = await query
+                .OrderByDescending(e => e.CreatedAt)
                 .Include(x => x.Priority)
                 .Include(x => x.OrgUnit)
                 .Include(x => x.ApplicationForm)
@@ -196,12 +231,26 @@ namespace ServicePortals.Application.Services.ITForm
 
             var nextUserInfo = await _userService.GetMultipleUserViclockByOrgPositionId(nextOrgPositionId ?? -1);
 
+            var itemFormIT = await _context.ITForms
+                .Include(e => e.Priority)
+                .Include(e => e.ItFormCategories)
+                    .ThenInclude(e => e.ITCategory)
+                .FirstOrDefaultAsync(e => e.Id == formIT.Id) ?? throw new NotFoundException("Not found data, please check again");
+
+            string urlApproval = $@"{request?.UrlFrontend}/approval/approval-form-it/{itemFormIT.Id}?mode=approval";
+
+            string bodyMail = $@"
+                <h4>
+                    <span>Click to detail: </span>
+                    <a href={urlApproval}>{itemFormIT.Code}</a>
+                </h4>" + TemplateEmail.EmailFormIT(itemFormIT);
+
             BackgroundJob.Enqueue<IEmailService>(job =>
                 job.SendEmailFormIT(
                     nextUserInfo.Select(e => e.Email ?? "").ToList(),
                     null,
-                    "New approval request form IT",
-                    TemplateEmail.EmailFormIT(),
+                    "Request for IT Form approval",
+                    bodyMail,
                     null,
                     true
                 )
@@ -243,9 +292,18 @@ namespace ServicePortals.Application.Services.ITForm
 
         public async Task<object> Approval(ApprovalRequest request)
         {
-            var itemITForm = await GetById(request?.ITFormId ?? Guid.Empty) ?? throw new NotFoundException("IT Form not found");
+            var itemFormIT = await _context.ITForms
+                .Include(e => e.Priority)
+                .Include(e => e.ItFormCategories)
+                    .ThenInclude(e => e.ITCategory)
+                .FirstOrDefaultAsync(e => e.Id == request.ITFormId) ?? throw new NotFoundException("Not found data, please check again");
 
-            var applicationForm = await _context.ApplicationForms.FirstOrDefaultAsync(e => e.Id == itemITForm.ApplicationFormId) ?? throw new NotFoundException("Item application form not found");
+            var applicationForm = await _context.ApplicationForms.FirstOrDefaultAsync(e => e.Id == itemFormIT.ApplicationFormId) ?? throw new NotFoundException("Item application form not found");
+
+            if (request?.OrgPositionId != applicationForm.OrgPositionId)
+            {
+                throw new ForbiddenException("You are not permitted to approve this request.");
+            }
 
             var historyApplicationForm = new HistoryApplicationForm
             {
@@ -256,7 +314,7 @@ namespace ServicePortals.Application.Services.ITForm
                 CreatedAt = DateTimeOffset.Now
             };
 
-            List<int?> ITFormCategoryIds = itemITForm.ItFormCategories.Select(e => e.ITCategoryId)?.ToList();
+            List<int?> ITFormCategoryIds = itemFormIT.ItFormCategories.Select(e => e.ITCategoryId)?.ToList();
 
             if (request?.Status == false)
             {
@@ -271,10 +329,10 @@ namespace ServicePortals.Application.Services.ITForm
 
                 BackgroundJob.Enqueue<IEmailService>(job =>
                     job.SendEmailFormIT(
-                        new List<string> { itemITForm.Email ?? "" },
+                        new List<string> { itemFormIT.Email ?? "" },
                         null,
                         "IT Form has been reject",
-                        TemplateEmail.EmailFormIT(),
+                        TemplateEmail.EmailFormIT(itemFormIT),
                         null,
                         true
                     )
@@ -344,12 +402,20 @@ namespace ServicePortals.Application.Services.ITForm
 
             var nextUserInfo = await _userService.GetMultipleUserViclockByOrgPositionId(nextOrgPositionId ?? -1);
 
+            string urlApproval = $@"{request?.UrlFrontend}/approval/approval-form-it/{itemFormIT.Id}?mode=approval";
+
+            string bodyMail = $@"
+                <h4>
+                    <span>Click to detail: </span>
+                    <a href={urlApproval}>{itemFormIT.Code}</a>
+                </h4>" + TemplateEmail.EmailFormIT(itemFormIT);
+
             BackgroundJob.Enqueue<IEmailService>(job =>
                 job.SendEmailFormIT(
                     nextUserInfo.Select(e => e.Email ?? "").ToList(),
                     null,
-                    "New approval request form IT",
-                    TemplateEmail.EmailFormIT(),
+                    "Request for IT Form approval",
+                    bodyMail,
                     null,
                     true
                 )
@@ -360,7 +426,11 @@ namespace ServicePortals.Application.Services.ITForm
 
         public async Task<object> AssignedTask(AssignedTaskRequest request)
         {
-            var itemITForm = await _context.ITForms.FirstOrDefaultAsync(e => e.Id == request.ITFormId) ?? throw new NotFoundException("IT Form not found");
+            var itemITForm = await _context.ITForms
+                .Include(e => e.Priority)
+                .Include(e => e.ItFormCategories)
+                    .ThenInclude(e => e.ITCategory)
+                .FirstOrDefaultAsync(e => e.Id == request.ITFormId) ?? throw new NotFoundException("IT Form not found");
 
             var applicationForm = await _context.ApplicationForms.FirstOrDefaultAsync(e => e.Id == itemITForm.ApplicationFormId) ?? throw new NotFoundException("Application form not found");
             applicationForm.UpdatedAt = DateTimeOffset.Now;
@@ -396,15 +466,20 @@ namespace ServicePortals.Application.Services.ITForm
 
             await _context.SaveChangesAsync();
 
-            //chỗ này trong email có ghi chú của manager
+            string urlApproval = $@"{request.UrlFrontend}/approval/approval-form-it/{itemITForm.Id}?mode=approval";
 
-            //send email
+            string bodyMail = $@"
+                <h4>
+                    <span>Click to detail: </span>
+                    <a href={urlApproval}>{itemITForm.Code}</a>
+                </h4>" + TemplateEmail.EmailFormIT(itemITForm);
+
             BackgroundJob.Enqueue<IEmailService>(job =>
                 job.SendEmailFormIT(
                     request.UserAssignedTasks.Select(e => e.Email ?? "").ToList(),
                     null,
-                    "New assign task form IT",
-                    TemplateEmail.EmailFormIT(),
+                    "New Task Assigned",
+                    bodyMail,
                     null,
                     true
                 )
@@ -415,12 +490,35 @@ namespace ServicePortals.Application.Services.ITForm
 
         public async Task<object> ResolvedTask(ResolvedTaskRequest request)
         {
-            var itemFormIT = await GetById(request.ITFormId ?? Guid.Empty);
+            var itemFormIT = await _context.ITForms
+                .Include(e => e.Priority)
+                .Include(e => e.ItFormCategories)
+                    .ThenInclude(e => e.ITCategory)
+                .FirstOrDefaultAsync(e => e.Id == request.ITFormId) ?? throw new NotFoundException("Not found data, please check again");
 
-            var applicationForm = await _context.ApplicationForms.FirstOrDefaultAsync(e => e.Id == itemFormIT.ApplicationFormId);
+            var applicationForm = await _context.ApplicationForms
+                .Include(e => e.HistoryApplicationForms)
+                .Include(e => e.AssignedTasks)
+                .FirstOrDefaultAsync(e => e.Id == itemFormIT.ApplicationFormId)
+
+                ?? throw new NotFoundException("Not found data, please check again");
+
+            bool exists = applicationForm.AssignedTasks.Any(e => e.UserCode == request.UserCodeApproval);
+
+            if (!exists)
+            {
+                throw new ForbiddenException("You are not permitted to approve this request.");
+            }
+
+            itemFormIT.TargetCompletionDate = request.TargetCompletionDate;
+            itemFormIT.ActualCompletionDate = request.ActualCompletionDate;
+
+            _context.ITForms.Update(itemFormIT);
 
             applicationForm.RequestStatusId = (int)StatusApplicationFormEnum.COMPLETE;
+
             applicationForm.UpdatedAt = DateTimeOffset.Now;
+
             _context.ApplicationForms.Update(applicationForm);
 
             var historyApplicationForm = new HistoryApplicationForm
@@ -436,19 +534,139 @@ namespace ServicePortals.Application.Services.ITForm
 
             await _context.SaveChangesAsync();
 
+            List<string> ccUserCode = [];
+            ccUserCode.Add(applicationForm?.HistoryApplicationForms?.First()?.UserCodeApproval ?? ""); //latest manager assigned, get usercode
+            
+            //get usercode everybody assigned task
+            foreach (var itemAss in applicationForm!.AssignedTasks)
+            {
+                ccUserCode.Add(itemAss.UserCode ?? "");
+            }
+
+            //get email to cc, manager, user assigned task
+            List<GetMultiUserViClockByOrgPositionIdResponse> multipleByUserCodes = await _userService.GetMultipleUserViclockByOrgPositionId(-1, ccUserCode);
+
+            string urlDetail = $@"{request.UrlFrontend}/approval/approval-form-it/{itemFormIT.Id}?mode=view";
+
+            string bodyMail = $@"
+                <h4>
+                    <span>Click to detail: </span>
+                    <a href={urlDetail}>{itemFormIT.Code}</a>
+                </h4>" + TemplateEmail.EmailFormIT(itemFormIT);
+
             //send email
             BackgroundJob.Enqueue<IEmailService>(job =>
                 job.SendEmailFormIT(
                     new List<string> { itemFormIT.Email ?? "" },
-                    null,
-                    "Your request form IT has been resolved",
-                    TemplateEmail.EmailFormIT(),
+                    multipleByUserCodes.Select(e => e.Email ?? "").ToList(),
+                    "Your IT request form has been successfully processed",
+                    bodyMail,
                     null,
                     true
                 )
             );
 
             return true;
+        }
+
+        public async Task<StatisticalFormITResponse> StatisticalFormIT()
+        {
+            using var connection = _context.Database.GetDbConnection();
+            if (connection.State != ConnectionState.Open)
+            {
+                await connection.OpenAsync();
+            }
+
+            var sql = $@"
+                SELECT 
+                    COUNT(*) AS Total,
+	                SUM(CASE WHEN AF.RequestStatusId = 2 OR AF.RequestStatusId = 7  THEN 1 ELSE 0 END) AS InProcess,
+                    SUM(CASE WHEN AF.RequestStatusId = 3 THEN 1 ELSE 0 END) AS Complete,
+                    SUM(CASE WHEN AF.RequestStatusId = 1 OR AF.RequestStatusId = 6 THEN 1 ELSE 0 END) AS Pending,
+	                SUM(CASE WHEN AF.RequestStatusId = 5 THEN 1 ELSE 0 END) AS Reject
+                FROM it_forms AS IT
+                INNER JOIN application_forms AS AF ON AF.Id = IT.ApplicationFormId
+                WHERE IT.DeletedAt IS NULL AND AF.DeletedAt IS NULL;
+
+                SELECT 
+	                IT.Code,
+	                IT.Reason,
+	                IT.UserNameRequestor,
+	                OU.Name as DepartmentName,
+	                IT.CreatedAt,
+	                P.Name AS NamePriority,
+	                P.NameE AS NamePriorityE,
+	                RS.Name AS RequestStatus,
+	                Rs.NameE AS RequestStatusE
+                FROM it_forms AS IT
+                LEFT JOIN org_units AS OU ON IT.DepartmentId = OU.Id
+                LEFT JOIN priorities AS P ON P.Id = IT.PriorityId
+                LEFT JOIN application_forms AS AF ON IT.ApplicationFormId = AF.Id
+                LEFT JOIN request_statuses AS RS ON RS.Id = AF.RequestStatusId
+                WHERE IT.DeletedAt IS NULL
+                ORDER BY IT.CreatedAt DESC, AF.RequestStatusId
+                OFFSET 10 * 0 ROWS
+                FETCH NEXT 10 ROWS ONLY;
+
+                SELECT 
+                    OU.Id,
+                    OU.Name,
+                    COUNT(IT.id) AS Total
+                FROM org_units AS OU 
+                LEFT JOIN it_forms AS IT ON IT.DepartmentId = OU.Id AND IT.DeletedAt IS NULL
+                WHERE OU.UnitId = 3
+                GROUP BY OU.Id, OU.Name
+                ORDER BY OU.Name;
+
+                WITH Months AS (
+                    SELECT 1 AS Mon
+                    UNION ALL SELECT 2
+                    UNION ALL SELECT 3
+                    UNION ALL SELECT 4
+                    UNION ALL SELECT 5
+                    UNION ALL SELECT 6
+                    UNION ALL SELECT 7
+                    UNION ALL SELECT 8
+                    UNION ALL SELECT 9
+                    UNION ALL SELECT 10
+                    UNION ALL SELECT 11
+                    UNION ALL SELECT 12
+                )
+                SELECT 
+                    M.Mon,
+                    COALESCE(COUNT(IT.Id), 0) AS Total
+                FROM Months M
+                LEFT JOIN it_forms IT 
+                    ON MONTH(IT.CreatedAt) = M.Mon 
+                    AND YEAR(IT.CreatedAt) = 2025
+                    AND IT.DeletedAt IS NULL
+                GROUP BY M.Mon
+                ORDER BY M.Mon;
+
+                SELECT
+	                T.Name AS Name,
+                    T.Code AS Code,
+                    COUNT(*) AS Total
+                FROM it_form_categories FT
+                JOIN it_categories T ON FT.ITCategoryId = T.Id
+                JOIN it_forms F ON FT.ITFormId = F.Id
+                WHERE YEAR(F.CreatedAt) = 2025
+                GROUP BY T.Code, T.Name
+                ORDER BY T.Code;
+            ";
+
+            using var multi = await connection.QueryMultipleAsync(sql, new { Page = 1, Year = 2025});
+
+            var result = new StatisticalFormITResponse
+            {
+                GroupByTotal = await multi.ReadFirstAsync<GroupByTotal>(),
+                GroupRecentList = (await multi.ReadAsync<GroupRecentList>()).ToList(),
+                GroupByDepartment = (await multi.ReadAsync<GroupByDepartment>()).ToList(),
+                GroupByMonth = (await multi.ReadAsync<GroupByMonth>()).ToList(),
+                GroupByCategory = (await multi.ReadAsync<GroupByCategory>()).ToList()
+            };
+
+            return result;
         }
     }
 }

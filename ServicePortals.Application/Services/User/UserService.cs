@@ -390,7 +390,7 @@ namespace ServicePortals.Application.Services.User
         /// <summary>
         /// Lấy những người theo orgUnitId kết hợp bảng user vs tblNhanVien bên db viclock
         /// </summary>
-        public async Task<List<GetMultiUserViClockByOrgPositionIdResponse>> GetMultipleUserViclockByOrgPositionId(int OrgPositionId)
+        public async Task<List<GetMultiUserViClockByOrgPositionIdResponse>> GetMultipleUserViclockByOrgPositionId(int OrgPositionId, List<string>? UserCodes = null)
         {
             var connection = (SqlConnection)_context.CreateConnection();
 
@@ -399,19 +399,30 @@ namespace ServicePortals.Application.Services.User
                 await connection.OpenAsync();
             }
 
-            var sql = $@"SELECT
-                            NVMa,
-                            NVMaNV,
-                            {Global.DbViClock}.dbo.funTCVN2Unicode(NVHoTen) AS NVHoTen,
-                            ViTriToChucId AS OrgPositionId,
-	                        COALESCE(NULLIF(Email, ''), NVEmail, '') AS Email
-                        FROM {Global.DbViClock}.[dbo].[tblNhanVien] AS NV
-                        LEFT JOIN {Global.DbWeb}.dbo.users as U
-	                        ON NV.NVMaNV = U.UserCode
-                        WHERE
-                            NV.ViTriToChucId = @OrgPositionId AND NV.NVNgayRa > GETDATE()";
+            string sql = $@"
+                SELECT
+                    NVMa,
+                    NVMaNV,
+                    {Global.DbViClock}.dbo.funTCVN2Unicode(NVHoTen) AS NVHoTen,
+                    ViTriToChucId AS OrgPositionId,
+	                COALESCE(NULLIF(Email, ''), NVEmail, '') AS Email
+                FROM {Global.DbViClock}.[dbo].[tblNhanVien] AS NV
+                LEFT JOIN {Global.DbWeb}.dbo.users as U
+	                ON NV.NVMaNV = U.UserCode
+                WHERE
+                    NV.NVNgayRa > GETDATE()
+            ";
 
-            var result = await connection.QueryAsync<GetMultiUserViClockByOrgPositionIdResponse>(sql, new { OrgPositionId });
+            if (UserCodes != null && UserCodes.Any())
+            {
+                sql += " AND NV.NVMaNV IN @UserCodes";
+            }
+            else
+            {
+                sql += " AND NV.ViTriToChucId = @OrgPositionId";
+            }
+
+            var result = await connection.QueryAsync<GetMultiUserViClockByOrgPositionIdResponse>(sql, new { OrgPositionId, UserCodes });
 
             return (List<GetMultiUserViClockByOrgPositionIdResponse>)result;
         }
