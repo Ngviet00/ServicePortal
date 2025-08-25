@@ -6,8 +6,5 @@ namespace ServicePortals.Application.Dtos.Auth.Requests
     {
         [Required]
         public string? UserCode { get; set; }
-
-        [Required]
-        public string? Password { get; set; }
     }
 }

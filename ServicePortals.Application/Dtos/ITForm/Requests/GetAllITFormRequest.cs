@@ -7,5 +7,6 @@
         public int PageSize { get; set; } = 10;
         public int? DepartmentId { get; set; }
         public int? RequestStatusId { get; set; }
+        public int? Year { get; set; }
     }
 }

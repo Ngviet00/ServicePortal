@@ -1,9 +1,6 @@
 ﻿using System.Data;
 using System.Text.Json;
-using Azure.Core;
 using Dapper;
-using DocumentFormat.OpenXml.Bibliography;
-using DocumentFormat.OpenXml.Vml;
 using Hangfire;
 using Microsoft.EntityFrameworkCore;
 using ServicePortals.Application.Common;
@@ -42,6 +39,7 @@ namespace ServicePortals.Application.Services.ITForm
             int pageSize = request.PageSize;
             int? departmentId = request.DepartmentId;
             int? statusId = request.RequestStatusId;
+            int? year = request.Year;
 
             var query = _context.ITForms.AsQueryable();
 
@@ -53,6 +51,11 @@ namespace ServicePortals.Application.Services.ITForm
             if (departmentId != null)
             {
                 query = query.Where(e => e.DepartmentId == departmentId);
+            }
+
+            if (year != null)
+            {
+                query = query.Where(e => e.CreatedAt != null && e.CreatedAt.Value.Year == year);
             }
 
             if (statusId != null)
@@ -314,7 +317,7 @@ namespace ServicePortals.Application.Services.ITForm
                 CreatedAt = DateTimeOffset.Now
             };
 
-            List<int?> ITFormCategoryIds = itemFormIT.ItFormCategories.Select(e => e.ITCategoryId)?.ToList();
+            List<int?>? ITFormCategoryIds = itemFormIT.ItFormCategories.Select(e => e.ITCategoryId)?.ToList();
 
             if (request?.Status == false)
             {
@@ -327,12 +330,16 @@ namespace ServicePortals.Application.Services.ITForm
 
                 await _context.SaveChangesAsync();
 
+                string? reasonReject = request?.Note == null || request.Note == "" ? "--" : request?.Note;
+
+                string bodyMailReject = $@"<h4><span style=""color:red"">Reason: {reasonReject}</span></h4>" + TemplateEmail.EmailFormIT(itemFormIT);
+
                 BackgroundJob.Enqueue<IEmailService>(job =>
                     job.SendEmailFormIT(
                         new List<string> { itemFormIT.Email ?? "" },
                         null,
                         "IT Form has been reject",
-                        TemplateEmail.EmailFormIT(itemFormIT),
+                        bodyMailReject,
                         null,
                         true
                     )
@@ -569,7 +576,7 @@ namespace ServicePortals.Application.Services.ITForm
             return true;
         }
 
-        public async Task<StatisticalFormITResponse> StatisticalFormIT()
+        public async Task<StatisticalFormITResponse> StatisticalFormIT(int year)
         {
             using var connection = _context.Database.GetDbConnection();
             if (connection.State != ConnectionState.Open)
@@ -577,85 +584,7 @@ namespace ServicePortals.Application.Services.ITForm
                 await connection.OpenAsync();
             }
 
-            var sql = $@"
-                SELECT 
-                    COUNT(*) AS Total,
-	                SUM(CASE WHEN AF.RequestStatusId = 2 OR AF.RequestStatusId = 7  THEN 1 ELSE 0 END) AS InProcess,
-                    SUM(CASE WHEN AF.RequestStatusId = 3 THEN 1 ELSE 0 END) AS Complete,
-                    SUM(CASE WHEN AF.RequestStatusId = 1 OR AF.RequestStatusId = 6 THEN 1 ELSE 0 END) AS Pending,
-	                SUM(CASE WHEN AF.RequestStatusId = 5 THEN 1 ELSE 0 END) AS Reject
-                FROM it_forms AS IT
-                INNER JOIN application_forms AS AF ON AF.Id = IT.ApplicationFormId
-                WHERE IT.DeletedAt IS NULL AND AF.DeletedAt IS NULL;
-
-                SELECT 
-	                IT.Code,
-	                IT.Reason,
-	                IT.UserNameRequestor,
-	                OU.Name as DepartmentName,
-	                IT.CreatedAt,
-	                P.Name AS NamePriority,
-	                P.NameE AS NamePriorityE,
-	                RS.Name AS RequestStatus,
-	                Rs.NameE AS RequestStatusE
-                FROM it_forms AS IT
-                LEFT JOIN org_units AS OU ON IT.DepartmentId = OU.Id
-                LEFT JOIN priorities AS P ON P.Id = IT.PriorityId
-                LEFT JOIN application_forms AS AF ON IT.ApplicationFormId = AF.Id
-                LEFT JOIN request_statuses AS RS ON RS.Id = AF.RequestStatusId
-                WHERE IT.DeletedAt IS NULL
-                ORDER BY IT.CreatedAt DESC, AF.RequestStatusId
-                OFFSET 10 * 0 ROWS
-                FETCH NEXT 10 ROWS ONLY;
-
-                SELECT 
-                    OU.Id,
-                    OU.Name,
-                    COUNT(IT.id) AS Total
-                FROM org_units AS OU 
-                LEFT JOIN it_forms AS IT ON IT.DepartmentId = OU.Id AND IT.DeletedAt IS NULL
-                WHERE OU.UnitId = 3
-                GROUP BY OU.Id, OU.Name
-                ORDER BY OU.Name;
-
-                WITH Months AS (
-                    SELECT 1 AS Mon
-                    UNION ALL SELECT 2
-                    UNION ALL SELECT 3
-                    UNION ALL SELECT 4
-                    UNION ALL SELECT 5
-                    UNION ALL SELECT 6
-                    UNION ALL SELECT 7
-                    UNION ALL SELECT 8
-                    UNION ALL SELECT 9
-                    UNION ALL SELECT 10
-                    UNION ALL SELECT 11
-                    UNION ALL SELECT 12
-                )
-                SELECT 
-                    M.Mon,
-                    COALESCE(COUNT(IT.Id), 0) AS Total
-                FROM Months M
-                LEFT JOIN it_forms IT 
-                    ON MONTH(IT.CreatedAt) = M.Mon 
-                    AND YEAR(IT.CreatedAt) = 2025
-                    AND IT.DeletedAt IS NULL
-                GROUP BY M.Mon
-                ORDER BY M.Mon;
-
-                SELECT
-	                T.Name AS Name,
-                    T.Code AS Code,
-                    COUNT(*) AS Total
-                FROM it_form_categories FT
-                JOIN it_categories T ON FT.ITCategoryId = T.Id
-                JOIN it_forms F ON FT.ITFormId = F.Id
-                WHERE YEAR(F.CreatedAt) = 2025
-                GROUP BY T.Code, T.Name
-                ORDER BY T.Code;
-            ";
-
-            using var multi = await connection.QueryMultipleAsync(sql, new { Page = 1, Year = 2025});
+            using var multi = await connection.QueryMultipleAsync("GetITFormStatisticalData", new { Year = year }, commandType: CommandType.StoredProcedure);
 
             var result = new StatisticalFormITResponse
             {

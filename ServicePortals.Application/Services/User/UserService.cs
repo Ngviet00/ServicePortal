@@ -44,6 +44,7 @@ namespace ServicePortals.Application.Services.User
             parameters.Add("@SearchDepartmentId", request.DepartmentId, DbType.Int32, ParameterDirection.Input);
             parameters.Add("@SearchGender", request.Sex, DbType.Int32, ParameterDirection.Input);
             parameters.Add("@SearchName", Helper.RemoveDiacritics(request.Name ?? ""), DbType.String, ParameterDirection.Input);
+            parameters.Add("@SearchStatus", request?.Status ?? null, DbType.Int32, ParameterDirection.Input);
             parameters.Add("@TotalRecords", dbType: DbType.Int32, direction: ParameterDirection.Output);
 
             var results = await _context.Database.GetDbConnection()
@@ -294,7 +295,7 @@ namespace ServicePortals.Application.Services.User
                         WHERE
                             NVMaNV = @UserCode";
 
-            var result = await connection.QueryFirstAsync<object>(sql, new { UserCode = userCode });
+            var result = await connection.QueryFirstOrDefaultAsync<object?>(sql, new { UserCode = userCode });
 
             return result;
         }

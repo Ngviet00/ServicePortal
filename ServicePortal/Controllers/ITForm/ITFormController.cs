@@ -19,9 +19,9 @@ namespace ServicePortal.Controllers.ITForm
         }
 
         [HttpGet("statistical-form-it")]
-        public async Task<IActionResult> StatisticalFormIT()
+        public async Task<IActionResult> StatisticalFormIT([FromQuery] int year)
         {
-            var results = await _iITFormService.StatisticalFormIT();
+            var results = await _iITFormService.StatisticalFormIT(year);
 
             return Ok(new BaseResponse<object>(200, "success", results));
         }

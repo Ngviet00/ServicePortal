@@ -13,5 +13,6 @@
         public string? NVEmail { get; set; }
         public string? NVNgayVao { get; set; }
         public string? NVNgayRa { get; set; }
+        public bool? StatusUser { get; set; }
     }
 }

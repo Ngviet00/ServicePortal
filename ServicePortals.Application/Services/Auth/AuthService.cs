@@ -63,7 +63,6 @@ namespace ServicePortals.Application.Services.Auth
             var newUser = new Domain.Entities.User
             {
                 UserCode = request.UserCode,
-                Password = Helper.HashString(request.Password),
                 IsActive = 1,
                 IsChangePassword = 0,
                 Email = !string.IsNullOrWhiteSpace(userFromViclock.NVEmail) ? userFromViclock.NVEmail : null,
