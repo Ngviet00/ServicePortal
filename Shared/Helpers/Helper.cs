@@ -18,6 +18,11 @@ namespace ServicePortals.Infrastructure.Helpers
 
         public static bool VerifyString(string hash, string currrentInput)
         {
+            if (string.IsNullOrEmpty(hash))
+            {
+                return false;
+            }
+
             return BCrypt.Net.BCrypt.Verify(currrentInput, hash);
         }
 

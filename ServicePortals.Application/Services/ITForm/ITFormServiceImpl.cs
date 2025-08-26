@@ -240,7 +240,7 @@ namespace ServicePortals.Application.Services.ITForm
                     .ThenInclude(e => e.ITCategory)
                 .FirstOrDefaultAsync(e => e.Id == formIT.Id) ?? throw new NotFoundException("Not found data, please check again");
 
-            string urlApproval = $@"{request?.UrlFrontend}/approval/approval-form-it/{itemFormIT.Id}?mode=approval";
+            string urlApproval = $@"{request?.UrlFrontend}/approval/approval-form-it/{itemFormIT.Id}";
 
             string bodyMail = $@"
                 <h4>
@@ -285,6 +285,7 @@ namespace ServicePortals.Application.Services.ITForm
             item.RequiredCompletionDate = request.RequiredCompletionDate;
             item.Reason = request.Reason;
             item.PriorityId = request.PriorityId;
+            item.UpdatedAt = DateTimeOffset.Now;
 
             _context.ITForms.Update(item);
 
@@ -409,7 +410,7 @@ namespace ServicePortals.Application.Services.ITForm
 
             var nextUserInfo = await _userService.GetMultipleUserViclockByOrgPositionId(nextOrgPositionId ?? -1);
 
-            string urlApproval = $@"{request?.UrlFrontend}/approval/approval-form-it/{itemFormIT.Id}?mode=approval";
+            string urlApproval = $@"{request?.UrlFrontend}/approval/approval-form-it/{itemFormIT.Id}";
 
             string bodyMail = $@"
                 <h4>
@@ -440,6 +441,12 @@ namespace ServicePortals.Application.Services.ITForm
                 .FirstOrDefaultAsync(e => e.Id == request.ITFormId) ?? throw new NotFoundException("IT Form not found");
 
             var applicationForm = await _context.ApplicationForms.FirstOrDefaultAsync(e => e.Id == itemITForm.ApplicationFormId) ?? throw new NotFoundException("Application form not found");
+
+            if (request?.OrgPositionId != applicationForm.OrgPositionId)
+            {
+                throw new ForbiddenException("You are not permitted to approve this request.");
+            }
+
             applicationForm.UpdatedAt = DateTimeOffset.Now;
             applicationForm.RequestStatusId = (int)StatusApplicationFormEnum.ASSIGNED; //set sang trạng thái là đẫ được gắn task
             applicationForm.OrgPositionId = (int)StatusApplicationFormEnum.ORG_POSITION_ID_AFTER_ASSIGNED_TASK; //SET -1 để không còn ai, dựa vào usercode để xử lý tiếp theo
@@ -473,7 +480,7 @@ namespace ServicePortals.Application.Services.ITForm
 
             await _context.SaveChangesAsync();
 
-            string urlApproval = $@"{request.UrlFrontend}/approval/approval-form-it/{itemITForm.Id}?mode=approval";
+            string urlApproval = $@"{request.UrlFrontend}/approval/assigned-form-it/{itemITForm.Id}";
 
             string bodyMail = $@"
                 <h4>
@@ -553,7 +560,7 @@ namespace ServicePortals.Application.Services.ITForm
             //get email to cc, manager, user assigned task
             List<GetMultiUserViClockByOrgPositionIdResponse> multipleByUserCodes = await _userService.GetMultipleUserViclockByOrgPositionId(-1, ccUserCode);
 
-            string urlDetail = $@"{request.UrlFrontend}/approval/approval-form-it/{itemFormIT.Id}?mode=view";
+            string urlDetail = $@"{request.UrlFrontend}/approval/view-form-it/{itemFormIT.Id}";
 
             string bodyMail = $@"
                 <h4>

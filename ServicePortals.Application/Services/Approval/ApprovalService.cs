@@ -220,50 +220,70 @@ namespace ServicePortals.Application.Services.Approval
                 throw new ValidationException("UserCode is required");
             }
 
-            var query = _context.HistoryApplicationForms.Where(e => e.UserCodeApproval == userCode && e.DeletedAt == null && e.ApplicationForm != null && e.ApplicationForm.DeletedAt == null);
+            var query = _context.HistoryApplicationForms
+                .Where(e => 
+                    (e.UserCodeApproval == userCode || 
+                        (
+                            e.ApplicationForm != null &&
+                            e.ApplicationForm.RequestTypeId == (int)RequestTypeEnum.FORM_IT && 
+                            e.ApplicationForm.AssignedTasks.Any(at => at.UserCode == userCode))
+                        ) && 
+                    e.DeletedAt == null && e.ApplicationForm != null &&
+                    e.ApplicationForm.DeletedAt == null
+            );
 
             if (requestTypeId != null)
             {
                 query = query.Where(e => e.ApplicationForm != null && e.ApplicationForm.RequestTypeId == requestTypeId);
             }
 
-            var totalItems = await query.CountAsync();
-
+            var totalItems = await query.GroupBy(e => e.ApplicationFormId).CountAsync();
             var totalPages = (int)Math.Ceiling(totalItems / pageSize);
 
-            var results = await query
+            var pagedIds = await query
+                .OrderByDescending(e => e.CreatedAt)
+                .GroupBy(e => e.ApplicationFormId)
+                .Select(g => g.FirstOrDefault().Id)
                 .Skip((int)((page - 1) * pageSize))
                 .Take((int)pageSize)
-                .OrderByDescending(e => e.CreatedAt)
+                .ToListAsync();
+
+            var results = await _context.HistoryApplicationForms
+                .Where(e => pagedIds.Contains(e.Id))
                 .Select(x => new HistoryApprovalProcessResponse
                 {
                     CreatedAt = x.CreatedAt,
                     Action = x.Action,
                     RequestStatusId = x.ApplicationForm != null ? x.ApplicationForm.RequestStatusId : null,
-                    RequestType = x.ApplicationForm != null && x.ApplicationForm.RequestType == null ? null : new Domain.Entities.RequestType
+                    RequestType = x.ApplicationForm.RequestType == null ? null : new Domain.Entities.RequestType
                     {
                         Id = x.ApplicationForm.RequestType.Id,
                         Name = x.ApplicationForm.RequestType.Name,
                         NameE = x.ApplicationForm.RequestType.NameE,
                     },
-                    LeaveRequest = x.ApplicationForm.Leave == null ? null : new Domain.Entities.LeaveRequest
+                    LeaveRequest = x.ApplicationForm.Leave == null ? null : new CommonDataHistoryApproval
                     {
                         Id = x.ApplicationForm.Leave.Id,
                         Code = x.ApplicationForm.Leave.Code,
-                        UserNameRequestor = x.ApplicationForm.Leave.UserNameRequestor
+                        UserNameRequestor = x.ApplicationForm.Leave.UserNameRequestor,
+                        UserNameCreated = x.ApplicationForm.Leave.CreatedBy,
+                        DepartmentName = x.ApplicationForm.Leave.OrgUnit == null ? "" : x.ApplicationForm.Leave.OrgUnit.Name
                     },
-                    MemoNotification = x.ApplicationForm.MemoNotification == null ? null : new Domain.Entities.MemoNotification
+                    MemoNotification = x.ApplicationForm.MemoNotification == null ? null : new CommonDataHistoryApproval
                     {
                         Id = x.ApplicationForm.MemoNotification.Id,
                         Code = x.ApplicationForm.MemoNotification.Code,
-                        CreatedBy = x.ApplicationForm.MemoNotification.CreatedBy
+                        UserNameRequestor = x.ApplicationForm.MemoNotification.CreatedBy,
+                        UserNameCreated = x.ApplicationForm.MemoNotification.CreatedBy,
+                        DepartmentName = x.ApplicationForm.MemoNotification.OrgUnit == null ? "" : x.ApplicationForm.MemoNotification.OrgUnit.Name,
                     },
-                    ITForm = x.ApplicationForm.ITForm == null ? null : new Domain.Entities.ITForm
+                    ITForm = x.ApplicationForm.ITForm == null ? null : new CommonDataHistoryApproval
                     {
                         Id = x.ApplicationForm.ITForm.Id,
                         Code = x.ApplicationForm.ITForm.Code,
                         UserNameRequestor = x.ApplicationForm.ITForm.UserNameRequestor,
-                        UserNameCreated = x.ApplicationForm.ITForm.UserNameCreated
+                        UserNameCreated = x.ApplicationForm.ITForm.UserNameCreated,
+                        DepartmentName = x.ApplicationForm.ITForm.OrgUnit == null ? "" : x.ApplicationForm.ITForm.OrgUnit.Name,
                     }
                 })
                 .ToListAsync();

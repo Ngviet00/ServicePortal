@@ -177,8 +177,8 @@ namespace ServicePortal.Controllers.User
             return Ok(new BaseResponse<List<GetMultiUserViClockByOrgPositionIdResponse>>(200, "Success", results));
         }
 
-        [HttpGet("test"), AllowAnonymous]
-        public async Task<IActionResult> Test()
+        [HttpGet("test112"), AllowAnonymous]
+        public async Task<IActionResult> Test112()
         {
             return Ok("OK");
         }
