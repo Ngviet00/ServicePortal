@@ -221,47 +221,56 @@ namespace ServicePortals.Application.Services.Approval
             }
 
             var query = _context.HistoryApplicationForms
-                .Where(e => 
-                    (e.UserCodeApproval == userCode || 
+                .Where(e =>
+                    (
+                        e.UserCodeApproval == userCode ||
                         (
                             e.ApplicationForm != null &&
-                            e.ApplicationForm.RequestTypeId == (int)RequestTypeEnum.FORM_IT && 
-                            e.ApplicationForm.AssignedTasks.Any(at => at.UserCode == userCode))
-                        ) && 
-                    e.DeletedAt == null && e.ApplicationForm != null &&
-                    e.ApplicationForm.DeletedAt == null
-            );
+                            e.ApplicationForm.RequestTypeId == (int)RequestTypeEnum.FORM_IT &&
+                            e.ApplicationForm.AssignedTasks.Any(at => at.UserCode == userCode)
+                        )
+                    )
+                    && e.DeletedAt == null
+                    && e.ApplicationForm != null
+                    && e.ApplicationForm.DeletedAt == null
+                );
 
             if (requestTypeId != null)
             {
                 query = query.Where(e => e.ApplicationForm != null && e.ApplicationForm.RequestTypeId == requestTypeId);
             }
 
-            var totalItems = await query.GroupBy(e => e.ApplicationFormId).CountAsync();
+            var totalItems = await query
+                .Select(e => e.ApplicationFormId)
+                .Distinct()
+                .CountAsync();
+
             var totalPages = (int)Math.Ceiling(totalItems / pageSize);
 
-            var pagedIds = await query
-                .OrderByDescending(e => e.CreatedAt)
+            var latestHistories = await query
                 .GroupBy(e => e.ApplicationFormId)
-                .Select(g => g.FirstOrDefault().Id)
+                .Select(g => g.OrderByDescending(x => x.CreatedAt).FirstOrDefault().Id)
+                .OrderByDescending(id => id)
                 .Skip((int)((page - 1) * pageSize))
                 .Take((int)pageSize)
                 .ToListAsync();
 
             var results = await _context.HistoryApplicationForms
-                .Where(e => pagedIds.Contains(e.Id))
+                .Where(e => latestHistories.Contains(e.Id))
                 .Select(x => new HistoryApprovalProcessResponse
                 {
                     CreatedAt = x.CreatedAt,
                     Action = x.Action,
                     RequestStatusId = x.ApplicationForm != null ? x.ApplicationForm.RequestStatusId : null,
-                    RequestType = x.ApplicationForm.RequestType == null ? null : new Domain.Entities.RequestType
-                    {
-                        Id = x.ApplicationForm.RequestType.Id,
-                        Name = x.ApplicationForm.RequestType.Name,
-                        NameE = x.ApplicationForm.RequestType.NameE,
-                    },
-                    LeaveRequest = x.ApplicationForm.Leave == null ? null : new CommonDataHistoryApproval
+                    RequestType = x.ApplicationForm != null && x.ApplicationForm.RequestType != null
+                        ? new Domain.Entities.RequestType
+                        {
+                            Id = x.ApplicationForm.RequestType.Id,
+                            Name = x.ApplicationForm.RequestType.Name,
+                            NameE = x.ApplicationForm.RequestType.NameE,
+                        }
+                        : null,
+                    LeaveRequest = x.ApplicationForm != null && x.ApplicationForm.Leave == null ? null : new CommonDataHistoryApproval
                     {
                         Id = x.ApplicationForm.Leave.Id,
                         Code = x.ApplicationForm.Leave.Code,
@@ -286,6 +295,7 @@ namespace ServicePortals.Application.Services.Approval
                         DepartmentName = x.ApplicationForm.ITForm.OrgUnit == null ? "" : x.ApplicationForm.ITForm.OrgUnit.Name,
                     }
                 })
+                .OrderByDescending(x => x.CreatedAt)
                 .ToListAsync();
 
             return new PagedResults<HistoryApprovalProcessResponse>

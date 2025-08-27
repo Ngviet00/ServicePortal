@@ -6,7 +6,6 @@ using ServicePortals.Application;
 using ServicePortals.Application.Dtos.User.Requests;
 using ServicePortals.Application.Dtos.User.Responses;
 using ServicePortals.Application.Interfaces.User;
-using ServicePortals.Domain.Entities;
 using ServicePortals.Infrastructure.Excel;
 
 namespace ServicePortal.Controllers.User

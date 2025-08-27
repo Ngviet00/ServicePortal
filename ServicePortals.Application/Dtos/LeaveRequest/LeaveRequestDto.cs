@@ -34,6 +34,9 @@ namespace ServicePortals.Application.Dtos.LeaveRequest
     {
         [Required]
         public int OrgPositionId { get; set; }
+        [Required]
+        public string? UserCode { get; set; }
+        public string? UrlFrontEnd { get; set; }
         public List<LeaveRequestDto>? Leaves { get; set; }
     }
 }
