@@ -39,6 +39,9 @@ namespace ServicePortals.Infrastructure.Data
         public DbSet<ITForm> ITForms { get; set; }
         public DbSet<ITFormCategory> ITFormCategories { get; set; }
         public DbSet<AssignedTask> AssignTasks { get; set; }
+        public DbSet<Purchase> Purchases { get; set; }
+        public DbSet<PurchaseDetail> PurchaseDetails { get; set; }
+        public DbSet<CostCenter> CostCenters { get; set; }
         public IDbConnection CreateConnection() => Database.GetDbConnection();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -199,14 +202,25 @@ namespace ServicePortals.Infrastructure.Data
                 new ITCategory { Id = 6, Name = "Other", Code = "OTHER" }
             );
 
+            modelBuilder.Entity<CostCenter>().HasData(
+                new CostCenter { Id = 1, Code = "V1013202", Description = "MIS" }
+            );
+
             modelBuilder.Entity<ApplicationForm>()
+                .HasQueryFilter(e => e.DeletedAt == null);
+
+            modelBuilder.Entity<HistoryApplicationForm>()
                 .HasQueryFilter(e => e.DeletedAt == null);
 
             modelBuilder.Entity<ITForm>()
                 .HasQueryFilter(e => e.DeletedAt == null);
 
-            modelBuilder.Entity<HistoryApplicationForm>()
+            modelBuilder.Entity<Purchase>()
                 .HasQueryFilter(e => e.DeletedAt == null);
+
+            modelBuilder.Entity<PurchaseDetail>()
+                .HasQueryFilter(e => e.DeletedAt == null);
+
 
             //file - attach_file
             modelBuilder.Entity<AttachFile>()
@@ -398,6 +412,39 @@ namespace ServicePortals.Infrastructure.Data
                 .HasForeignKey(it => it.UserCodeCreated)
                 .IsRequired(false)
                 .OnDelete(DeleteBehavior.NoAction);
+
+            //------------PURCHASING--------------
+            
+            modelBuilder.Entity<Purchase>()
+                .HasOne(p => p.OrgUnit)
+                .WithMany()
+                .HasForeignKey(p => p.DepartmentId)
+                .HasPrincipalKey(ou => ou.Id)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<Purchase>()
+                .HasOne(p => p.ApplicationForm)
+                .WithOne(a => a.Purchase)
+                .HasForeignKey<Purchase>(p => p.ApplicationFormId)
+                .HasPrincipalKey<ApplicationForm>(a => a.Id)
+                .OnDelete(DeleteBehavior.NoAction)
+                .IsRequired(false);
+
+            modelBuilder.Entity<Purchase>()
+                .HasMany(p => p.PurchaseDetails)
+                .WithOne()
+                .HasForeignKey(pl => pl.PurchaseId)
+                .HasPrincipalKey(p => p.Id)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<PurchaseDetail>()
+                .HasOne(pl => pl.CostCenter)
+                .WithMany()
+                .HasForeignKey(pl => pl.CostCenterId)
+                .HasPrincipalKey(cc => cc.Id)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            //--------------------------
         }
     }
 }

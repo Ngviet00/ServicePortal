@@ -50,6 +50,8 @@ using ServicePortals.Application.Interfaces.ITForm;
 using ServicePortals.Application.Services.ITForm;
 using ServicePortals.Application.Interfaces.Priority;
 using ServicePortals.Application.Services.Priority;
+using ServicePortals.Application.Interfaces.CostCenter;
+using ServicePortals.Application.Services.CostCenter;
 
 namespace ServicePortal
 {
@@ -161,6 +163,8 @@ namespace ServicePortal
             builder.Services.AddScoped<ITCategoryService, ITCategoryServiceImpl>();
 
             builder.Services.AddScoped<IPriorityService, PriorityService>();
+
+            builder.Services.AddScoped<ICostCenterService, CostCenterService>();
             #endregion
 
             builder.Services.AddHttpContextAccessor();

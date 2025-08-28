@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ServicePortals.Infrastructure.Data;
 
@@ -11,9 +12,11 @@ using ServicePortals.Infrastructure.Data;
 namespace ServicePortals.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250828042535_AddTblPurchase")]
+    partial class AddTblPurchase
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1048,9 +1051,6 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                     b.Property<Guid?>("ApplicationFormId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("Code")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<DateTimeOffset?>("CreatedAt")
                         .HasColumnType("datetimeoffset");
 
@@ -1118,8 +1118,8 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                     b.Property<DateTimeOffset?>("RequiredDate")
                         .HasColumnType("datetimeoffset");
 
-                    b.Property<string>("UnitMeasurement")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int?>("UnitMeasurementId")
+                        .HasColumnType("int");
 
                     b.Property<DateTimeOffset?>("UpdatedAt")
                         .HasColumnType("datetimeoffset");
@@ -1129,6 +1129,8 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                     b.HasIndex("CostCenterId");
 
                     b.HasIndex("PurchaseId");
+
+                    b.HasIndex("UnitMeasurementId");
 
                     b.ToTable("purchase_details");
                 });
@@ -1615,6 +1617,37 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                         });
                 });
 
+            modelBuilder.Entity("ServicePortals.Domain.Entities.UnitMeasurement", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Name")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("NameE")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("StandFor")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("unit_measurements");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Name = "Cái",
+                            NameE = "Pieces",
+                            StandFor = "pcs"
+                        });
+                });
+
             modelBuilder.Entity("ServicePortals.Domain.Entities.User", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1978,7 +2011,14 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                         .HasForeignKey("PurchaseId")
                         .OnDelete(DeleteBehavior.NoAction);
 
+                    b.HasOne("ServicePortals.Domain.Entities.UnitMeasurement", "UnitMeasurement")
+                        .WithMany()
+                        .HasForeignKey("UnitMeasurementId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
                     b.Navigation("CostCenter");
+
+                    b.Navigation("UnitMeasurement");
                 });
 
             modelBuilder.Entity("ServicePortals.Domain.Entities.RolePermission", b =>
