@@ -20,6 +20,6 @@ namespace ServicePortal.Controllers.CostCenter
             var results = await _costCenterService.GetAll();
 
             return Ok(new BaseResponse<List< ServicePortals.Domain.Entities.CostCenter>>(200, "success", results));
-        } 
+        }
     }
 }

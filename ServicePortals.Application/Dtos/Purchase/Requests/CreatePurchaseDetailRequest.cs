@@ -1,0 +1,13 @@
+﻿namespace ServicePortals.Application.Dtos.Purchase.Requests
+{
+    public class CreatePurchaseDetailRequest
+    {
+        public string? ItemName { get; set; }
+        public string? ItemDescription { get; set; }
+        public int Quantity { get; set; } = 0;
+        public string? UnitMeasurement { get; set; }
+        public DateTimeOffset? RequiredDate { get; set; }
+        public int? CostCenterId { get; set; }
+        public string? Note { get; set; }
+    }
+}

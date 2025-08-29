@@ -446,14 +446,14 @@ namespace ServicePortals.Application.Services.User
             var sql = $@"
                 SELECT
                     NV.NVMaNV,
-                    vs_new.dbo.funTCVN2Unicode(NV.NVHoTen) AS NVHoTen,
+                    {Global.DbViClock}.dbo.funTCVN2Unicode(NV.NVHoTen) AS NVHoTen,
                     OP.Id AS OrgPositionId,
                     OP.Name AS PositionName,
                     OP.ParentOrgPositionId,
                     OU.Name AS TeamName
-                FROM ServicePortal.dbo.org_units AS OU
-                INNER JOIN ServicePortal.dbo.org_positions AS OP ON OU.Id = OP.OrgUnitId
-                LEFT JOIN vs_new.dbo.tblNhanVien AS NV ON OP.Id = NV.ViTriToChucId
+                FROM {Global.DbWeb}.dbo.org_units AS OU
+                INNER JOIN {Global.DbWeb}.dbo.org_positions AS OP ON OU.Id = OP.OrgUnitId
+                LEFT JOIN {Global.DbViClock}.dbo.tblNhanVien AS NV ON OP.Id = NV.ViTriToChucId
                 WHERE (OU.ParentOrgUnitId = @DepartmentId OR OP.OrgUnitId = @DepartmentId)
             ";
 

@@ -13,83 +13,83 @@ namespace ServicePortals.Application.Services.DelegatedTemp
 {
     public class DelegatedTempService : IDelegatedTempService
     {
-    //    private readonly ApplicationDbContext _context;
+        //    private readonly ApplicationDbContext _context;
 
-    //    public DelegatedTempService (ApplicationDbContext context)
-    //    {
-    //        _context = context;
-    //    }
+        //    public DelegatedTempService (ApplicationDbContext context)
+        //    {
+        //        _context = context;
+        //    }
 
-    //    public async Task<DelegatedTempDto> AddNew(CreateDelegatedTempRequest request)
-    //    {
-    //        var mainOrgUnitId = request.MainOrgUnitId;
-    //        var userCodeMain = request.MainUserCode;
-    //        var userCodeTemp = request.TempUserCode;
+        //    public async Task<DelegatedTempDto> AddNew(CreateDelegatedTempRequest request)
+        //    {
+        //        var mainOrgUnitId = request.MainOrgUnitId;
+        //        var userCodeMain = request.MainUserCode;
+        //        var userCodeTemp = request.TempUserCode;
 
-    //        if (mainOrgUnitId == null)
-    //        {
-    //            var connection = _context.Database.GetDbConnection();
+        //        if (mainOrgUnitId == null)
+        //        {
+        //            var connection = _context.Database.GetDbConnection();
 
-    //            mainOrgUnitId = await connection.QueryFirstOrDefaultAsync<int?>($@"SELECT OrgUnitId FROM vs_new.dbo.tblNhanVien AS NV WHERE NV.NVMaNV = @MainUserCode", new { MainUserCode = userCodeMain });
-            
-    //            if (mainOrgUnitId == null)
-    //            {
-    //                throw new NotFoundException("Chưa thiết lập vị trí của người phụ trách, liên hệ team IT");
-    //            }
-    //        }
+        //            mainOrgUnitId = await connection.QueryFirstOrDefaultAsync<int?>($@"SELECT OrgUnitId FROM {Global.DbViClock}.dbo.tblNhanVien AS NV WHERE NV.NVMaNV = @MainUserCode", new { MainUserCode = userCodeMain });
 
-    //        var newItem = new Domain.Entities.Delegation
-    //        {
-    //            MainOrgUnitId = mainOrgUnitId,
-    //            TempUserCode = userCodeTemp,
-    //            RequestTypeId = request.RequestTypeId,
-    //            IsActive = true,
-    //            IsPermanent = true
-    //        };
+        //            if (mainOrgUnitId == null)
+        //            {
+        //                throw new NotFoundException("Chưa thiết lập vị trí của người phụ trách, liên hệ team IT");
+        //            }
+        //        }
 
-    //        _context.DelegatedTemps.Add(newItem);
+        //        var newItem = new Domain.Entities.Delegation
+        //        {
+        //            MainOrgUnitId = mainOrgUnitId,
+        //            TempUserCode = userCodeTemp,
+        //            RequestTypeId = request.RequestTypeId,
+        //            IsActive = true,
+        //            IsPermanent = true
+        //        };
 
-    //        await _context.SaveChangesAsync();
+        //        _context.DelegatedTemps.Add(newItem);
 
-    //        return DelegatedTempMapper.ToDto(newItem);
-    //    }
+        //        await _context.SaveChangesAsync();
 
-    //    public async Task<DelegatedTempDto> Delete(DelegatedTempDto request)
-    //    {
-    //        var item = await _context.DelegatedTemps.FirstOrDefaultAsync(e => e.MainOrgUnitId == request.MainOrgUnitId && e.TempUserCode == request.TempUserCode);
+        //        return DelegatedTempMapper.ToDto(newItem);
+        //    }
 
-    //        _context.DelegatedTemps.Remove(item);
+        //    public async Task<DelegatedTempDto> Delete(DelegatedTempDto request)
+        //    {
+        //        var item = await _context.DelegatedTemps.FirstOrDefaultAsync(e => e.MainOrgUnitId == request.MainOrgUnitId && e.TempUserCode == request.TempUserCode);
 
-    //        await _context.SaveChangesAsync();
+        //        _context.DelegatedTemps.Remove(item);
 
-    //        return DelegatedTempMapper.ToDto(item);
-    //    }
+        //        await _context.SaveChangesAsync();
 
-    //    public async Task<List<GetAllDelegatedTempResponse>> GetAll(DelegatedTempDto request)
-    //    {
-    //        var delegatedTemp = await _context.DelegatedTemps.Where(e => e.RequestTypeId == request.RequestTypeId).ToListAsync();
+        //        return DelegatedTempMapper.ToDto(item);
+        //    }
 
-    //        var sql = $@"
-    //        SELECT
-    //              DT.MainOrgUnitId, 
-    //              ORG.Name AS OrgUnitName, 
-    //              {Global.DbViClock}.dbo.funTCVN2Unicode(NV1.NVHoTen) AS MainUser,
-    //              NV1.NVMaNV AS MainUserCode, 
-    //              {Global.DbViClock}.dbo.funTCVN2Unicode(NV.NVHoTen) AS TempUser,
-    //              NV.NVMaNV AS TempUserCode
-    //            FROM
-    //              {Global.DbWeb}.[dbo].[delegated_temp] AS DT
-    //              INNER JOIN {Global.DbWeb}.dbo.org_units AS ORG ON DT.MainOrgUnitId = ORG.Id
-    //              LEFT JOIN {Global.DbViClock}.dbo.tblNhanVien AS NV ON DT.TempUserCode = NV.NVMaNV
-    //              LEFT JOIN {Global.DbViClock}.dbo.tblNhanVien AS NV1 ON DT.MainOrgUnitId = NV1.OrgUnitID
-    //            WHERE
-    //              DT.RequestTypeId = @RequestTypeId";
+        //    public async Task<List<GetAllDelegatedTempResponse>> GetAll(DelegatedTempDto request)
+        //    {
+        //        var delegatedTemp = await _context.DelegatedTemps.Where(e => e.RequestTypeId == request.RequestTypeId).ToListAsync();
 
-    //        var connection = _context.Database.GetDbConnection();
+        //        var sql = $@"
+        //        SELECT
+        //              DT.MainOrgUnitId, 
+        //              ORG.Name AS OrgUnitName, 
+        //              {Global.DbViClock}.dbo.funTCVN2Unicode(NV1.NVHoTen) AS MainUser,
+        //              NV1.NVMaNV AS MainUserCode, 
+        //              {Global.DbViClock}.dbo.funTCVN2Unicode(NV.NVHoTen) AS TempUser,
+        //              NV.NVMaNV AS TempUserCode
+        //            FROM
+        //              {Global.DbWeb}.[dbo].[delegated_temp] AS DT
+        //              INNER JOIN {Global.DbWeb}.dbo.org_units AS ORG ON DT.MainOrgUnitId = ORG.Id
+        //              LEFT JOIN {Global.DbViClock}.dbo.tblNhanVien AS NV ON DT.TempUserCode = NV.NVMaNV
+        //              LEFT JOIN {Global.DbViClock}.dbo.tblNhanVien AS NV1 ON DT.MainOrgUnitId = NV1.OrgUnitID
+        //            WHERE
+        //              DT.RequestTypeId = @RequestTypeId";
 
-    //        var results = await connection.QueryAsync<GetAllDelegatedTempResponse>(sql, new { RequestTypeId = request.RequestTypeId });
+        //        var connection = _context.Database.GetDbConnection();
 
-    //        return (List<GetAllDelegatedTempResponse>)results;
-    //    }
+        //        var results = await connection.QueryAsync<GetAllDelegatedTempResponse>(sql, new { RequestTypeId = request.RequestTypeId });
+
+        //        return (List<GetAllDelegatedTempResponse>)results;
+        //    }
     }
 }

@@ -5,7 +5,7 @@ namespace ServicePortals.Domain.Entities
     [Table("purchase_details")]
     public class PurchaseDetail
     {
-        public int? Id { get; set; }
+        public Guid? Id { get; set; }
         public Guid? PurchaseId { get; set; }
         public string? ItemName { get; set; }
         public string? ItemDescription { get; set; }

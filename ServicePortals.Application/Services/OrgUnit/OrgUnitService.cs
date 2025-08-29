@@ -122,7 +122,7 @@ namespace ServicePortals.Application.Services.OrgUnit
 
             var sql = $@"
                 SELECT 
-                    NV.NVMaNV, vs_new.dbo.funTCVN2Unicode(NV.NVHoTen) AS NVHoTen 
+                    NV.NVMaNV, {Global.DbViClock}.dbo.funTCVN2Unicode(NV.NVHoTen) AS NVHoTen 
                 FROM {Global.DbViClock}.dbo.tblNhanVien AS NV
                 WHERE ViTriToChucId IN @orgPositions AND NV.NVNgayRa > GETDATE()
             ";

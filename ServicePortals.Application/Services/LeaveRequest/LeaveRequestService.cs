@@ -933,7 +933,7 @@ namespace ServicePortals.Application.Services.LeaveRequest
                      BP.BPMa,
                      {Global.DbViClock}.dbo.funTCVN2Unicode(BP.BPTen) as BPTen,
                      COALESCE(NULLIF(Email, ''), NVEmail, '') AS Email
-                FROM vs_new.dbo.tblNhanVien AS NV
+                FROM {Global.DbViClock}.dbo.tblNhanVien AS NV
                 LEFT JOIN {Global.DbViClock}.dbo.tblBoPhan as BP ON NV.NVMaBP = BP.BPMa
                 LEFT JOIN {Global.DbWeb}.dbo.users AS U ON NV.NVMaNV = U.UserCode
                 WHERE NV.NVMaNV IN @userCodePerission
