@@ -9,6 +9,7 @@
         public CommonDataHistoryApproval? LeaveRequest { get; set; }
         public CommonDataHistoryApproval? MemoNotification { get; set; }
         public CommonDataHistoryApproval? ITForm { get; set; }
+        public CommonDataHistoryApproval? Purchase { get; set; }
     }
 
     public class CommonDataHistoryApproval

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ServicePortals.Application.Dtos.ITForm.Requests
+namespace ServicePortals.Shared.SharedDto.Requests
 {
     public class AssignedTaskRequest
     {
@@ -13,6 +13,7 @@ namespace ServicePortals.Application.Dtos.ITForm.Requests
         public string? NoteManager { get; set; }
         public int? OrgPositionId { get; set; }
         public Guid? ITFormId { get; set; }
+        public Guid? PurchaseId { get; set; }
         public string? UrlFrontend { get; set; }
         public List<UserAssignedTaskRequest> UserAssignedTasks { get; set; } = [];
     }

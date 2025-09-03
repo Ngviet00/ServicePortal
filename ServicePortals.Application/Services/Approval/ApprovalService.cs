@@ -7,6 +7,7 @@ using ServicePortals.Application.Interfaces.Approval;
 using ServicePortals.Application.Interfaces.ITForm;
 using ServicePortals.Application.Interfaces.LeaveRequest;
 using ServicePortals.Application.Interfaces.MemoNotification;
+using ServicePortals.Application.Interfaces.Purchase;
 using ServicePortals.Domain.Entities;
 using ServicePortals.Domain.Enums;
 using ServicePortals.Infrastructure.Data;
@@ -21,6 +22,7 @@ namespace ServicePortals.Application.Services.Approval
         private readonly ILeaveRequestService _leaveRequestService;
         private readonly ITFormService _IitFormService;
         private readonly IMemoNotificationService _memoNotificationService;
+        private readonly IPurchaseService _purchaseService;
 
         public ApprovalService
         (
@@ -28,7 +30,8 @@ namespace ServicePortals.Application.Services.Approval
             IHttpContextAccessor httpContextAccessor,
             ILeaveRequestService leaveRequestService,
             IMemoNotificationService memoNotificationService,
-            ITFormService IitFormService
+            ITFormService IitFormService,
+            IPurchaseService purchaseService
         )
         {
             _context = context;
@@ -36,6 +39,7 @@ namespace ServicePortals.Application.Services.Approval
             _leaveRequestService = leaveRequestService;
             _memoNotificationService = memoNotificationService;
             _IitFormService = IitFormService;
+            _purchaseService = purchaseService;
         }
 
         public async Task<PagedResults<PendingApproval>> ListWaitApprovals(ListWaitApprovalRequest request)
@@ -68,11 +72,6 @@ namespace ServicePortals.Application.Services.Approval
                     ) ||
                     e.RequestStatusId == (int)StatusApplicationFormEnum.WAIT_HR
                 );
-
-                if (request.DepartmentId != null)
-                {
-                    query = query.Where(e => _context.LeaveRequests.Any(lr => lr.ApplicationFormId == e.Id && lr.DepartmentId == request.DepartmentId));
-                }
             }
             else
             {
@@ -88,15 +87,18 @@ namespace ServicePortals.Application.Services.Approval
             var totalPages = (int)Math.Ceiling(totalItems / pageSize);
 
             var results = await query
-                .Skip((int)(page - 1) * (int)pageSize)
-                .Take((int)pageSize)
                 .Select(r => new PendingApproval
                 {
                     Id = r.Id,
                     RequestTypeId = r.RequestTypeId,
                     OrgPositionId = r.OrgPositionId,
                     CreatedAt = r.CreatedAt,
-                    RequestType = r.RequestType,
+                    RequestType = new Domain.Entities.RequestType
+                    {
+                        Id = r.RequestType.Id,
+                        Name = r.RequestType.Name,
+                        NameE = r.RequestType.NameE
+                    },
                     HistoryApplicationForm = r.HistoryApplicationForms
                         .OrderByDescending(h => h.CreatedAt)
                         .Select(h => new HistoryApplicationForm { UserNameApproval = h.UserNameApproval })
@@ -107,7 +109,7 @@ namespace ServicePortals.Application.Services.Approval
                         Code = r.Leave.Code,
                         UserNameRequestor = r.Leave.UserNameRequestor,
                         UserNameCreated = r.Leave.CreatedBy,
-                        DepartmentName = r.Leave.OrgUnit == null ? "" : r.Leave.OrgUnit.Name
+                        DepartmentName = r.Leave.OrgUnit == null ? string.Empty : r.Leave.OrgUnit.Name
                     },
                     MemoNotification = r.MemoNotification == null ? null : new CommonDataPendingApproval
                     {
@@ -115,7 +117,7 @@ namespace ServicePortals.Application.Services.Approval
                         Code = r.MemoNotification.Code,
                         UserNameRequestor = r.MemoNotification.CreatedBy,
                         UserNameCreated = r.MemoNotification.CreatedBy,
-                        DepartmentName = r.MemoNotification.OrgUnit == null ? "" : r.MemoNotification.OrgUnit.Name
+                        DepartmentName = r.MemoNotification.OrgUnit == null ? string.Empty : r.MemoNotification.OrgUnit.Name
                     },
                     ITForm = r.ITForm == null ? null : new CommonDataPendingApproval
                     {
@@ -123,9 +125,19 @@ namespace ServicePortals.Application.Services.Approval
                         Code = r.ITForm.Code,
                         UserNameRequestor = r.ITForm.UserNameRequestor,
                         UserNameCreated = r.ITForm.UserNameCreated,
-                        DepartmentName = r.ITForm.OrgUnit == null ? "" : r.ITForm.OrgUnit.Name
+                        DepartmentName = r.ITForm.OrgUnit == null ? string.Empty : r.ITForm.OrgUnit.Name
+                    },
+                    Purchase = r.Purchase == null ? null : new CommonDataPendingApproval
+                    {
+                        Id = r.Purchase.Id,
+                        Code = r.Purchase.Code,
+                        UserNameCreated = r.Purchase.UserName,
+                        UserNameRequestor = r.Purchase.UserName,
+                        DepartmentName = r.Purchase.OrgUnit == null ? string.Empty : r.Purchase.OrgUnit.Name
                     }
                 })
+                .Skip((int)(page - 1) * (int)pageSize)
+                .Take((int)pageSize)
                 .ToListAsync();
 
             return new PagedResults<PendingApproval>
@@ -154,6 +166,10 @@ namespace ServicePortals.Application.Services.Approval
             else if (request.RequestTypeId == (int)RequestTypeEnum.FORM_IT)
             {
                 await _IitFormService.Approval(request);
+            }
+            else if (request.RequestTypeId == (int)RequestTypeEnum.PURCHASE)
+            {
+                await _purchaseService.Approval(request);
             }
 
             return true;
@@ -226,8 +242,12 @@ namespace ServicePortals.Application.Services.Approval
                         e.UserCodeApproval == userCode ||
                         (
                             e.ApplicationForm != null &&
-                            e.ApplicationForm.RequestTypeId == (int)RequestTypeEnum.FORM_IT &&
-                            e.ApplicationForm.AssignedTasks.Any(at => at.UserCode == userCode)
+                            (
+                                (
+                                    e.ApplicationForm.RequestTypeId == (int)RequestTypeEnum.FORM_IT || e.ApplicationForm.RequestTypeId == (int)RequestTypeEnum.PURCHASE
+                                ) && 
+                                e.ApplicationForm.AssignedTasks.Any(at => at.UserCode == userCode)
+                            )
                         )
                     )
                     && e.DeletedAt == null
@@ -293,7 +313,15 @@ namespace ServicePortals.Application.Services.Approval
                         UserNameRequestor = x.ApplicationForm.ITForm.UserNameRequestor,
                         UserNameCreated = x.ApplicationForm.ITForm.UserNameCreated,
                         DepartmentName = x.ApplicationForm.ITForm.OrgUnit == null ? "" : x.ApplicationForm.ITForm.OrgUnit.Name,
-                    }
+                    },
+                    Purchase = x.ApplicationForm.Purchase == null ? null : new CommonDataHistoryApproval
+                    {
+                        Id = x.ApplicationForm.Purchase.Id,
+                        Code = x.ApplicationForm.Purchase.Code,
+                        UserNameRequestor = x.ApplicationForm.Purchase.UserName,
+                        UserNameCreated = x.ApplicationForm.Purchase.UserName,
+                        DepartmentName = x.ApplicationForm.Purchase.OrgUnit == null ? "" : x.ApplicationForm.Purchase.OrgUnit.Name,
+                    },
                 })
                 .OrderByDescending(x => x.CreatedAt)
                 .ToListAsync();
@@ -325,8 +353,6 @@ namespace ServicePortals.Application.Services.Approval
 
             var results = await query
                 .OrderByDescending(r => r.CreatedAt)
-                .Skip((int)(page - 1) * (int)pageSize)
-                .Take((int)pageSize)
                 .Select(r => new PendingApproval
                 {
                     Id = r.Id,
@@ -361,8 +387,18 @@ namespace ServicePortals.Application.Services.Approval
                         UserNameRequestor = r.ITForm.UserNameRequestor,
                         UserNameCreated = r.ITForm.UserNameCreated,
                         DepartmentName = r.ITForm.OrgUnit == null ? "" : r.ITForm.OrgUnit.Name
+                    },
+                    Purchase = r.Purchase == null ? null : new CommonDataPendingApproval
+                    {
+                        Id = r.Purchase.Id,
+                        Code = r.Purchase.Code,
+                        UserNameCreated = r.Purchase.UserName,
+                        UserNameRequestor = r.Purchase.UserName,
+                        DepartmentName = r.Purchase.OrgUnit == null ? string.Empty : r.Purchase.OrgUnit.Name
                     }
                 })
+                .Skip((int)(page - 1) * (int)pageSize)
+                .Take((int)pageSize)
                 .ToListAsync();
 
             return new PagedResults<PendingApproval>

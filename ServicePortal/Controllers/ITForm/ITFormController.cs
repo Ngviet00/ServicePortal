@@ -4,6 +4,8 @@ using ServicePortals.Application;
 using ServicePortals.Application.Dtos.ITForm.Requests;
 using ServicePortals.Application.Dtos.ITForm.Responses;
 using ServicePortals.Application.Interfaces.ITForm;
+using ServicePortals.Shared.SharedDto;
+using ServicePortals.Shared.SharedDto.Requests;
 
 namespace ServicePortal.Controllers.ITForm
 {
@@ -90,6 +92,15 @@ namespace ServicePortal.Controllers.ITForm
             var result = await _iITFormService.ResolvedTask(request);
 
             return Ok(new BaseResponse<object>(200, "success", result));
+        }
+
+
+        [HttpGet("get-member-it-assigned")]
+        public async Task<IActionResult> GetMemberITAssigned()
+        {
+            var results = await _iITFormService.GetMemberITAssigned();
+
+            return Ok(new BaseResponse<List<InfoUserAssigned>>(200, "success", results));
         }
     }
 }

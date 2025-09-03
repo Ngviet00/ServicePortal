@@ -389,7 +389,7 @@ namespace ServicePortals.Application.Services.User
         }
 
         /// <summary>
-        /// Lấy những người theo orgUnitId kết hợp bảng user vs tblNhanVien bên db viclock
+        /// Lấy những người theo orgUnitId kết hợp bảng user vs tblNhanVien bên db viclock, dựa trên 1 org position id
         /// </summary>
         public async Task<List<GetMultiUserViClockByOrgPositionIdResponse>> GetMultipleUserViclockByOrgPositionId(int OrgPositionId, List<string>? UserCodes = null)
         {

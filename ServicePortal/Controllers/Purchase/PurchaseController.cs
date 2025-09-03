@@ -3,6 +3,8 @@ using ServicePortals.Application;
 using ServicePortals.Application.Dtos.Purchase.Requests;
 using ServicePortals.Application.Dtos.Purchase.Responses;
 using ServicePortals.Application.Interfaces.Purchase;
+using ServicePortals.Shared.SharedDto;
+using ServicePortals.Shared.SharedDto.Requests;
 
 namespace ServicePortal.Controllers.Purchase
 {
@@ -36,7 +38,7 @@ namespace ServicePortal.Controllers.Purchase
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(Guid id)
         {
-            var result = await _purchaseService.GetById(id);
+            var result = await _purchaseService.GetById(id, true);
 
             return Ok(new BaseResponse<PurchaseResponse>(200, "success", result));
         }
@@ -65,12 +67,28 @@ namespace ServicePortal.Controllers.Purchase
             return Ok(new BaseResponse<object>(200, "success", result));
         }
 
-        [HttpDelete("delete-purchase-item/{id}")]
-        public async Task<IActionResult> DeletePurchaseItem(Guid id)
+        [HttpPost("assigned-task")]
+        public async Task<IActionResult> AssignedTask([FromBody] AssignedTaskRequest request)
         {
-            var result = await _purchaseService.DeletePurchaseItem(id);
+            var result = await _purchaseService.AssignedTask(request);
 
             return Ok(new BaseResponse<object>(200, "success", result));
+        }
+
+        [HttpPost("resolved-task")]
+        public async Task<IActionResult> ResolvedTask([FromBody] ResolvedTaskRequest request)
+        {
+            var result = await _purchaseService.ResolvedTask(request);
+
+            return Ok(new BaseResponse<object>(200, "success", result));
+        }
+
+        [HttpGet("get-member-purchase-assigned")]
+        public async Task<IActionResult> GetMemberPurchaseAssigned()
+        {
+            var results = await _purchaseService.GetMemberPurchaseAssigned();
+
+            return Ok(new BaseResponse<List<InfoUserAssigned>>(200, "success", results));
         }
     }
 }

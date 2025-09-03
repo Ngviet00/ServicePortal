@@ -2,6 +2,7 @@
 using System.Text.Json;
 using Dapper;
 using Hangfire;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using ServicePortals.Application.Common;
 using ServicePortals.Application.Dtos.Approval.Request;
@@ -17,6 +18,8 @@ using ServicePortals.Infrastructure.Data;
 using ServicePortals.Infrastructure.Email;
 using ServicePortals.Infrastructure.Helpers;
 using ServicePortals.Shared.Exceptions;
+using ServicePortals.Shared.SharedDto;
+using ServicePortals.Shared.SharedDto.Requests;
 
 namespace ServicePortals.Application.Services.ITForm
 {
@@ -603,6 +606,34 @@ namespace ServicePortals.Application.Services.ITForm
             };
 
             return result;
+        }
+
+        public async Task<List<InfoUserAssigned>> GetMemberITAssigned()
+        {
+            var connection = (SqlConnection)_context.CreateConnection();
+
+            if (connection.State != ConnectionState.Open)
+            {
+                await connection.OpenAsync();
+            }
+
+            string sql = $@"
+                SELECT
+                    NVMa,
+                    NVMaNV,
+                    {Global.DbViClock}.dbo.funTCVN2Unicode(NVHoTen) AS NVHoTen,
+                    ViTriToChucId AS OrgPositionId,
+	                COALESCE(NULLIF(Email, ''), NVEmail, '') AS Email
+                FROM {Global.DbViClock}.[dbo].[tblNhanVien] AS NV
+                LEFT JOIN {Global.DbWeb}.dbo.users as U
+	                ON NV.NVMaNV = U.UserCode
+                WHERE
+                    NV.NVNgayRa > GETDATE() AND NV.ViTriToChucId = 8
+            ";
+
+            var result = await connection.QueryAsync<InfoUserAssigned>(sql);
+
+            return (List<InfoUserAssigned>)result;
         }
     }
 }

@@ -11,6 +11,7 @@
         public CommonDataPendingApproval? LeaveRequest { get; set; }
         public CommonDataPendingApproval? MemoNotification  { get; set; }
         public CommonDataPendingApproval? ITForm { get; set; }
+        public CommonDataPendingApproval? Purchase { get; set; }
     }
 
     public class CommonDataPendingApproval

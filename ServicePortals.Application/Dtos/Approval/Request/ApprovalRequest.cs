@@ -9,6 +9,7 @@ namespace ServicePortals.Application.Dtos.Approval.Request
         public Guid? MemoNotificationId { get; set; }
         public Guid? LeaveRequestId { get; set; }
         public Guid? ITFormId { get; set; }
+        public Guid? PurchaseId { get; set; }
         public string? UserCodeApproval { get; set; }
         public string? UserNameApproval { get; set; }
         [Required]

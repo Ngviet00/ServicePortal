@@ -1,4 +1,6 @@
-﻿using ServicePortals.Domain.Entities;
+﻿using System.Text;
+using Microsoft.AspNetCore.Http;
+using ServicePortals.Domain.Entities;
 
 namespace ServicePortals.Application.Common
 {
@@ -214,6 +216,44 @@ namespace ServicePortals.Application.Common
                         <td style=""border: 1px solid #cccccc; padding: 8px;"">{itForm?.Priority?.NameE}</td>
                     </tr>
                 </table>
+            ";
+        }
+
+        public static string EmailPurchase(Purchase? purchase)
+        {
+            StringBuilder sb = new StringBuilder();
+
+            if (purchase != null && purchase.PurchaseDetails != null)
+            {
+                foreach (var item in purchase.PurchaseDetails)
+                {
+                    sb.AppendLine($@"<li style=""margin-bottom: 5px;""><strong>Item name:</strong> {item.ItemName} - <strong>Qty:</strong> {item.Quantity} - <strong>Unit:</strong> {item.UnitMeasurement}</li>");
+                }
+            }
+
+            return $@"
+                <body style=""font-family: Arial, sans-serif; margin: 0; padding: 0; color: #333;"">
+                    <div>
+                        <div style=""padding: 20px 0; line-height: 1.6;"">
+                            <div>
+                                <ul style=""list-style: none; padding: 0;"">
+                                    <li style=""margin-bottom: 5px;""><strong>Code:</strong> {purchase.Code}</li>
+                                    <li style=""margin-bottom: 5px;""><strong>UserName:</strong> {purchase.UserName}</li>
+                                    <li style=""margin-bottom: 5px;""><strong>Department:</strong> {purchase?.OrgUnit?.Name}</li>
+                                    <li style=""margin-bottom: 5px;""><strong>Date Created:</strong> {purchase.CreatedAt}</li>
+                                    <li style=""margin-bottom: 5px;""><strong>Order Summary:</strong>
+                                        <ul style=""list-style: none; padding: 0; margin-top: 5px;"">
+                                            {sb?.ToString()}
+                                        </ul>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div style=""text-align: center; padding-top: 20px; margin-top: 20px; border-top: 1px solid #ddd; font-size: 12px; color: #999;"">
+                            <p style=""margin: 0 0 10px;"">This is an automated notification. Please do not reply to this email.</p>
+                        </div>
+                    </div>
+                </body>
             ";
         }
     }

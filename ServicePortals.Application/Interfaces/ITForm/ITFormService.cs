@@ -1,6 +1,8 @@
 ﻿using ServicePortals.Application.Dtos.Approval.Request;
 using ServicePortals.Application.Dtos.ITForm.Requests;
 using ServicePortals.Application.Dtos.ITForm.Responses;
+using ServicePortals.Shared.SharedDto;
+using ServicePortals.Shared.SharedDto.Requests;
 
 namespace ServicePortals.Application.Interfaces.ITForm
 {
@@ -15,5 +17,6 @@ namespace ServicePortals.Application.Interfaces.ITForm
         Task<object> Approval(ApprovalRequest request);
         Task<object> AssignedTask(AssignedTaskRequest request);
         Task<object> ResolvedTask(ResolvedTaskRequest request);
+        Task<List<InfoUserAssigned>> GetMemberITAssigned();
     }
 }
