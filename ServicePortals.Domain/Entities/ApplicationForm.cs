@@ -9,23 +9,35 @@ namespace ServicePortals.Domain.Entities
     [Index(nameof(UserCodeRequestor))]
     public class ApplicationForm
     {
-        public Guid? Id { get; set; }
-        public string? UserCodeRequestor { get; set; } //mã nhân viên người yêu cầu
-        public string? UserNameRequestor { get; set; } //tên nhân viên người yêu cầu
-        public int? RequestTypeId { get; set; } //loại yêu cầu, mua bán, form it, sap
-        public int? RequestStatusId { get; set; } //trạng thái của đơn như pending, complete,...
-        public int? OrgPositionId { get; set; } //vị trí người duyệt
+        public Guid Id { get; set; }
+        public string? Code { get; set; }
+
+        public string? UserCodeRequestor { get; set; }
+        public string? UserNameRequestor { get; set; }
+        public string? UserCodeCreated { get; set; }
+        public string? UserNameCreated { get; set; }
+
+        public int? RequestTypeId { get; set; }
+        public int? RequestStatusId { get; set; }
+        public int? OrgPositionId { get; set; }
+        public int? DepartmentId { get; set; }
+
+        public int? Step { get; set; }
+        public string? MetaData { get; set; } //json
+
         public DateTimeOffset? CreatedAt { get; set; }
         public DateTimeOffset? UpdatedAt { get; set; }
         public DateTimeOffset? DeletedAt { get; set; }
-        public ICollection<HistoryApplicationForm> HistoryApplicationForms { get; set; } = [];
+
         public RequestType? RequestType { get; set; }
         public RequestStatus? RequestStatus { get; set; }
         public LeaveRequest? Leave { get; set; }
         public MemoNotification? MemoNotification { get; set; }
         public OrgPosition? OrgPosition { get; set; }
+        public OrgUnit? OrgUnit { get; set; }
         public ITForm? ITForm { get; set; }
         public Purchase? Purchase { get; set; }
         public ICollection<AssignedTask> AssignedTasks { get; set; } = [];
+        public ICollection<HistoryApplicationForm> HistoryApplicationForms { get; set; } = [];
     }
 }

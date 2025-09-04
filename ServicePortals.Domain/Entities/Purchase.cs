@@ -7,9 +7,6 @@ namespace ServicePortals.Domain.Entities
     {
         public Guid? Id { get; set; }
         public Guid? ApplicationFormId { get; set; }
-        public string? Code { get; set; }
-        public string? UserCode { get; set; }
-        public string? UserName { get; set; }
         public int? DepartmentId { get; set; }
         public DateTimeOffset? RequestedDate { get; set; }
         public DateTimeOffset? CreatedAt { get; set; }

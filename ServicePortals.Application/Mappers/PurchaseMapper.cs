@@ -16,9 +16,9 @@ namespace ServicePortals.Application.Mappers
             {
                 Id = x.Id,
                 ApplicationFormId = x.ApplicationFormId,
-                Code = x.Code,
-                UserCode = x.UserCode,
-                UserName = x.UserName,
+                //Code = x.Code,
+                //UserCode = x.UserCode,
+                //UserName = x.UserName,
                 DepartmentId = x.DepartmentId,
                 RequestedDate = x.RequestedDate,
                 CreatedAt = x.CreatedAt,

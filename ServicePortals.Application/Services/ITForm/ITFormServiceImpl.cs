@@ -48,7 +48,7 @@ namespace ServicePortals.Application.Services.ITForm
 
             if (!string.IsNullOrWhiteSpace(userCode))
             {
-                query = query.Where(e => (e.UserCodeRequestor == userCode || e.UserCodeCreated == userCode) && e.DeletedAt == null);
+                //query = query.Where(e => (e.UserCodeRequestor == userCode || e.UserCodeCreated == userCode) && e.DeletedAt == null);
             }
 
             if (departmentId != null)
@@ -192,7 +192,12 @@ namespace ServicePortals.Application.Services.ITForm
             var applicationForm = new ApplicationForm
             {
                 Id = Guid.NewGuid(),
+                Code = Helper.GenerateFormCode("FIT"),
                 UserCodeRequestor = request.UserCodeRequestor,
+                UserNameRequestor = request.UserNameRequestor,
+                UserCodeCreated = request.UserCodeCreated,
+                UserNameCreated = request.UserNameCreated,
+                DepartmentId = request.DepartmentId,
                 RequestTypeId = (int)RequestTypeEnum.FORM_IT,
                 OrgPositionId = nextOrgPositionId,
                 RequestStatusId = status,
@@ -203,11 +208,6 @@ namespace ServicePortals.Application.Services.ITForm
             {
                 Id = Guid.NewGuid(),
                 ApplicationFormId = applicationForm.Id,
-                Code = Helper.GenerateFormCode("FIT"),
-                UserCodeRequestor = request.UserCodeRequestor,
-                UserNameRequestor = request.UserNameRequestor,
-                UserCodeCreated = request.UserCodeCreated,
-                UserNameCreated = request.UserNameCreated,
                 DepartmentId = request.DepartmentId,
                 Email = request.Email,
                 Position = request.Position,
@@ -248,8 +248,9 @@ namespace ServicePortals.Application.Services.ITForm
             string bodyMail = $@"
                 <h4>
                     <span>Click to detail: </span>
-                    <a href={urlApproval}>{itemFormIT.Code}</a>
-                </h4>" + TemplateEmail.EmailFormIT(itemFormIT);
+                    <a href={urlApproval}>{itemFormIT}</a>
+                </h4>";
+            //+ TemplateEmail.EmailFormIT(itemFormIT);
 
             BackgroundJob.Enqueue<IEmailService>(job =>
                 job.SendEmailFormIT(
@@ -418,7 +419,7 @@ namespace ServicePortals.Application.Services.ITForm
             string bodyMail = $@"
                 <h4>
                     <span>Click to detail: </span>
-                    <a href={urlApproval}>{itemFormIT.Code}</a>
+                    <a href={urlApproval}>{itemFormIT}</a>
                 </h4>" + TemplateEmail.EmailFormIT(itemFormIT);
 
             BackgroundJob.Enqueue<IEmailService>(job =>
@@ -488,7 +489,7 @@ namespace ServicePortals.Application.Services.ITForm
             string bodyMail = $@"
                 <h4>
                     <span>Click to detail: </span>
-                    <a href={urlApproval}>{itemITForm.Code}</a>
+                    <a href={urlApproval}>{itemITForm}</a>
                 </h4>" + TemplateEmail.EmailFormIT(itemITForm);
 
             BackgroundJob.Enqueue<IEmailService>(job =>
@@ -568,7 +569,7 @@ namespace ServicePortals.Application.Services.ITForm
             string bodyMail = $@"
                 <h4>
                     <span>Click to detail: </span>
-                    <a href={urlDetail}>{itemFormIT.Code}</a>
+                    <a href={urlDetail}>{itemFormIT}</a>
                 </h4>" + TemplateEmail.EmailFormIT(itemFormIT);
 
             //send email

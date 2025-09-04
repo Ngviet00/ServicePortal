@@ -57,7 +57,7 @@ namespace ServicePortals.Application.Services.Purchase
 
             if (!string.IsNullOrWhiteSpace(userCode))
             {
-                query = query.Where(e => e.UserCode == userCode);
+                //query = query.Where(e => e.UserCode == userCode);
             }
 
             if (departmentId != null)
@@ -199,9 +199,9 @@ namespace ServicePortals.Application.Services.Purchase
             {
                 Id = Guid.NewGuid(),
                 ApplicationFormId = applicationForm.Id,
-                Code = Helper.GenerateFormCode("P"),
-                UserCode = request.UserCode,
-                UserName = request.UserName,
+                //Code = Helper.GenerateFormCode("P"),
+                //UserCode = request.UserCode,
+                //UserName = request.UserName,
                 DepartmentId = request.DepartmentId,
                 RequestedDate = request.RequestedDate,
                 CreatedAt = DateTimeOffset.Now
@@ -237,22 +237,22 @@ namespace ServicePortals.Application.Services.Purchase
 
             string urlApproval = $@"{_configuration["Setting:UrlFrontEnd"]}/approval/approval-purchase/{purchaseById?.Id}";
 
-            string bodyMail = $@"
-                <h3>
-                    <span>Click to detail: </span>
-                    <a href={urlApproval}>{purchase.Code}</a>
-                </h3>" + TemplateEmail.EmailPurchase(purchaseById);
+            //string bodyMail = $@"
+            //    <h3>
+            //        <span>Click to detail: </span>
+            //        <a href={urlApproval}>{purchase.Code}</a>
+            //    </h3>" + TemplateEmail.EmailPurchase(purchaseById);
 
-            BackgroundJob.Enqueue<IEmailService>(job =>
-                job.SendEmailPurchase(
-                    nextUserInfo.Select(e => e.Email ?? "").ToList(),
-                    null,
-                    "Request for purchase approval",
-                    bodyMail,
-                    null,
-                    true
-                )
-            );
+            //BackgroundJob.Enqueue<IEmailService>(job =>
+            //    job.SendEmailPurchase(
+            //        nextUserInfo.Select(e => e.Email ?? "").ToList(),
+            //        null,
+            //        "Request for purchase approval",
+            //        bodyMail,
+            //        null,
+            //        true
+            //    )
+            //);
 
             return true;
         }
@@ -372,20 +372,20 @@ namespace ServicePortals.Application.Services.Purchase
 
                 string? reasonReject = request?.Note == null || request.Note == "" ? "--" : request?.Note;
 
-                string bodyMailReject = $@"<h3><span style=""color:red"">Reason: {reasonReject}</span></h3>" + TemplateEmail.EmailPurchase(purchase);
+                //string bodyMailReject = $@"<h3><span style=""color:red"">Reason: {reasonReject}</span></h3>" + TemplateEmail.EmailPurchase(purchase);
 
-                var currentUser = await _userService.GetMultipleUserViclockByOrgPositionId(-1, [purchase.UserCode]);
+                //var currentUser = await _userService.GetMultipleUserViclockByOrgPositionId(-1, [purchase.UserCode]);
 
-                BackgroundJob.Enqueue<IEmailService>(job =>
-                    job.SendEmailPurchase(
-                        currentUser.Select(e => e.Email ?? "").ToList(),
-                        null,
-                        "Request purchase has been reject",
-                        bodyMailReject,
-                        null,
-                        true
-                    )
-                );
+                //BackgroundJob.Enqueue<IEmailService>(job =>
+                //    job.SendEmailPurchase(
+                //        currentUser.Select(e => e.Email ?? "").ToList(),
+                //        null,
+                //        "Request purchase has been reject",
+                //        bodyMailReject,
+                //        null,
+                //        true
+                //    )
+                //);
 
                 return true;
             }
@@ -436,22 +436,22 @@ namespace ServicePortals.Application.Services.Purchase
 
             string urlApproval = $@"{_configuration["Setting:UrlFrontEnd"]}/approval/approval-purchase/{purchase?.Id}";
 
-            string bodyMail = $@"
-                <h3>
-                    <span>Click to detail: </span>
-                    <a href={urlApproval}>{purchase.Code}</a>
-                </h3>" + TemplateEmail.EmailPurchase(purchase);
+            //string bodyMail = $@"
+            //    <h3>
+            //        <span>Click to detail: </span>
+            //        <a href={urlApproval}>{purchase.Code}</a>
+            //    </h3>" + TemplateEmail.EmailPurchase(purchase);
 
-            BackgroundJob.Enqueue<IEmailService>(job =>
-                job.SendEmailPurchase(
-                    nextUserInfo.Select(e => e.Email ?? "").ToList(),
-                    null,
-                    "Request for purchase approval",
-                    bodyMail,
-                    null,
-                    true
-                )
-            );
+            //BackgroundJob.Enqueue<IEmailService>(job =>
+            //    job.SendEmailPurchase(
+            //        nextUserInfo.Select(e => e.Email ?? "").ToList(),
+            //        null,
+            //        "Request for purchase approval",
+            //        bodyMail,
+            //        null,
+            //        true
+            //    )
+            //);
 
             return true;
         }
@@ -499,22 +499,22 @@ namespace ServicePortals.Application.Services.Purchase
 
             string urlAssigned = $@"{_configuration["Setting:UrlFrontEnd"]}/approval/assigned-purchase/{purchase?.Id}";
 
-            string bodyMail = $@"
-                <h3>
-                    <span>Click to detail: </span>
-                    <a href={urlAssigned}>{purchase?.Code}</a>
-                </h3>" + TemplateEmail.EmailPurchase(purchase);
+            //string bodyMail = $@"
+            //    <h3>
+            //        <span>Click to detail: </span>
+            //        <a href={urlAssigned}>{purchase?.Code}</a>
+            //    </h3>" + TemplateEmail.EmailPurchase(purchase);
 
-            BackgroundJob.Enqueue<IEmailService>(job =>
-                job.SendEmailPurchase(
-                    request.UserAssignedTasks.Select(e => e.Email ?? "").ToList(),
-                    null,
-                    "New Task Assigned",
-                    bodyMail,
-                    null,
-                    true
-                )
-            );
+            //BackgroundJob.Enqueue<IEmailService>(job =>
+            //    job.SendEmailPurchase(
+            //        request.UserAssignedTasks.Select(e => e.Email ?? "").ToList(),
+            //        null,
+            //        "New Task Assigned",
+            //        bodyMail,
+            //        null,
+            //        true
+            //    )
+            //);
 
             return true;
         }
@@ -562,32 +562,32 @@ namespace ServicePortals.Application.Services.Purchase
                 ccUserCode.Add(itemAss.UserCode ?? "");
             }
 
-            var userSendRequestPurchase = await _context.Users.FirstOrDefaultAsync(e => e.UserCode == purchase.UserCode);
+            //var userSendRequestPurchase = await _context.Users.FirstOrDefaultAsync(e => e.UserCode == purchase.UserCode);
 
-            var emailUserSendRequestPurchase = userSendRequestPurchase?.Email ?? "";
+            //var emailUserSendRequestPurchase = userSendRequestPurchase?.Email ?? "";
 
             //get email to cc, manager, user assigned task
             List<GetMultiUserViClockByOrgPositionIdResponse> multipleByUserCodes = await _userService.GetMultipleUserViclockByOrgPositionId(-1, ccUserCode);
 
             string urlDetail = $@"{_configuration["Setting:UrlFrontEnd"]}/approval/view-purchase/{purchase?.Id}";
 
-            string bodyMail = $@"
-                <h3>
-                    <span>Click to detail: </span>
-                    <a href={urlDetail}>{purchase?.Code}</a>
-                </h3>" + TemplateEmail.EmailPurchase(purchase);
+            //string bodyMail = $@"
+            //    <h3>
+            //        <span>Click to detail: </span>
+            //        <a href={urlDetail}>{purchase?.Code}</a>
+            //    </h3>" + TemplateEmail.EmailPurchase(purchase);
 
-            //send email
-            BackgroundJob.Enqueue<IEmailService>(job =>
-                job.SendEmailPurchase(
-                    new List<string> { emailUserSendRequestPurchase },
-                    multipleByUserCodes.Select(e => e.Email ?? "").ToList(),
-                    "Your purchase request has been successfully processed",
-                    bodyMail,
-                    null,
-                    true
-                )
-            );
+            ////send email
+            //BackgroundJob.Enqueue<IEmailService>(job =>
+            //    job.SendEmailPurchase(
+            //        new List<string> { emailUserSendRequestPurchase },
+            //        multipleByUserCodes.Select(e => e.Email ?? "").ToList(),
+            //        "Your purchase request has been successfully processed",
+            //        bodyMail,
+            //        null,
+            //        true
+            //    )
+            //);
 
             return true;
         }

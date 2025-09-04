@@ -48,6 +48,8 @@ namespace ServicePortals.Infrastructure.Data
         {
             base.OnModelCreating(modelBuilder);
 
+            #region SEED DATA
+
             modelBuilder.Entity<Role>().HasData(
                 new Role { Id = 1, Name = "SuperAdmin", Code = "SUPERADMIN" },
                 new Role { Id = 2, Name = "HR", Code = "HR" },
@@ -66,7 +68,7 @@ namespace ServicePortals.Infrastructure.Data
             );
 
             modelBuilder.Entity<TypeLeave>().HasData(
-                new TypeLeave { Id = 1, Code = "AL", NameE = "Annual Leave", Name = "Nghỉ Phép Năm"  },
+                new TypeLeave { Id = 1, Code = "AL", NameE = "Annual Leave", Name = "Nghỉ Phép Năm" },
                 new TypeLeave { Id = 2, Code = "NPL", NameE = "Unpaid Leave", Name = "Nghỉ Việc Cá Nhân" },
                 new TypeLeave { Id = 3, Code = "MC", NameE = "Sick Leave", Name = "Nghỉ Ốm" },
                 new TypeLeave { Id = 4, Code = "ML", NameE = "Wedding Leave", Name = "Nghỉ Cưới" },
@@ -159,12 +161,12 @@ namespace ServicePortals.Infrastructure.Data
                 new OrgPosition { Id = 4, PositionCode = "FGM", Name = "Finance General Manage", OrgUnitId = 6, ParentOrgPositionId = 1 },
                 new OrgPosition { Id = 5, PositionCode = "OGM", Name = "Operations General Manager", OrgUnitId = 6, ParentOrgPositionId = 1 },
                 new OrgPosition { Id = 6, PositionCode = "OM", Name = "Operations Manager", OrgUnitId = 6, ParentOrgPositionId = 1 },
-                                       
+
                 new OrgPosition { Id = 7, PositionCode = "MIS-MGR", Name = "Manager MIS/IT", OrgUnitId = 8, ParentOrgPositionId = null },
                 new OrgPosition { Id = 8, PositionCode = "MIS-Staff", Name = "Staff IT", OrgUnitId = 8, ParentOrgPositionId = 7 },
-                                       
+
                 new OrgPosition { Id = 9, PositionCode = "COM-MGR", Name = "Manager Commercial", OrgUnitId = 10, ParentOrgPositionId = null },
-                new OrgPosition { Id = 10, PositionCode = "COM-AM", Name = "AM Commercial", OrgUnitId = 10, ParentOrgPositionId = 9},
+                new OrgPosition { Id = 10, PositionCode = "COM-AM", Name = "AM Commercial", OrgUnitId = 10, ParentOrgPositionId = 9 },
                 new OrgPosition { Id = 11, PositionCode = "COM-Staff", Name = "Staff Commercial", OrgUnitId = 10, ParentOrgPositionId = 10 },
 
                 new OrgPosition { Id = 12, PositionCode = "HR-MGR", Name = "Manager HR", OrgUnitId = 9, ParentOrgPositionId = null },
@@ -194,8 +196,8 @@ namespace ServicePortals.Infrastructure.Data
             );
 
             modelBuilder.Entity<ITCategory>().HasData(
-                new ITCategory { Id = 1, Name = "Server Login Id", Code = "SERVER"},
-                new ITCategory { Id = 2, Name = "Network device", Code = "NETWORK"},
+                new ITCategory { Id = 1, Name = "Server Login Id", Code = "SERVER" },
+                new ITCategory { Id = 2, Name = "Network device", Code = "NETWORK" },
                 new ITCategory { Id = 3, Name = "Email", Code = "EMAIL" },
                 new ITCategory { Id = 4, Name = "Software Installation", Code = "SOFTWARE" },
                 new ITCategory { Id = 5, Name = "ERP Login Id", Code = "ERP" },
@@ -220,6 +222,8 @@ namespace ServicePortals.Infrastructure.Data
 
             modelBuilder.Entity<PurchaseDetail>()
                 .HasQueryFilter(e => e.DeletedAt == null);
+
+            #endregion
 
 
             //file - attach_file
@@ -325,18 +329,10 @@ namespace ServicePortals.Infrastructure.Data
             //leave_request - application_form
             modelBuilder.Entity<LeaveRequest>()
                 .HasOne(lr => lr.ApplicationForm)
-                .WithMany()
-                .HasPrincipalKey(a => a.Id)
+                .WithOne(a => a.Leave)
+                .HasForeignKey<LeaveRequest>(p => p.ApplicationFormId)
                 .IsRequired(false)
                 .OnDelete(DeleteBehavior.NoAction);
-
-            modelBuilder.Entity<LeaveRequest>()
-                .HasOne(lr => lr.User)
-                .WithMany()
-                .HasPrincipalKey(u => u.UserCode) 
-                .HasForeignKey(lr => lr.UserCodeRequestor)
-                .OnDelete(DeleteBehavior.NoAction)
-                .IsRequired(false);
 
             modelBuilder.Entity<LeaveRequest>()
                 .Navigation(lr => lr.User)
@@ -353,8 +349,8 @@ namespace ServicePortals.Infrastructure.Data
             //leave_request - application_form
             modelBuilder.Entity<MemoNotification>()
                 .HasOne(lr => lr.ApplicationForm)
-                .WithMany()
-                .HasPrincipalKey(a => a.Id)
+                .WithOne(a => a.MemoNotification)
+                .HasForeignKey<MemoNotification>(p => p.ApplicationFormId)
                 .IsRequired(false)
                 .OnDelete(DeleteBehavior.NoAction);
 
@@ -373,21 +369,18 @@ namespace ServicePortals.Infrastructure.Data
                 .OnDelete(DeleteBehavior.NoAction);
 
             modelBuilder.Entity<ApplicationForm>()
-                .HasOne(a => a.Leave)
-                .WithOne(l => l.ApplicationForm)
-                .HasForeignKey<LeaveRequest>(l => l.ApplicationFormId)
+                .HasOne(a => a.OrgUnit)
+                .WithOne()
+                .HasForeignKey<ApplicationForm>(a => a.DepartmentId)
+                .HasPrincipalKey<OrgUnit>(o => o.Id)
+                .IsRequired(false)
                 .OnDelete(DeleteBehavior.NoAction);
 
-            modelBuilder.Entity<ApplicationForm>()
-                .HasOne(a => a.MemoNotification)
-                .WithOne(l => l.ApplicationForm)
-                .HasForeignKey<MemoNotification>(l => l.ApplicationFormId)
-                .OnDelete(DeleteBehavior.NoAction);
-
-            modelBuilder.Entity<ApplicationForm>()
-                .HasOne(a => a.ITForm)
-                .WithOne(it => it.ApplicationForm)
-                .HasForeignKey<ITForm>(it => it.ApplicationFormId)
+            modelBuilder.Entity<ITForm>()
+                .HasOne(it => it.ApplicationForm)
+                .WithOne(a => a.ITForm)
+                .HasPrincipalKey<ITForm>(it => it.ApplicationFormId)
+                .IsRequired(false)
                 .OnDelete(DeleteBehavior.NoAction);
 
             modelBuilder.Entity<ITForm>()
@@ -405,14 +398,6 @@ namespace ServicePortals.Infrastructure.Data
                 .IsRequired(false)
                 .OnDelete(DeleteBehavior.NoAction);
 
-            modelBuilder.Entity<ITForm>()
-                .HasOne(it => it.UserRelationCreated)
-                .WithMany()
-                .HasPrincipalKey(u => u.UserCode)
-                .HasForeignKey(it => it.UserCodeCreated)
-                .IsRequired(false)
-                .OnDelete(DeleteBehavior.NoAction);
-
             //------------PURCHASING--------------
             
             modelBuilder.Entity<Purchase>()
@@ -426,7 +411,6 @@ namespace ServicePortals.Infrastructure.Data
                 .HasOne(p => p.ApplicationForm)
                 .WithOne(a => a.Purchase)
                 .HasForeignKey<Purchase>(p => p.ApplicationFormId)
-                .HasPrincipalKey<ApplicationForm>(a => a.Id)
                 .OnDelete(DeleteBehavior.NoAction)
                 .IsRequired(false);
 
@@ -443,8 +427,6 @@ namespace ServicePortals.Infrastructure.Data
                 .HasForeignKey(pl => pl.CostCenterId)
                 .HasPrincipalKey(cc => cc.Id)
                 .OnDelete(DeleteBehavior.NoAction);
-
-            //--------------------------
         }
     }
 }

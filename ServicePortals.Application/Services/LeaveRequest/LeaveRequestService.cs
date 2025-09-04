@@ -49,79 +49,88 @@ namespace ServicePortals.Application.Services.LeaveRequest
         /// </summary>
         public async Task<PagedResults<Domain.Entities.LeaveRequest>> GetAll(GetAllLeaveRequest request)
         {
-            int pageSize = request.PageSize;
-            int page = request.Page;
-            int? status = request.Status;
-            string? UserCode = request?.UserCode;
+            //int pageSize = request.PageSize;
+            //int page = request.Page;
+            //int? status = request.Status;
+            //string? UserCode = request?.UserCode;
 
-            var query = _context.LeaveRequests
-                .Where(l => (l.UserCodeRequestor == UserCode || l.UserCodeCreated == UserCode) &&
-                            l.ApplicationForm != null &&
-                            (
-                                status == (int)StatusApplicationFormEnum.IN_PROCESS
-                                    ? l.ApplicationForm.RequestStatusId == (int)StatusApplicationFormEnum.IN_PROCESS || l.ApplicationForm.RequestStatusId == (int)StatusApplicationFormEnum.WAIT_HR
-                                    : l.ApplicationForm.RequestStatusId == status
-                            )
-                );
+            //var query = _context.LeaveRequests
+            //    .Where(l => (l.UserCodeRequestor == UserCode || l.UserCodeCreated == UserCode) &&
+            //                l.ApplicationForm != null &&
+            //                (
+            //                    status == (int)StatusApplicationFormEnum.IN_PROCESS
+            //                        ? l.ApplicationForm.RequestStatusId == (int)StatusApplicationFormEnum.IN_PROCESS || l.ApplicationForm.RequestStatusId == (int)StatusApplicationFormEnum.WAIT_HR
+            //                        : l.ApplicationForm.RequestStatusId == status
+            //                )
+            //    );
 
-            var totalItems = await query.CountAsync();
-            var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+            //var totalItems = await query.CountAsync();
+            //var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
 
-            var pagedResult = await query
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .OrderByDescending(x => x.CreatedAt)
-                .Select(x => new Domain.Entities.LeaveRequest
-                {
-                    Id = x.Id,
-                    Code = x.Code,
-                    UserCodeRequestor = x.UserCodeRequestor,
-                    UserNameRequestor = x.UserNameRequestor,
-                    Position = x.Position,
-                    FromDate = x.FromDate,
-                    ToDate = x.ToDate,
-                    Reason = x.Reason,
-                    CreatedBy = x.CreatedBy,
-                    CreatedAt = x.CreatedAt,
-                    TimeLeave = x.TimeLeave,
-                    TypeLeave = x.TypeLeave,
-                    OrgUnit = x.OrgUnit,
-                    User = x.User,
-                    ApplicationForm = x.ApplicationForm != null ? new ApplicationForm
-                    {
-                        Id = x.ApplicationForm.Id,
-                        UserCodeRequestor = x.ApplicationForm.UserCodeRequestor,
-                        UserNameRequestor = x.ApplicationForm.UserNameRequestor,
-                        OrgPositionId = x.ApplicationForm.OrgPositionId,
-                        CreatedAt = x.ApplicationForm.CreatedAt,
-                        RequestType = x.ApplicationForm.RequestType,
-                        RequestStatus = x.ApplicationForm.RequestStatus,
-                        HistoryApplicationForms = x.ApplicationForm.HistoryApplicationForms.OrderByDescending(h => h.CreatedAt).ToList(),
-                    } : null
-                })
-                .ToListAsync();
+            //var pagedResult = await query
+            //    .Skip((page - 1) * pageSize)
+            //    .Take(pageSize)
+            //    .OrderByDescending(x => x.CreatedAt)
+            //    .Select(x => new Domain.Entities.LeaveRequest
+            //    {
+            //        Id = x.Id,
+            //        //Code = x.Code,
+            //        //UserCodeRequestor = x.UserCodeRequestor,
+            //        //UserNameRequestor = x.UserNameRequestor,
+            //        Position = x.Position,
+            //        FromDate = x.FromDate,
+            //        ToDate = x.ToDate,
+            //        Reason = x.Reason,
+            //        //CreatedBy = x.CreatedBy,
+            //        CreatedAt = x.CreatedAt,
+            //        TimeLeave = x.TimeLeave,
+            //        TypeLeave = x.TypeLeave,
+            //        OrgUnit = x.OrgUnit,
+            //        User = x.User,
+            //        ApplicationForm = x.ApplicationForm != null ? new ApplicationForm
+            //        {
+            //            Id = x.ApplicationForm.Id,
+            //            UserCodeRequestor = x.ApplicationForm.UserCodeRequestor,
+            //            UserNameRequestor = x.ApplicationForm.UserNameRequestor,
+            //            OrgPositionId = x.ApplicationForm.OrgPositionId,
+            //            CreatedAt = x.ApplicationForm.CreatedAt,
+            //            RequestType = x.ApplicationForm.RequestType,
+            //            RequestStatus = x.ApplicationForm.RequestStatus,
+            //            HistoryApplicationForms = x.ApplicationForm.HistoryApplicationForms.OrderByDescending(h => h.CreatedAt).ToList(),
+            //        } : null
+            //    })
+            //    .ToListAsync();
 
-            var countPending = await _context.LeaveRequests
-                .Include(e => e.ApplicationForm)
-                .Where(e => (e.UserCodeRequestor == UserCode || e.UserCodeCreated == UserCode) && e.ApplicationForm != null && e.ApplicationForm.RequestStatusId == 1) //1 pending
-                .CountAsync();
+            //var countPending = await _context.LeaveRequests
+            //    .Include(e => e.ApplicationForm)
+            //    .Where(e => (e.UserCodeRequestor == UserCode || e.UserCodeCreated == UserCode) && e.ApplicationForm != null && e.ApplicationForm.RequestStatusId == 1) //1 pending
+            //    .CountAsync();
 
-            var countInProcess = await _context.LeaveRequests
-                .Include(e => e.ApplicationForm)
-                .Where(e => (e.UserCodeRequestor == UserCode || e.UserCodeCreated == UserCode) && e.ApplicationForm != null &&
-                    (
-                        e.ApplicationForm.RequestStatusId == 2 || e.ApplicationForm.RequestStatusId == 4
-                    )
-                )
-                .CountAsync();
+            //var countInProcess = await _context.LeaveRequests
+            //    .Include(e => e.ApplicationForm)
+            //    .Where(e => (e.UserCodeRequestor == UserCode || e.UserCodeCreated == UserCode) && e.ApplicationForm != null &&
+            //        (
+            //            e.ApplicationForm.RequestStatusId == 2 || e.ApplicationForm.RequestStatusId == 4
+            //        )
+            //    )
+            //    .CountAsync();
+
+            //return new PagedResults<Domain.Entities.LeaveRequest>
+            //{
+            //    Data = pagedResult,
+            //    TotalItems = totalItems,
+            //    TotalPages = totalPages,
+            //    CountPending = countPending,
+            //    CountInProcess = countInProcess,
+            //};
 
             return new PagedResults<Domain.Entities.LeaveRequest>
             {
-                Data = pagedResult,
-                TotalItems = totalItems,
-                TotalPages = totalPages,
-                CountPending = countPending,
-                CountInProcess = countInProcess,
+                Data = [],
+                TotalItems = 0,
+                TotalPages = 0,
+                CountPending = 0,
+                CountInProcess = 0,
             };
         }
 
@@ -131,14 +140,14 @@ namespace ServicePortals.Application.Services.LeaveRequest
                 .Select(x => new Domain.Entities.LeaveRequest
                 {
                     Id = x.Id,
-                    Code = x.Code,
-                    UserCodeRequestor = x.UserCodeRequestor,
-                    UserNameRequestor = x.UserNameRequestor,
-                    Position = x.Position,
-                    FromDate = x.FromDate,
-                    ToDate = x.ToDate,
-                    Reason = x.Reason,
-                    CreatedBy = x.CreatedBy,
+                    //Code = x.Code,
+                    //UserCodeRequestor = x.UserCodeRequestor,
+                    //UserNameRequestor = x.UserNameRequestor,
+                    //Position = x.Position,
+                    //FromDate = x.FromDate,
+                    //ToDate = x.ToDate,
+                    //Reason = x.Reason,
+                    //CreatedBy = x.CreatedBy,
                     CreatedAt = x.CreatedAt,
                     TimeLeave = x.TimeLeave,
                     TypeLeave = x.TypeLeave,
@@ -222,14 +231,14 @@ namespace ServicePortals.Application.Services.LeaveRequest
 
             Domain.Entities.LeaveRequest newLeaveRequest = new()
             {
-                Code = Helper.GenerateFormCode("LR"),
-                ApplicationFormId = newApplicationForm.Id,
-                UserCodeRequestor = request.UserCodeRequestor,
-                UserNameRequestor = request.UserNameRequestor,
-                DepartmentId = request.DepartmentId,
-                Position = request.Position,
-                UserCodeCreated = request.WriteLeaveUserCode,
-                CreatedBy = request.UserNameWriteLeaveRequest,
+                //Code = Helper.GenerateFormCode("LR"),
+                //ApplicationFormId = newApplicationForm.Id,
+                //UserCodeRequestor = request.UserCodeRequestor,
+                //UserNameRequestor = request.UserNameRequestor,
+                //DepartmentId = request.DepartmentId,
+                //Position = request.Position,
+                //UserCodeCreated = request.WriteLeaveUserCode,
+                //CreatedBy = request.UserNameWriteLeaveRequest,
                 FromDate = request.FromDate,
                 ToDate = request.ToDate,
                 TimeLeaveId = request.TimeLeaveId,
@@ -762,14 +771,14 @@ namespace ServicePortals.Application.Services.LeaveRequest
 
                 var newLeave = new Domain.Entities.LeaveRequest
                 {
-                    Code = Helper.GenerateFormCode("LR"),
-                    ApplicationFormId = newApplicationForm.Id,
-                    UserCodeRequestor = itemLeave.UserCodeRequestor,
-                    UserNameRequestor = itemLeave.UserNameRequestor,
-                    DepartmentId = itemLeave.DepartmentId,
-                    Position = itemLeave.Position,
-                    UserCodeCreated = itemLeave.WriteLeaveUserCode,
-                    CreatedBy = itemLeave.UserNameWriteLeaveRequest,
+                    //Code = Helper.GenerateFormCode("LR"),
+                    //ApplicationFormId = newApplicationForm.Id,
+                    //UserCodeRequestor = itemLeave.UserCodeRequestor,
+                    //UserNameRequestor = itemLeave.UserNameRequestor,
+                    //DepartmentId = itemLeave.DepartmentId,
+                    //Position = itemLeave.Position,
+                    //UserCodeCreated = itemLeave.WriteLeaveUserCode,
+                    //CreatedBy = itemLeave.UserNameWriteLeaveRequest,
                     FromDate = itemLeave.FromDate,
                     ToDate = itemLeave.ToDate,
                     TimeLeaveId = itemLeave.TimeLeaveId,

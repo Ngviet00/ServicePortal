@@ -8,14 +8,11 @@ namespace ServicePortals.Domain.Entities
         public Guid? Id { get; set; }
         public Guid? ApplicationFormId { get; set; }
         public int? DepartmentId { get; set;}
-        public string? Code { get; set; }
         public string? Title { get; set; }
         public string? Content { get; set; }
         public DateTimeOffset? FromDate {  get; set; }
         public DateTimeOffset? ToDate { get; set; }
-        public string? UserCodeCreated { get; set; }
-        public string? CreatedBy { get; set; }
-        public int? Priority { get; set; } = 3; //1 normal, 2 medium, 3 high
+        public int? Priority { get; set; }
         public bool? Status { get; set; }
         public bool? ApplyAllDepartment { get; set; }
         public DateTimeOffset? CreatedAt { get; set; }

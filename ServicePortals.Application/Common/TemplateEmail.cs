@@ -138,12 +138,12 @@ namespace ServicePortals.Application.Common
 
                     <tr style=""border-bottom: 1px solid #ddd;"">
                         <td style=""background-color: #f9f9f9;""><strong>Tên nhân viên:</strong></td>
-                        <td>{leaveRequest?.UserNameRequestor}</td>
+                        <td>{leaveRequest}</td> /
                     </tr>
 
                     <tr style=""border-bottom: 1px solid #ddd;"">
                         <td style=""background-color: #f9f9f9;""><strong>Mã nhân viên:</strong></td>
-                        <td>{leaveRequest?.UserCodeRequestor}</td>
+                        <td>{leaveRequest}</td>
                     </tr>
 
                     <tr style=""border-bottom: 1px solid #ddd;"">
@@ -193,11 +193,11 @@ namespace ServicePortals.Application.Common
                     </tr>
                     <tr>
                         <td style=""border: 1px solid #cccccc; padding: 8px;"">UserCode</td>
-                        <td style=""border: 1px solid #cccccc; padding: 8px;"">{itForm?.UserCodeRequestor}</td>
+                        <td style=""border: 1px solid #cccccc; padding: 8px;"">{itForm}</td>
                     </tr>
                     <tr>
                         <td style=""border: 1px solid #cccccc; padding: 8px;"">UserName</td>
-                        <td style=""border: 1px solid #cccccc; padding: 8px;"">{itForm?.UserNameRequestor}</td>
+                        <td style=""border: 1px solid #cccccc; padding: 8px;"">{itForm}</td>
                     </tr>
                     <tr>
                         <td style=""border: 1px solid #cccccc; padding: 8px;"">Date request</td>
@@ -237,8 +237,8 @@ namespace ServicePortals.Application.Common
                         <div style=""padding: 20px 0; line-height: 1.6;"">
                             <div>
                                 <ul style=""list-style: none; padding: 0;"">
-                                    <li style=""margin-bottom: 5px;""><strong>Code:</strong> {purchase.Code}</li>
-                                    <li style=""margin-bottom: 5px;""><strong>UserName:</strong> {purchase.UserName}</li>
+                                    <li style=""margin-bottom: 5px;""><strong>Code:</strong> {purchase}</li>
+                                    <li style=""margin-bottom: 5px;""><strong>UserName:</strong> {purchase}</li>
                                     <li style=""margin-bottom: 5px;""><strong>Department:</strong> {purchase?.OrgUnit?.Name}</li>
                                     <li style=""margin-bottom: 5px;""><strong>Date Created:</strong> {purchase.CreatedAt}</li>
                                     <li style=""margin-bottom: 5px;""><strong>Order Summary:</strong>

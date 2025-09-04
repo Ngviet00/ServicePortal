@@ -50,24 +50,24 @@ namespace ServicePortals.Application.Services.MemoNotification
 
             var q = _context.MemoNotifications.AsQueryable();
 
-            q = q.Where(e => e.UserCodeCreated == userCode);
+            //q = q.Where(e => e.UserCodeCreated == userCode);
 
             var totalItems = await q.CountAsync();
             int totalPages = (int)Math.Ceiling((double)totalItems / pageSize);
 
             var query = await _context.MemoNotifications
-                .Where(e => e.UserCodeCreated == userCode)
+                //.Where(e => e.UserCodeCreated == userCode)
                 .OrderByDescending(e => e.CreatedAt)
                 .Select(e => new Entities.MemoNotification
                 {
                     Id = e.Id,
                     Title = e.Title,
                     Content = e.Content,
-                    Code = e.Code,
-                    FromDate = e.FromDate,
-                    ToDate = e.ToDate,
-                    UserCodeCreated = e.UserCodeCreated,
-                    CreatedBy = e.CreatedBy,
+                    //Code = e.Code,
+                    //FromDate = e.FromDate,
+                    //ToDate = e.ToDate,
+                    //UserCodeCreated = e.UserCodeCreated,
+                    //CreatedBy = e.CreatedBy,
                     Priority = e.Priority,
                     Status = e.Status,
                     ApplyAllDepartment = e.ApplyAllDepartment,
@@ -125,11 +125,11 @@ namespace ServicePortals.Application.Services.MemoNotification
                     DepartmentId = e.DepartmentId,
                     Title = e.Title,
                     Content = e.Content,
-                    Code = e.Code,
-                    FromDate = e.FromDate,
-                    ToDate = e.ToDate,
-                    UserCodeCreated = e.UserCodeCreated,
-                    CreatedBy = e.CreatedBy,
+                    //Code = e.Code,
+                    //FromDate = e.FromDate,
+                    //ToDate = e.ToDate,
+                    //UserCodeCreated = e.UserCodeCreated,
+                    //CreatedBy = e.CreatedBy,
                     Priority = e.Priority,
                     Status = e.Status,
                     ApplyAllDepartment = e.ApplyAllDepartment,
@@ -266,15 +266,15 @@ namespace ServicePortals.Application.Services.MemoNotification
                 Id = Guid.NewGuid(),
                 DepartmentId = request.DepartmentId,
                 ApplicationFormId = applicationForm.Id,
-                Code = Helper.GenerateFormCode("MNT"),
-                Title = request.Title,
-                Content = request.Content,
-                Status = request.Status,
-                FromDate = request.FromDate,
-                ToDate = request.ToDate,
-                UserCodeCreated = request.UserCodeCreated,
-                CreatedAt = request.CreatedAt,
-                CreatedBy = request.CreatedBy,
+                //Code = Helper.GenerateFormCode("MNT"),
+                //Title = request.Title,
+                //Content = request.Content,
+                //Status = request.Status,
+                //FromDate = request.FromDate,
+                //ToDate = request.ToDate,
+                //UserCodeCreated = request.UserCodeCreated,
+                //CreatedAt = request.CreatedAt,
+                //CreatedBy = request.CreatedBy,
                 ApplyAllDepartment = request.ApplyAllDepartment,
             };
 
@@ -491,19 +491,19 @@ namespace ServicePortals.Application.Services.MemoNotification
                     x => x.memoDeptGroup.DefaultIfEmpty(),
                     (x, memoDept) => new { MemoNotification = x.memo, MemoNotificationDepartment = memoDept }
                 )
-                .Where(x =>
-                    x.MemoNotification.Status == true &&
-                    x.MemoNotification.ApplicationForm != null &&
-                    x.MemoNotification.ApplicationForm.RequestStatusId == (int)StatusApplicationFormEnum.COMPLETE &&
-                    x.MemoNotification.FromDate.HasValue && x.MemoNotification.FromDate.Value.Date <= today &&
-                    x.MemoNotification.ToDate.HasValue && x.MemoNotification.ToDate.Value.Date >= today &&
-                    (
-                        DepartmentId == GM_Department ||
-                        x.MemoNotification.ApplyAllDepartment == true ||
-                        x.MemoNotificationDepartment != null &&
-                        (x.MemoNotificationDepartment.DepartmentId == DepartmentId || x.MemoNotification.UserCodeCreated == userCode)
-                    )
-                )
+                //.Where(x =>
+                //    x.MemoNotification.Status == true &&
+                //    x.MemoNotification.ApplicationForm != null &&
+                //    x.MemoNotification.ApplicationForm.RequestStatusId == (int)StatusApplicationFormEnum.COMPLETE &&
+                //    x.MemoNotification.FromDate.HasValue && x.MemoNotification.FromDate.Value.Date <= today &&
+                //    x.MemoNotification.ToDate.HasValue && x.MemoNotification.ToDate.Value.Date >= today &&
+                //    (
+                //        DepartmentId == GM_Department ||
+                //        x.MemoNotification.ApplyAllDepartment == true ||
+                //        x.MemoNotificationDepartment != null &&
+                //        (x.MemoNotificationDepartment.DepartmentId == DepartmentId || x.MemoNotification.UserCodeCreated == userCode)
+                //    )
+                //)
                 .Select(x => x.MemoNotification)
                 .Distinct()
                 .ToListAsync();
@@ -612,20 +612,21 @@ namespace ServicePortals.Application.Services.MemoNotification
 
             if (request.Status == false || request.Status == true && isFinal) //gửi email cho người tạo thông báo là complete or reject
             {
-                var userRequest = await _context.Users.Where(e => e.UserCode == memoNotify.UserCodeCreated).ToListAsync();
+                //var userRequest =  await _context.Users.Where(e => e.UserCode == memoNotify.UserCodeCreated).ToListAsync();
+
                 bool isApproved = request.Status == true;
                 string title = isApproved ? "approved" : "reject";
 
-                BackgroundJob.Enqueue<IEmailService>(job =>
-                    job.EmailSendMemoNotificationHasBeenCompletedOrReject(
-                        userRequest.Select(e => e.Email ?? "").ToList(),
-                        null,
-                        $"Your request create notification has been {title}",
-                        TemplateEmail.EmailSendMemoNotificationHasBeenCompletedOrReject(request.UrlFrontend ?? "", isApproved),
-                        null,
-                        true
-                    )
-                );
+                //BackgroundJob.Enqueue<IEmailService>(job =>
+                //    job.EmailSendMemoNotificationHasBeenCompletedOrReject(
+                //        //userRequest.Select(e => e.Email ?? "").ToList(),
+                //        null,
+                //        $"Your request create notification has been {title}",
+                //        TemplateEmail.EmailSendMemoNotificationHasBeenCompletedOrReject(request.UrlFrontend ?? "", isApproved),
+                //        null,
+                //        true
+                //    )
+                //);
             }
             else //gửi cho người tiếp theo duyệt
             {

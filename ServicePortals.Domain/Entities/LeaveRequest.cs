@@ -3,24 +3,20 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ServicePortals.Domain.Entities
 {
-    [Table("leave_requests"), Index(nameof(Id), nameof(UserCodeRequestor))]
+    [Table("leave_requests"), Index(nameof(Id))]
     public class LeaveRequest
     {
         public Guid Id { get; set; }
         public Guid? ApplicationFormId { get; set; }
-        public string? Code { get; set; } //mã đơn
-        public string? UserCodeRequestor { get; set; } //mã nhân viên người xin nghỉ
-        public string? UserNameRequestor { get; set; } //tên nhân viên người xin nghỉ
-        public int? DepartmentId { get; set; } //phòng ban
-        public string? Position { get; set; } = "Staff"; //chức vụ, để mặc định là Staff
-        public DateTimeOffset? FromDate { get; set; } //Ngày bắt đầu nghỉ
-        public DateTimeOffset? ToDate { get; set; } //ngày kết thúc nghỉ
-        public int? TypeLeaveId { get; set; } //loại phép
-        public int? TimeLeaveId { get; set; } //thời gian nghỉ
-        public string? Reason { get; set; } //lý do
+        public int? DepartmentId { get; set; }
+        public string? Position { get; set; }
+        public DateTimeOffset? FromDate { get; set; }
+        public DateTimeOffset? ToDate { get; set; }
+        public int? TypeLeaveId { get; set; }
+        public int? TimeLeaveId { get; set; }
+        public string? Reason { get; set; }
+        public byte[]? Image { get; set; }
         public byte? HaveSalary { get; set; }
-        public string? UserCodeCreated { get; set; } //mã nhân viên người tạo
-        public string? CreatedBy { get; set; } // tên nhân viên người tạo
         public DateTimeOffset? CreatedAt { get; set; }
         public DateTimeOffset? UpdateAt { get; set; }
         public DateTimeOffset? DeletedAt { get; set; }
@@ -28,6 +24,6 @@ namespace ServicePortals.Domain.Entities
         public ApplicationForm? ApplicationForm { get; set; }
         public TimeLeave? TimeLeave { get; set; }
         public TypeLeave? TypeLeave{ get; set; }
-        public OrgUnit? OrgUnit { get; set; } //khóa ngoại departmentId liên kết vs Id trong bảng org unit để lấy thông tin phòng ban
+        public OrgUnit? OrgUnit { get; set; } //foreign key departmentId
     }
 }
