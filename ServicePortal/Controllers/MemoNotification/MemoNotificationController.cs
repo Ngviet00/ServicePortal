@@ -69,7 +69,7 @@ namespace ServicePortal.Controllers.MemoNotification
         {
             var result = await _memoNotificationService.Update(id, request, files);
 
-            return Ok(new BaseResponse<MemoNotificationDto>(200, "success", result));
+            return Ok(new BaseResponse<object>(200, "success", result));
         }
 
         [HttpDelete("{id}")]
@@ -78,7 +78,7 @@ namespace ServicePortal.Controllers.MemoNotification
         {
             var result = await _memoNotificationService.Delete(id);
 
-            return Ok(new BaseResponse<MemoNotificationDto>(200, "success", result));
+            return Ok(new BaseResponse<object>(200, "success", result));
         }
 
         [HttpGet("download/{id}")]

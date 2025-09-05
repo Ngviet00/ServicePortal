@@ -44,7 +44,7 @@ namespace ServicePortals.Application.Services.Purchase
             _configuration = configuration;
         }
 
-        public async Task<PagedResults<PurchaseResponse>> GetAll(GetAllPurchaseRequest request)
+        public async Task<PagedResults<Domain.Entities.Purchase>> GetAll(GetAllPurchaseRequest request)
         {
             string? userCode = request.UserCode;
             int page = request.Page;
@@ -57,7 +57,7 @@ namespace ServicePortals.Application.Services.Purchase
 
             if (!string.IsNullOrWhiteSpace(userCode))
             {
-                //query = query.Where(e => e.UserCode == userCode);
+                query = query.Where(e => e.ApplicationForm != null && e.ApplicationForm.UserCodeRequestor == userCode);
             }
 
             if (departmentId != null)
@@ -95,50 +95,26 @@ namespace ServicePortals.Application.Services.Purchase
 
             var totalPages = (int)Math.Ceiling((double)totalItems / pageSize);
 
-            var result = await query
+            var results = await SelectPurchase(query)
                 .OrderByDescending(e => e.CreatedAt)
-                .Include(e => e.OrgUnit)
-                .Include(e => e.PurchaseDetails)
-                .Include(e => e.ApplicationForm)
-                    .ThenInclude(e => e.HistoryApplicationForms)
-                .Include(e => e.ApplicationForm)
-                    .ThenInclude(e => e.RequestStatus)
-                .Include(e => e.ApplicationForm)
-                    .ThenInclude(e => e.RequestType)
-                .Include(e => e.ApplicationForm)
                 .Skip(((page - 1) * pageSize)).Take(pageSize)
                 .ToListAsync();
 
-            var resultDtos = PurchaseMapper.ToDtoList(result);
-
-            return new PagedResults<PurchaseResponse>
+            return new PagedResults<Domain.Entities.Purchase>
             {
-                Data = resultDtos,
+                Data = results,
                 TotalItems = totalItems,
                 TotalPages = totalPages
             };
         }
 
-        public async Task<PurchaseResponse> GetById(Guid id, bool? isHasRelationApplication = null)
+        public async Task<Domain.Entities.Purchase> GetById(Guid id)
         {
-            var query = _context.Purchases.Include(e => e.OrgUnit).Include(e => e.PurchaseDetails).AsQueryable();
+            var query = _context.Purchases.AsQueryable();
 
-            if (isHasRelationApplication != null && isHasRelationApplication == true)
-            {
-                query = query
-                 .Include(e => e.ApplicationForm)
-                    .ThenInclude(e => e.HistoryApplicationForms)
-                 .Include(e => e.ApplicationForm)
-                    .ThenInclude(e => e.RequestStatus)
-                 .Include(e => e.ApplicationForm)
-                    .ThenInclude(e => e.RequestType)
-                 .Include(e => e.ApplicationForm)
-                    .ThenInclude(e => e.AssignedTasks);
-            }
+            var result = await SelectPurchase(query).FirstOrDefaultAsync(e => e.Id == id) ?? throw new ValidationException("Purchase not found");
 
-            var item = await query.FirstOrDefaultAsync(e => e.Id == id) ?? throw new ValidationException("Purchase not found");
-
-            return PurchaseMapper.ToDto(item);
+            return result;
         }
 
         public async Task<object> Create(CreatePurchaseRequest request)
@@ -147,18 +123,17 @@ namespace ServicePortals.Application.Services.Purchase
 
             if (request.DepartmentId <= 0 || request.OrgPositionId == null || request.OrgPositionId <= 0)
             {
-                throw new ValidationException("Thông tin vị trí người dùng chưa được cập nhật, liên hệ với HR");
+                throw new ValidationException(Global.UserNotSetInformation);
             }
 
             int? nextOrgPositionId = -1;
 
             int status = (int)StatusApplicationFormEnum.PENDING;
 
-            var orgPosition = await _context.OrgPositions.FirstOrDefaultAsync(e => e.Id == request.OrgPositionId);
+            var orgPosition = await _context.OrgPositions.FirstOrDefaultAsync(e => e.Id == request.OrgPositionId) ?? throw new ValidationException(Global.UserNotSetInformation);
 
             var approvalFlowCurrentPositionId = await _context.ApprovalFlows.FirstOrDefaultAsync(e => e.RequestTypeId == (int)RequestTypeEnum.PURCHASE && e.FromOrgPositionId == orgPositionId);
 
-            //nếu có custom approval flow
             if (approvalFlowCurrentPositionId != null)
             {
                 nextOrgPositionId = approvalFlowCurrentPositionId.ToOrgPositionId;
@@ -170,23 +145,32 @@ namespace ServicePortals.Application.Services.Purchase
             }
             else
             {
-                if (orgPosition?.ParentOrgPositionId == null) //manager các bộ phận
+                if (orgPosition.ParentOrgPositionId == null || orgPosition.Id == Global.ParentOrgPositionGM || orgPosition.ParentOrgPositionId == Global.ParentOrgPositionGM)
                 {
-                    var approvalFlows = await _context.ApprovalFlows.FirstOrDefaultAsync(e => e.RequestTypeId == (int)RequestTypeEnum.PURCHASE && e.PositonContext == "MANAGER");
-                    nextOrgPositionId = approvalFlows?.ToOrgPositionId;
+                    var approvalFlowsManager = await _context.ApprovalFlows.FirstOrDefaultAsync(e => e.RequestTypeId == (int)RequestTypeEnum.PURCHASE && e.PositonContext == "MANAGER");
+                    nextOrgPositionId = approvalFlowsManager?.ToOrgPositionId;
+
+                    if (approvalFlowsManager?.IsFinal == true)
+                    {
+                        status = (int)StatusApplicationFormEnum.FINAL_APPROVAL;
+                    }
                 }
-                else //nhân viên
+                else
                 {
-                    var getManagerOrgPostionId = await _orgPositionService.GetManagerOrgPostionIdByOrgPositionId(orgPositionId ?? -1);
-                    nextOrgPositionId = getManagerOrgPostionId?.Id;
+                    var orgPositionManagerOfDepartment = await _context.OrgPositions.FirstOrDefaultAsync(e => e.OrgUnitId == request.DepartmentId && e.ParentOrgPositionId == null);
+                    nextOrgPositionId = orgPositionManagerOfDepartment?.Id;
                 }
             }
 
             var applicationForm = new ApplicationForm
             {
                 Id = Guid.NewGuid(),
+                Code = Helper.GenerateFormCode("P"),
                 UserCodeRequestor = request.UserCode,
                 UserNameRequestor = request.UserName,
+                UserNameCreated = request.UserCode,
+                UserCodeCreated = request.UserCode,
+                DepartmentId = request.DepartmentId,
                 RequestTypeId = (int)RequestTypeEnum.PURCHASE,
                 RequestStatusId = status,
                 OrgPositionId = nextOrgPositionId,
@@ -199,9 +183,6 @@ namespace ServicePortals.Application.Services.Purchase
             {
                 Id = Guid.NewGuid(),
                 ApplicationFormId = applicationForm.Id,
-                //Code = Helper.GenerateFormCode("P"),
-                //UserCode = request.UserCode,
-                //UserName = request.UserName,
                 DepartmentId = request.DepartmentId,
                 RequestedDate = request.RequestedDate,
                 CreatedAt = DateTimeOffset.Now
@@ -231,28 +212,32 @@ namespace ServicePortals.Application.Services.Purchase
 
             await _context.SaveChangesAsync();
 
-            var purchaseById = await _context.Purchases.Include(e => e.OrgUnit).Include(e => e.PurchaseDetails).FirstOrDefaultAsync(e => e.Id == purchase.Id);
+            var purchaseById = await _context.Purchases
+                .Include(e => e.OrgUnit)
+                .Include(e => e.ApplicationForm)
+                .Include(e => e.PurchaseDetails)
+                .FirstOrDefaultAsync(e => e.Id == purchase.Id);
 
             var nextUserInfo = await _userService.GetMultipleUserViclockByOrgPositionId(nextOrgPositionId ?? -1);
 
             string urlApproval = $@"{_configuration["Setting:UrlFrontEnd"]}/approval/approval-purchase/{purchaseById?.Id}";
 
-            //string bodyMail = $@"
-            //    <h3>
-            //        <span>Click to detail: </span>
-            //        <a href={urlApproval}>{purchase.Code}</a>
-            //    </h3>" + TemplateEmail.EmailPurchase(purchaseById);
+            string bodyMail = $@"
+                <h3>
+                    <span>Detail: </span>
+                    <a href={urlApproval}>{applicationForm.Code}</a>
+                </h3>" + TemplateEmail.EmailPurchase(purchaseById);
 
-            //BackgroundJob.Enqueue<IEmailService>(job =>
-            //    job.SendEmailPurchase(
-            //        nextUserInfo.Select(e => e.Email ?? "").ToList(),
-            //        null,
-            //        "Request for purchase approval",
-            //        bodyMail,
-            //        null,
-            //        true
-            //    )
-            //);
+            BackgroundJob.Enqueue<IEmailService>(job =>
+                job.SendEmailPurchase(
+                    nextUserInfo.Select(e => e.Email ?? "").ToList(),
+                    null,
+                    "Request for purchase approval",
+                    bodyMail,
+                    null,
+                    true
+                )
+            );
 
             return true;
         }
@@ -338,16 +323,20 @@ namespace ServicePortals.Application.Services.Purchase
 
             if (request.OrgPositionId == null || request.OrgPositionId <= 0)
             {
-                throw new ValidationException("User information is not updated, contact HR");
+                throw new ValidationException(Global.UserNotSetInformation);
             }
 
-            var purchase = await _context.Purchases.Include(e => e.OrgUnit).Include(e => e.PurchaseDetails).FirstOrDefaultAsync(e => e.Id == request.PurchaseId) ?? throw new NotFoundException("Purchase not found");
+            var purchase = await _context.Purchases
+                .Include(e => e.OrgUnit)
+                .Include(e => e.ApplicationForm)
+                .Include(e => e.PurchaseDetails)
+                .FirstOrDefaultAsync(e => e.Id == request.PurchaseId) ?? throw new NotFoundException("Purchase not found");
 
             var applicationForm = await _context.ApplicationForms.FirstOrDefaultAsync(e => e.Id == purchase.ApplicationFormId) ?? throw new NotFoundException("Item application form not found");
 
             if (request?.OrgPositionId != applicationForm.OrgPositionId)
             {
-                throw new ForbiddenException("You are not permitted to approve this request.");
+                throw new ForbiddenException(Global.NotPermissionApproval);
             }
 
             var historyApplicationForm = new HistoryApplicationForm
@@ -372,20 +361,20 @@ namespace ServicePortals.Application.Services.Purchase
 
                 string? reasonReject = request?.Note == null || request.Note == "" ? "--" : request?.Note;
 
-                //string bodyMailReject = $@"<h3><span style=""color:red"">Reason: {reasonReject}</span></h3>" + TemplateEmail.EmailPurchase(purchase);
+                string bodyMailReject = $@"<h3><span style=""color:red"">Reason: {reasonReject}</span></h3>" + TemplateEmail.EmailPurchase(purchase);
 
-                //var currentUser = await _userService.GetMultipleUserViclockByOrgPositionId(-1, [purchase.UserCode]);
+                var currentUser = await _userService.GetMultipleUserViclockByOrgPositionId(-1, [applicationForm.UserCodeRequestor]);
 
-                //BackgroundJob.Enqueue<IEmailService>(job =>
-                //    job.SendEmailPurchase(
-                //        currentUser.Select(e => e.Email ?? "").ToList(),
-                //        null,
-                //        "Request purchase has been reject",
-                //        bodyMailReject,
-                //        null,
-                //        true
-                //    )
-                //);
+                BackgroundJob.Enqueue<IEmailService>(job =>
+                    job.SendEmailPurchase(
+                        currentUser.Select(e => e.Email ?? "").ToList(),
+                        null,
+                        "Your purchase request has been rejected",
+                        bodyMailReject,
+                        null,
+                        true
+                    )
+                );
 
                 return true;
             }
@@ -394,7 +383,7 @@ namespace ServicePortals.Application.Services.Purchase
 
             int status = (int)StatusApplicationFormEnum.IN_PROCESS;
 
-            var orgPosition = await _context.OrgPositions.FirstOrDefaultAsync(e => e.Id == request.OrgPositionId) ?? throw new ValidationException("Bạn chưa được cập nhật vị trí, liên hệ với HR");
+            var orgPosition = await _context.OrgPositions.FirstOrDefaultAsync(e => e.Id == request.OrgPositionId) ?? throw new ValidationException(Global.UserNotSetInformation);
 
             var approvalFlowCurrentPositionId = await _context.ApprovalFlows.FirstOrDefaultAsync(e => e.RequestTypeId == (int)RequestTypeEnum.PURCHASE && e.FromOrgPositionId == orgPosition.Id);
 
@@ -410,15 +399,20 @@ namespace ServicePortals.Application.Services.Purchase
             }
             else
             {
-                if (orgPosition?.ParentOrgPositionId == null) //manager các bộ phận
+                if (orgPosition.ParentOrgPositionId == null || orgPosition.Id == Global.ParentOrgPositionGM || orgPosition.ParentOrgPositionId == Global.ParentOrgPositionGM)
                 {
-                    var approvalFlows = await _context.ApprovalFlows.FirstOrDefaultAsync(e => e.RequestTypeId == (int)RequestTypeEnum.PURCHASE && e.PositonContext == "MANAGER");
-                    nextOrgPositionId = approvalFlows?.ToOrgPositionId;
+                    var approvalFlowsManager = await _context.ApprovalFlows.FirstOrDefaultAsync(e => e.RequestTypeId == (int)RequestTypeEnum.PURCHASE && e.PositonContext == "MANAGER");
+                    nextOrgPositionId = approvalFlowsManager?.ToOrgPositionId;
+
+                    if (approvalFlowsManager?.IsFinal == true)
+                    {
+                        status = (int)StatusApplicationFormEnum.FINAL_APPROVAL;
+                    }
                 }
-                else //nhân viên
+                else
                 {
-                    var getManagerOrgPostionId = await _orgPositionService.GetManagerOrgPostionIdByOrgPositionId(orgPositionId ?? -1);
-                    nextOrgPositionId = getManagerOrgPostionId?.Id;
+                    var orgPositionManagerOfDepartment = await _context.OrgPositions.FirstOrDefaultAsync(e => e.OrgUnitId == purchase.DepartmentId && e.ParentOrgPositionId == null);
+                    nextOrgPositionId = orgPositionManagerOfDepartment?.Id;
                 }
             }
 
@@ -436,35 +430,39 @@ namespace ServicePortals.Application.Services.Purchase
 
             string urlApproval = $@"{_configuration["Setting:UrlFrontEnd"]}/approval/approval-purchase/{purchase?.Id}";
 
-            //string bodyMail = $@"
-            //    <h3>
-            //        <span>Click to detail: </span>
-            //        <a href={urlApproval}>{purchase.Code}</a>
-            //    </h3>" + TemplateEmail.EmailPurchase(purchase);
+            string bodyMail = $@"
+                <h3>
+                    <span>Detail: </span>
+                    <a href={urlApproval}>{applicationForm.Code}</a>
+                </h3>" + TemplateEmail.EmailPurchase(purchase);
 
-            //BackgroundJob.Enqueue<IEmailService>(job =>
-            //    job.SendEmailPurchase(
-            //        nextUserInfo.Select(e => e.Email ?? "").ToList(),
-            //        null,
-            //        "Request for purchase approval",
-            //        bodyMail,
-            //        null,
-            //        true
-            //    )
-            //);
+            BackgroundJob.Enqueue<IEmailService>(job =>
+                job.SendEmailPurchase(
+                    nextUserInfo.Select(e => e.Email ?? "").ToList(),
+                    null,
+                    "Request for purchase approval",
+                    bodyMail,
+                    null,
+                    true
+                )
+            );
 
             return true;
         }
 
         public async Task<object> AssignedTask(AssignedTaskRequest request)
         {
-            var purchase = await _context.Purchases.Include(e => e.OrgUnit).Include(e => e.PurchaseDetails).FirstOrDefaultAsync(e => e.Id == request.PurchaseId) ?? throw new NotFoundException("Purchase not found");
+            var purchase = await _context.Purchases
+                .Include(e => e.OrgUnit)
+                .Include(e => e.ApplicationForm)
+                .Include(e => e.PurchaseDetails)
+                .FirstOrDefaultAsync(e => e.Id == request.PurchaseId) ?? throw new NotFoundException("Purchase not found");
 
             var applicationForm = await _context.ApplicationForms.FirstOrDefaultAsync(e => e.Id == purchase.ApplicationFormId) ?? throw new NotFoundException("Item application form not found");
 
             if (request?.OrgPositionId != applicationForm.OrgPositionId)
             {
-                throw new ForbiddenException("You are not permitted to approve this request.");
+                throw new ForbiddenException(Global.NotPermissionApproval);
             }
 
             applicationForm.UpdatedAt = DateTimeOffset.Now;
@@ -499,29 +497,33 @@ namespace ServicePortals.Application.Services.Purchase
 
             string urlAssigned = $@"{_configuration["Setting:UrlFrontEnd"]}/approval/assigned-purchase/{purchase?.Id}";
 
-            //string bodyMail = $@"
-            //    <h3>
-            //        <span>Click to detail: </span>
-            //        <a href={urlAssigned}>{purchase?.Code}</a>
-            //    </h3>" + TemplateEmail.EmailPurchase(purchase);
+            string bodyMail = $@"
+                <h3>
+                    <span>Detail: </span>
+                    <a href={urlAssigned}>{purchase?.ApplicationForm?.Code}</a>
+                </h3>" + TemplateEmail.EmailPurchase(purchase);
 
-            //BackgroundJob.Enqueue<IEmailService>(job =>
-            //    job.SendEmailPurchase(
-            //        request.UserAssignedTasks.Select(e => e.Email ?? "").ToList(),
-            //        null,
-            //        "New Task Assigned",
-            //        bodyMail,
-            //        null,
-            //        true
-            //    )
-            //);
+            BackgroundJob.Enqueue<IEmailService>(job =>
+                job.SendEmailPurchase(
+                    request.UserAssignedTasks.Select(e => e.Email ?? "").ToList(),
+                    null,
+                    "New Task Assigned",
+                    bodyMail,
+                    null,
+                    true
+                )
+            );
 
             return true;
         }
 
         public async Task<object> ResolvedTask(ResolvedTaskRequest request)
         {
-            var purchase = await _context.Purchases.Include(e => e.OrgUnit).Include(e => e.PurchaseDetails).FirstOrDefaultAsync(e => e.Id == request.PurchaseId) ?? throw new NotFoundException("Purchase not found");
+            var purchase = await _context.Purchases
+                .Include(e => e.OrgUnit)
+                .Include(e => e.ApplicationForm)
+                .Include(e => e.PurchaseDetails)
+                .FirstOrDefaultAsync(e => e.Id == request.PurchaseId) ?? throw new NotFoundException("Purchase not found");
 
             var applicationForm = await _context.ApplicationForms
                 .Include(e => e.HistoryApplicationForms)
@@ -533,7 +535,7 @@ namespace ServicePortals.Application.Services.Purchase
 
             if (!exists)
             {
-                throw new ForbiddenException("You are not permitted to approve this request.");
+                throw new ForbiddenException(Global.NotPermissionApproval);
             }
 
             applicationForm.RequestStatusId = (int)StatusApplicationFormEnum.COMPLETE;
@@ -562,32 +564,32 @@ namespace ServicePortals.Application.Services.Purchase
                 ccUserCode.Add(itemAss.UserCode ?? "");
             }
 
-            //var userSendRequestPurchase = await _context.Users.FirstOrDefaultAsync(e => e.UserCode == purchase.UserCode);
+            var userSendRequestPurchase = await _context.Users.FirstOrDefaultAsync(e => e.UserCode == purchase.ApplicationForm.UserCodeRequestor);
 
-            //var emailUserSendRequestPurchase = userSendRequestPurchase?.Email ?? "";
+            var emailUserSendRequestPurchase = userSendRequestPurchase?.Email ?? "";
 
             //get email to cc, manager, user assigned task
             List<GetMultiUserViClockByOrgPositionIdResponse> multipleByUserCodes = await _userService.GetMultipleUserViclockByOrgPositionId(-1, ccUserCode);
 
             string urlDetail = $@"{_configuration["Setting:UrlFrontEnd"]}/approval/view-purchase/{purchase?.Id}";
 
-            //string bodyMail = $@"
-            //    <h3>
-            //        <span>Click to detail: </span>
-            //        <a href={urlDetail}>{purchase?.Code}</a>
-            //    </h3>" + TemplateEmail.EmailPurchase(purchase);
+            string bodyMail = $@"
+                <h3>
+                    <span>Detail: </span>
+                    <a href={urlDetail}>{purchase?.ApplicationForm?.Code}</a>
+                </h3>" + TemplateEmail.EmailPurchase(purchase);
 
-            ////send email
-            //BackgroundJob.Enqueue<IEmailService>(job =>
-            //    job.SendEmailPurchase(
-            //        new List<string> { emailUserSendRequestPurchase },
-            //        multipleByUserCodes.Select(e => e.Email ?? "").ToList(),
-            //        "Your purchase request has been successfully processed",
-            //        bodyMail,
-            //        null,
-            //        true
-            //    )
-            //);
+            //send email
+            BackgroundJob.Enqueue<IEmailService>(job =>
+                job.SendEmailPurchase(
+                    new List<string> { emailUserSendRequestPurchase },
+                    multipleByUserCodes.Select(e => e.Email ?? "").ToList(),
+                    "Your purchase request has been approved",
+                    bodyMail,
+                    null,
+                    true
+                )
+            );
 
             return true;
         }
@@ -618,6 +620,62 @@ namespace ServicePortals.Application.Services.Purchase
             var result = await connection.QueryAsync<InfoUserAssigned>(sql);
 
             return (List<InfoUserAssigned>)result;
+        }
+
+        private static IQueryable<Domain.Entities.Purchase> SelectPurchase(IQueryable<Domain.Entities.Purchase> query)
+        {
+            return query.Select(x => new Domain.Entities.Purchase
+            {
+                Id = x.Id,
+                ApplicationFormId = x.ApplicationFormId,
+                DepartmentId = x.DepartmentId,
+                RequestedDate = x.RequestedDate,
+                CreatedAt = x.CreatedAt,
+                UpdatedAt = x.UpdatedAt,
+                DeletedAt = x.DeletedAt,
+                OrgUnit = x.OrgUnit == null ? null : new Domain.Entities.OrgUnit
+                {
+                    Id = x.OrgUnit.Id,
+                    Name = x.OrgUnit.Name,
+                    ParentOrgUnitId = x.OrgUnit.ParentOrgUnitId
+                },
+                ApplicationForm = x.ApplicationForm == null ? null : new ApplicationForm
+                {
+                    Id = x.ApplicationForm.Id,
+                    Code = x.ApplicationForm.Code,
+                    UserCodeRequestor = x.ApplicationForm.UserCodeRequestor,
+                    UserNameRequestor = x.ApplicationForm.UserNameRequestor,
+                    UserCodeCreated = x.ApplicationForm.UserCodeCreated,
+                    UserNameCreated = x.ApplicationForm.UserNameCreated,
+                    RequestStatusId = x.ApplicationForm.RequestStatusId,
+                    RequestTypeId = x.ApplicationForm.RequestTypeId,
+                    OrgPositionId = x.ApplicationForm.OrgPositionId,
+                    CreatedAt = x.ApplicationForm.CreatedAt,
+                    RequestStatus = x.ApplicationForm.RequestStatus == null ? null : new RequestStatus
+                    {
+                        Id = x.ApplicationForm.RequestStatus.Id,
+                        Name = x.ApplicationForm.RequestStatus.Name,
+                        NameE = x.ApplicationForm.RequestStatus.NameE,
+                    },
+                    RequestType = x.ApplicationForm.RequestType == null ? null : new Domain.Entities.RequestType
+                    {
+                        Id = x.ApplicationForm.RequestType.Id,
+                        Name = x.ApplicationForm.RequestType.Name,
+                        NameE = x.ApplicationForm.RequestType.NameE,
+                    },
+                    HistoryApplicationForms = x.ApplicationForm.HistoryApplicationForms.OrderByDescending(e => e.CreatedAt).Select(itemHistory => new HistoryApplicationForm
+                    {
+                        Id = itemHistory.Id,
+                        UserNameApproval = itemHistory.UserNameApproval,
+                        UserCodeApproval = itemHistory.UserCodeApproval,
+                        Action = itemHistory.Action,
+                        Note = itemHistory.Note,
+                        CreatedAt = itemHistory.CreatedAt
+                    }).ToList(),
+                    AssignedTasks = x.ApplicationForm.AssignedTasks.ToList(),
+                },
+                PurchaseDetails = x.PurchaseDetails != null ? x.PurchaseDetails.OrderByDescending(h => h.CreatedAt).ToList() : new List<PurchaseDetail> { } 
+            });
         }
     }
 }

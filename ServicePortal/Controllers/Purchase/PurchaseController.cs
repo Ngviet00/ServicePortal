@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using ServicePortals.Application;
 using ServicePortals.Application.Dtos.Purchase.Requests;
-using ServicePortals.Application.Dtos.Purchase.Responses;
 using ServicePortals.Application.Interfaces.Purchase;
 using ServicePortals.Shared.SharedDto;
 using ServicePortals.Shared.SharedDto.Requests;
@@ -22,7 +21,7 @@ namespace ServicePortal.Controllers.Purchase
         {
             var results = await _purchaseService.GetAll(request);
 
-            var response = new PageResponse<PurchaseResponse>(
+            var response = new PageResponse<ServicePortals.Domain.Entities.Purchase>(
                 200,
                 "Success",
                 results.Data,
@@ -38,9 +37,9 @@ namespace ServicePortal.Controllers.Purchase
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(Guid id)
         {
-            var result = await _purchaseService.GetById(id, true);
+            var result = await _purchaseService.GetById(id);
 
-            return Ok(new BaseResponse<PurchaseResponse>(200, "success", result));
+            return Ok(new BaseResponse<ServicePortals.Domain.Entities.Purchase>(200, "success", result));
         }
 
         [HttpPost]

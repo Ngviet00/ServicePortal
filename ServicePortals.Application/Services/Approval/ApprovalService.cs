@@ -1,4 +1,5 @@
 ﻿using System.Security.Claims;
+using DocumentFormat.OpenXml.Spreadsheet;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using ServicePortals.Application.Dtos.Approval.Request;
@@ -65,12 +66,7 @@ namespace ServicePortals.Application.Services.Approval
 
             if (request.DepartmentId != null)
             {
-                query = query.Where(e =>
-                    (e.RequestType.Id == (int)RequestTypeEnum.LEAVE_REQUEST && e.Leave.DepartmentId == request.DepartmentId) ||
-                    (e.RequestType.Id == (int)RequestTypeEnum.CREATE_MEMO_NOTIFICATION && e.MemoNotification.DepartmentId == request.DepartmentId) ||
-                    (e.RequestType.Id == (int)RequestTypeEnum.FORM_IT && e.ITForm.DepartmentId == request.DepartmentId) ||
-                    (e.RequestType.Id == (int)RequestTypeEnum.PURCHASE && e.Purchase.DepartmentId == request.DepartmentId)
-                );
+                query = query.Where(e => e.DepartmentId == request.DepartmentId);
             }
 
             if (isHR)
@@ -100,51 +96,18 @@ namespace ServicePortals.Application.Services.Approval
                 .Select(r => new PendingApproval
                 {
                     Id = r.Id,
-                    RequestTypeId = r.RequestTypeId,
-                    OrgPositionId = r.OrgPositionId,
+                    Code = r.Code,
+                    UserCodeRequestor = r.UserCodeRequestor,
+                    UserNameCreated = r.UserNameCreated,
+                    UserNameRequestor = r.UserNameRequestor,
+                    OrgUnit = r.OrgUnit,
                     CreatedAt = r.CreatedAt,
-                    RequestType = new Domain.Entities.RequestType
-                    {
-                        Id = r.RequestType.Id,
-                        Name = r.RequestType.Name,
-                        NameE = r.RequestType.NameE
-                    },
+                    RequestStatus = r.RequestStatus,
+                    RequestType = r.RequestType,
                     HistoryApplicationForm = r.HistoryApplicationForms
                         .OrderByDescending(h => h.CreatedAt)
                         .Select(h => new HistoryApplicationForm { UserNameApproval = h.UserNameApproval })
                         .FirstOrDefault(),
-                    //LeaveRequest = r.Leave == null ? null : new CommonDataPendingApproval
-                    //{
-                    //    Id = r.Leave.Id,
-                    //    Code = r.Leave.Code,
-                    //    UserNameRequestor = r.Leave.UserNameRequestor,
-                    //    UserNameCreated = r.Leave.CreatedBy,
-                    //    DepartmentName = r.Leave.OrgUnit == null ? string.Empty : r.Leave.OrgUnit.Name
-                    //},
-                    //MemoNotification = r.MemoNotification == null ? null : new CommonDataPendingApproval
-                    //{
-                    //    Id = r.MemoNotification.Id,
-                    //    Code = r.MemoNotification.Code,
-                    //    UserNameRequestor = r.MemoNotification.CreatedBy,
-                    //    UserNameCreated = r.MemoNotification.CreatedBy,
-                    //    DepartmentName = r.MemoNotification.OrgUnit == null ? string.Empty : r.MemoNotification.OrgUnit.Name
-                    //},
-                    //ITForm = r.ITForm == null ? null : new CommonDataPendingApproval
-                    //{
-                    //    Id = r.ITForm.Id,
-                    //    Code = r.ITForm.Code,
-                    //    UserNameRequestor = r.ITForm.UserNameRequestor,
-                    //    UserNameCreated = r.ITForm.UserNameCreated,
-                    //    DepartmentName = r.ITForm.OrgUnit == null ? string.Empty : r.ITForm.OrgUnit.Name
-                    //},
-                    //Purchase = r.Purchase == null ? null : new CommonDataPendingApproval
-                    //{
-                    //    Id = r.Purchase.Id,
-                    //    Code = r.Purchase.Code,
-                    //    UserNameCreated = r.Purchase.UserName,
-                    //    UserNameRequestor = r.Purchase.UserName,
-                    //    DepartmentName = r.Purchase.OrgUnit == null ? string.Empty : r.Purchase.OrgUnit.Name
-                    //}
                 })
                 .Skip((int)(page - 1) * (int)pageSize)
                 .Take((int)pageSize)
@@ -324,51 +287,17 @@ namespace ServicePortals.Application.Services.Approval
                 .Where(e => latestHistories.Contains(e.Id))
                 .Select(x => new HistoryApprovalProcessResponse
                 {
-                    CreatedAt = x.CreatedAt,
+                    Id = x.ApplicationForm == null ? null : x.ApplicationForm.Id,
+                    Code = x.ApplicationForm == null ? null : x.ApplicationForm.Code,
                     Action = x.Action,
-                    RequestStatusId = x.ApplicationForm != null ? x.ApplicationForm.RequestStatusId : null,
-                    RequestType = x.ApplicationForm != null && x.ApplicationForm.RequestType != null
-                        ? new Domain.Entities.RequestType
-                        {
-                            Id = x.ApplicationForm.RequestType.Id,
-                            Name = x.ApplicationForm.RequestType.Name,
-                            NameE = x.ApplicationForm.RequestType.NameE,
-                        }
-                        : null,
-                    //LeaveRequest = x.ApplicationForm != null && x.ApplicationForm.Leave == null ? null : new CommonDataHistoryApproval
-                    //{
-                    //    Id = x.ApplicationForm.Leave.Id,
-                    //    Code = x.ApplicationForm.Leave.Code,
-                    //    UserNameRequestor = x.ApplicationForm.Leave.UserNameRequestor,
-                    //    UserNameCreated = x.ApplicationForm.Leave.CreatedBy,
-                    //    DepartmentName = x.ApplicationForm.Leave.OrgUnit == null ? "" : x.ApplicationForm.Leave.OrgUnit.Name
-                    //},
-                    //MemoNotification = x.ApplicationForm.MemoNotification == null ? null : new CommonDataHistoryApproval
-                    //{
-                    //    Id = x.ApplicationForm.MemoNotification.Id,
-                    //    Code = x.ApplicationForm.MemoNotification.Code,
-                    //    UserNameRequestor = x.ApplicationForm.MemoNotification.CreatedBy,
-                    //    UserNameCreated = x.ApplicationForm.MemoNotification.CreatedBy,
-                    //    DepartmentName = x.ApplicationForm.MemoNotification.OrgUnit == null ? "" : x.ApplicationForm.MemoNotification.OrgUnit.Name,
-                    //},
-                    //ITForm = x.ApplicationForm.ITForm == null ? null : new CommonDataHistoryApproval
-                    //{
-                    //    Id = x.ApplicationForm.ITForm.Id,
-                    //    Code = x.ApplicationForm.ITForm.Code,
-                    //    UserNameRequestor = x.ApplicationForm.ITForm.UserNameRequestor,
-                    //    UserNameCreated = x.ApplicationForm.ITForm.UserNameCreated,
-                    //    DepartmentName = x.ApplicationForm.ITForm.OrgUnit == null ? "" : x.ApplicationForm.ITForm.OrgUnit.Name,
-                    //},
-                    //Purchase = x.ApplicationForm.Purchase == null ? null : new CommonDataHistoryApproval
-                    //{
-                    //    Id = x.ApplicationForm.Purchase.Id,
-                    //    Code = x.ApplicationForm.Purchase.Code,
-                    //    UserNameRequestor = x.ApplicationForm.Purchase.UserName,
-                    //    UserNameCreated = x.ApplicationForm.Purchase.UserName,
-                    //    DepartmentName = x.ApplicationForm.Purchase.OrgUnit == null ? "" : x.ApplicationForm.Purchase.OrgUnit.Name,
-                    //},
+                    RequestStatus = x.ApplicationForm == null ? null : x.ApplicationForm.RequestStatus,
+                    RequestType = x.ApplicationForm == null ? null : x.ApplicationForm.RequestType,
+                    OrgUnit = x.ApplicationForm == null ? null : x.ApplicationForm.OrgUnit,
+                    UserNameRequestor = x.ApplicationForm == null ? null : x.ApplicationForm.UserNameRequestor,
+                    UserCodeRequestor = x.ApplicationForm == null ? null : x.ApplicationForm.UserCodeRequestor,
+                    ApprovedAt = x.CreatedAt
                 })
-                .OrderByDescending(x => x.CreatedAt)
+                .OrderByDescending(x => x.ApprovedAt)
                 .ToListAsync();
 
             return new PagedResults<HistoryApprovalProcessResponse>
@@ -401,14 +330,9 @@ namespace ServicePortals.Application.Services.Approval
             }
 
             //filter by department
-            if (departmentId != null)
+            if (request.DepartmentId != null)
             {
-                query = query.Where(e =>
-                    (e.RequestType.Id == (int)RequestTypeEnum.LEAVE_REQUEST && e.Leave.DepartmentId == request.DepartmentId) ||
-                    (e.RequestType.Id == (int)RequestTypeEnum.CREATE_MEMO_NOTIFICATION && e.MemoNotification.DepartmentId == request.DepartmentId) ||
-                    (e.RequestType.Id == (int)RequestTypeEnum.FORM_IT && e.ITForm.DepartmentId == request.DepartmentId) || 
-                    (e.RequestType.Id == (int)RequestTypeEnum.PURCHASE && e.Purchase.DepartmentId == request.DepartmentId) 
-                );
+                query = query.Where(e => e.DepartmentId == request.DepartmentId);
             }
 
             var totalItems = await query.CountAsync();
@@ -420,46 +344,18 @@ namespace ServicePortals.Application.Services.Approval
                 .Select(r => new PendingApproval
                 {
                     Id = r.Id,
-                    RequestTypeId = r.RequestTypeId,
-                    OrgPositionId = r.OrgPositionId,
+                    Code = r.Code,
+                    UserCodeRequestor = r.UserCodeRequestor,
+                    UserNameCreated = r.UserNameCreated,
+                    UserNameRequestor = r.UserNameRequestor,
+                    OrgUnit = r.OrgUnit,
                     CreatedAt = r.CreatedAt,
+                    RequestStatus = r.RequestStatus,
                     RequestType = r.RequestType,
                     HistoryApplicationForm = r.HistoryApplicationForms
                         .OrderByDescending(h => h.CreatedAt)
                         .Select(h => new HistoryApplicationForm { UserNameApproval = h.UserNameApproval })
                         .FirstOrDefault(),
-                    //LeaveRequest = r.Leave == null ? null : new CommonDataPendingApproval
-                    //{
-                    //    Id = r.Leave.Id,
-                    //    Code = r.Leave.Code,
-                    //    UserNameRequestor = r.Leave.UserNameRequestor,
-                    //    UserNameCreated = r.Leave.CreatedBy,
-                    //    DepartmentName = r.Leave.OrgUnit == null ? "" : r.Leave.OrgUnit.Name
-                    //},
-                    //MemoNotification = r.MemoNotification == null ? null : new CommonDataPendingApproval
-                    //{
-                    //    Id = r.MemoNotification.Id,
-                    //    Code = r.MemoNotification.Code,
-                    //    UserNameRequestor = r.MemoNotification.CreatedBy,
-                    //    UserNameCreated = r.MemoNotification.CreatedBy,
-                    //    DepartmentName = r.MemoNotification.OrgUnit == null ? "" : r.MemoNotification.OrgUnit.Name
-                    //},
-                    //ITForm = r.ITForm == null ? null : new CommonDataPendingApproval
-                    //{
-                    //    Id = r.ITForm.Id,
-                    //    Code = r.ITForm.Code,
-                    //    UserNameRequestor = r.ITForm.UserNameRequestor,
-                    //    UserNameCreated = r.ITForm.UserNameCreated,
-                    //    DepartmentName = r.ITForm.OrgUnit == null ? "" : r.ITForm.OrgUnit.Name
-                    //},
-                    //Purchase = r.Purchase == null ? null : new CommonDataPendingApproval
-                    //{
-                    //    Id = r.Purchase.Id,
-                    //    Code = r.Purchase.Code,
-                    //    UserNameCreated = r.Purchase.UserName,
-                    //    UserNameRequestor = r.Purchase.UserName,
-                    //    DepartmentName = r.Purchase.OrgUnit == null ? string.Empty : r.Purchase.OrgUnit.Name
-                    //}
                 })
                 .Skip((int)(page - 1) * (int)pageSize)
                 .Take((int)pageSize)

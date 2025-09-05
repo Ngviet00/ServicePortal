@@ -29,7 +29,6 @@ namespace ServicePortals.Application.Services.LeaveRequest
         private readonly IUserService _userService;
         private readonly ExcelService _excelService;
         private readonly IHttpContextAccessor _httpContextAccessor;
-        private const int PARENT_ORG_POSITION_GN = 1;
 
         public LeaveRequestService(
             ApplicationDbContext context,
@@ -49,88 +48,78 @@ namespace ServicePortals.Application.Services.LeaveRequest
         /// </summary>
         public async Task<PagedResults<Domain.Entities.LeaveRequest>> GetAll(GetAllLeaveRequest request)
         {
-            //int pageSize = request.PageSize;
-            //int page = request.Page;
-            //int? status = request.Status;
-            //string? UserCode = request?.UserCode;
+            int pageSize = request.PageSize;
+            int page = request.Page;
+            int? status = request.Status;
+            string? UserCode = request?.UserCode;
 
-            //var query = _context.LeaveRequests
-            //    .Where(l => (l.UserCodeRequestor == UserCode || l.UserCodeCreated == UserCode) &&
-            //                l.ApplicationForm != null &&
-            //                (
-            //                    status == (int)StatusApplicationFormEnum.IN_PROCESS
-            //                        ? l.ApplicationForm.RequestStatusId == (int)StatusApplicationFormEnum.IN_PROCESS || l.ApplicationForm.RequestStatusId == (int)StatusApplicationFormEnum.WAIT_HR
-            //                        : l.ApplicationForm.RequestStatusId == status
-            //                )
-            //    );
+            var query = _context.LeaveRequests
+                .Where(l => l.ApplicationForm != null && (l.ApplicationForm.UserCodeRequestor == UserCode || l.ApplicationForm.UserCodeCreated == UserCode) &&
+                            l.ApplicationForm != null &&
+                            (
+                                status == (int)StatusApplicationFormEnum.IN_PROCESS
+                                    ? l.ApplicationForm.RequestStatusId == (int)StatusApplicationFormEnum.IN_PROCESS || l.ApplicationForm.RequestStatusId == (int)StatusApplicationFormEnum.WAIT_HR
+                                    : l.ApplicationForm.RequestStatusId == status
+                            )
+                );
 
-            //var totalItems = await query.CountAsync();
-            //var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+            var totalItems = await query.CountAsync();
+            var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
 
-            //var pagedResult = await query
-            //    .Skip((page - 1) * pageSize)
-            //    .Take(pageSize)
-            //    .OrderByDescending(x => x.CreatedAt)
-            //    .Select(x => new Domain.Entities.LeaveRequest
-            //    {
-            //        Id = x.Id,
-            //        //Code = x.Code,
-            //        //UserCodeRequestor = x.UserCodeRequestor,
-            //        //UserNameRequestor = x.UserNameRequestor,
-            //        Position = x.Position,
-            //        FromDate = x.FromDate,
-            //        ToDate = x.ToDate,
-            //        Reason = x.Reason,
-            //        //CreatedBy = x.CreatedBy,
-            //        CreatedAt = x.CreatedAt,
-            //        TimeLeave = x.TimeLeave,
-            //        TypeLeave = x.TypeLeave,
-            //        OrgUnit = x.OrgUnit,
-            //        User = x.User,
-            //        ApplicationForm = x.ApplicationForm != null ? new ApplicationForm
-            //        {
-            //            Id = x.ApplicationForm.Id,
-            //            UserCodeRequestor = x.ApplicationForm.UserCodeRequestor,
-            //            UserNameRequestor = x.ApplicationForm.UserNameRequestor,
-            //            OrgPositionId = x.ApplicationForm.OrgPositionId,
-            //            CreatedAt = x.ApplicationForm.CreatedAt,
-            //            RequestType = x.ApplicationForm.RequestType,
-            //            RequestStatus = x.ApplicationForm.RequestStatus,
-            //            HistoryApplicationForms = x.ApplicationForm.HistoryApplicationForms.OrderByDescending(h => h.CreatedAt).ToList(),
-            //        } : null
-            //    })
-            //    .ToListAsync();
+            var pagedResult = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .OrderByDescending(x => x.CreatedAt)
+                .Select(x => new Domain.Entities.LeaveRequest
+                {
+                    Id = x.Id,
+                    Position = x.Position,
+                    FromDate = x.FromDate,
+                    ToDate = x.ToDate,
+                    Reason = x.Reason,
+                    CreatedAt = x.CreatedAt,
+                    TimeLeave = x.TimeLeave,
+                    TypeLeave = x.TypeLeave,
+                    OrgUnit = x.OrgUnit,
+                    User = x.User,
+                    ApplicationForm = x.ApplicationForm != null ? new ApplicationForm
+                    {
+                        Id = x.ApplicationForm.Id,
+                        Code = x.ApplicationForm.Code,
+                        UserCodeRequestor = x.ApplicationForm.UserCodeRequestor,
+                        UserNameRequestor = x.ApplicationForm.UserNameRequestor,
+                        UserCodeCreated = x.ApplicationForm.UserCodeCreated,
+                        UserNameCreated = x.ApplicationForm.UserNameCreated,
+                        OrgPositionId = x.ApplicationForm.OrgPositionId,
+                        CreatedAt = x.ApplicationForm.CreatedAt,
+                        RequestType = x.ApplicationForm.RequestType,
+                        RequestStatus = x.ApplicationForm.RequestStatus,
+                        HistoryApplicationForms = x.ApplicationForm.HistoryApplicationForms.OrderByDescending(h => h.CreatedAt).ToList(),
+                    } : null
+                })
+                .ToListAsync();
 
-            //var countPending = await _context.LeaveRequests
-            //    .Include(e => e.ApplicationForm)
-            //    .Where(e => (e.UserCodeRequestor == UserCode || e.UserCodeCreated == UserCode) && e.ApplicationForm != null && e.ApplicationForm.RequestStatusId == 1) //1 pending
-            //    .CountAsync();
+            var countPending = await _context.LeaveRequests
+                .Include(e => e.ApplicationForm)
+                .Where(e => e.ApplicationForm != null && (e.ApplicationForm.UserCodeRequestor == UserCode || e.ApplicationForm.UserCodeCreated == UserCode) && e.ApplicationForm.RequestStatusId == (int)StatusApplicationFormEnum.PENDING)
+                .CountAsync();
 
-            //var countInProcess = await _context.LeaveRequests
-            //    .Include(e => e.ApplicationForm)
-            //    .Where(e => (e.UserCodeRequestor == UserCode || e.UserCodeCreated == UserCode) && e.ApplicationForm != null &&
-            //        (
-            //            e.ApplicationForm.RequestStatusId == 2 || e.ApplicationForm.RequestStatusId == 4
-            //        )
-            //    )
-            //    .CountAsync();
-
-            //return new PagedResults<Domain.Entities.LeaveRequest>
-            //{
-            //    Data = pagedResult,
-            //    TotalItems = totalItems,
-            //    TotalPages = totalPages,
-            //    CountPending = countPending,
-            //    CountInProcess = countInProcess,
-            //};
+            var countInProcess = await _context.LeaveRequests
+                .Include(e => e.ApplicationForm)
+                .Where(e => e.ApplicationForm != null && (e.ApplicationForm.UserCodeRequestor == UserCode || e.ApplicationForm.UserCodeCreated == UserCode) &&
+                    (
+                        e.ApplicationForm.RequestStatusId == 2 || e.ApplicationForm.RequestStatusId == 4
+                    )
+                )
+                .CountAsync();
 
             return new PagedResults<Domain.Entities.LeaveRequest>
             {
-                Data = [],
-                TotalItems = 0,
-                TotalPages = 0,
-                CountPending = 0,
-                CountInProcess = 0,
+                Data = pagedResult,
+                TotalItems = totalItems,
+                TotalPages = totalPages,
+                CountPending = countPending,
+                CountInProcess = countInProcess,
             };
         }
 
@@ -140,14 +129,10 @@ namespace ServicePortals.Application.Services.LeaveRequest
                 .Select(x => new Domain.Entities.LeaveRequest
                 {
                     Id = x.Id,
-                    //Code = x.Code,
-                    //UserCodeRequestor = x.UserCodeRequestor,
-                    //UserNameRequestor = x.UserNameRequestor,
-                    //Position = x.Position,
-                    //FromDate = x.FromDate,
-                    //ToDate = x.ToDate,
-                    //Reason = x.Reason,
-                    //CreatedBy = x.CreatedBy,
+                    Position = x.Position,
+                    FromDate = x.FromDate,
+                    ToDate = x.ToDate,
+                    Reason = x.Reason,
                     CreatedAt = x.CreatedAt,
                     TimeLeave = x.TimeLeave,
                     TypeLeave = x.TypeLeave,
@@ -157,8 +142,11 @@ namespace ServicePortals.Application.Services.LeaveRequest
                     ApplicationForm = x.ApplicationForm != null ? new ApplicationForm
                     {
                         Id = x.ApplicationForm.Id,
+                        Code = x.ApplicationForm.Code,
                         UserCodeRequestor = x.ApplicationForm.UserCodeRequestor,
                         UserNameRequestor = x.ApplicationForm.UserNameRequestor,
+                        UserCodeCreated = x.ApplicationForm.UserCodeCreated,
+                        UserNameCreated = x.ApplicationForm.UserNameCreated,
                         OrgPositionId = x.ApplicationForm.OrgPositionId,
                         CreatedAt = x.ApplicationForm.CreatedAt,
                         RequestType = x.ApplicationForm.RequestType,
@@ -171,147 +159,6 @@ namespace ServicePortals.Application.Services.LeaveRequest
                 ?? throw new NotFoundException("Leave request not found!");
 
             return leaveRequest;
-        }
-
-        /// <summary>
-        /// Tạo đơn nghỉ phép, phải có orgUnitId, lấy luồng duyệt từ bảng workflowstep, sau đó gửi email cho người tiếp theo, mặc định k có ai cấp trên thì gửi thẳng hr
-        /// </summary>
-        public async Task<object> Create(CreateLeaveRequest request)
-        {
-            var orgPosition = await _context.OrgPositions.FirstOrDefaultAsync(e => e.Id == request.OrgPositionId);
-
-            if (orgPosition == null)
-            {
-                throw new ValidationException("Thông tin chưa được cập nhật, vui lòng liên hệ với HR!");
-            }
-
-            if (request.DepartmentId == null || request.DepartmentId < 0)
-            {
-                throw new NotFoundException("Department is invalid!");
-            }
-
-            //lấy thông tin người dùng hiện tại
-            var requesterUser = await _context.Users.Include(e => e.UserConfigs).FirstOrDefaultAsync(e => e.UserCode == request.UserCodeRequestor) ?? throw new NotFoundException("User not found!");
-
-            int requestStatusApplicationForm = -1;
-            int? nextOrgPositionId = orgPosition.ParentOrgPositionId;
-
-            bool isSendHr = false;
-
-            var approvalFlows = await _context.ApprovalFlows.Where(e => e.RequestTypeId == (int)RequestTypeEnum.LEAVE_REQUEST && e.FromOrgPositionId == orgPosition.Id).FirstOrDefaultAsync();
-
-            //send to hr, không có parent, có approval flow và approval flow is final = true, next org position = 1 là general manager
-            if (nextOrgPositionId == null || (approvalFlows != null && approvalFlows.IsFinal == true) || nextOrgPositionId == PARENT_ORG_POSITION_GN) //next org position = 1 là của GM
-            {
-                isSendHr = true;
-                requestStatusApplicationForm = (int)StatusApplicationFormEnum.WAIT_HR; //send hr
-                nextOrgPositionId = (int)StatusApplicationFormEnum.ORG_POSITION_ID_HR_LEAVE_RQ; //send hr
-            }
-            else if (approvalFlows != null)
-            {
-                requestStatusApplicationForm = (int)StatusApplicationFormEnum.PENDING;
-                nextOrgPositionId = approvalFlows.ToOrgPositionId;
-            }
-            else
-            {
-                requestStatusApplicationForm = (int)StatusApplicationFormEnum.PENDING;
-            }
-
-            ApplicationForm newApplicationForm = new()
-            {
-                Id = Guid.NewGuid(),
-                UserCodeRequestor = request.UserCodeRequestor,
-                UserNameRequestor = request.UserNameRequestor,
-                RequestTypeId = (int)RequestTypeEnum.LEAVE_REQUEST,
-                RequestStatusId = requestStatusApplicationForm,
-                OrgPositionId = nextOrgPositionId,
-                CreatedAt = DateTimeOffset.Now
-            };
-            _context.ApplicationForms.Add(newApplicationForm);
-
-            Domain.Entities.LeaveRequest newLeaveRequest = new()
-            {
-                //Code = Helper.GenerateFormCode("LR"),
-                //ApplicationFormId = newApplicationForm.Id,
-                //UserCodeRequestor = request.UserCodeRequestor,
-                //UserNameRequestor = request.UserNameRequestor,
-                //DepartmentId = request.DepartmentId,
-                //Position = request.Position,
-                //UserCodeCreated = request.WriteLeaveUserCode,
-                //CreatedBy = request.UserNameWriteLeaveRequest,
-                FromDate = request.FromDate,
-                ToDate = request.ToDate,
-                TimeLeaveId = request.TimeLeaveId,
-                TypeLeaveId = request.TypeLeaveId,
-                Reason = request.Reason,
-                CreatedAt = DateTimeOffset.Now
-            };
-            _context.LeaveRequests.Add(newLeaveRequest);
-
-            await _context.SaveChangesAsync();
-
-            var latestNewLeaveRequest = await GetById(newLeaveRequest.Id);
-
-            string templateEmail = TemplateEmail.EmailContentLeaveRequest(latestNewLeaveRequest);
-
-            //gửi email thông tin cho chính mình
-            if (!(requesterUser?.UserConfigs?.FirstOrDefault(e => e.Key == "RECEIVE_MAIL_LEAVE_REQUEST")?.Value == "false"))
-            {
-                var emailCurrentUser = requesterUser?.Email ?? "";
-
-                BackgroundJob.Enqueue<IEmailService>(job =>
-                    job.SendEmailRequestHasBeenSent(
-                        new List<string> { emailCurrentUser },
-                        null,
-                        "Đơn xin nghỉ phép đã được gửi",
-                        templateEmail,
-                        null,
-                        true
-                    )
-                );
-            }
-
-            //gửi email thông tin cho người tiếp theo
-            string urlWaitApproval = $"{request.UrlFrontend}/leave/wait-approval";
-            string emailWithUrlApproval = $@"
-                    <h4>
-                        <span>Duyệt đơn: </span>
-                        <a href={urlWaitApproval}>{urlWaitApproval}</a>
-                    </h4>" + templateEmail + "<br/>"
-            ;
-
-            if (isSendHr) //gửi email cho HR
-            {
-                var hrHavePermissionMngLeaveRequest = await GetHrWithManagementLeavePermission();
-
-                BackgroundJob.Enqueue<IEmailService>(job =>
-                    job.SendEmailRequestHasBeenSent(
-                        hrHavePermissionMngLeaveRequest.Select(e => e.Email ?? "").ToList(),
-                        null,
-                        "Đơn xin nghỉ phép",
-                        emailWithUrlApproval,
-                        null,
-                        true
-                    )
-                );
-            }
-            else //lấy email của những người tiếp theo và gửi email cho họ
-            {
-                var receiveUser = await _userService.GetMultipleUserViclockByOrgPositionId(nextOrgPositionId ?? -1);
-
-                BackgroundJob.Enqueue<IEmailService>(job =>
-                    job.SendEmailRequestHasBeenSent(
-                        receiveUser.Select(e => e.Email ?? "").ToList(),
-                        null,
-                        "Đơn xin nghỉ phép",
-                        emailWithUrlApproval,
-                        null,
-                        true
-                    )
-                );
-            }
-
-            return true;
         }
 
         public async Task<object> Update(Guid id, LeaveRequestDto dto)
@@ -341,21 +188,11 @@ namespace ServicePortals.Application.Services.LeaveRequest
         {
             var leaveRequest = await _context.LeaveRequests.FirstOrDefaultAsync(e => e.Id == id) ?? throw new NotFoundException("Leave request not found!");
 
-            var applicationForm = await _context.ApplicationForms.FirstOrDefaultAsync(e => e.Id == leaveRequest.ApplicationFormId);
+            await _context.HistoryApplicationForms.Where(e => e.ApplicationFormId == leaveRequest.ApplicationFormId).ExecuteUpdateAsync(s => s.SetProperty(e => e.DeletedAt, DateTimeOffset.Now));
 
-            var historyApplicationForms = await _context.HistoryApplicationForms.Where(e => applicationForm != null && e.ApplicationFormId == applicationForm.Id).ToListAsync();
+            await _context.ApplicationForms.Where(e => e.Id == leaveRequest.ApplicationFormId).ExecuteUpdateAsync(s => s.SetProperty(e => e.DeletedAt, DateTimeOffset.Now));
 
-            _context.HistoryApplicationForms.RemoveRange(historyApplicationForms);
-
-            _context.LeaveRequests.Remove(leaveRequest);
-
-            _context.ApplicationForms.Remove(applicationForm);
-
-            var requestOfLeave = await _context.ApplicationForms.FirstOrDefaultAsync(e => e.Id == leaveRequest.ApplicationFormId) ?? throw new NotFoundException("Leave request not found!");
-
-            _context.ApplicationForms.Remove(requestOfLeave);
-
-            await _context.SaveChangesAsync();
+            await _context.LeaveRequests.Where(e => e.Id == leaveRequest.Id).ExecuteUpdateAsync(s => s.SetProperty(e => e.DeletedAt, DateTimeOffset.Now));
 
             return true;
         }
@@ -369,48 +206,13 @@ namespace ServicePortals.Application.Services.LeaveRequest
 
             var roleClaims = userClaim.Claims.Where(c => c.Type == ClaimTypes.Role).Select(c => c.Value).ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-            var connection = (SqlConnection)_context.CreateConnection();
-            if (connection.State != ConnectionState.Open)
-            {
-                await connection.OpenAsync();
-            }
-
-            var orgPosition = await _context.OrgPositions.FirstOrDefaultAsync(e => e.Id == request.OrgPositionId);
-
-            if (orgPosition == null)
-            {
-                throw new ValidationException("Thông tin chưa được cập nhật, vui lòng liên hệ với HR!");
-            }
-
-            //var delegatedTempUser = await _context.DelegatedTemps.FirstOrDefaultAsync(e => e.RequestTypeId == 1 && e.TempUserCode == request.UserCodeApproval && e.IsActive == true);
-
-            //if (delegatedTempUser != null)
-            //{
-            //    orgUnitIdCurrentUser = delegatedTempUser.MainOrgUnitId;
-            //}
-            //else
-            //{
-            //orgPositionIdCurrentUser = await connection.QueryFirstOrDefaultAsync<int>($@"SELECT OrgUnitID FROM {Global.DbViClock}.dbo.tblNhanVien AS NV WHERE NVMaNV = @UserCode", new
-            //{
-            //    UserCode = request.UserCodeApproval
-            //});
-            ////}
-
-            //if (orgPositionId == 0 || orgPositionId == null) //nếu hr chưa set org unit id, user sẽ k thể đăng ký nghỉ phép đc
-            //{
-            //    throw new ValidationException("Thông tin chưa được cập nhật, vui lòng liên hệ với HR!");
-            //}
+            var orgPosition = await _context.OrgPositions.FirstOrDefaultAsync(e => e.Id == request.OrgPositionId) ?? throw new ValidationException(Global.UserNotSetInformation);
 
             var leaveRequest = await GetById((Guid)(request.LeaveRequestId));
 
             var userRequester = leaveRequest.User;
 
-            var applicationForm = await _context.ApplicationForms.FirstOrDefaultAsync(e => e.Id == leaveRequest.ApplicationFormId);
-
-            if (applicationForm == null)
-            {
-                throw new NotFoundException("Application form is not found, please check again");
-            }
+            var applicationForm = await _context.ApplicationForms.FirstOrDefaultAsync(e => e.Id == leaveRequest.ApplicationFormId) ?? throw new NotFoundException("Application form is not found, please check again");
 
             var historyApplicationForm = new HistoryApplicationForm
             {
@@ -494,10 +296,10 @@ namespace ServicePortals.Application.Services.LeaveRequest
             //gửi email thông tin cho người tiếp theo
             string urlWaitApproval = $"{request.UrlFrontend}/leave/wait-approval";
             string emailWithUrlApproval = $@"
-                    <h4>
-                        <span>Duyệt đơn: </span>
-                        <a href={urlWaitApproval}>{urlWaitApproval}</a>
-                    </h4>" + templateEmail + "<br/>"
+                <h4>
+                    <span>Detail: </span>
+                    <a href={urlWaitApproval}>{urlWaitApproval}</a>
+                </h4>" + templateEmail + "<br/>"
             ;
 
             if (isSendHr)
@@ -508,7 +310,7 @@ namespace ServicePortals.Application.Services.LeaveRequest
                     job.SendEmailRequestHasBeenSent(
                         hrHavePermissionMngLeaveRequest.Select(e => e.Email ?? "").ToList(),
                         null,
-                        "Đơn xin nghỉ phép",
+                        "Request for leave request approval",
                         emailWithUrlApproval,
                         null,
                         true
@@ -523,7 +325,7 @@ namespace ServicePortals.Application.Services.LeaveRequest
                     job.SendEmailRequestHasBeenSent(
                         receiveUser.Select(e => e.Email ?? "").ToList(),
                         null,
-                        "Đơn xin nghỉ phép",
+                        "Request for leave request approval",
                         emailWithUrlApproval,
                         null,
                         true
@@ -548,7 +350,7 @@ namespace ServicePortals.Application.Services.LeaveRequest
                     job.SendEmailRejectLeaveRequest(
                         new List<string> { userRequester.Email ?? Global.EmailDefault },
                         null,
-                        "Đơn xin nghỉ phép đã được đăng ký thành công",
+                        "Your leave request has been approved",
                         TemplateEmail.EmailContentLeaveRequest(leaveRequest),
                         null,
                         true
@@ -565,7 +367,7 @@ namespace ServicePortals.Application.Services.LeaveRequest
                 return;
             }
 
-            string bodyMailReject = $@"<h4><span style=""color:red"">Lý do từ chối: {rejectionNote}</span></h4>" +
+            string bodyMailReject = $@"<h4><span style=""color:red"">Reason: {rejectionNote}</span></h4>" +
                             TemplateEmail.EmailContentLeaveRequest(leaveRequest) + "<br/>";
 
             if (!string.IsNullOrWhiteSpace(userRequester?.Email))
@@ -574,7 +376,7 @@ namespace ServicePortals.Application.Services.LeaveRequest
                     job.SendEmailRejectLeaveRequest(
                         new List<string> { userRequester.Email },
                         null,
-                        "Đơn xin nghỉ phép đã bị từ chối",
+                        "Your leave request has been rejected",
                         bodyMailReject,
                         null,
                         true
@@ -701,15 +503,15 @@ namespace ServicePortals.Application.Services.LeaveRequest
 
             if (orgPositionId == null)
             {
-                throw new ValidationException("Dữ liệu vị trí chưa được cập nhật, liên hệ với HR!");
+                throw new ValidationException(Global.UserNotSetInformation);
             }
 
             if (request.Leaves == null || request.Leaves != null && request.Leaves.Count == 0)
             {
-                throw new ValidationException("Không có người nào xin nghỉ phép, vui lòng check lại!");
+                throw new ValidationException("No one has requested leave, please check again!");
             }
 
-            var orgPosition = await _context.OrgPositions.FirstOrDefaultAsync(e => e.Id == orgPositionId) ?? throw new ValidationException("Dữ liệu vị trí chưa được cập nhật, liên hệ với HR!");
+            var orgPosition = await _context.OrgPositions.FirstOrDefaultAsync(e => e.Id == orgPositionId) ?? throw new ValidationException(Global.UserNotSetInformation);
             var requesterUser = await _context.Users.Include(e => e.UserConfigs).FirstOrDefaultAsync(e => e.UserCode == request.UserCode) ?? throw new NotFoundException("User not found!");
 
             int requestStatusApplicationForm = -1;
@@ -722,7 +524,7 @@ namespace ServicePortals.Application.Services.LeaveRequest
 
             var approvalFlows = await _context.ApprovalFlows.Where(e => e.RequestTypeId == (int)RequestTypeEnum.LEAVE_REQUEST && e.FromOrgPositionId == orgPosition.Id).FirstOrDefaultAsync();
 
-            if (nextOrgPositionId == null || (approvalFlows != null && approvalFlows.IsFinal == true) || nextOrgPositionId == PARENT_ORG_POSITION_GN) //next org position = 1 là của GM
+            if (nextOrgPositionId == null || (approvalFlows != null && approvalFlows.IsFinal == true) || nextOrgPositionId == Global.ParentOrgPositionGM) //next org position = 1 là của GM
             {
                 isSendHr = true;
                 requestStatusApplicationForm = (int)StatusApplicationFormEnum.WAIT_HR; //send hr
@@ -747,7 +549,7 @@ namespace ServicePortals.Application.Services.LeaveRequest
 
             string emailLinkApproval = $@"
                 <h4>
-                    <span>Duyệt đơn: </span>
+                    <span>Detail: </span>
                     <a href={urlWaitApproval}>{urlWaitApproval}</a>
                 </h4>";
 
@@ -760,8 +562,12 @@ namespace ServicePortals.Application.Services.LeaveRequest
                 var newApplicationForm = new ApplicationForm
                 {
                     Id = Guid.NewGuid(),
+                    Code = Helper.GenerateFormCode("LR"),
                     UserCodeRequestor = itemLeave.UserCodeRequestor,
                     UserNameRequestor = itemLeave.UserNameRequestor,
+                    UserNameCreated = itemLeave.UserNameWriteLeaveRequest,
+                    UserCodeCreated = itemLeave.WriteLeaveUserCode,
+                    DepartmentId = itemLeave.DepartmentId,
                     RequestTypeId = (int)RequestTypeEnum.LEAVE_REQUEST,
                     RequestStatusId = requestStatusApplicationForm,
                     OrgPositionId = nextOrgPositionId,
@@ -771,14 +577,9 @@ namespace ServicePortals.Application.Services.LeaveRequest
 
                 var newLeave = new Domain.Entities.LeaveRequest
                 {
-                    //Code = Helper.GenerateFormCode("LR"),
-                    //ApplicationFormId = newApplicationForm.Id,
-                    //UserCodeRequestor = itemLeave.UserCodeRequestor,
-                    //UserNameRequestor = itemLeave.UserNameRequestor,
-                    //DepartmentId = itemLeave.DepartmentId,
-                    //Position = itemLeave.Position,
-                    //UserCodeCreated = itemLeave.WriteLeaveUserCode,
-                    //CreatedBy = itemLeave.UserNameWriteLeaveRequest,
+                    ApplicationFormId = newApplicationForm.Id,
+                    DepartmentId = itemLeave.DepartmentId,
+                    Position = itemLeave.Position,
                     FromDate = itemLeave.FromDate,
                     ToDate = itemLeave.ToDate,
                     TimeLeaveId = itemLeave.TimeLeaveId,
@@ -792,6 +593,7 @@ namespace ServicePortals.Application.Services.LeaveRequest
                 newLeave.TypeLeave = typeLeaves.FirstOrDefault(e => e.Id == itemLeave.TypeLeaveId);
                 newLeave.TimeLeave = timeLeaves.FirstOrDefault(e => e.Id == itemLeave.TimeLeaveId);
                 newLeave.OrgUnit = orgUnits.FirstOrDefault(e => e.Id == itemLeave.DepartmentId);
+                newLeave.ApplicationForm = newApplicationForm;
 
                 bodyMail += TemplateEmail.EmailContentLeaveRequest(newLeave) + "<br/>";
             }
@@ -810,7 +612,7 @@ namespace ServicePortals.Application.Services.LeaveRequest
                 job.SendEmailRequestHasBeenSent(
                     emailSendNoti.ToList(),
                     null,
-                    "Đơn xin nghỉ phép đã được gửi",
+                    "Leave request has been submitted.",
                     bodyMail,
                     null,
                     true
@@ -826,7 +628,7 @@ namespace ServicePortals.Application.Services.LeaveRequest
                     job.SendEmailRequestHasBeenSent(
                         hrHavePermissionMngLeaveRequest.Select(e => e.Email ?? "").ToList(),
                         null,
-                        "Đơn xin nghỉ phép",
+                        "Request for leave request approval",
                         emailLinkApproval + bodyMail,
                         null,
                         true
@@ -841,7 +643,7 @@ namespace ServicePortals.Application.Services.LeaveRequest
                     job.SendEmailManyPeopleLeaveRequest(
                         userNextOrgPosition.Select(e => e.Email ?? "").ToList(),
                         null,
-                        "Đơn xin nghỉ phép",
+                        "Request for leave request approval",
                         emailLinkApproval + bodyMail,
                         null,
                         true
@@ -1004,6 +806,7 @@ namespace ServicePortals.Application.Services.LeaveRequest
                 .ToList();
 
             var leaveRequestsWaitHrApproval = await _context.LeaveRequests
+                .Include(e => e.ApplicationForm)
                 .Include(e => e.TimeLeave)
                 .Include(e => e.TypeLeave)
                 .Where(e =>

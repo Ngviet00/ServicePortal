@@ -1,5 +1,4 @@
 ﻿using System.Text;
-using Microsoft.AspNetCore.Http;
 using ServicePortals.Domain.Entities;
 
 namespace ServicePortals.Application.Common
@@ -7,10 +6,8 @@ namespace ServicePortals.Application.Common
     public static class TemplateEmail
     {
         #region Email Memo Notification
-        public static string EmailSendMemoNotificationNeedApproval(string urlFrontEnd)
+        public static string EmailSendMemoNotificationNeedApproval(string urlApproval)
         {
-            var urlWaitApprovalMemo = $"{urlFrontEnd}/memo-notify/wait-approval";
-
             return $@"<!DOCTYPE html>
                 <html>
                       <head>
@@ -36,7 +33,7 @@ namespace ServicePortals.Application.Common
                                 </tr>
                                 <tr>
                                   <td style=""padding: 0 30px 30px 30px; text-align: center;"">
-                                    <a href=""{urlWaitApprovalMemo}""
+                                    <a href=""{urlApproval}""
                                       style=""color:#0073e6; text-decoration:none; padding:10px 20px; border-radius:4px; font-weight:500; display:inline-block;text-decoration: underline;text-decoration-offset: 3px;"">
                                       Open Request
                                     </a>
@@ -56,9 +53,8 @@ namespace ServicePortals.Application.Common
             ";
         }
 
-        public static string EmailSendMemoNotificationHasBeenCompletedOrReject(string urlFrontEnd, bool rejectOrApproved) //true approval, false reject
+        public static string EmailSendMemoNotificationHasBeenCompletedOrReject(string urlView, bool rejectOrApproved) //true approval, false reject
         {
-            var urlWaitApprovalMemo = $"{urlFrontEnd}/memo-notify";
             string status = rejectOrApproved ? "Approved" : "Reject";
 
             return $@"<!DOCTYPE html>
@@ -86,7 +82,7 @@ namespace ServicePortals.Application.Common
                             </tr>
                             <tr>
                                 <td style=""padding: 0 30px 30px 30px; text-align: center;"">
-                                <a href=""{urlWaitApprovalMemo}""
+                                <a href=""{urlView}""
                                     style=""color:#0051dd; text-decoration:none; padding:10px 20px; border-radius:4px; font-weight:500; display:inline-block;text-decoration: underline"">
                                     View Details
                                 </a>
@@ -132,52 +128,52 @@ namespace ServicePortals.Application.Common
                 <table cellpadding=""10"" cellspacing=""0"" style=""border-collapse: collapse; width: 100%; font-family: Arial, sans-serif; border: 1px solid #ccc;"">
                     <tr>
                         <th colspan=""2"" style=""background-color: #f2f2f2; font-size: 20px; padding: 12px; text-align: center; border-bottom: 2px solid #ccc;"">
-                            ĐƠN XIN NGHỈ PHÉP
+                            Leave application form
                         </th>
                     </tr>
 
                     <tr style=""border-bottom: 1px solid #ddd;"">
-                        <td style=""background-color: #f9f9f9;""><strong>Tên nhân viên:</strong></td>
-                        <td>{leaveRequest}</td> /
+                        <td style=""background-color: #f9f9f9;""><strong>Usercode:</strong></td>
+                        <td>{leaveRequest?.ApplicationForm?.UserCodeRequestor}</td>
                     </tr>
 
                     <tr style=""border-bottom: 1px solid #ddd;"">
-                        <td style=""background-color: #f9f9f9;""><strong>Mã nhân viên:</strong></td>
-                        <td>{leaveRequest}</td>
+                        <td style=""background-color: #f9f9f9;""><strong>Username:</strong></td>
+                        <td>{leaveRequest?.ApplicationForm?.UserNameRequestor}</td>
                     </tr>
 
                     <tr style=""border-bottom: 1px solid #ddd;"">
-                        <td style=""background-color: #f9f9f9;""><strong>Phòng ban:</strong></td>
+                        <td style=""background-color: #f9f9f9;""><strong>Department:</strong></td>
                         <td>{leaveRequest?.OrgUnit?.Name}</td>
                     </tr>
 
                     <tr style=""border-bottom: 1px solid #ddd;"">
-                        <td style=""background-color: #f9f9f9;""><strong>Chức vụ:</strong></td>
+                        <td style=""background-color: #f9f9f9;""><strong>Position:</strong></td>
                         <td>{leaveRequest?.Position}</td>
                     </tr>
 
                     <tr style=""border-bottom: 1px solid #ddd;"">
-                        <td style=""background-color: #f9f9f9;""><strong>Ngày nghỉ từ:</strong></td>
+                        <td style=""background-color: #f9f9f9;""><strong>From date:</strong></td>
                         <td>{leaveRequest?.FromDate}</td>
                     </tr>
 
                     <tr style=""border-bottom: 1px solid #ddd;"">
-                        <td style=""background-color: #f9f9f9;""><strong>Đến ngày:</strong></td>
+                        <td style=""background-color: #f9f9f9;""><strong>To date:</strong></td>
                         <td>{leaveRequest?.ToDate}</td>
                     </tr>
 
                     <tr style=""border-bottom: 1px solid #ddd;"">
-                        <td style=""background-color: #f9f9f9;""><strong>Loại phép:</strong></td>
+                        <td style=""background-color: #f9f9f9;""><strong>Type leave:</strong></td>
                         <td>{leaveRequest?.TypeLeave?.Name}</td>
                     </tr>
 
                     <tr style=""border-bottom: 1px solid #ddd;"">
-                        <td style=""background-color: #f9f9f9;""><strong>Thời gian nghỉ:</strong></td>
+                        <td style=""background-color: #f9f9f9;""><strong>Time:</strong></td>
                         <td>{leaveRequest?.TimeLeave?.Name}</td>
                     </tr>
 
                     <tr style=""border-bottom: 1px solid #ddd;"">
-                        <td style=""background-color: #f9f9f9;""><strong>Lý do nghỉ:</strong></td>
+                        <td style=""background-color: #f9f9f9;""><strong>Reason:</strong></td>
                         <td>{leaveRequest?.Reason}</td>
                     </tr>
                 </table>";
@@ -193,11 +189,11 @@ namespace ServicePortals.Application.Common
                     </tr>
                     <tr>
                         <td style=""border: 1px solid #cccccc; padding: 8px;"">UserCode</td>
-                        <td style=""border: 1px solid #cccccc; padding: 8px;"">{itForm}</td>
+                        <td style=""border: 1px solid #cccccc; padding: 8px;"">{itForm?.ApplicationForm?.UserCodeRequestor}</td>
                     </tr>
                     <tr>
                         <td style=""border: 1px solid #cccccc; padding: 8px;"">UserName</td>
-                        <td style=""border: 1px solid #cccccc; padding: 8px;"">{itForm}</td>
+                        <td style=""border: 1px solid #cccccc; padding: 8px;"">{itForm?.ApplicationForm?.UserNameRequestor}</td>
                     </tr>
                     <tr>
                         <td style=""border: 1px solid #cccccc; padding: 8px;"">Date request</td>
@@ -205,11 +201,11 @@ namespace ServicePortals.Application.Common
                     </tr>
                     <tr>
                         <td style=""border: 1px solid #cccccc; padding: 8px;"">IT Category</td>
-                        <td style=""border: 1px solid #cccccc; padding: 8px;"">{string.Join(", ", itForm.ItFormCategories.Select(e => e.ITCategory?.Name ?? "").ToList())}</td>
+                        <td style=""border: 1px solid #cccccc; padding: 8px;"">{string.Join(", ", itForm != null ? itForm.ItFormCategories.Select(e => e.ITCategory?.Name ?? "").ToList() : [])}</td>
                     </tr>
                     <tr>
                         <td style=""border: 1px solid #cccccc; padding: 8px;"">Reason</td>
-                        <td style=""border: 1px solid #cccccc; padding: 8px;"">{itForm?.Reason}</td>
+                        <td style=""border: 1px solid #cccccc; padding: 8px;"">{itForm?.Reason}</td>d
                     </tr>
                     <tr>
                         <td style=""border: 1px solid #cccccc; padding: 8px;"">Priority</td>
@@ -237,10 +233,10 @@ namespace ServicePortals.Application.Common
                         <div style=""padding: 20px 0; line-height: 1.6;"">
                             <div>
                                 <ul style=""list-style: none; padding: 0;"">
-                                    <li style=""margin-bottom: 5px;""><strong>Code:</strong> {purchase}</li>
-                                    <li style=""margin-bottom: 5px;""><strong>UserName:</strong> {purchase}</li>
+                                    <li style=""margin-bottom: 5px;""><strong>Code:</strong> {purchase?.ApplicationForm?.Code}</li>
+                                    <li style=""margin-bottom: 5px;""><strong>UserName:</strong> {purchase?.ApplicationForm?.UserNameRequestor}</li>
                                     <li style=""margin-bottom: 5px;""><strong>Department:</strong> {purchase?.OrgUnit?.Name}</li>
-                                    <li style=""margin-bottom: 5px;""><strong>Date Created:</strong> {purchase.CreatedAt}</li>
+                                    <li style=""margin-bottom: 5px;""><strong>Date Created:</strong> {purchase?.CreatedAt}</li>
                                     <li style=""margin-bottom: 5px;""><strong>Order Summary:</strong>
                                         <ul style=""list-style: none; padding: 0; margin-top: 5px;"">
                                             {sb?.ToString()}

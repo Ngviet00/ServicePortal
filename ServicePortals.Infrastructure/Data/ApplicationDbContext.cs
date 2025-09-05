@@ -223,6 +223,9 @@ namespace ServicePortals.Infrastructure.Data
             modelBuilder.Entity<PurchaseDetail>()
                 .HasQueryFilter(e => e.DeletedAt == null);
 
+            modelBuilder.Entity<MemoNotification>()
+                .HasQueryFilter(e => e.DeletedAt == null);
+
             #endregion
 
 
@@ -370,9 +373,8 @@ namespace ServicePortals.Infrastructure.Data
 
             modelBuilder.Entity<ApplicationForm>()
                 .HasOne(a => a.OrgUnit)
-                .WithOne()
-                .HasForeignKey<ApplicationForm>(a => a.DepartmentId)
-                .HasPrincipalKey<OrgUnit>(o => o.Id)
+                .WithMany()
+                .HasForeignKey(a => a.DepartmentId)
                 .IsRequired(false)
                 .OnDelete(DeleteBehavior.NoAction);
 

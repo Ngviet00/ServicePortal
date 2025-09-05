@@ -16,11 +16,6 @@ namespace ServicePortals.Application.Mappers
             {
                 Id = x.Id,
                 ApplicationFormId = x.ApplicationFormId,
-                //Code = x.Code,
-                //UserCodeRequestor = x.UserCodeRequestor,
-                //UserNameRequestor = x.UserNameRequestor,
-                //UserCodeCreated = x.UserCodeCreated,
-                //UserNameCreated = x.UserNameCreated,
                 DepartmentId = x.DepartmentId,
                 Email = x.Email,
                 Position = x.Position,
@@ -49,7 +44,11 @@ namespace ServicePortals.Application.Mappers
                 ApplicationForm = x.ApplicationForm == null ? null : new ApplicationForm
                 {
                     Id = x.ApplicationForm.Id,
+                    Code = x.ApplicationForm.Code,
                     UserCodeRequestor = x.ApplicationForm.UserCodeRequestor,
+                    UserNameRequestor = x.ApplicationForm.UserNameRequestor,
+                    UserCodeCreated = x.ApplicationForm.UserCodeCreated,
+                    UserNameCreated = x.ApplicationForm.UserNameCreated,
                     RequestStatusId = x.ApplicationForm.RequestStatusId,
                     RequestTypeId = x.ApplicationForm.RequestTypeId,
                     OrgPositionId = x.ApplicationForm.OrgPositionId,

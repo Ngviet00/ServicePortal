@@ -11,18 +11,6 @@ namespace ServicePortals.Infrastructure.Data.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropForeignKey(
-                name: "FK_it_forms_application_forms_ApplicationFormId",
-                table: "it_forms");
-
-            migrationBuilder.DropForeignKey(
-                name: "FK_it_forms_users_UserCodeCreated",
-                table: "it_forms");
-
-            migrationBuilder.DropForeignKey(
-                name: "FK_leave_requests_users_UserCodeRequestor",
-                table: "leave_requests");
-
             migrationBuilder.DropIndex(
                 name: "IX_leave_requests_Id_UserCodeRequestor",
                 table: "leave_requests");
@@ -161,11 +149,6 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                 type: "nvarchar(max)",
                 nullable: true);
 
-            migrationBuilder.AddUniqueConstraint(
-                name: "AK_it_forms_ApplicationFormId",
-                table: "it_forms",
-                column: "ApplicationFormId");
-
             migrationBuilder.CreateIndex(
                 name: "IX_leave_requests_Id",
                 table: "leave_requests",
@@ -182,27 +165,6 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                 column: "DepartmentId",
                 unique: true,
                 filter: "[DepartmentId] IS NOT NULL");
-
-            migrationBuilder.AddForeignKey(
-                name: "FK_application_forms_it_forms_Id",
-                table: "application_forms",
-                column: "Id",
-                principalTable: "it_forms",
-                principalColumn: "ApplicationFormId");
-
-            migrationBuilder.AddForeignKey(
-                name: "FK_application_forms_org_units_DepartmentId",
-                table: "application_forms",
-                column: "DepartmentId",
-                principalTable: "org_units",
-                principalColumn: "Id");
-
-            migrationBuilder.AddForeignKey(
-                name: "FK_leave_requests_users_UserId",
-                table: "leave_requests",
-                column: "UserId",
-                principalTable: "users",
-                principalColumn: "Id");
         }
 
         /// <inheritdoc />

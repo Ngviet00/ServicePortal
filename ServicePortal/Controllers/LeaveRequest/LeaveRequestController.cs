@@ -50,14 +50,6 @@ namespace ServicePortal.Controllers.LeaveRequest
             return Ok(new BaseResponse<ServicePortals.Domain.Entities.LeaveRequest>(200, "success", result));
         }
 
-        [HttpPost]
-        public async Task<IActionResult> Create([FromBody] CreateLeaveRequest request)
-        {
-            var result = await _leaveRequestService.Create(request);
-
-            return Ok(new BaseResponse<object>(200, "success", result));
-        }
-
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(Guid id, LeaveRequestDto dto)
         {

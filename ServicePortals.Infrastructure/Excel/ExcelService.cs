@@ -158,7 +158,7 @@ namespace ServicePortals.Infrastructure.Excel
                 ws.Row(row).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
                 ws.Row(row).Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
 
-                //ws.Cell(row, 1).Value = item.UserCodeRequestor;
+                ws.Cell(row, 1).Value = item?.ApplicationForm?.UserCodeRequestor;
                 ws.Cell(row, 2).Value = item?.TypeLeave?.Code;
 
                 var dateFrom = ((DateTimeOffset)item.FromDate).DateTime;

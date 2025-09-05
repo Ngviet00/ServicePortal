@@ -2,10 +2,10 @@
 using Microsoft.AspNetCore.Mvc;
 using ServicePortals.Application;
 using ServicePortals.Application.Dtos.ITForm.Requests;
-using ServicePortals.Application.Dtos.ITForm.Responses;
 using ServicePortals.Application.Interfaces.ITForm;
 using ServicePortals.Shared.SharedDto;
 using ServicePortals.Shared.SharedDto.Requests;
+using Entity = ServicePortals.Domain.Entities;
 
 namespace ServicePortal.Controllers.ITForm
 {
@@ -33,7 +33,7 @@ namespace ServicePortal.Controllers.ITForm
         {
             var results = await _iITFormService.GetAll(request);
 
-            var response = new PageResponse<ITFormResponse>(
+            var response = new PageResponse<Entity.ITForm>(
                 200,
                 "Success",
                 results.Data,
@@ -51,7 +51,7 @@ namespace ServicePortal.Controllers.ITForm
         {
             var result = await _iITFormService.GetById(Id);
 
-            return Ok(new BaseResponse<ITFormResponse>(200, "success", result));
+            return Ok(new BaseResponse<Entity.ITForm>(200, "success", result));
         }
 
         [HttpPost]

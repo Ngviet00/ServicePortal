@@ -4,14 +4,13 @@ using Dapper;
 using Hangfire;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using ServicePortals.Application.Common;
 using ServicePortals.Application.Dtos.Approval.Request;
 using ServicePortals.Application.Dtos.ITForm.Requests;
-using ServicePortals.Application.Dtos.ITForm.Responses;
 using ServicePortals.Application.Dtos.User.Responses;
 using ServicePortals.Application.Interfaces.OrgUnit;
 using ServicePortals.Application.Interfaces.User;
-using ServicePortals.Application.Mappers;
 using ServicePortals.Domain.Entities;
 using ServicePortals.Domain.Enums;
 using ServicePortals.Infrastructure.Data;
@@ -28,14 +27,16 @@ namespace ServicePortals.Application.Services.ITForm
         private readonly ApplicationDbContext _context;
         private readonly IUserService _userService;
         private readonly IOrgPositionService _orgPositionService;
-        public ITFormServiceImpl(ApplicationDbContext context, IUserService userService, IOrgPositionService orgPositionService)
+        private readonly IConfiguration _configuration;
+        public ITFormServiceImpl(ApplicationDbContext context, IUserService userService, IOrgPositionService orgPositionService, IConfiguration configuration)
         {
             _context = context;
             _userService = userService;
             _orgPositionService = orgPositionService;
+            _configuration = configuration;
         }
 
-        public async Task<PagedResults<ITFormResponse>> GetAll(GetAllITFormRequest request)
+        public async Task<PagedResults<Domain.Entities.ITForm>> GetAll(GetAllITFormRequest request)
         {
             string? userCode = request.UserCode;
             int page = request.Page;
@@ -48,7 +49,7 @@ namespace ServicePortals.Application.Services.ITForm
 
             if (!string.IsNullOrWhiteSpace(userCode))
             {
-                //query = query.Where(e => (e.UserCodeRequestor == userCode || e.UserCodeCreated == userCode) && e.DeletedAt == null);
+                query = query.Where(e => e.ApplicationForm != null && (e.ApplicationForm.UserCodeRequestor == userCode || e.ApplicationForm.UserCodeCreated == userCode) && e.DeletedAt == null);
             }
 
             if (departmentId != null)
@@ -86,58 +87,33 @@ namespace ServicePortals.Application.Services.ITForm
 
             var totalPages = (int)Math.Ceiling((double)totalItems / pageSize);
 
-            var result = await query
+            var results = await SelectITForm(query)
                 .OrderByDescending(e => e.CreatedAt)
-                .Include(x => x.Priority)
-                .Include(x => x.OrgUnit)
-                .Include(x => x.ApplicationForm)
-                    .ThenInclude(haf => haf.HistoryApplicationForms)
-                .Include(x => x.ApplicationForm)
-                    .ThenInclude(af => af.RequestStatus)
-                .Include(x => x.ApplicationForm)
-                    .ThenInclude(af => af.RequestType)
-                .Include(x => x.ItFormCategories)
-                    .ThenInclude(ift => ift.ITCategory)
                 .Skip(((page - 1) * pageSize)).Take(pageSize)
                 .ToListAsync();
 
-            var resultDtos = ITFormMapper.ToDtoList(result);
-
-            return new PagedResults<ITFormResponse>
+            return new PagedResults<Domain.Entities.ITForm>
             {
-                Data = resultDtos,
+                Data = results,
                 TotalItems = totalItems,
                 TotalPages = totalPages
             };
         }
 
-        public async Task<ITFormResponse?> GetById(Guid Id)
+        public async Task<Domain.Entities.ITForm?> GetById(Guid Id)
         {
-            var result = await _context.ITForms
-                .Include(x => x.Priority)
-                .Include(x => x.OrgUnit)
-                .Include(x => x.ApplicationForm)
-                    .ThenInclude(ast => ast.AssignedTasks)
-                .Include(x => x.ApplicationForm)
-                    .ThenInclude(haf => haf.HistoryApplicationForms)
-                .Include(x => x.ApplicationForm)
-                    .ThenInclude(af => af.RequestStatus)
-                .Include(x => x.ApplicationForm)
-                    .ThenInclude(af => af.RequestType)
-                .Include(x => x.ItFormCategories)
-                    .ThenInclude(ift => ift.ITCategory)
-                .FirstOrDefaultAsync(e => e.Id == Id && e.DeletedAt == null);
+            var query = _context.ITForms.AsQueryable();
 
-            var resultDto = ITFormMapper.ToDto(result);
+            var result = await SelectITForm(query).FirstOrDefaultAsync(e => e.Id == Id);
 
-            return resultDto;
+            return result;
         }
 
         public async Task<object> Create(CreateITFormRequest request)
         {
             if (request.DepartmentId == null || request.OrgPositionId <= 0)
             {
-                throw new ValidationException("Bạn chưa được cập nhật vị trí, liên hệ với HR");
+                throw new ValidationException(Global.UserNotSetInformation);
             }
 
             int? nextOrgPositionId = -1;
@@ -238,19 +214,19 @@ namespace ServicePortals.Application.Services.ITForm
             var nextUserInfo = await _userService.GetMultipleUserViclockByOrgPositionId(nextOrgPositionId ?? -1);
 
             var itemFormIT = await _context.ITForms
+                .Include(e => e.ApplicationForm)
                 .Include(e => e.Priority)
                 .Include(e => e.ItFormCategories)
                     .ThenInclude(e => e.ITCategory)
                 .FirstOrDefaultAsync(e => e.Id == formIT.Id) ?? throw new NotFoundException("Not found data, please check again");
 
-            string urlApproval = $@"{request?.UrlFrontend}/approval/approval-form-it/{itemFormIT.Id}";
+            string urlApproval = $@"{_configuration["Setting:UrlFrontEnd"]}/approval/approval-form-it/{itemFormIT.Id}";
 
             string bodyMail = $@"
                 <h4>
-                    <span>Click to detail: </span>
+                    <span>Detail: </span>
                     <a href={urlApproval}>{itemFormIT}</a>
-                </h4>";
-            //+ TemplateEmail.EmailFormIT(itemFormIT);
+                </h4>" + TemplateEmail.EmailFormIT(itemFormIT);
 
             BackgroundJob.Enqueue<IEmailService>(job =>
                 job.SendEmailFormIT(
@@ -310,7 +286,7 @@ namespace ServicePortals.Application.Services.ITForm
 
             if (request?.OrgPositionId != applicationForm.OrgPositionId)
             {
-                throw new ForbiddenException("You are not permitted to approve this request.");
+                throw new ForbiddenException(Global.NotPermissionApproval);
             }
 
             var historyApplicationForm = new HistoryApplicationForm
@@ -343,7 +319,7 @@ namespace ServicePortals.Application.Services.ITForm
                     job.SendEmailFormIT(
                         new List<string> { itemFormIT.Email ?? "" },
                         null,
-                        "IT Form has been reject",
+                        "Your request IT form has been rejected",
                         bodyMailReject,
                         null,
                         true
@@ -414,11 +390,11 @@ namespace ServicePortals.Application.Services.ITForm
 
             var nextUserInfo = await _userService.GetMultipleUserViclockByOrgPositionId(nextOrgPositionId ?? -1);
 
-            string urlApproval = $@"{request?.UrlFrontend}/approval/approval-form-it/{itemFormIT.Id}";
+            string urlApproval = $@"{_configuration["Setting:UrlFrontEnd"]}/approval/approval-form-it/{itemFormIT.Id}";
 
             string bodyMail = $@"
                 <h4>
-                    <span>Click to detail: </span>
+                    <span>Detail: </span>
                     <a href={urlApproval}>{itemFormIT}</a>
                 </h4>" + TemplateEmail.EmailFormIT(itemFormIT);
 
@@ -448,7 +424,7 @@ namespace ServicePortals.Application.Services.ITForm
 
             if (request?.OrgPositionId != applicationForm.OrgPositionId)
             {
-                throw new ForbiddenException("You are not permitted to approve this request.");
+                throw new ForbiddenException(Global.NotPermissionApproval);
             }
 
             applicationForm.UpdatedAt = DateTimeOffset.Now;
@@ -484,11 +460,11 @@ namespace ServicePortals.Application.Services.ITForm
 
             await _context.SaveChangesAsync();
 
-            string urlApproval = $@"{request.UrlFrontend}/approval/assigned-form-it/{itemITForm.Id}";
+            string urlApproval = $@"{_configuration["Setting:UrlFrontEnd"]}/approval/assigned-form-it/{itemITForm.Id}";
 
             string bodyMail = $@"
                 <h4>
-                    <span>Click to detail: </span>
+                    <span>Detail: </span>
                     <a href={urlApproval}>{itemITForm}</a>
                 </h4>" + TemplateEmail.EmailFormIT(itemITForm);
 
@@ -525,7 +501,7 @@ namespace ServicePortals.Application.Services.ITForm
 
             if (!exists)
             {
-                throw new ForbiddenException("You are not permitted to approve this request.");
+                throw new ForbiddenException(Global.NotPermissionApproval);
             }
 
             itemFormIT.TargetCompletionDate = request.TargetCompletionDate;
@@ -564,11 +540,11 @@ namespace ServicePortals.Application.Services.ITForm
             //get email to cc, manager, user assigned task
             List<GetMultiUserViClockByOrgPositionIdResponse> multipleByUserCodes = await _userService.GetMultipleUserViclockByOrgPositionId(-1, ccUserCode);
 
-            string urlDetail = $@"{request.UrlFrontend}/approval/view-form-it/{itemFormIT.Id}";
+            string urlDetail = $@"{_configuration["Setting:UrlFrontEnd"]}/approval/view-form-it/{itemFormIT.Id}";
 
             string bodyMail = $@"
                 <h4>
-                    <span>Click to detail: </span>
+                    <span>Detail: </span>
                     <a href={urlDetail}>{itemFormIT}</a>
                 </h4>" + TemplateEmail.EmailFormIT(itemFormIT);
 
@@ -577,7 +553,7 @@ namespace ServicePortals.Application.Services.ITForm
                 job.SendEmailFormIT(
                     new List<string> { itemFormIT.Email ?? "" },
                     multipleByUserCodes.Select(e => e.Email ?? "").ToList(),
-                    "Your IT request form has been successfully processed",
+                    "Your IT form request has been approved",
                     bodyMail,
                     null,
                     true
@@ -635,6 +611,86 @@ namespace ServicePortals.Application.Services.ITForm
             var result = await connection.QueryAsync<InfoUserAssigned>(sql);
 
             return (List<InfoUserAssigned>)result;
+        }
+        private static IQueryable<Domain.Entities.ITForm> SelectITForm(IQueryable<Domain.Entities.ITForm> query)
+        {
+            return query.Select(x => new Domain.Entities.ITForm
+            {
+                Id = x.Id,
+                ApplicationFormId = x.ApplicationFormId,
+                DepartmentId = x.DepartmentId,
+                Email = x.Email,
+                Position = x.Position,
+                Reason = x.Reason,
+                PriorityId = x.PriorityId,
+                NoteManagerIT = x.NoteManagerIT,
+                RequestDate = x.RequestDate,
+                RequiredCompletionDate = x.RequiredCompletionDate,
+                TargetCompletionDate = x.TargetCompletionDate,
+                ActualCompletionDate = x.ActualCompletionDate,
+                CreatedAt = x.CreatedAt,
+                UpdatedAt = x.UpdatedAt,
+                DeletedAt = x.DeletedAt,
+                Priority = x.Priority == null ? null : new Domain.Entities.Priority
+                {
+                    Id = x.Priority.Id,
+                    Name = x.Priority.Name,
+                    NameE = x.Priority.NameE
+                },
+                OrgUnit = x.OrgUnit == null ? null : new Domain.Entities.OrgUnit
+                {
+                    Id = x.OrgUnit.Id,
+                    Name = x.OrgUnit.Name,
+                    ParentOrgUnitId = x.OrgUnit.ParentOrgUnitId
+                },
+                ApplicationForm = x.ApplicationForm == null ? null : new ApplicationForm
+                {
+                    Id = x.ApplicationForm.Id,
+                    Code = x.ApplicationForm.Code,
+                    UserCodeRequestor = x.ApplicationForm.UserCodeRequestor,
+                    UserNameRequestor = x.ApplicationForm.UserNameRequestor,
+                    UserCodeCreated = x.ApplicationForm.UserCodeCreated,
+                    UserNameCreated = x.ApplicationForm.UserNameCreated,
+                    RequestStatusId = x.ApplicationForm.RequestStatusId,
+                    RequestTypeId = x.ApplicationForm.RequestTypeId,
+                    OrgPositionId = x.ApplicationForm.OrgPositionId,
+                    CreatedAt = x.ApplicationForm.CreatedAt,
+                    RequestStatus = x.ApplicationForm.RequestStatus == null ? null : new RequestStatus
+                    {
+                        Id = x.ApplicationForm.RequestStatus.Id,
+                        Name = x.ApplicationForm.RequestStatus.Name,
+                        NameE = x.ApplicationForm.RequestStatus.NameE,
+                    },
+                    RequestType = x.ApplicationForm.RequestType == null ? null : new Domain.Entities.RequestType
+                    {
+                        Id = x.ApplicationForm.RequestType.Id,
+                        Name = x.ApplicationForm.RequestType.Name,
+                        NameE = x.ApplicationForm.RequestType.NameE,
+                    },
+                    HistoryApplicationForms = x.ApplicationForm.HistoryApplicationForms.OrderByDescending(e => e.CreatedAt).Select(itemHistory => new HistoryApplicationForm
+                    {
+                        Id = itemHistory.Id,
+                        UserNameApproval = itemHistory.UserNameApproval,
+                        UserCodeApproval = itemHistory.UserCodeApproval,
+                        Action = itemHistory.Action,
+                        Note = itemHistory.Note,
+                        CreatedAt = itemHistory.CreatedAt
+                    }).ToList(),
+                    AssignedTasks = x.ApplicationForm.AssignedTasks.ToList(),
+                },
+                ItFormCategories = x.ItFormCategories.Select(ift => new ITFormCategory
+                {
+                    Id = ift.Id,
+                    ITCategoryId = ift.ITCategoryId,
+                    ITFormId = ift.ITFormId,
+                    ITCategory = ift.ITCategory == null ? null : new ITCategory
+                    {
+                        Id = ift.ITCategory.Id,
+                        Name = ift.ITCategory.Name,
+                        Code = ift.ITCategory.Code
+                    }
+                }).ToList(),
+            });
         }
     }
 }
