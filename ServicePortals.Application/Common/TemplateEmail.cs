@@ -205,7 +205,7 @@ namespace ServicePortals.Application.Common
                     </tr>
                     <tr>
                         <td style=""border: 1px solid #cccccc; padding: 8px;"">Reason</td>
-                        <td style=""border: 1px solid #cccccc; padding: 8px;"">{itForm?.Reason}</td>d
+                        <td style=""border: 1px solid #cccccc; padding: 8px;"">{itForm?.Reason}</td>
                     </tr>
                     <tr>
                         <td style=""border: 1px solid #cccccc; padding: 8px;"">Priority</td>

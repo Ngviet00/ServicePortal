@@ -8,6 +8,7 @@ using Microsoft.Extensions.Configuration;
 using ServicePortals.Application.Common;
 using ServicePortals.Application.Dtos.Approval.Request;
 using ServicePortals.Application.Dtos.ITForm.Requests;
+using ServicePortals.Application.Dtos.ITForm.Responses;
 using ServicePortals.Application.Dtos.User.Responses;
 using ServicePortals.Application.Interfaces.OrgUnit;
 using ServicePortals.Application.Interfaces.User;
@@ -104,7 +105,7 @@ namespace ServicePortals.Application.Services.ITForm
         {
             var query = _context.ITForms.AsQueryable();
 
-            var result = await SelectITForm(query).FirstOrDefaultAsync(e => e.Id == Id);
+            var result = await SelectITForm(query).FirstOrDefaultAsync(e => e.Id == Id || e.ApplicationFormId == Id);
 
             return result;
         }
@@ -225,7 +226,7 @@ namespace ServicePortals.Application.Services.ITForm
             string bodyMail = $@"
                 <h4>
                     <span>Detail: </span>
-                    <a href={urlApproval}>{itemFormIT}</a>
+                    <a href={urlApproval}>{itemFormIT?.ApplicationForm?.Code}</a>
                 </h4>" + TemplateEmail.EmailFormIT(itemFormIT);
 
             BackgroundJob.Enqueue<IEmailService>(job =>
@@ -244,7 +245,7 @@ namespace ServicePortals.Application.Services.ITForm
 
         public async Task<object> Delete(Guid Id)
         {
-            var item = await _context.ITForms.FirstOrDefaultAsync(e => e.Id == Id && e.DeletedAt == null) ?? throw new NotFoundException("Form IT not found");
+            var item = await _context.ITForms.FirstOrDefaultAsync(e => (e.Id == Id || e.ApplicationFormId == Id) && e.DeletedAt == null) ?? throw new NotFoundException("Form IT not found");
 
             await _context.HistoryApplicationForms.Where(e => e.ApplicationFormId == item.ApplicationFormId).ExecuteUpdateAsync(s => s.SetProperty(e => e.DeletedAt, DateTimeOffset.Now));
 
@@ -257,7 +258,7 @@ namespace ServicePortals.Application.Services.ITForm
 
         public async Task<object> Update(Guid Id, UpdateITFormRequest request)
         {
-            var item = await _context.ITForms.FirstOrDefaultAsync(e => e.Id == Id && e.DeletedAt == null) ?? throw new NotFoundException("Form IT not found");
+            var item = await _context.ITForms.FirstOrDefaultAsync(e => (e.Id == Id || e.ApplicationFormId == Id) && e.DeletedAt == null) ?? throw new NotFoundException("Form IT not found");
 
             item.Position = request.Position;
             item.Email = request.Email;
@@ -277,10 +278,11 @@ namespace ServicePortals.Application.Services.ITForm
         public async Task<object> Approval(ApprovalRequest request)
         {
             var itemFormIT = await _context.ITForms
+                .Include(e => e.ApplicationForm)
                 .Include(e => e.Priority)
                 .Include(e => e.ItFormCategories)
                     .ThenInclude(e => e.ITCategory)
-                .FirstOrDefaultAsync(e => e.Id == request.ITFormId) ?? throw new NotFoundException("Not found data, please check again");
+                .FirstOrDefaultAsync(e => e.Id == request.ITFormId || e.ApplicationFormId == request.ITFormId) ?? throw new NotFoundException("Not found data, please check again");
 
             var applicationForm = await _context.ApplicationForms.FirstOrDefaultAsync(e => e.Id == itemFormIT.ApplicationFormId) ?? throw new NotFoundException("Item application form not found");
 
@@ -395,7 +397,7 @@ namespace ServicePortals.Application.Services.ITForm
             string bodyMail = $@"
                 <h4>
                     <span>Detail: </span>
-                    <a href={urlApproval}>{itemFormIT}</a>
+                    <a href={urlApproval}>{itemFormIT?.ApplicationForm?.Code}</a>
                 </h4>" + TemplateEmail.EmailFormIT(itemFormIT);
 
             BackgroundJob.Enqueue<IEmailService>(job =>
@@ -418,7 +420,7 @@ namespace ServicePortals.Application.Services.ITForm
                 .Include(e => e.Priority)
                 .Include(e => e.ItFormCategories)
                     .ThenInclude(e => e.ITCategory)
-                .FirstOrDefaultAsync(e => e.Id == request.ITFormId) ?? throw new NotFoundException("IT Form not found");
+                .FirstOrDefaultAsync(e => e.Id == request.ITFormId || e.ApplicationFormId == request.ITFormId) ?? throw new NotFoundException("IT Form not found");
 
             var applicationForm = await _context.ApplicationForms.FirstOrDefaultAsync(e => e.Id == itemITForm.ApplicationFormId) ?? throw new NotFoundException("Application form not found");
 
@@ -465,7 +467,7 @@ namespace ServicePortals.Application.Services.ITForm
             string bodyMail = $@"
                 <h4>
                     <span>Detail: </span>
-                    <a href={urlApproval}>{itemITForm}</a>
+                    <a href={urlApproval}>{itemITForm?.ApplicationForm?.Code}</a>
                 </h4>" + TemplateEmail.EmailFormIT(itemITForm);
 
             BackgroundJob.Enqueue<IEmailService>(job =>
@@ -488,7 +490,7 @@ namespace ServicePortals.Application.Services.ITForm
                 .Include(e => e.Priority)
                 .Include(e => e.ItFormCategories)
                     .ThenInclude(e => e.ITCategory)
-                .FirstOrDefaultAsync(e => e.Id == request.ITFormId) ?? throw new NotFoundException("Not found data, please check again");
+                .FirstOrDefaultAsync(e => e.Id == request.ITFormId || e.ApplicationFormId == request.ITFormId) ?? throw new NotFoundException("Not found data, please check again");
 
             var applicationForm = await _context.ApplicationForms
                 .Include(e => e.HistoryApplicationForms)
@@ -545,7 +547,7 @@ namespace ServicePortals.Application.Services.ITForm
             string bodyMail = $@"
                 <h4>
                     <span>Detail: </span>
-                    <a href={urlDetail}>{itemFormIT}</a>
+                    <a href={urlDetail}>{itemFormIT?.ApplicationForm?.Code}</a>
                 </h4>" + TemplateEmail.EmailFormIT(itemFormIT);
 
             //send email

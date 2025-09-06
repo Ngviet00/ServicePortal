@@ -16,6 +16,14 @@ namespace ServicePortal.Controllers.Purchase
             _purchaseService = purchaseService;
         }
 
+        [HttpGet("statistical-purchase")]
+        public async Task<IActionResult> StatisticalFormIT([FromQuery] int year)
+        {
+            var results = await _purchaseService.StatisticalPurchase(year);
+
+            return Ok(new BaseResponse<object>(200, "success", results));
+        }
+
         [HttpGet]
         public async Task<IActionResult> GetAll([FromQuery] GetAllPurchaseRequest request)
         {

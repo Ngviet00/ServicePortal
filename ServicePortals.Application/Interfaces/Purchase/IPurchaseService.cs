@@ -1,5 +1,6 @@
 ﻿using ServicePortals.Application.Dtos.Approval.Request;
 using ServicePortals.Application.Dtos.Purchase.Requests;
+using ServicePortals.Application.Dtos.Purchase.Responses;
 using ServicePortals.Shared.SharedDto;
 using ServicePortals.Shared.SharedDto.Requests;
 
@@ -7,6 +8,7 @@ namespace ServicePortals.Application.Interfaces.Purchase
 {
     public interface IPurchaseService
     {
+        Task<StatisticalPurchaseResponse> StatisticalPurchase(int year);
         Task<PagedResults<Domain.Entities.Purchase>> GetAll(GetAllPurchaseRequest request);
         Task<Domain.Entities.Purchase> GetById(Guid id);
         Task<object> Create(CreatePurchaseRequest request);

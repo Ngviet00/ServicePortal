@@ -91,7 +91,7 @@ namespace ServicePortals.Application.Services.MemoNotification
         /// </summary>
         public async Task<Entities.MemoNotification?> GetById(Guid Id)
         {
-            var query = _context.MemoNotifications.Where(e => e.Id == Id);
+            var query = _context.MemoNotifications.Where(e => e.Id == Id || e.ApplicationFormId == Id);
 
             var result = await SelectMemoNotify(query)
                 .Select(e => new Entities.MemoNotification
@@ -304,7 +304,7 @@ namespace ServicePortals.Application.Services.MemoNotification
         //update thông báo
         public async Task<object> Update(Guid id, CreateMemoNotiRequest dto, IFormFile[] files)
         {
-            var memoNotify = await _context.MemoNotifications.FirstOrDefaultAsync(e => e.Id == id) ?? throw new NotFoundException("Memo notification not found!");
+            var memoNotify = await _context.MemoNotifications.FirstOrDefaultAsync(e => e.Id == id || e.ApplicationFormId == id) ?? throw new NotFoundException("Memo notification not found!");
 
             memoNotify.Title = dto.Title;
             memoNotify.Content = dto.Content;
@@ -391,7 +391,7 @@ namespace ServicePortals.Application.Services.MemoNotification
         //delete thông báo, sẽ xóa nhưng dữ liên quan trước như là file, phòng ban vs thông báo rồi tới thông báo
         public async Task<object> Delete(Guid id)
         {
-            var memoNotify = await _context.MemoNotifications.FirstOrDefaultAsync(e => e.Id == id) ?? throw new NotFoundException("Notification not found to delete!");
+            var memoNotify = await _context.MemoNotifications.FirstOrDefaultAsync(e => e.Id == id || e.ApplicationFormId == id) ?? throw new NotFoundException("Notification not found to delete!");
 
             await _context.HistoryApplicationForms.Where(e => e.ApplicationFormId == memoNotify.ApplicationFormId).ExecuteUpdateAsync(s => s.SetProperty(e => e.DeletedAt, DateTimeOffset.Now));
 
@@ -463,7 +463,7 @@ namespace ServicePortals.Application.Services.MemoNotification
         {
             var orgPositionId = request.OrgPositionId;
 
-            var memoNotify = await _context.MemoNotifications.Include(e => e.ApplicationForm).FirstOrDefaultAsync(e => e.Id == request.MemoNotificationId);
+            var memoNotify = await _context.MemoNotifications.Include(e => e.ApplicationForm).FirstOrDefaultAsync(e => e.Id == request.MemoNotificationId || e.ApplicationFormId == request.MemoNotificationId);
 
             if (memoNotify == null)
             {

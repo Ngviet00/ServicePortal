@@ -5,6 +5,7 @@ using Hangfire;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using ServicePortal.Applications.Modules.LeaveRequest.DTO.Requests;
 using ServicePortals.Application.Common;
 using ServicePortals.Application.Dtos.Approval.Request;
@@ -29,18 +30,21 @@ namespace ServicePortals.Application.Services.LeaveRequest
         private readonly IUserService _userService;
         private readonly ExcelService _excelService;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IConfiguration _configuration;
 
         public LeaveRequestService(
             ApplicationDbContext context,
             IUserService userService,
             ExcelService excelService,
-            IHttpContextAccessor httpContextAccessor
+            IHttpContextAccessor httpContextAccessor,
+            IConfiguration configuration
         )
         {
             _context = context;
             _userService = userService;
             _excelService = excelService;
             _httpContextAccessor = httpContextAccessor;
+            _configuration = configuration;
         }
 
         /// <summary>
@@ -155,7 +159,7 @@ namespace ServicePortals.Application.Services.LeaveRequest
                         HistoryApplicationForms = x.ApplicationForm.HistoryApplicationForms.OrderByDescending(h => h.CreatedAt).ToList(),
                     } : null
                 })
-                .FirstOrDefaultAsync(e => e.Id == id)
+                .FirstOrDefaultAsync(e => e.Id == id || e.ApplicationFormId == id)
                 ?? throw new NotFoundException("Leave request not found!");
 
             return leaveRequest;
@@ -163,7 +167,7 @@ namespace ServicePortals.Application.Services.LeaveRequest
 
         public async Task<object> Update(Guid id, LeaveRequestDto dto)
         {
-            var leaveRequest = await _context.LeaveRequests.FirstOrDefaultAsync(e => e.Id == id) ?? throw new NotFoundException("Leave request not found!");
+            var leaveRequest = await _context.LeaveRequests.FirstOrDefaultAsync(e => e.Id == id || e.ApplicationFormId == id) ?? throw new NotFoundException("Leave request not found!");
 
             leaveRequest.Id = leaveRequest.Id;
             leaveRequest.DepartmentId = dto.DepartmentId;
@@ -186,7 +190,7 @@ namespace ServicePortals.Application.Services.LeaveRequest
 
         public async Task<object> Delete(Guid id)
         {
-            var leaveRequest = await _context.LeaveRequests.FirstOrDefaultAsync(e => e.Id == id) ?? throw new NotFoundException("Leave request not found!");
+            var leaveRequest = await _context.LeaveRequests.FirstOrDefaultAsync(e => e.Id == id || e.ApplicationFormId == id) ?? throw new NotFoundException("Leave request not found!");
 
             await _context.HistoryApplicationForms.Where(e => e.ApplicationFormId == leaveRequest.ApplicationFormId).ExecuteUpdateAsync(s => s.SetProperty(e => e.DeletedAt, DateTimeOffset.Now));
 
@@ -210,8 +214,6 @@ namespace ServicePortals.Application.Services.LeaveRequest
 
             var leaveRequest = await GetById((Guid)(request.LeaveRequestId));
 
-            var userRequester = leaveRequest.User;
-
             var applicationForm = await _context.ApplicationForms.FirstOrDefaultAsync(e => e.Id == leaveRequest.ApplicationFormId) ?? throw new NotFoundException("Application form is not found, please check again");
 
             var historyApplicationForm = new HistoryApplicationForm
@@ -219,6 +221,8 @@ namespace ServicePortals.Application.Services.LeaveRequest
                 ApplicationFormId = applicationForm.Id,
                 CreatedAt = DateTimeOffset.Now
             };
+
+            var user = await _context.Users.Include(e => e.UserConfigs).FirstOrDefaultAsync(e => e.UserCode == applicationForm.UserCodeRequestor);
 
             int requestStatusApplicationForm = -1;
             int? nextOrgPositionId = orgPosition.ParentOrgPositionId;
@@ -271,7 +275,7 @@ namespace ServicePortals.Application.Services.LeaveRequest
 
                 _context.HistoryApplicationForms.Add(historyApplicationForm);
 
-                SendRejectEmailLeaveRequest(userRequester, leaveRequest, request.Note ?? "");
+                SendRejectEmailLeaveRequest(user, leaveRequest, request.Note ?? "");
 
                 await _context.SaveChangesAsync();
                 return true;
@@ -294,7 +298,7 @@ namespace ServicePortals.Application.Services.LeaveRequest
             string templateEmail = TemplateEmail.EmailContentLeaveRequest(leaveRequest);
 
             //gửi email thông tin cho người tiếp theo
-            string urlWaitApproval = $"{request.UrlFrontend}/leave/wait-approval";
+            string urlWaitApproval = $"{_configuration["Setting:UrlFrontEnd"]}/approval/pending-approval";
             string emailWithUrlApproval = $@"
                 <h4>
                     <span>Detail: </span>
@@ -337,7 +341,7 @@ namespace ServicePortals.Application.Services.LeaveRequest
         }
 
         //hàm send email khi mà approved bước cuối cùng thành công
-        private void SendEmailSuccessLeaveRequest(Domain.Entities.User userRequester, Domain.Entities.LeaveRequest leaveRequest)
+        private void SendEmailSuccessLeaveRequest(Domain.Entities.User? userRequester, Domain.Entities.LeaveRequest leaveRequest)
         {
             if (userRequester?.UserConfigs?.FirstOrDefault(e => e.Key == "RECEIVE_MAIL_LEAVE_REQUEST")?.Value == "false")
             {
@@ -545,7 +549,7 @@ namespace ServicePortals.Application.Services.LeaveRequest
 
             List<string> userCodes = [userCode ?? ""];
 
-            string urlWaitApproval = $"{urlFrontEnd}/leave/wait-approval";
+            string urlWaitApproval = $"{_configuration["Setting:UrlFrontEnd"]}/approval/pending-approval";
 
             string emailLinkApproval = $@"
                 <h4>
@@ -677,9 +681,13 @@ namespace ServicePortals.Application.Services.LeaveRequest
                     e.ApplicationForm != null &&
                     e.ApplicationForm.RequestStatusId == (int)StatusApplicationFormEnum.WAIT_HR &&
                     e.ApplicationForm.OrgPositionId == (int)StatusApplicationFormEnum.ORG_POSITION_ID_HR_LEAVE_RQ &&
-                    parsedIds.Contains(e.Id)
+                    (parsedIds.Contains(e.Id) || parsedIds.Contains(e.ApplicationFormId ?? Guid.Empty))
                 )
                 .ToListAsync();
+
+            var userCodeRequestors = leaveRequestsWaitHrApproval.Select(e => e?.ApplicationForm?.UserCodeRequestor).Distinct().ToList();
+
+            var users = await _context.Users.Where(e => userCodeRequestors.Contains(e.UserCode)).Include(e => e.UserConfigs).ToListAsync();
 
             foreach (var itemLeave in leaveRequestsWaitHrApproval)
             {
@@ -704,10 +712,7 @@ namespace ServicePortals.Application.Services.LeaveRequest
 
                     _context.HistoryApplicationForms.Add(historyApplicationForm);
 
-                    if (itemLeave.User != null)
-                    {
-                        SendEmailSuccessLeaveRequest(itemLeave.User, itemLeave);
-                    }
+                    SendEmailSuccessLeaveRequest(users.FirstOrDefault(e => e.UserCode == applicationForm.UserCodeRequestor), itemLeave);
                 }
             }
 
@@ -813,7 +818,7 @@ namespace ServicePortals.Application.Services.LeaveRequest
                     e.ApplicationForm != null &&
                     e.ApplicationForm.RequestStatusId == (int)StatusApplicationFormEnum.WAIT_HR &&
                     e.ApplicationForm.OrgPositionId == (int)StatusApplicationFormEnum.ORG_POSITION_ID_HR_LEAVE_RQ &&
-                    parsedIds.Contains(e.Id)
+                    (parsedIds.Contains(e.Id) || parsedIds.Contains(e.ApplicationFormId ?? Guid.Empty))
                 )
                 .ToListAsync();
 

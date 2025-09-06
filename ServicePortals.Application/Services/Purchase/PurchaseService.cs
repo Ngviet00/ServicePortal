@@ -12,7 +12,6 @@ using ServicePortals.Application.Dtos.User.Responses;
 using ServicePortals.Application.Interfaces.OrgUnit;
 using ServicePortals.Application.Interfaces.Purchase;
 using ServicePortals.Application.Interfaces.User;
-using ServicePortals.Application.Mappers;
 using ServicePortals.Domain.Entities;
 using ServicePortals.Domain.Enums;
 using ServicePortals.Infrastructure.Data;
@@ -21,6 +20,10 @@ using ServicePortals.Infrastructure.Helpers;
 using ServicePortals.Shared.Exceptions;
 using ServicePortals.Shared.SharedDto;
 using ServicePortals.Shared.SharedDto.Requests;
+using GroupByDepartment = ServicePortals.Application.Dtos.Purchase.Responses.GroupByDepartment;
+using GroupByMonth = ServicePortals.Application.Dtos.Purchase.Responses.GroupByMonth;
+using GroupByTotal = ServicePortals.Application.Dtos.Purchase.Responses.GroupByTotal;
+using GroupRecentList = ServicePortals.Application.Dtos.Purchase.Responses.GroupRecentList;
 
 namespace ServicePortals.Application.Services.Purchase
 {
@@ -44,6 +47,27 @@ namespace ServicePortals.Application.Services.Purchase
             _configuration = configuration;
         }
 
+        public async Task<StatisticalPurchaseResponse> StatisticalPurchase(int year)
+        {
+            using var connection = _context.Database.GetDbConnection();
+            if (connection.State != ConnectionState.Open)
+            {
+                await connection.OpenAsync();
+            }
+
+            using var multi = await connection.QueryMultipleAsync("GetPurchaseStatisticalData", new { Year = year }, commandType: CommandType.StoredProcedure);
+
+            var result = new StatisticalPurchaseResponse
+            {
+                GroupByTotal = await multi.ReadFirstAsync<GroupByTotal>(),
+                GroupRecentList = (await multi.ReadAsync<GroupRecentList>()).ToList(),
+                GroupByDepartment = (await multi.ReadAsync<GroupByDepartment>()).ToList(),
+                GroupByMonth = (await multi.ReadAsync<GroupByMonth>()).ToList()
+            };
+
+            return result;
+        }
+
         public async Task<PagedResults<Domain.Entities.Purchase>> GetAll(GetAllPurchaseRequest request)
         {
             string? userCode = request.UserCode;
@@ -53,7 +77,7 @@ namespace ServicePortals.Application.Services.Purchase
             int? statusId = request.RequestStatusId;
             int? year = request.Year;
 
-            var query = _context.Purchases.AsQueryable();
+            var query = _context.Purchases.AsSplitQuery().AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(userCode))
             {
@@ -112,7 +136,7 @@ namespace ServicePortals.Application.Services.Purchase
         {
             var query = _context.Purchases.AsQueryable();
 
-            var result = await SelectPurchase(query).FirstOrDefaultAsync(e => e.Id == id) ?? throw new ValidationException("Purchase not found");
+            var result = await SelectPurchase(query).FirstOrDefaultAsync(e => e.Id == id || e.ApplicationFormId == id) ?? throw new ValidationException("Purchase not found");
 
             return result;
         }
@@ -168,7 +192,7 @@ namespace ServicePortals.Application.Services.Purchase
                 Code = Helper.GenerateFormCode("P"),
                 UserCodeRequestor = request.UserCode,
                 UserNameRequestor = request.UserName,
-                UserNameCreated = request.UserCode,
+                UserNameCreated = request.UserName,
                 UserCodeCreated = request.UserCode,
                 DepartmentId = request.DepartmentId,
                 RequestTypeId = (int)RequestTypeEnum.PURCHASE,
@@ -244,7 +268,7 @@ namespace ServicePortals.Application.Services.Purchase
 
         public async Task<object> Delete(Guid id)
         {
-            var purchase = await _context.Purchases.FirstOrDefaultAsync(e => e.Id == id) ?? throw new NotFoundException("Purchase item not found");
+            var purchase = await _context.Purchases.FirstOrDefaultAsync(e => e.Id == id || e.ApplicationFormId == id) ?? throw new NotFoundException("Purchase item not found");
 
             await _context.HistoryApplicationForms.Where(e => e.ApplicationFormId == purchase.ApplicationFormId).ExecuteUpdateAsync(s => s.SetProperty(e => e.DeletedAt, DateTimeOffset.Now));
 
@@ -259,7 +283,7 @@ namespace ServicePortals.Application.Services.Purchase
 
         public async Task<object> Update(Guid id, UpdatePurchaseRequest request)
         {
-            var purchase = await _context.Purchases.FirstOrDefaultAsync(e => e.Id == id) ?? throw new NotFoundException("Purchase not found");
+            var purchase = await _context.Purchases.FirstOrDefaultAsync(e => e.Id == id || e.ApplicationFormId == id) ?? throw new NotFoundException("Purchase not found");
 
             var requestDetailIds = request.CreatePurchaseDetailRequests.Where(r => r.Id.HasValue).Select(r => r.Id.Value).ToList();
 
@@ -330,7 +354,7 @@ namespace ServicePortals.Application.Services.Purchase
                 .Include(e => e.OrgUnit)
                 .Include(e => e.ApplicationForm)
                 .Include(e => e.PurchaseDetails)
-                .FirstOrDefaultAsync(e => e.Id == request.PurchaseId) ?? throw new NotFoundException("Purchase not found");
+                .FirstOrDefaultAsync(e => e.Id == request.PurchaseId || e.ApplicationFormId == request.PurchaseId) ?? throw new NotFoundException("Purchase not found");
 
             var applicationForm = await _context.ApplicationForms.FirstOrDefaultAsync(e => e.Id == purchase.ApplicationFormId) ?? throw new NotFoundException("Item application form not found");
 
@@ -456,7 +480,7 @@ namespace ServicePortals.Application.Services.Purchase
                 .Include(e => e.OrgUnit)
                 .Include(e => e.ApplicationForm)
                 .Include(e => e.PurchaseDetails)
-                .FirstOrDefaultAsync(e => e.Id == request.PurchaseId) ?? throw new NotFoundException("Purchase not found");
+                .FirstOrDefaultAsync(e => e.Id == request.PurchaseId || e.ApplicationFormId == request.PurchaseId) ?? throw new NotFoundException("Purchase not found");
 
             var applicationForm = await _context.ApplicationForms.FirstOrDefaultAsync(e => e.Id == purchase.ApplicationFormId) ?? throw new NotFoundException("Item application form not found");
 
@@ -523,7 +547,7 @@ namespace ServicePortals.Application.Services.Purchase
                 .Include(e => e.OrgUnit)
                 .Include(e => e.ApplicationForm)
                 .Include(e => e.PurchaseDetails)
-                .FirstOrDefaultAsync(e => e.Id == request.PurchaseId) ?? throw new NotFoundException("Purchase not found");
+                .FirstOrDefaultAsync(e => e.Id == request.PurchaseId || e.ApplicationFormId == request.PurchaseId) ?? throw new NotFoundException("Purchase not found");
 
             var applicationForm = await _context.ApplicationForms
                 .Include(e => e.HistoryApplicationForms)

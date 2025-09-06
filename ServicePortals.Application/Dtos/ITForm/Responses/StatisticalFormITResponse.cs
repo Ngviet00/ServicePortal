@@ -1,4 +1,4 @@
-﻿namespace ServicePortals.Application.Dtos.ITForm.Requests
+﻿namespace ServicePortals.Application.Dtos.ITForm.Responses
 {
     public class StatisticalFormITResponse
     {
