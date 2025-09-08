@@ -11,6 +11,7 @@ using ServicePortals.Domain.Enums;
 using ServicePortals.Shared.SharedDto;
 using Entities = ServicePortals.Domain.Entities;
 using ServicePortals.Shared.Exceptions;
+using System.Linq.Expressions;
 
 namespace ServicePortals.Application.Services.OrgUnit
 {
@@ -206,6 +207,44 @@ namespace ServicePortals.Application.Services.OrgUnit
             }
 
             return roots;
+        }
+
+        public async Task<List<Entities.OrgUnit>> GetAll(Expression<Func<Entities.OrgUnit, bool>>? predicate = null, int? departmentId = null)
+        {
+            var query = _context.OrgUnits.AsQueryable();
+
+            if (predicate != null)
+            {
+                query = query.Where(predicate);
+            }
+
+            if (departmentId != null)
+            {
+                query = query.Where(e => e.ParentOrgUnitId == departmentId || (e.ParentOrgUnit != null && e.ParentOrgUnit.ParentOrgUnitId == departmentId));
+            }
+
+            var results =  await query
+                .Select(e => new Entities.OrgUnit
+                {
+                    Id = e.Id,
+                    Name = e.Name,
+                    ParentOrgUnitId = e.ParentOrgUnitId,
+                    UnitId = e.UnitId,
+                    Unit = e.Unit == null ? null : new Domain.Entities.Unit
+                    {
+                        Id = e.Unit.Id,
+                        Name = e.Unit.Name
+                    },
+                    ParentOrgUnit = e.ParentOrgUnit == null ? null : new Domain.Entities.OrgUnit
+                    {
+                        Id = e.ParentOrgUnit.Id,
+                        Name = e.ParentOrgUnit.Name,
+                        ParentOrgUnitId = e.ParentOrgUnit.ParentOrgUnitId
+                    }
+                })
+                .ToListAsync();
+
+            return results;
         }
     }
 }

@@ -11,5 +11,7 @@ namespace ServicePortals.Domain.Entities
         public int? ParentOrgUnitId { get; set; }
         public int? UnitId { get; set; }
         public Unit? Unit { get; set; }
+        public OrgUnit? ParentOrgUnit { get; set; }
+        public ICollection<OrgUnit> Children { get; set; } = [];
     }
 }

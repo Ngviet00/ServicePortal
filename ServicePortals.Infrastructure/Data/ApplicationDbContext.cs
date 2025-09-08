@@ -429,6 +429,24 @@ namespace ServicePortals.Infrastructure.Data
                 .HasForeignKey(pl => pl.CostCenterId)
                 .HasPrincipalKey(cc => cc.Id)
                 .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<OrgUnit>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.HasOne(e => e.ParentOrgUnit)
+                      .WithMany(e => e.Children)
+                      .HasForeignKey(e => e.ParentOrgUnitId)
+                      .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            modelBuilder.Entity<OrgPosition>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.HasOne(e => e.ParentOrgPosition)
+                      .WithMany()
+                      .HasForeignKey(e => e.ParentOrgPositionId)
+                      .OnDelete(DeleteBehavior.Restrict);
+            });
         }
     }
 }

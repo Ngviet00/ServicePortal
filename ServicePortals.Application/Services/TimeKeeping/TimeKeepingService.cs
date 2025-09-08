@@ -381,18 +381,19 @@ namespace ServicePortals.Infrastructure.Services.TimeKeeping
         /// </summary>
         public async Task<object> EditTimeKeeping(CreateTimeAttendanceRequest request)
         {
-            var itemAttendance = await _context.TimeAttendanceEditHistories.FirstOrDefaultAsync(e => e.Datetime == request.Datetime && e.UserCode == request.UserCode);
+            var itemAttendance = await _context.TimeAttendanceEditHistories.Where(e => e.Datetime == request.Datetime && e.UserCode == request.UserCode).ToListAsync();
 
-            if (itemAttendance != null)
+            var itemNotSendHR = itemAttendance.FirstOrDefault(e => e.IsSentToHR == false);
+
+            if (itemAttendance.Count > 0 && itemNotSendHR != null)
             {
-                itemAttendance.OldValue = request.OldValue;
-                itemAttendance.CurrentValue = request.CurrentValue;
-                itemAttendance.UserCodeUpdated = request.UserCodeUpdate;
-                itemAttendance.UpdatedBy = request.UpdatedBy;
-                itemAttendance.UpdatedAt = DateTimeOffset.Now;
-                itemAttendance.IsSentToHR = false;
-
-                _context.TimeAttendanceEditHistories.Update(itemAttendance);
+                itemNotSendHR.OldValue = request.OldValue;
+                itemNotSendHR.CurrentValue = request.CurrentValue;
+                itemNotSendHR.UserCodeUpdated = request.UserCodeUpdate;
+                itemNotSendHR.UpdatedBy = request.UpdatedBy;
+                itemNotSendHR.UpdatedAt = DateTimeOffset.Now;
+                itemNotSendHR.IsSentToHR = false;
+                _context.TimeAttendanceEditHistories.Update(itemNotSendHR);
             }
             else
             {
@@ -438,6 +439,7 @@ namespace ServicePortals.Infrastructure.Services.TimeKeeping
                 INNER JOIN 
                     {Global.DbViClock}.dbo.tblNhanVien AS NV 
                 ON TA.UserCode = NV.NVMaNV AND UserCodeUpdated = @UserCodeUpdated
+                WHERE TA.DeletedAt IS NULL
                 ORDER BY TA.UpdatedAt DESC
                 OFFSET (@Page - 1) * @PageSize ROWS
                 FETCH NEXT @PageSize ROWS ONLY

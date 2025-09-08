@@ -33,9 +33,38 @@ namespace ServicePortals.Application.Services.OrgUnit
             return result;
         }
 
-        public async Task<List<OrgPosition>> GetOrgPositionsByDepartmentId(int departmentId)
+        public async Task<List<OrgPosition>> GetOrgPositionsByDepartmentId(int? departmentId)
         {
-            var results = await _context.OrgPositions.Where(e => e.OrgUnit != null && (e.OrgUnit.Id == departmentId || e.OrgUnit.ParentOrgUnitId == departmentId)).ToListAsync();
+            var query = _context.OrgPositions.AsQueryable();
+
+            if (departmentId != null)
+            {
+                query = query.Where(e => e.OrgUnit != null && (e.OrgUnit.Id == departmentId || e.OrgUnit.ParentOrgUnitId == departmentId));
+            }
+
+            var results = await query
+                .Select(e => new OrgPosition
+                {
+                    Id = e.Id,
+                    PositionCode = e.PositionCode,
+                    Name = e.Name,
+                    OrgUnitId = e.OrgUnitId,
+                    ParentOrgPositionId = e.ParentOrgPositionId,
+                    OrgUnit = e.OrgUnit == null ? null : new Domain.Entities.OrgUnit
+                    {
+                        Id = e.OrgUnit.Id,
+                        Name = e.OrgUnit.Name,
+                    },
+                    ParentOrgPosition = e.ParentOrgPosition == null ? null : new OrgPosition
+                    {
+                        Id = e.ParentOrgPosition.Id,
+                        PositionCode = e.ParentOrgPosition.PositionCode,
+                        Name = e.ParentOrgPosition.Name,
+                        OrgUnitId = e.ParentOrgPosition.OrgUnitId,
+                        ParentOrgPositionId = e.ParentOrgPosition.ParentOrgPositionId,
+                    }
+                })
+                .ToListAsync();
 
             return results;
         }

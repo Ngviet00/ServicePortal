@@ -11,5 +11,6 @@ namespace ServicePortals.Domain.Entities
         public int? OrgUnitId { get; set; }
         public int? ParentOrgPositionId { get; set; }
         public OrgUnit? OrgUnit { get; set; }
+        public OrgPosition? ParentOrgPosition { get; set; }
     }
 }

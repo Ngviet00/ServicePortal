@@ -6,7 +6,7 @@ using ServicePortals.Domain.Entities;
 
 namespace ServicePortal.Controllers.OrgUnit
 {
-    [Authorize]
+    //[Authorize]
     [ApiController, Route("api/org-position")]
     public class OrgPositionController : ControllerBase
     {
@@ -17,7 +17,7 @@ namespace ServicePortal.Controllers.OrgUnit
         }
 
         [HttpGet("get-org-positions-by-department-id")]
-        public async Task<IActionResult> GetOrgPositionsByDepartmentId([FromQuery] int departmentId)
+        public async Task<IActionResult> GetOrgPositionsByDepartmentId([FromQuery] int? departmentId)
         {
             var results = await _orgPositionService.GetOrgPositionsByDepartmentId(departmentId);
 

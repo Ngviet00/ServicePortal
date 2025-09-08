@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using ServicePortals.Application;
 using ServicePortals.Application.Dtos.OrgUnit.Requests;
 using ServicePortals.Application.Interfaces.OrgUnit;
+using ServicePortals.Domain.Enums;
 using Entities = ServicePortals.Domain.Entities;
 
 namespace ServicePortal.Controllers.OrgUnit
@@ -55,6 +56,30 @@ namespace ServicePortal.Controllers.OrgUnit
             var results = await _orgUnitService.GetDepartmentAndChildrenTeam();
 
             return Ok(new BaseResponse<dynamic>(200, "success", results));
+        }
+
+        [HttpGet("get-all")]
+        public async Task<IActionResult> GetAll()
+        {
+            var results = await _orgUnitService.GetAll();
+
+            return Ok(new BaseResponse<List<Entities.OrgUnit>>(200, "success", results));
+        }
+
+        [HttpGet("get-all-team")]
+        public async Task<IActionResult> GetAllTeam(int? departmentId)
+        {
+            var results = await _orgUnitService.GetAll(e => e.UnitId == (int)UnitEnum.Team, departmentId);
+
+            return Ok(new BaseResponse<List<Entities.OrgUnit>>(200, "success", results));
+        }
+
+        [HttpGet("get-all-without-team")]
+        public async Task<IActionResult> GetAllWithOutTeam()
+        {
+            var results = await _orgUnitService.GetAll(e => e.UnitId != (int)UnitEnum.Team);
+
+            return Ok(new BaseResponse<List<Entities.OrgUnit>>(200, "success", results));
         }
     }
 }
