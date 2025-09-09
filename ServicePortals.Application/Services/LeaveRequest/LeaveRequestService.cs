@@ -12,6 +12,7 @@ using ServicePortals.Application.Dtos.Approval.Request;
 using ServicePortals.Application.Dtos.LeaveRequest;
 using ServicePortals.Application.Dtos.LeaveRequest.Requests;
 using ServicePortals.Application.Dtos.LeaveRequest.Responses;
+using ServicePortals.Application.Dtos.Purchase.Responses;
 using ServicePortals.Application.Interfaces.LeaveRequest;
 using ServicePortals.Application.Interfaces.User;
 using ServicePortals.Domain.Entities;
@@ -21,6 +22,10 @@ using ServicePortals.Infrastructure.Email;
 using ServicePortals.Infrastructure.Excel;
 using ServicePortals.Infrastructure.Helpers;
 using ServicePortals.Shared.Exceptions;
+using GroupByDepartment = ServicePortals.Application.Dtos.LeaveRequest.Responses.GroupByDepartment;
+using GroupByMonth = ServicePortals.Application.Dtos.LeaveRequest.Responses.GroupByMonth;
+using GroupByTotal = ServicePortals.Application.Dtos.LeaveRequest.Responses.GroupByTotal;
+using GroupRecentList = ServicePortals.Application.Dtos.LeaveRequest.Responses.GroupRecentList;
 
 namespace ServicePortals.Application.Services.LeaveRequest
 {
@@ -823,6 +828,27 @@ namespace ServicePortals.Application.Services.LeaveRequest
                 .ToListAsync();
 
             return _excelService.ExportLeaveRequestToExcel(leaveRequestsWaitHrApproval);
+        }
+
+        public async Task<LeaveRequestStatisticalResponse> StatisticalLeaveRequest(int year)
+        {
+            using var connection = _context.Database.GetDbConnection();
+            if (connection.State != ConnectionState.Open)
+            {
+                await connection.OpenAsync();
+            }
+
+            using var multi = await connection.QueryMultipleAsync("GetLeaveRequestStatisticalData", new { Year = year }, commandType: CommandType.StoredProcedure);
+
+            var result = new LeaveRequestStatisticalResponse
+            {
+                GroupByTotal = await multi.ReadFirstAsync<GroupByTotal>(),
+                GroupRecentList = (await multi.ReadAsync<GroupRecentList>()).ToList(),
+                GroupByDepartment = (await multi.ReadAsync<GroupByDepartment>()).ToList(),
+                GroupByMonth = (await multi.ReadAsync<GroupByMonth>()).ToList()
+            };
+
+            return result;
         }
     }
 }

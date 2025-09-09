@@ -81,5 +81,21 @@ namespace ServicePortal.Controllers.OrgUnit
 
             return Ok(new BaseResponse<List<Entities.OrgUnit>>(200, "success", results));
         }
+
+        [HttpPost("save-or-update")]
+        public async Task<IActionResult> SaveOrUpdateOrgUnit([FromBody] SaveOrUpdateOrgUnitRequest request)
+        {
+            var result = await _orgUnitService.SaveOrUpdateOrgUnit(request);
+
+            return Ok(new BaseResponse<object>(200, "success", result));
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var result = await _orgUnitService.Delete(id);
+
+            return Ok(new BaseResponse<object>(200, "success", result));
+        }
     }
 }

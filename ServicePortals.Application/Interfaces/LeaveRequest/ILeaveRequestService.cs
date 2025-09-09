@@ -8,6 +8,8 @@ namespace ServicePortals.Application.Interfaces.LeaveRequest
 {
     public interface ILeaveRequestService
     {
+        //Task<LeaveRequest> GetAllFormLeaveRequest();
+        Task<LeaveRequestStatisticalResponse> StatisticalLeaveRequest(int year);
         Task<PagedResults<Domain.Entities.LeaveRequest>> GetAll(GetAllLeaveRequest request);
         Task<Domain.Entities.LeaveRequest> GetById(Guid? id);
         Task<object> Approval(ApprovalRequest request);

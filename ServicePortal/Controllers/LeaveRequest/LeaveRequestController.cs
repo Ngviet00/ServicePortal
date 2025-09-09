@@ -22,6 +22,14 @@ namespace ServicePortal.Controllers.LeaveRequest
             _leaveRequestService = leaveRequestService;
         }
 
+        [HttpGet("statistical-leave-request")]
+        public async Task<IActionResult> StatisticalFormIT([FromQuery] int year)
+        {
+            var results = await _leaveRequestService.StatisticalLeaveRequest(year);
+
+            return Ok(new BaseResponse<object>(200, "success", results));
+        }
+
         [HttpGet]
         public async Task<IActionResult> GetAll(GetAllLeaveRequest request)
         {

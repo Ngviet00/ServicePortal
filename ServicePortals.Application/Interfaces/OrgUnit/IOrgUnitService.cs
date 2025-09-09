@@ -6,6 +6,8 @@ namespace ServicePortals.Application.Interfaces.OrgUnit
 {
     public interface IOrgUnitService
     {
+        Task<object> Delete(int id);
+        Task<object> SaveOrUpdateOrgUnit(SaveOrUpdateOrgUnitRequest request);
         Task<List<Entities.OrgUnit>> GetAllDepartments();
         Task<object> GetTeamByDeptIdAndUserNotSetOrgPositionId(int departmentId);
         Task<object> GetListUserByTeamId(int teamId);

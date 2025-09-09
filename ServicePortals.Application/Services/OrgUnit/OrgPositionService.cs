@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using ServicePortals.Application.Interfaces.OrgUnit;
 using ServicePortals.Domain.Entities;
+using ServicePortals.Domain.Enums;
 using ServicePortals.Infrastructure.Data;
 
 namespace ServicePortals.Application.Services.OrgUnit
@@ -54,6 +55,13 @@ namespace ServicePortals.Application.Services.OrgUnit
                     {
                         Id = e.OrgUnit.Id,
                         Name = e.OrgUnit.Name,
+                        UnitId = e.OrgUnit.UnitId,
+                        ParentOrgUnit = e.OrgUnit.ParentOrgUnit != null && e.OrgUnit.ParentOrgUnit.UnitId == (int)UnitEnum.Department ? new Domain.Entities.OrgUnit
+                        {
+                            Id = e.OrgUnit.ParentOrgUnit.Id,
+                            Name = e.OrgUnit.ParentOrgUnit.Name,
+                            UnitId = e.OrgUnit.ParentOrgUnit.UnitId
+                        } : null
                     },
                     ParentOrgPosition = e.ParentOrgPosition == null ? null : new OrgPosition
                     {

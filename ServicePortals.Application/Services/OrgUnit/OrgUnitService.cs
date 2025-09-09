@@ -12,6 +12,7 @@ using ServicePortals.Shared.SharedDto;
 using Entities = ServicePortals.Domain.Entities;
 using ServicePortals.Shared.Exceptions;
 using System.Linq.Expressions;
+using Azure.Core;
 
 namespace ServicePortals.Application.Services.OrgUnit
 {
@@ -245,6 +246,42 @@ namespace ServicePortals.Application.Services.OrgUnit
                 .ToListAsync();
 
             return results;
+        }
+
+        public async Task<object> SaveOrUpdateOrgUnit(SaveOrUpdateOrgUnitRequest request)
+        {
+            if (request.Id == null)
+            {
+                var newItem = new Domain.Entities.OrgUnit
+                {
+                    Name = request.Name,
+                    ParentOrgUnitId = request.ParentOrgUnitId,
+                    UnitId = request.UnitId,
+                };
+
+                _context.OrgUnits.Add(newItem);
+            }
+            else
+            {
+                var item = await _context.OrgUnits.FirstOrDefaultAsync(e => e.Id == request.Id) ?? throw new NotFoundException("Org unit not found. check again");
+
+                item.Name = request.Name;
+                item.ParentOrgUnitId = request.ParentOrgUnitId;
+                item.UnitId = request.UnitId;
+
+                _context.OrgUnits.Update(item);
+            }
+
+            await _context.SaveChangesAsync();
+
+            return true;
+        }
+
+        public async Task<object> Delete(int id)
+        {
+            await _context.OrgUnits.Where(e => e.Id == id).ExecuteDeleteAsync();
+
+            return true;
         }
     }
 }

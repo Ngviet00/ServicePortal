@@ -1,6 +1,6 @@
 ﻿namespace ServicePortals.Application.Dtos.Purchase.Requests
 {
-    public class GetAllPurchaseRequest
+    public class  GetAllPurchaseRequest
     {
         public string? UserCode { get; set; }
         public int Page { get; set; } = 1;
