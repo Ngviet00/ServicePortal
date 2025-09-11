@@ -50,6 +50,14 @@ namespace ServicePortal.Controllers.OrgUnit
             return Ok(new BaseResponse<bool>(200, "success", result));
         }
 
+        [HttpPost("save-change-org-unit-many-user")]
+        public async Task<IActionResult> SaveChangeOrgUnitManyUser(IFormFile file)
+        {
+            var result = await _orgUnitService.SaveChangeOrgUnitManyUser(file);
+
+            return Ok(new BaseResponse<bool>(200, "success", result));
+        }
+
         [HttpGet("get-department-and-children-team")]
         public async Task<IActionResult> GetDepartmentAndChildrenTeam()
         {

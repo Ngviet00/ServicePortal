@@ -12,7 +12,8 @@ using ServicePortals.Shared.SharedDto;
 using Entities = ServicePortals.Domain.Entities;
 using ServicePortals.Shared.Exceptions;
 using System.Linq.Expressions;
-using Azure.Core;
+using Microsoft.AspNetCore.Http;
+using ClosedXML.Excel;
 
 namespace ServicePortals.Application.Services.OrgUnit
 {
@@ -282,6 +283,107 @@ namespace ServicePortals.Application.Services.OrgUnit
             await _context.OrgUnits.Where(e => e.Id == id).ExecuteDeleteAsync();
 
             return true;
+        }
+
+        public async Task<bool> SaveChangeOrgUnitManyUser(IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+            {
+                throw new BadRequestException("No file uploaded");
+            }
+
+            var connection = (SqlConnection)_context.CreateConnection();
+            await connection.OpenAsync();
+
+            using var transaction = connection.BeginTransaction();
+
+            try
+            {
+                using var workbook = new XLWorkbook(file.OpenReadStream());
+                var worksheet = workbook.Worksheet(1);
+
+                var headerUserCode = worksheet.Cell(1, 1).GetString().Trim();
+                var headerOrgPositionId = worksheet.Cell(1, 2).GetString().Trim();
+
+                if (!string.Equals(headerUserCode, "user_code", StringComparison.OrdinalIgnoreCase) ||
+                    !string.Equals(headerOrgPositionId, "org_position_id", StringComparison.OrdinalIgnoreCase))
+                {
+                    throw new ValidationException("File excel không đúng định dạng cột");
+                }
+
+                var rows = worksheet?.RangeUsed()?.RowsUsed().Skip(1);
+
+                var cases = new List<string>();
+                var userCodes = new List<string>();
+
+                var userCodesCheck = new List<string>();
+                var orgPositionIdCheck = new List<int?>();
+
+                if (rows != null)
+                {
+                    if (!rows.Any())
+                    {
+                        throw new ValidationException("Không có dữ liệu nào trong file excel");
+                    }
+
+                    foreach (var row in rows)
+                    {
+                        string userCode = row.Cell(1).GetValue<string>();
+                        int orgPositionId = row.Cell(2).GetValue<int>();
+
+                        if (string.IsNullOrWhiteSpace(userCode) || orgPositionId <= 0)
+                        {
+                            throw new ValidationException("Dữ liệu sai định dạng, vui lòng kiểm tra lại");
+                        }
+
+                        cases.Add($"WHEN '{userCode}' THEN {orgPositionId}");
+                        userCodes.Add($"'{userCode}'");
+
+                        userCodesCheck.Add(userCode);
+                        orgPositionIdCheck.Add(orgPositionId);
+                    }
+                }
+
+                var orgPositionIdDb = await connection.QueryAsync<int>(
+                    @"SELECT Id 
+                      FROM org_positions 
+                      WHERE Id IN @ids",
+                    new { ids = orgPositionIdCheck },
+                    transaction: transaction
+                );
+
+                if (orgPositionIdDb.Count() != orgPositionIdCheck.Distinct().Count())
+                {
+                    throw new ValidationException("Dữ liệu sai định dạng, vui lòng kiểm tra lại");
+                }
+
+                var numberUsersExist = await connection.ExecuteScalarAsync<int>($@"SELECT COUNT(1) FROM {Global.DbViClock}.dbo.tblNhanVien WHERE NVMaNV IN @userCodesCheck", new { userCodesCheck }, transaction: transaction);
+
+                if (numberUsersExist != userCodesCheck.Distinct().Count())
+                {
+                    throw new ValidationException("Dữ liệu sai định dạng, vui lòng kiểm tra lại");
+                }
+
+                var sql = $@"
+                    UPDATE {Global.DbViClock}.dbo.tblNhanVien
+                    SET ViTriToChucId = CASE NVMaNV
+                        {string.Join("\n", cases)}
+                    END
+                    WHERE NVMaNV IN ({string.Join(",", userCodes)})";
+
+                var affected = await connection.ExecuteAsync(sql, transaction: transaction);
+
+                transaction.Commit();
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                transaction.Rollback();
+                Log.Error($"Error import excel, ex: {ex.Message}");
+
+                throw new ValidationException("Dữ liệu sai định dạng, vui lòng kiểm tra lại");
+            }
         }
     }
 }

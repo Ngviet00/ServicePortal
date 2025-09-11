@@ -103,6 +103,8 @@ namespace ServicePortals.Infrastructure.Email
                     }
                 }
 
+                message.CC.Add(Global.EmailDefault);
+
                 if (attachments != null)
                 {
                     foreach (var (fileName, fileBytes) in attachments)

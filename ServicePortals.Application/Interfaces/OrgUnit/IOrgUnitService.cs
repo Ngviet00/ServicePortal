@@ -1,4 +1,5 @@
 ﻿using System.Linq.Expressions;
+using Microsoft.AspNetCore.Http;
 using ServicePortals.Application.Dtos.OrgUnit.Requests;
 using Entities = ServicePortals.Domain.Entities;
 
@@ -12,6 +13,7 @@ namespace ServicePortals.Application.Interfaces.OrgUnit
         Task<object> GetTeamByDeptIdAndUserNotSetOrgPositionId(int departmentId);
         Task<object> GetListUserByTeamId(int teamId);
         Task<bool> SaveChangeUserOrgUnit(SaveChangeOrgUnitUserRequest request);
+        Task<bool> SaveChangeOrgUnitManyUser(IFormFile file);
         Task<dynamic?> GetDepartmentAndChildrenTeam();
         Task<List<Entities.OrgUnit>> GetAll(Expression<Func<Entities.OrgUnit, bool>>? predicate = null, int? departmentId = null);
     }
