@@ -23,15 +23,30 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                     DepartmentId = table.Column<int>(type: "int", nullable: true),
                     UnitId = table.Column<int>(type: "int", nullable: true),
                     Step = table.Column<int>(type: "int", nullable: true),
-                    FromPositionId = table.Column<int>(type: "int", nullable: true),
+                    FromOrgPositionId = table.Column<int>(type: "int", nullable: true),
                     PositonContext = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    ToPositionId = table.Column<int>(type: "int", nullable: true),
+                    ToOrgPositionId = table.Column<int>(type: "int", nullable: true),
                     ToSpecificUserCode = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    IsFinal = table.Column<bool>(type: "bit", nullable: true)
+                    IsFinal = table.Column<bool>(type: "bit", nullable: true),
+                    Condition = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_approval_flows", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "cost_centers",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Code = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Description = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_cost_centers", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -69,6 +84,20 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "it_categories",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Name = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Code = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_it_categories", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "permissions",
                 columns: table => new
                 {
@@ -80,6 +109,20 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_permissions", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "priorities",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Name = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    NameE = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_priorities", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -176,7 +219,9 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                     UserCodeUpdated = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     UpdatedBy = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     IsSentToHR = table.Column<bool>(type: "bit", nullable: true),
-                    UpdatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true)
+                    CreatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
+                    UpdatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
+                    DeletedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -232,7 +277,7 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     UserCode = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    PositionId = table.Column<int>(type: "int", nullable: true),
+                    OrgUnitId = table.Column<int>(type: "int", nullable: true),
                     ManagementType = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
@@ -257,7 +302,6 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_users", x => x.Id);
-                    table.UniqueConstraint("AK_users_UserCode", x => x.UserCode);
                 });
 
             migrationBuilder.CreateTable(
@@ -272,6 +316,29 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_attach_files", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "application_forms",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Code = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    RequestTypeId = table.Column<int>(type: "int", nullable: true),
+                    RequestStatusId = table.Column<int>(type: "int", nullable: true),
+                    OrgPositionId = table.Column<int>(type: "int", nullable: true),
+                    UserCodeCreatedBy = table.Column<string>(type: "nvarchar(450)", nullable: true),
+                    CreatedBy = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Note = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Step = table.Column<int>(type: "int", nullable: true),
+                    MetaData = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    CreatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
+                    UpdatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
+                    DeletedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_application_forms", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -346,38 +413,31 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "positions",
+                name: "application_form_items",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    ApplicationFormId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    UserCode = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    UserName = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_application_form_items", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "assigned_tasks",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    PositionCode = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Name = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    OrgUnitId = table.Column<int>(type: "int", nullable: true),
-                    ParentPositionId = table.Column<int>(type: "int", nullable: true)
+                    ApplicationFormId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    UserCode = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_positions", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "application_forms",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    UserCodeRequestor = table.Column<string>(type: "nvarchar(450)", nullable: true),
-                    UserNameRequestor = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    RequestTypeId = table.Column<int>(type: "int", nullable: true),
-                    RequestStatusId = table.Column<int>(type: "int", nullable: true),
-                    PositionId = table.Column<int>(type: "int", nullable: true),
-                    CreatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
-                    UpdatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
-                    DeletedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_application_forms", x => x.Id);
+                    table.PrimaryKey("PK_assigned_tasks", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -386,11 +446,11 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     ApplicationFormId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    UserNameApproval = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    UserCodeApproval = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Action = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Note = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    CreatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true)
+                    Action = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    ActionBy = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    ActionAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
+                    DeletedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -398,14 +458,96 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "leave_requests",
+                name: "it_forms",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     ApplicationFormId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    Code = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    UserCodeRequestor = table.Column<string>(type: "nvarchar(450)", nullable: true),
-                    UserNameRequestor = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    DepartmentId = table.Column<int>(type: "int", nullable: true),
+                    Email = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Position = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Reason = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    PriorityId = table.Column<int>(type: "int", nullable: true),
+                    NoteManagerIT = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    RequestDate = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
+                    RequiredCompletionDate = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
+                    TargetCompletionDate = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
+                    ActualCompletionDate = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
+                    CreatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
+                    UpdatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
+                    DeletedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_it_forms", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "memo_notifications",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    ApplicationFormId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    DepartmentId = table.Column<int>(type: "int", nullable: true),
+                    Title = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Content = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    FromDate = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
+                    ToDate = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
+                    Priority = table.Column<int>(type: "int", nullable: true),
+                    Status = table.Column<bool>(type: "bit", nullable: true),
+                    ApplyAllDepartment = table.Column<bool>(type: "bit", nullable: true),
+                    CreatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
+                    UpdatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
+                    DeletedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_memo_notifications", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "org_positions",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    PositionCode = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Name = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    OrgUnitId = table.Column<int>(type: "int", nullable: true),
+                    ParentOrgPositionId = table.Column<int>(type: "int", nullable: true),
+                    UnitId = table.Column<int>(type: "int", nullable: true),
+                    IsStaff = table.Column<bool>(type: "bit", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_org_positions", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "purchases",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    ApplicationFormId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    DepartmentId = table.Column<int>(type: "int", nullable: true),
+                    RequestedDate = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
+                    CreatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
+                    UpdatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
+                    DeletedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_purchases", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "leave_requests",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    ApplicationFormItemId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    UserCode = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    UserName = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     DepartmentId = table.Column<int>(type: "int", nullable: true),
                     Position = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     FromDate = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
@@ -413,9 +555,9 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                     TypeLeaveId = table.Column<int>(type: "int", nullable: true),
                     TimeLeaveId = table.Column<int>(type: "int", nullable: true),
                     Reason = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Image = table.Column<byte[]>(type: "varbinary(max)", nullable: true),
                     HaveSalary = table.Column<byte>(type: "tinyint", nullable: true),
-                    UserCodeCreated = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    CreatedBy = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    NoteOfHR = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     CreatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
                     UpdateAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
                     DeletedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true)
@@ -426,30 +568,17 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "memo_notifications",
+                name: "it_form_categories",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    ApplicationFormId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    DepartmentId = table.Column<int>(type: "int", nullable: true),
-                    Code = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Title = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Content = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    FromDate = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
-                    ToDate = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
-                    UserCodeCreated = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    CreatedBy = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Priority = table.Column<int>(type: "int", nullable: true),
-                    Status = table.Column<bool>(type: "bit", nullable: true),
-                    ApplyAllDepartment = table.Column<bool>(type: "bit", nullable: true),
-                    CreatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
-                    UpdatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
-                    DeletedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
-                    OrgUnitId = table.Column<int>(type: "int", nullable: true)
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    ITFormId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    ITCategoryId = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_memo_notifications", x => x.Id);
+                    table.PrimaryKey("PK_it_form_categories", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -465,6 +594,46 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                     table.PrimaryKey("PK_memo_notification_departments", x => x.Id);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "purchase_details",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    PurchaseId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    ItemName = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    ItemDescription = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Quantity = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    UnitMeasurement = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    RequiredDate = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
+                    CostCenterId = table.Column<int>(type: "int", nullable: true),
+                    Note = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    CreatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
+                    UpdatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
+                    DeletedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_purchase_details", x => x.Id);
+                });
+
+            migrationBuilder.InsertData(
+                table: "cost_centers",
+                columns: new[] { "Id", "Code", "Description" },
+                values: new object[] { 1, "V1013202", "MIS" });
+
+            migrationBuilder.InsertData(
+                table: "it_categories",
+                columns: new[] { "Id", "Code", "Name" },
+                values: new object[,]
+                {
+                    { 1, "SERVER", "Server Login Id" },
+                    { 2, "NETWORK", "Network device" },
+                    { 3, "EMAIL", "Email" },
+                    { 4, "SOFTWARE", "Software Installation" },
+                    { 5, "ERP", "ERP Login Id" },
+                    { 6, "OTHER", "Other" }
+                });
+
             migrationBuilder.InsertData(
                 table: "permissions",
                 columns: new[] { "Id", "Group", "Name" },
@@ -474,6 +643,16 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                     { 2, "LEAVE_REQUEST", "leave_request.create_multiple_leave_request" },
                     { 3, "LEAVE_REQUEST", "leave_request.hr_management_leave_request" },
                     { 4, "MEMO_NOTIFICATION", "memo_notification.create" }
+                });
+
+            migrationBuilder.InsertData(
+                table: "priorities",
+                columns: new[] { "Id", "Name", "NameE" },
+                values: new object[,]
+                {
+                    { 1, "Thấp", "Low" },
+                    { 2, "Trung bình", "Medium" },
+                    { 3, "Cao", "High" }
                 });
 
             migrationBuilder.InsertData(
@@ -561,16 +740,41 @@ namespace ServicePortals.Infrastructure.Data.Migrations
             migrationBuilder.InsertData(
                 table: "org_units",
                 columns: new[] { "Id", "Name", "ParentOrgUnitId", "UnitId" },
+                values: new object[] { 1, "VS Industry VietNam", null, 1 });
+
+            migrationBuilder.InsertData(
+                table: "user_roles",
+                columns: new[] { "Id", "RoleId", "UserCode" },
+                values: new object[] { 1, 1, "0" });
+
+            migrationBuilder.InsertData(
+                table: "org_units",
+                columns: new[] { "Id", "Name", "ParentOrgUnitId", "UnitId" },
                 values: new object[,]
                 {
-                    { 1, "VS Industry VietNam", null, 1 },
                     { 2, "Business Development", 1, 2 },
                     { 3, "Finance & Admin", 1, 2 },
                     { 4, "Operations", 1, 2 },
                     { 5, "VS Technology", 1, 2 },
                     { 6, "General Manager", 1, 3 },
+                    { 8, "MIS", 1, 3 }
+                });
+
+            migrationBuilder.InsertData(
+                table: "org_positions",
+                columns: new[] { "Id", "IsStaff", "Name", "OrgUnitId", "ParentOrgPositionId", "PositionCode", "UnitId" },
+                values: new object[,]
+                {
+                    { 1, null, "General Director", 6, null, "GD", null },
+                    { 7, null, "Manager MIS/IT", 8, null, "MIS-MGR", null }
+                });
+
+            migrationBuilder.InsertData(
+                table: "org_units",
+                columns: new[] { "Id", "Name", "ParentOrgUnitId", "UnitId" },
+                values: new object[,]
+                {
                     { 7, "Production", 4, 3 },
-                    { 8, "MIS", 1, 3 },
                     { 9, "HR", 3, 3 },
                     { 10, "Commercial", 4, 3 },
                     { 14, "12A_A", 6, 4 },
@@ -582,46 +786,44 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                 });
 
             migrationBuilder.InsertData(
-                table: "user_roles",
-                columns: new[] { "Id", "RoleId", "UserCode" },
-                values: new object[] { 1, 1, "0" });
-
-            migrationBuilder.InsertData(
-                table: "positions",
-                columns: new[] { "Id", "Name", "OrgUnitId", "ParentPositionId", "PositionCode" },
+                table: "org_positions",
+                columns: new[] { "Id", "IsStaff", "Name", "OrgUnitId", "ParentOrgPositionId", "PositionCode", "UnitId" },
                 values: new object[,]
                 {
-                    { 1, "General Director", 6, null, "GD" },
-                    { 2, "AM General Director", 6, 1, "AM_GD" },
-                    { 3, "BD General Manager", 6, 1, "BDGM" },
-                    { 4, "Finance General Manage", 6, 1, "FGM" },
-                    { 5, "Operations General Manager", 6, 1, "OGM" },
-                    { 6, "Operations Manager", 6, 1, "OM" },
-                    { 7, "Manager MIS/IT", 8, null, "MIS-MGR" },
-                    { 8, "Staff IT", 8, 7, "MIS-Staff" },
-                    { 9, "Manager Commercial", 10, null, "COM-MGR" },
-                    { 10, "AM Commercial", 10, 9, "COM-AM" },
-                    { 11, "Staff Commercial", 10, 10, "COM-Staff" },
-                    { 12, "Manager HR", 9, null, "HR-MGR" },
-                    { 13, "AM HR", 9, 12, "HR-AM" },
-                    { 14, "Staff HR", 9, 13, "HR-Staff" },
-                    { 15, "Manager Production", 7, null, "PRD-MGR" },
-                    { 16, "Supervisor A_AGH", 18, 15, "PRD-S-AGH" },
-                    { 17, "Supervisor B_BCDEF", 19, 15, "PRD-S-BBCDEF" },
-                    { 18, "Supervisor Shift A", 14, 15, "PRD-S-SA" },
-                    { 19, "Supervisor Shift B", 17, 15, "PRD-S-SB" },
-                    { 20, "12A_A Leader", 14, 18, "PRD-12AA-L" },
-                    { 21, "12A_A Operator", 14, 18, "PRD-12AA-OP" },
-                    { 22, "12B_A Leader", 16, 19, "PRD-12BA-L" },
-                    { 23, "12B_A Operator", 16, 19, "PRD-12BA-OP" },
-                    { 24, "Technician A_AGH", 18, 16, "PRD-T-AAH" },
-                    { 25, "Technician B_BCDEF", 19, 17, "PRD-T-BCDEF" }
+                    { 2, null, "AM General Director", 6, 1, "AM_GD", null },
+                    { 3, null, "BD General Manager", 6, 1, "BDGM", null },
+                    { 4, null, "Finance General Manage", 6, 1, "FGM", null },
+                    { 5, null, "Operations General Manager", 6, 1, "OGM", null },
+                    { 6, null, "Operations Manager", 6, 1, "OM", null },
+                    { 8, null, "Staff IT", 8, 7, "MIS-Staff", null },
+                    { 9, null, "Manager Commercial", 10, null, "COM-MGR", null },
+                    { 12, null, "Manager HR", 9, null, "HR-MGR", null },
+                    { 15, null, "Manager Production", 7, null, "PRD-MGR", null },
+                    { 23, null, "12B_A Operator", 16, 23, "PRD-12BA-OP", null },
+                    { 10, null, "AM Commercial", 10, 9, "COM-AM", null },
+                    { 13, null, "AM HR", 9, 12, "HR-AM", null },
+                    { 16, null, "Supervisor A_AGH", 18, 15, "PRD-S-AGH", null },
+                    { 17, null, "Supervisor B_BCDEF", 19, 15, "PRD-S-BBCDEF", null },
+                    { 18, null, "Supervisor Shift A", 14, 15, "PRD-S-SA", null },
+                    { 19, null, "Supervisor Shift B", 17, 15, "PRD-S-SB", null },
+                    { 11, null, "Staff Commercial", 10, 10, "COM-Staff", null },
+                    { 14, null, "Staff HR", 9, 13, "HR-Staff", null },
+                    { 20, null, "12A_A Leader", 14, 18, "PRD-12AA-L", null },
+                    { 22, null, "12B_A Leader", 16, 19, "PRD-12BA-L", null },
+                    { 24, null, "Technician A_AGH", 18, 16, "PRD-T-AAH", null },
+                    { 25, null, "Technician B_BCDEF", 19, 17, "PRD-T-BCDEF", null },
+                    { 21, null, "12A_A Operator", 14, 20, "PRD-12AA-OP", null }
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_application_forms_PositionId",
+                name: "IX_application_form_items_ApplicationFormId",
+                table: "application_form_items",
+                column: "ApplicationFormId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_application_forms_OrgPositionId",
                 table: "application_forms",
-                column: "PositionId");
+                column: "OrgPositionId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_application_forms_RequestStatusId",
@@ -634,14 +836,19 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                 column: "RequestTypeId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_application_forms_UserCodeRequestor",
+                name: "IX_application_forms_UserCodeCreatedBy",
                 table: "application_forms",
-                column: "UserCodeRequestor");
+                column: "UserCodeCreatedBy");
 
             migrationBuilder.CreateIndex(
-                name: "IX_approval_flows_FromPositionId",
+                name: "IX_approval_flows_FromOrgPositionId_ToOrgPositionId",
                 table: "approval_flows",
-                column: "FromPositionId");
+                columns: new[] { "FromOrgPositionId", "ToOrgPositionId" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_assigned_tasks_ApplicationFormId",
+                table: "assigned_tasks",
+                column: "ApplicationFormId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_attach_files_EntityType_EntityId",
@@ -664,11 +871,34 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                 column: "ApplicationFormId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_leave_requests_ApplicationFormId",
+                name: "IX_it_form_categories_ITCategoryId",
+                table: "it_form_categories",
+                column: "ITCategoryId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_it_form_categories_ITFormId",
+                table: "it_form_categories",
+                column: "ITFormId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_it_forms_ApplicationFormId",
+                table: "it_forms",
+                column: "ApplicationFormId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_it_forms_DepartmentId",
+                table: "it_forms",
+                column: "DepartmentId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_it_forms_PriorityId",
+                table: "it_forms",
+                column: "PriorityId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_leave_requests_ApplicationFormItemId",
                 table: "leave_requests",
-                column: "ApplicationFormId",
-                unique: true,
-                filter: "[ApplicationFormId] IS NOT NULL");
+                column: "ApplicationFormItemId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_leave_requests_DepartmentId",
@@ -676,9 +906,9 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                 column: "DepartmentId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_leave_requests_Id_UserCodeRequestor",
+                name: "IX_leave_requests_Id",
                 table: "leave_requests",
-                columns: new[] { "Id", "UserCodeRequestor" });
+                column: "Id");
 
             migrationBuilder.CreateIndex(
                 name: "IX_leave_requests_TimeLeaveId",
@@ -689,11 +919,6 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                 name: "IX_leave_requests_TypeLeaveId",
                 table: "leave_requests",
                 column: "TypeLeaveId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_leave_requests_UserCodeRequestor",
-                table: "leave_requests",
-                column: "UserCodeRequestor");
 
             migrationBuilder.CreateIndex(
                 name: "IX_memo_notification_departments_DepartmentId",
@@ -708,14 +933,32 @@ namespace ServicePortals.Infrastructure.Data.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_memo_notifications_ApplicationFormId",
                 table: "memo_notifications",
-                column: "ApplicationFormId",
-                unique: true,
-                filter: "[ApplicationFormId] IS NOT NULL");
+                column: "ApplicationFormId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_memo_notifications_OrgUnitId",
+                name: "IX_memo_notifications_DepartmentId",
                 table: "memo_notifications",
+                column: "DepartmentId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_org_positions_OrgUnitId",
+                table: "org_positions",
                 column: "OrgUnitId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_org_positions_ParentOrgPositionId",
+                table: "org_positions",
+                column: "ParentOrgPositionId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_org_positions_UnitId",
+                table: "org_positions",
+                column: "UnitId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_org_units_ParentOrgUnitId",
+                table: "org_units",
+                column: "ParentOrgUnitId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_org_units_UnitId",
@@ -728,9 +971,24 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                 column: "Id");
 
             migrationBuilder.CreateIndex(
-                name: "IX_positions_OrgUnitId",
-                table: "positions",
-                column: "OrgUnitId");
+                name: "IX_purchase_details_CostCenterId",
+                table: "purchase_details",
+                column: "CostCenterId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_purchase_details_PurchaseId",
+                table: "purchase_details",
+                column: "PurchaseId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_purchases_ApplicationFormId",
+                table: "purchases",
+                column: "ApplicationFormId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_purchases_DepartmentId",
+                table: "purchases",
+                column: "DepartmentId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_refresh_tokens_ExpiresAt",
@@ -800,6 +1058,9 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                 name: "approval_flows");
 
             migrationBuilder.DropTable(
+                name: "assigned_tasks");
+
+            migrationBuilder.DropTable(
                 name: "attach_files");
 
             migrationBuilder.DropTable(
@@ -809,10 +1070,19 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                 name: "history_application_forms");
 
             migrationBuilder.DropTable(
+                name: "it_form_categories");
+
+            migrationBuilder.DropTable(
                 name: "leave_requests");
 
             migrationBuilder.DropTable(
                 name: "memo_notification_departments");
+
+            migrationBuilder.DropTable(
+                name: "org_positions");
+
+            migrationBuilder.DropTable(
+                name: "purchase_details");
 
             migrationBuilder.DropTable(
                 name: "refresh_tokens");
@@ -842,6 +1112,15 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                 name: "files");
 
             migrationBuilder.DropTable(
+                name: "it_categories");
+
+            migrationBuilder.DropTable(
+                name: "it_forms");
+
+            migrationBuilder.DropTable(
+                name: "application_form_items");
+
+            migrationBuilder.DropTable(
                 name: "time_leaves");
 
             migrationBuilder.DropTable(
@@ -849,6 +1128,12 @@ namespace ServicePortals.Infrastructure.Data.Migrations
 
             migrationBuilder.DropTable(
                 name: "memo_notifications");
+
+            migrationBuilder.DropTable(
+                name: "cost_centers");
+
+            migrationBuilder.DropTable(
+                name: "purchases");
 
             migrationBuilder.DropTable(
                 name: "permissions");
@@ -860,19 +1145,19 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                 name: "users");
 
             migrationBuilder.DropTable(
+                name: "priorities");
+
+            migrationBuilder.DropTable(
                 name: "application_forms");
 
             migrationBuilder.DropTable(
-                name: "positions");
+                name: "org_units");
 
             migrationBuilder.DropTable(
                 name: "request_statuses");
 
             migrationBuilder.DropTable(
                 name: "request_types");
-
-            migrationBuilder.DropTable(
-                name: "org_units");
 
             migrationBuilder.DropTable(
                 name: "units");

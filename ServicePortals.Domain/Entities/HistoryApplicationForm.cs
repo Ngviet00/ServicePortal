@@ -8,12 +8,14 @@ namespace ServicePortals.Domain.Entities
     {
         public Guid Id { get; set; }
         public Guid? ApplicationFormId { get; set; }
-        public string? UserNameApproval { get; set; }
-        public string? UserCodeApproval { get; set; }
-        public string? Action { get; set; } //APPROVED or REJECT
-        public string? Note { get; set; } //ghi chú
-        public DateTimeOffset? CreatedAt { get; set; }
+        public string? Note { get; set; }
+        public string? Action { get; set; } //Created, Submitted, Approved, Rejected, Cancelled
+        public string? ActionBy { get; set; }
+        public DateTimeOffset? ActionAt { get; set; }
         public DateTimeOffset? DeletedAt { get; set; }
-        public ApplicationForm? ApplicationForm { get; set; }
+
+
+        //relationship
+        public ApplicationForm? ApplicationForm { get; set; } //ApplicationFormId
     }
 }

@@ -12,7 +12,7 @@ using ServicePortals.Infrastructure.Data;
 namespace ServicePortals.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250814075301_InitDb")]
+    [Migration("20250912064434_InitDb")]
     partial class InitDb
     {
         /// <inheritdoc />
@@ -31,13 +31,25 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("Code")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<DateTimeOffset?>("CreatedAt")
                         .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTimeOffset?>("DeletedAt")
                         .HasColumnType("datetimeoffset");
 
-                    b.Property<int?>("PositionId")
+                    b.Property<string>("MetaData")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Note")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("OrgPositionId")
                         .HasColumnType("int");
 
                     b.Property<int?>("RequestStatusId")
@@ -46,26 +58,48 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                     b.Property<int?>("RequestTypeId")
                         .HasColumnType("int");
 
+                    b.Property<int?>("Step")
+                        .HasColumnType("int");
+
                     b.Property<DateTimeOffset?>("UpdatedAt")
                         .HasColumnType("datetimeoffset");
 
-                    b.Property<string>("UserCodeRequestor")
+                    b.Property<string>("UserCodeCreatedBy")
                         .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("UserNameRequestor")
-                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("PositionId");
+                    b.HasIndex("OrgPositionId");
 
                     b.HasIndex("RequestStatusId");
 
                     b.HasIndex("RequestTypeId");
 
-                    b.HasIndex("UserCodeRequestor");
+                    b.HasIndex("UserCodeCreatedBy");
 
                     b.ToTable("application_forms");
+                });
+
+            modelBuilder.Entity("ServicePortals.Domain.Entities.ApplicationFormItem", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("ApplicationFormId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("UserCode")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UserName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ApplicationFormId");
+
+                    b.ToTable("application_form_items");
                 });
 
             modelBuilder.Entity("ServicePortals.Domain.Entities.ApprovalFlow", b =>
@@ -76,10 +110,13 @@ namespace ServicePortals.Infrastructure.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("Condition")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int?>("DepartmentId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("FromPositionId")
+                    b.Property<int?>("FromOrgPositionId")
                         .HasColumnType("int");
 
                     b.Property<bool?>("IsFinal")
@@ -94,7 +131,7 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                     b.Property<int?>("Step")
                         .HasColumnType("int");
 
-                    b.Property<int?>("ToPositionId")
+                    b.Property<int?>("ToOrgPositionId")
                         .HasColumnType("int");
 
                     b.Property<string>("ToSpecificUserCode")
@@ -105,9 +142,30 @@ namespace ServicePortals.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("FromPositionId");
+                    b.HasIndex("FromOrgPositionId", "ToOrgPositionId");
 
                     b.ToTable("approval_flows");
+                });
+
+            modelBuilder.Entity("ServicePortals.Domain.Entities.AssignedTask", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<Guid?>("ApplicationFormId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("UserCode")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ApplicationFormId");
+
+                    b.ToTable("assigned_tasks");
                 });
 
             modelBuilder.Entity("ServicePortals.Domain.Entities.AttachFile", b =>
@@ -132,6 +190,33 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                     b.HasIndex("EntityType", "EntityId");
 
                     b.ToTable("attach_files");
+                });
+
+            modelBuilder.Entity("ServicePortals.Domain.Entities.CostCenter", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Code")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("cost_centers");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Code = "V1013202",
+                            Description = "MIS"
+                        });
                 });
 
             modelBuilder.Entity("ServicePortals.Domain.Entities.Delegation", b =>
@@ -202,19 +287,19 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                     b.Property<string>("Action")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<DateTimeOffset?>("ActionAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("ActionBy")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<Guid?>("ApplicationFormId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<DateTimeOffset?>("CreatedAt")
+                    b.Property<DateTimeOffset?>("DeletedAt")
                         .HasColumnType("datetimeoffset");
 
                     b.Property<string>("Note")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("UserCodeApproval")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("UserNameApproval")
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
@@ -224,23 +309,156 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                     b.ToTable("history_application_forms");
                 });
 
+            modelBuilder.Entity("ServicePortals.Domain.Entities.ITCategory", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Code")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("it_categories");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Code = "SERVER",
+                            Name = "Server Login Id"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Code = "NETWORK",
+                            Name = "Network device"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Code = "EMAIL",
+                            Name = "Email"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Code = "SOFTWARE",
+                            Name = "Software Installation"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Code = "ERP",
+                            Name = "ERP Login Id"
+                        },
+                        new
+                        {
+                            Id = 6,
+                            Code = "OTHER",
+                            Name = "Other"
+                        });
+                });
+
+            modelBuilder.Entity("ServicePortals.Domain.Entities.ITForm", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset?>("ActualCompletionDate")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("ApplicationFormId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<int?>("DepartmentId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Email")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("NoteManagerIT")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Position")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("PriorityId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Reason")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset?>("RequestDate")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset?>("RequiredCompletionDate")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset?>("TargetCompletionDate")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ApplicationFormId");
+
+                    b.HasIndex("DepartmentId");
+
+                    b.HasIndex("PriorityId");
+
+                    b.ToTable("it_forms");
+                });
+
+            modelBuilder.Entity("ServicePortals.Domain.Entities.ITFormCategory", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("ITCategoryId")
+                        .HasColumnType("int");
+
+                    b.Property<Guid?>("ITFormId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ITCategoryId");
+
+                    b.HasIndex("ITFormId");
+
+                    b.ToTable("it_form_categories");
+                });
+
             modelBuilder.Entity("ServicePortals.Domain.Entities.LeaveRequest", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("ApplicationFormId")
+                    b.Property<Guid?>("ApplicationFormItemId")
                         .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Code")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTimeOffset?>("CreatedAt")
                         .HasColumnType("datetimeoffset");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTimeOffset?>("DeletedAt")
                         .HasColumnType("datetimeoffset");
@@ -253,6 +471,12 @@ namespace ServicePortals.Infrastructure.Data.Migrations
 
                     b.Property<byte?>("HaveSalary")
                         .HasColumnType("tinyint");
+
+                    b.Property<byte[]>("Image")
+                        .HasColumnType("varbinary(max)");
+
+                    b.Property<string>("NoteOfHR")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Position")
                         .HasColumnType("nvarchar(max)");
@@ -272,30 +496,23 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                     b.Property<DateTimeOffset?>("UpdateAt")
                         .HasColumnType("datetimeoffset");
 
-                    b.Property<string>("UserCodeCreated")
+                    b.Property<string>("UserCode")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("UserCodeRequestor")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("UserNameRequestor")
+                    b.Property<string>("UserName")
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ApplicationFormId")
-                        .IsUnique()
-                        .HasFilter("[ApplicationFormId] IS NOT NULL");
+                    b.HasIndex("ApplicationFormItemId");
 
                     b.HasIndex("DepartmentId");
+
+                    b.HasIndex("Id");
 
                     b.HasIndex("TimeLeaveId");
 
                     b.HasIndex("TypeLeaveId");
-
-                    b.HasIndex("UserCodeRequestor");
-
-                    b.HasIndex("Id", "UserCodeRequestor");
 
                     b.ToTable("leave_requests");
                 });
@@ -312,17 +529,11 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                     b.Property<bool?>("ApplyAllDepartment")
                         .HasColumnType("bit");
 
-                    b.Property<string>("Code")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("Content")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTimeOffset?>("CreatedAt")
                         .HasColumnType("datetimeoffset");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTimeOffset?>("DeletedAt")
                         .HasColumnType("datetimeoffset");
@@ -332,9 +543,6 @@ namespace ServicePortals.Infrastructure.Data.Migrations
 
                     b.Property<DateTimeOffset?>("FromDate")
                         .HasColumnType("datetimeoffset");
-
-                    b.Property<int?>("OrgUnitId")
-                        .HasColumnType("int");
 
                     b.Property<int?>("Priority")
                         .HasColumnType("int");
@@ -351,16 +559,11 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                     b.Property<DateTimeOffset?>("UpdatedAt")
                         .HasColumnType("datetimeoffset");
 
-                    b.Property<string>("UserCodeCreated")
-                        .HasColumnType("nvarchar(max)");
-
                     b.HasKey("Id");
 
-                    b.HasIndex("ApplicationFormId")
-                        .IsUnique()
-                        .HasFilter("[ApplicationFormId] IS NOT NULL");
+                    b.HasIndex("ApplicationFormId");
 
-                    b.HasIndex("OrgUnitId");
+                    b.HasIndex("DepartmentId");
 
                     b.ToTable("memo_notifications");
                 });
@@ -386,6 +589,240 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                     b.ToTable("memo_notification_departments");
                 });
 
+            modelBuilder.Entity("ServicePortals.Domain.Entities.OrgPosition", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool?>("IsStaff")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("OrgUnitId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("ParentOrgPositionId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("PositionCode")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("UnitId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrgUnitId");
+
+                    b.HasIndex("ParentOrgPositionId");
+
+                    b.HasIndex("UnitId");
+
+                    b.ToTable("org_positions");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Name = "General Director",
+                            OrgUnitId = 6,
+                            PositionCode = "GD"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Name = "AM General Director",
+                            OrgUnitId = 6,
+                            ParentOrgPositionId = 1,
+                            PositionCode = "AM_GD"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Name = "BD General Manager",
+                            OrgUnitId = 6,
+                            ParentOrgPositionId = 1,
+                            PositionCode = "BDGM"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Name = "Finance General Manage",
+                            OrgUnitId = 6,
+                            ParentOrgPositionId = 1,
+                            PositionCode = "FGM"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Name = "Operations General Manager",
+                            OrgUnitId = 6,
+                            ParentOrgPositionId = 1,
+                            PositionCode = "OGM"
+                        },
+                        new
+                        {
+                            Id = 6,
+                            Name = "Operations Manager",
+                            OrgUnitId = 6,
+                            ParentOrgPositionId = 1,
+                            PositionCode = "OM"
+                        },
+                        new
+                        {
+                            Id = 7,
+                            Name = "Manager MIS/IT",
+                            OrgUnitId = 8,
+                            PositionCode = "MIS-MGR"
+                        },
+                        new
+                        {
+                            Id = 8,
+                            Name = "Staff IT",
+                            OrgUnitId = 8,
+                            ParentOrgPositionId = 7,
+                            PositionCode = "MIS-Staff"
+                        },
+                        new
+                        {
+                            Id = 9,
+                            Name = "Manager Commercial",
+                            OrgUnitId = 10,
+                            PositionCode = "COM-MGR"
+                        },
+                        new
+                        {
+                            Id = 10,
+                            Name = "AM Commercial",
+                            OrgUnitId = 10,
+                            ParentOrgPositionId = 9,
+                            PositionCode = "COM-AM"
+                        },
+                        new
+                        {
+                            Id = 11,
+                            Name = "Staff Commercial",
+                            OrgUnitId = 10,
+                            ParentOrgPositionId = 10,
+                            PositionCode = "COM-Staff"
+                        },
+                        new
+                        {
+                            Id = 12,
+                            Name = "Manager HR",
+                            OrgUnitId = 9,
+                            PositionCode = "HR-MGR"
+                        },
+                        new
+                        {
+                            Id = 13,
+                            Name = "AM HR",
+                            OrgUnitId = 9,
+                            ParentOrgPositionId = 12,
+                            PositionCode = "HR-AM"
+                        },
+                        new
+                        {
+                            Id = 14,
+                            Name = "Staff HR",
+                            OrgUnitId = 9,
+                            ParentOrgPositionId = 13,
+                            PositionCode = "HR-Staff"
+                        },
+                        new
+                        {
+                            Id = 15,
+                            Name = "Manager Production",
+                            OrgUnitId = 7,
+                            PositionCode = "PRD-MGR"
+                        },
+                        new
+                        {
+                            Id = 16,
+                            Name = "Supervisor A_AGH",
+                            OrgUnitId = 18,
+                            ParentOrgPositionId = 15,
+                            PositionCode = "PRD-S-AGH"
+                        },
+                        new
+                        {
+                            Id = 17,
+                            Name = "Supervisor B_BCDEF",
+                            OrgUnitId = 19,
+                            ParentOrgPositionId = 15,
+                            PositionCode = "PRD-S-BBCDEF"
+                        },
+                        new
+                        {
+                            Id = 18,
+                            Name = "Supervisor Shift A",
+                            OrgUnitId = 14,
+                            ParentOrgPositionId = 15,
+                            PositionCode = "PRD-S-SA"
+                        },
+                        new
+                        {
+                            Id = 19,
+                            Name = "Supervisor Shift B",
+                            OrgUnitId = 17,
+                            ParentOrgPositionId = 15,
+                            PositionCode = "PRD-S-SB"
+                        },
+                        new
+                        {
+                            Id = 20,
+                            Name = "12A_A Leader",
+                            OrgUnitId = 14,
+                            ParentOrgPositionId = 18,
+                            PositionCode = "PRD-12AA-L"
+                        },
+                        new
+                        {
+                            Id = 21,
+                            Name = "12A_A Operator",
+                            OrgUnitId = 14,
+                            ParentOrgPositionId = 20,
+                            PositionCode = "PRD-12AA-OP"
+                        },
+                        new
+                        {
+                            Id = 22,
+                            Name = "12B_A Leader",
+                            OrgUnitId = 16,
+                            ParentOrgPositionId = 19,
+                            PositionCode = "PRD-12BA-L"
+                        },
+                        new
+                        {
+                            Id = 23,
+                            Name = "12B_A Operator",
+                            OrgUnitId = 16,
+                            ParentOrgPositionId = 23,
+                            PositionCode = "PRD-12BA-OP"
+                        },
+                        new
+                        {
+                            Id = 24,
+                            Name = "Technician A_AGH",
+                            OrgUnitId = 18,
+                            ParentOrgPositionId = 16,
+                            PositionCode = "PRD-T-AAH"
+                        },
+                        new
+                        {
+                            Id = 25,
+                            Name = "Technician B_BCDEF",
+                            OrgUnitId = 19,
+                            ParentOrgPositionId = 17,
+                            PositionCode = "PRD-T-BCDEF"
+                        });
+                });
+
             modelBuilder.Entity("ServicePortals.Domain.Entities.OrgUnit", b =>
                 {
                     b.Property<int>("Id")
@@ -404,6 +841,8 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ParentOrgUnitId");
 
                     b.HasIndex("UnitId");
 
@@ -570,7 +1009,7 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                         });
                 });
 
-            modelBuilder.Entity("ServicePortals.Domain.Entities.Position", b =>
+            modelBuilder.Entity("ServicePortals.Domain.Entities.Priority", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -581,217 +1020,113 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                     b.Property<string>("Name")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int?>("OrgUnitId")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("ParentPositionId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("PositionCode")
+                    b.Property<string>("NameE")
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("OrgUnitId");
-
-                    b.ToTable("positions");
+                    b.ToTable("priorities");
 
                     b.HasData(
                         new
                         {
                             Id = 1,
-                            Name = "General Director",
-                            OrgUnitId = 6,
-                            PositionCode = "GD"
+                            Name = "Thấp",
+                            NameE = "Low"
                         },
                         new
                         {
                             Id = 2,
-                            Name = "AM General Director",
-                            OrgUnitId = 6,
-                            ParentPositionId = 1,
-                            PositionCode = "AM_GD"
+                            Name = "Trung bình",
+                            NameE = "Medium"
                         },
                         new
                         {
                             Id = 3,
-                            Name = "BD General Manager",
-                            OrgUnitId = 6,
-                            ParentPositionId = 1,
-                            PositionCode = "BDGM"
-                        },
-                        new
-                        {
-                            Id = 4,
-                            Name = "Finance General Manage",
-                            OrgUnitId = 6,
-                            ParentPositionId = 1,
-                            PositionCode = "FGM"
-                        },
-                        new
-                        {
-                            Id = 5,
-                            Name = "Operations General Manager",
-                            OrgUnitId = 6,
-                            ParentPositionId = 1,
-                            PositionCode = "OGM"
-                        },
-                        new
-                        {
-                            Id = 6,
-                            Name = "Operations Manager",
-                            OrgUnitId = 6,
-                            ParentPositionId = 1,
-                            PositionCode = "OM"
-                        },
-                        new
-                        {
-                            Id = 7,
-                            Name = "Manager MIS/IT",
-                            OrgUnitId = 8,
-                            PositionCode = "MIS-MGR"
-                        },
-                        new
-                        {
-                            Id = 8,
-                            Name = "Staff IT",
-                            OrgUnitId = 8,
-                            ParentPositionId = 7,
-                            PositionCode = "MIS-Staff"
-                        },
-                        new
-                        {
-                            Id = 9,
-                            Name = "Manager Commercial",
-                            OrgUnitId = 10,
-                            PositionCode = "COM-MGR"
-                        },
-                        new
-                        {
-                            Id = 10,
-                            Name = "AM Commercial",
-                            OrgUnitId = 10,
-                            ParentPositionId = 9,
-                            PositionCode = "COM-AM"
-                        },
-                        new
-                        {
-                            Id = 11,
-                            Name = "Staff Commercial",
-                            OrgUnitId = 10,
-                            ParentPositionId = 10,
-                            PositionCode = "COM-Staff"
-                        },
-                        new
-                        {
-                            Id = 12,
-                            Name = "Manager HR",
-                            OrgUnitId = 9,
-                            PositionCode = "HR-MGR"
-                        },
-                        new
-                        {
-                            Id = 13,
-                            Name = "AM HR",
-                            OrgUnitId = 9,
-                            ParentPositionId = 12,
-                            PositionCode = "HR-AM"
-                        },
-                        new
-                        {
-                            Id = 14,
-                            Name = "Staff HR",
-                            OrgUnitId = 9,
-                            ParentPositionId = 13,
-                            PositionCode = "HR-Staff"
-                        },
-                        new
-                        {
-                            Id = 15,
-                            Name = "Manager Production",
-                            OrgUnitId = 7,
-                            PositionCode = "PRD-MGR"
-                        },
-                        new
-                        {
-                            Id = 16,
-                            Name = "Supervisor A_AGH",
-                            OrgUnitId = 18,
-                            ParentPositionId = 15,
-                            PositionCode = "PRD-S-AGH"
-                        },
-                        new
-                        {
-                            Id = 17,
-                            Name = "Supervisor B_BCDEF",
-                            OrgUnitId = 19,
-                            ParentPositionId = 15,
-                            PositionCode = "PRD-S-BBCDEF"
-                        },
-                        new
-                        {
-                            Id = 18,
-                            Name = "Supervisor Shift A",
-                            OrgUnitId = 14,
-                            ParentPositionId = 15,
-                            PositionCode = "PRD-S-SA"
-                        },
-                        new
-                        {
-                            Id = 19,
-                            Name = "Supervisor Shift B",
-                            OrgUnitId = 17,
-                            ParentPositionId = 15,
-                            PositionCode = "PRD-S-SB"
-                        },
-                        new
-                        {
-                            Id = 20,
-                            Name = "12A_A Leader",
-                            OrgUnitId = 14,
-                            ParentPositionId = 18,
-                            PositionCode = "PRD-12AA-L"
-                        },
-                        new
-                        {
-                            Id = 21,
-                            Name = "12A_A Operator",
-                            OrgUnitId = 14,
-                            ParentPositionId = 18,
-                            PositionCode = "PRD-12AA-OP"
-                        },
-                        new
-                        {
-                            Id = 22,
-                            Name = "12B_A Leader",
-                            OrgUnitId = 16,
-                            ParentPositionId = 19,
-                            PositionCode = "PRD-12BA-L"
-                        },
-                        new
-                        {
-                            Id = 23,
-                            Name = "12B_A Operator",
-                            OrgUnitId = 16,
-                            ParentPositionId = 19,
-                            PositionCode = "PRD-12BA-OP"
-                        },
-                        new
-                        {
-                            Id = 24,
-                            Name = "Technician A_AGH",
-                            OrgUnitId = 18,
-                            ParentPositionId = 16,
-                            PositionCode = "PRD-T-AAH"
-                        },
-                        new
-                        {
-                            Id = 25,
-                            Name = "Technician B_BCDEF",
-                            OrgUnitId = 19,
-                            ParentPositionId = 17,
-                            PositionCode = "PRD-T-BCDEF"
+                            Name = "Cao",
+                            NameE = "High"
                         });
+                });
+
+            modelBuilder.Entity("ServicePortals.Domain.Entities.Purchase", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("ApplicationFormId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<int?>("DepartmentId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTimeOffset?>("RequestedDate")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ApplicationFormId");
+
+                    b.HasIndex("DepartmentId");
+
+                    b.ToTable("purchases");
+                });
+
+            modelBuilder.Entity("ServicePortals.Domain.Entities.PurchaseDetail", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int?>("CostCenterId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("ItemDescription")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ItemName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Note")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid?>("PurchaseId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("Quantity")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTimeOffset?>("RequiredDate")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("UnitMeasurement")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CostCenterId");
+
+                    b.HasIndex("PurchaseId");
+
+                    b.ToTable("purchase_details");
                 });
 
             modelBuilder.Entity("ServicePortals.Domain.Entities.RefreshToken", b =>
@@ -1073,10 +1408,16 @@ namespace ServicePortals.Infrastructure.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
                     b.Property<string>("CurrentValue")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTimeOffset?>("Datetime")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
                         .HasColumnType("datetimeoffset");
 
                     b.Property<bool?>("IsSentToHR")
@@ -1359,7 +1700,7 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                     b.Property<string>("ManagementType")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int?>("PositionId")
+                    b.Property<int?>("OrgUnitId")
                         .HasColumnType("int");
 
                     b.Property<string>("UserCode")
@@ -1426,10 +1767,6 @@ namespace ServicePortals.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("ServicePortals.Domain.Entities.ApplicationForm", b =>
                 {
-                    b.HasOne("ServicePortals.Domain.Entities.Position", "Position")
-                        .WithMany()
-                        .HasForeignKey("PositionId");
-
                     b.HasOne("ServicePortals.Domain.Entities.RequestStatus", "RequestStatus")
                         .WithMany()
                         .HasForeignKey("RequestStatusId");
@@ -1438,11 +1775,26 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                         .WithMany()
                         .HasForeignKey("RequestTypeId");
 
-                    b.Navigation("Position");
-
                     b.Navigation("RequestStatus");
 
                     b.Navigation("RequestType");
+                });
+
+            modelBuilder.Entity("ServicePortals.Domain.Entities.ApplicationFormItem", b =>
+                {
+                    b.HasOne("ServicePortals.Domain.Entities.ApplicationForm", "ApplicationForm")
+                        .WithMany("ApplicationFormItems")
+                        .HasForeignKey("ApplicationFormId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.Navigation("ApplicationForm");
+                });
+
+            modelBuilder.Entity("ServicePortals.Domain.Entities.AssignedTask", b =>
+                {
+                    b.HasOne("ServicePortals.Domain.Entities.ApplicationForm", null)
+                        .WithMany("AssignedTasks")
+                        .HasForeignKey("ApplicationFormId");
                 });
 
             modelBuilder.Entity("ServicePortals.Domain.Entities.AttachFile", b =>
@@ -1465,11 +1817,49 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                     b.Navigation("ApplicationForm");
                 });
 
-            modelBuilder.Entity("ServicePortals.Domain.Entities.LeaveRequest", b =>
+            modelBuilder.Entity("ServicePortals.Domain.Entities.ITForm", b =>
                 {
                     b.HasOne("ServicePortals.Domain.Entities.ApplicationForm", "ApplicationForm")
-                        .WithOne("Leave")
-                        .HasForeignKey("ServicePortals.Domain.Entities.LeaveRequest", "ApplicationFormId")
+                        .WithMany()
+                        .HasForeignKey("ApplicationFormId");
+
+                    b.HasOne("ServicePortals.Domain.Entities.OrgUnit", "OrgUnit")
+                        .WithMany()
+                        .HasForeignKey("DepartmentId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("ServicePortals.Domain.Entities.Priority", "Priority")
+                        .WithMany()
+                        .HasForeignKey("PriorityId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.Navigation("ApplicationForm");
+
+                    b.Navigation("OrgUnit");
+
+                    b.Navigation("Priority");
+                });
+
+            modelBuilder.Entity("ServicePortals.Domain.Entities.ITFormCategory", b =>
+                {
+                    b.HasOne("ServicePortals.Domain.Entities.ITCategory", "ITCategory")
+                        .WithMany()
+                        .HasForeignKey("ITCategoryId");
+
+                    b.HasOne("ServicePortals.Domain.Entities.ITForm", "ITForm")
+                        .WithMany("ItFormCategories")
+                        .HasForeignKey("ITFormId");
+
+                    b.Navigation("ITCategory");
+
+                    b.Navigation("ITForm");
+                });
+
+            modelBuilder.Entity("ServicePortals.Domain.Entities.LeaveRequest", b =>
+                {
+                    b.HasOne("ServicePortals.Domain.Entities.ApplicationFormItem", "ApplicationFormItem")
+                        .WithMany("LeaveRequests")
+                        .HasForeignKey("ApplicationFormItemId")
                         .OnDelete(DeleteBehavior.NoAction);
 
                     b.HasOne("ServicePortals.Domain.Entities.OrgUnit", "OrgUnit")
@@ -1487,33 +1877,25 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                         .HasForeignKey("TypeLeaveId")
                         .OnDelete(DeleteBehavior.NoAction);
 
-                    b.HasOne("ServicePortals.Domain.Entities.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserCodeRequestor")
-                        .HasPrincipalKey("UserCode")
-                        .OnDelete(DeleteBehavior.NoAction);
-
-                    b.Navigation("ApplicationForm");
+                    b.Navigation("ApplicationFormItem");
 
                     b.Navigation("OrgUnit");
 
                     b.Navigation("TimeLeave");
 
                     b.Navigation("TypeLeave");
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("ServicePortals.Domain.Entities.MemoNotification", b =>
                 {
                     b.HasOne("ServicePortals.Domain.Entities.ApplicationForm", "ApplicationForm")
-                        .WithOne("MemoNotification")
-                        .HasForeignKey("ServicePortals.Domain.Entities.MemoNotification", "ApplicationFormId")
-                        .OnDelete(DeleteBehavior.NoAction);
+                        .WithMany()
+                        .HasForeignKey("ApplicationFormId");
 
                     b.HasOne("ServicePortals.Domain.Entities.OrgUnit", "OrgUnit")
                         .WithMany()
-                        .HasForeignKey("OrgUnitId");
+                        .HasForeignKey("DepartmentId")
+                        .OnDelete(DeleteBehavior.NoAction);
 
                     b.Navigation("ApplicationForm");
 
@@ -1537,22 +1919,74 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                     b.Navigation("OrgUnit");
                 });
 
-            modelBuilder.Entity("ServicePortals.Domain.Entities.OrgUnit", b =>
-                {
-                    b.HasOne("ServicePortals.Domain.Entities.Unit", "Unit")
-                        .WithMany()
-                        .HasForeignKey("UnitId");
-
-                    b.Navigation("Unit");
-                });
-
-            modelBuilder.Entity("ServicePortals.Domain.Entities.Position", b =>
+            modelBuilder.Entity("ServicePortals.Domain.Entities.OrgPosition", b =>
                 {
                     b.HasOne("ServicePortals.Domain.Entities.OrgUnit", "OrgUnit")
                         .WithMany()
                         .HasForeignKey("OrgUnitId");
 
+                    b.HasOne("ServicePortals.Domain.Entities.OrgPosition", "ParentOrgPosition")
+                        .WithMany()
+                        .HasForeignKey("ParentOrgPositionId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("ServicePortals.Domain.Entities.Unit", "Unit")
+                        .WithMany()
+                        .HasForeignKey("UnitId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
                     b.Navigation("OrgUnit");
+
+                    b.Navigation("ParentOrgPosition");
+
+                    b.Navigation("Unit");
+                });
+
+            modelBuilder.Entity("ServicePortals.Domain.Entities.OrgUnit", b =>
+                {
+                    b.HasOne("ServicePortals.Domain.Entities.OrgUnit", "ParentOrgUnit")
+                        .WithMany("Children")
+                        .HasForeignKey("ParentOrgUnitId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("ServicePortals.Domain.Entities.Unit", "Unit")
+                        .WithMany()
+                        .HasForeignKey("UnitId");
+
+                    b.Navigation("ParentOrgUnit");
+
+                    b.Navigation("Unit");
+                });
+
+            modelBuilder.Entity("ServicePortals.Domain.Entities.Purchase", b =>
+                {
+                    b.HasOne("ServicePortals.Domain.Entities.ApplicationForm", "ApplicationForm")
+                        .WithMany()
+                        .HasForeignKey("ApplicationFormId");
+
+                    b.HasOne("ServicePortals.Domain.Entities.OrgUnit", "OrgUnit")
+                        .WithMany()
+                        .HasForeignKey("DepartmentId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.Navigation("ApplicationForm");
+
+                    b.Navigation("OrgUnit");
+                });
+
+            modelBuilder.Entity("ServicePortals.Domain.Entities.PurchaseDetail", b =>
+                {
+                    b.HasOne("ServicePortals.Domain.Entities.CostCenter", "CostCenter")
+                        .WithMany()
+                        .HasForeignKey("CostCenterId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("ServicePortals.Domain.Entities.Purchase", null)
+                        .WithMany("PurchaseDetails")
+                        .HasForeignKey("PurchaseId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.Navigation("CostCenter");
                 });
 
             modelBuilder.Entity("ServicePortals.Domain.Entities.RolePermission", b =>
@@ -1621,11 +2055,21 @@ namespace ServicePortals.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("ServicePortals.Domain.Entities.ApplicationForm", b =>
                 {
+                    b.Navigation("ApplicationFormItems");
+
+                    b.Navigation("AssignedTasks");
+
                     b.Navigation("HistoryApplicationForms");
+                });
 
-                    b.Navigation("Leave");
+            modelBuilder.Entity("ServicePortals.Domain.Entities.ApplicationFormItem", b =>
+                {
+                    b.Navigation("LeaveRequests");
+                });
 
-                    b.Navigation("MemoNotification");
+            modelBuilder.Entity("ServicePortals.Domain.Entities.ITForm", b =>
+                {
+                    b.Navigation("ItFormCategories");
                 });
 
             modelBuilder.Entity("ServicePortals.Domain.Entities.MemoNotification", b =>
@@ -1633,11 +2077,21 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                     b.Navigation("MemoNotificationDepartments");
                 });
 
+            modelBuilder.Entity("ServicePortals.Domain.Entities.OrgUnit", b =>
+                {
+                    b.Navigation("Children");
+                });
+
             modelBuilder.Entity("ServicePortals.Domain.Entities.Permission", b =>
                 {
                     b.Navigation("RolePermissions");
 
                     b.Navigation("UserPermissions");
+                });
+
+            modelBuilder.Entity("ServicePortals.Domain.Entities.Purchase", b =>
+                {
+                    b.Navigation("PurchaseDetails");
                 });
 
             modelBuilder.Entity("ServicePortals.Domain.Entities.Role", b =>

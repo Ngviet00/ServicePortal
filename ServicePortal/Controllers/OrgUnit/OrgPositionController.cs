@@ -6,7 +6,7 @@ using ServicePortals.Domain.Entities;
 
 namespace ServicePortal.Controllers.OrgUnit
 {
-    //[Authorize]
+    [Authorize]
     [ApiController, Route("api/org-position")]
     public class OrgPositionController : ControllerBase
     {

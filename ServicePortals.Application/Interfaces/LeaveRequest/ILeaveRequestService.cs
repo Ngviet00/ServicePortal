@@ -8,25 +8,34 @@ namespace ServicePortals.Application.Interfaces.LeaveRequest
 {
     public interface ILeaveRequestService
     {
+        Task<object> Create(CreateLeaveRequest request);
+        Task<Domain.Entities.LeaveRequest> GetById(Guid Id);
+
+
+
+        //Task<object> GetAll();
+        //Task<object> Approval(ApprovalRequest request);
+        //Task<object> Update(Guid Id, LeaveRequestDto dto);
+        //Task<object> Delete(Guid Id);
+        //Task<object> HrSaveNote(Guid Id);
+
         //Task<LeaveRequest> GetAllFormLeaveRequest();
-        Task<LeaveRequestStatisticalResponse> StatisticalLeaveRequest(int year);
-        Task<PagedResults<Domain.Entities.LeaveRequest>> GetAll(GetAllLeaveRequest request);
-        Task<Domain.Entities.LeaveRequest> GetById(Guid? id);
-        Task<object> Approval(ApprovalRequest request);
-        Task<object> Update(Guid id, LeaveRequestDto dto);
-        Task<object> Delete(Guid id);
-        Task<object> UpdateUserHavePermissionCreateMultipleLeaveRequest(List<string> UserCodes);
-        Task<object> GetUserCodeHavePermissionCreateMultipleLeaveRequest();
+        //Task<LeaveRequestStatisticalResponse> StatisticalLeaveRequest(int year);
+        //Task<PagedResults<Domain.Entities.LeaveRequest>> GetAll(GetAllLeaveRequest request);
+        
 
-        Task<object> AttachUserManageOrgUnit(AttachUserManageOrgUnitRequest request);
-        Task<object> GetOrgUnitIdAttachedByUserCode(string userCode);
+        //Task<object> UpdateUserHavePermissionCreateMultipleLeaveRequest(List<string> UserCodes);
+        //Task<object> GetUserCodeHavePermissionCreateMultipleLeaveRequest();
 
-        Task<object> CreateLeaveForManyPeople(CreateLeaveRequestForManyPeopleRequest request);
-        Task<object> SearchUserRegisterLeaveRequest(SearchUserRegisterLeaveRequest request);
-        Task<object> HrRegisterAllLeave(HrRegisterAllLeaveRequest request);
+        //Task<object> AttachUserManageOrgUnit(AttachUserManageOrgUnitRequest request);
+        //Task<object> GetOrgUnitIdAttachedByUserCode(string userCode);
+
+        //Task<object> CreateLeaveForManyPeople(CreateLeaveRequestForManyPeopleRequest request);
+        //Task<object> SearchUserRegisterLeaveRequest(SearchUserRegisterLeaveRequest request);
+        //Task<object> HrRegisterAllLeave(HrRegisterAllLeaveRequest request);
 
         Task<List<HrMngLeaveRequestResponse>> GetHrWithManagementLeavePermission();
-        Task<object> UpdateHrWithManagementLeavePermission(List<string> UserCode);
-        Task<byte[]> HrExportExcelLeaveRequest(List<string> leaveRequestIds);
+        //Task<object> UpdateHrWithManagementLeavePermission(List<string> UserCode);
+        //Task<byte[]> HrExportExcelLeaveRequest(List<string> leaveRequestIds);
     }
 }

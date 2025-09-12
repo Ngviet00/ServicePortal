@@ -25,6 +25,7 @@ namespace ServicePortals.Infrastructure.Data.Migrations
             modelBuilder.Entity("ServicePortals.Domain.Entities.ApplicationForm", b =>
                 {
                     b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Code")
@@ -33,13 +34,16 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                     b.Property<DateTimeOffset?>("CreatedAt")
                         .HasColumnType("datetimeoffset");
 
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<DateTimeOffset?>("DeletedAt")
                         .HasColumnType("datetimeoffset");
 
-                    b.Property<int?>("DepartmentId")
-                        .HasColumnType("int");
-
                     b.Property<string>("MetaData")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Note")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int?>("OrgPositionId")
@@ -57,21 +61,10 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                     b.Property<DateTimeOffset?>("UpdatedAt")
                         .HasColumnType("datetimeoffset");
 
-                    b.Property<string>("UserCodeCreated")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("UserCodeRequestor")
+                    b.Property<string>("UserCodeCreatedBy")
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<string>("UserNameCreated")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("UserNameRequestor")
-                        .HasColumnType("nvarchar(max)");
-
                     b.HasKey("Id");
-
-                    b.HasIndex("DepartmentId");
 
                     b.HasIndex("OrgPositionId");
 
@@ -79,9 +72,31 @@ namespace ServicePortals.Infrastructure.Data.Migrations
 
                     b.HasIndex("RequestTypeId");
 
-                    b.HasIndex("UserCodeRequestor");
+                    b.HasIndex("UserCodeCreatedBy");
 
                     b.ToTable("application_forms");
+                });
+
+            modelBuilder.Entity("ServicePortals.Domain.Entities.ApplicationFormItem", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("ApplicationFormId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("UserCode")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UserName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ApplicationFormId");
+
+                    b.ToTable("application_form_items");
                 });
 
             modelBuilder.Entity("ServicePortals.Domain.Entities.ApprovalFlow", b =>
@@ -269,22 +284,19 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                     b.Property<string>("Action")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<DateTimeOffset?>("ActionAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("ActionBy")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<Guid?>("ApplicationFormId")
                         .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTimeOffset?>("CreatedAt")
-                        .HasColumnType("datetimeoffset");
 
                     b.Property<DateTimeOffset?>("DeletedAt")
                         .HasColumnType("datetimeoffset");
 
                     b.Property<string>("Note")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("UserCodeApproval")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("UserNameApproval")
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
@@ -360,7 +372,7 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                     b.Property<DateTimeOffset?>("ActualCompletionDate")
                         .HasColumnType("datetimeoffset");
 
-                    b.Property<Guid>("ApplicationFormId")
+                    b.Property<Guid?>("ApplicationFormId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTimeOffset?>("CreatedAt")
@@ -401,6 +413,8 @@ namespace ServicePortals.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("ApplicationFormId");
+
                     b.HasIndex("DepartmentId");
 
                     b.HasIndex("PriorityId");
@@ -437,7 +451,7 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("ApplicationFormId")
+                    b.Property<Guid?>("ApplicationFormItemId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTimeOffset?>("CreatedAt")
@@ -458,6 +472,9 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                     b.Property<byte[]>("Image")
                         .HasColumnType("varbinary(max)");
 
+                    b.Property<string>("NoteOfHR")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Position")
                         .HasColumnType("nvarchar(max)");
 
@@ -476,14 +493,15 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                     b.Property<DateTimeOffset?>("UpdateAt")
                         .HasColumnType("datetimeoffset");
 
-                    b.Property<Guid?>("UserId")
-                        .HasColumnType("uniqueidentifier");
+                    b.Property<string>("UserCode")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UserName")
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ApplicationFormId")
-                        .IsUnique()
-                        .HasFilter("[ApplicationFormId] IS NOT NULL");
+                    b.HasIndex("ApplicationFormItemId");
 
                     b.HasIndex("DepartmentId");
 
@@ -492,8 +510,6 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                     b.HasIndex("TimeLeaveId");
 
                     b.HasIndex("TypeLeaveId");
-
-                    b.HasIndex("UserId");
 
                     b.ToTable("leave_requests");
                 });
@@ -542,9 +558,7 @@ namespace ServicePortals.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ApplicationFormId")
-                        .IsUnique()
-                        .HasFilter("[ApplicationFormId] IS NOT NULL");
+                    b.HasIndex("ApplicationFormId");
 
                     b.HasIndex("DepartmentId");
 
@@ -580,6 +594,9 @@ namespace ServicePortals.Infrastructure.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<bool?>("IsStaff")
+                        .HasColumnType("bit");
+
                     b.Property<string>("Name")
                         .HasColumnType("nvarchar(max)");
 
@@ -592,9 +609,16 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                     b.Property<string>("PositionCode")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int?>("UnitId")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.HasIndex("OrgUnitId");
+
+                    b.HasIndex("ParentOrgPositionId");
+
+                    b.HasIndex("UnitId");
 
                     b.ToTable("org_positions");
 
@@ -814,6 +838,8 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ParentOrgUnitId");
 
                     b.HasIndex("UnitId");
 
@@ -1045,9 +1071,7 @@ namespace ServicePortals.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ApplicationFormId")
-                        .IsUnique()
-                        .HasFilter("[ApplicationFormId] IS NOT NULL");
+                    b.HasIndex("ApplicationFormId");
 
                     b.HasIndex("DepartmentId");
 
@@ -1740,21 +1764,6 @@ namespace ServicePortals.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("ServicePortals.Domain.Entities.ApplicationForm", b =>
                 {
-                    b.HasOne("ServicePortals.Domain.Entities.OrgUnit", "OrgUnit")
-                        .WithMany()
-                        .HasForeignKey("DepartmentId")
-                        .OnDelete(DeleteBehavior.NoAction);
-
-                    b.HasOne("ServicePortals.Domain.Entities.ITForm", "ITForm")
-                        .WithOne("ApplicationForm")
-                        .HasForeignKey("ServicePortals.Domain.Entities.ApplicationForm", "Id")
-                        .HasPrincipalKey("ServicePortals.Domain.Entities.ITForm", "ApplicationFormId")
-                        .OnDelete(DeleteBehavior.NoAction);
-
-                    b.HasOne("ServicePortals.Domain.Entities.OrgPosition", "OrgPosition")
-                        .WithMany()
-                        .HasForeignKey("OrgPositionId");
-
                     b.HasOne("ServicePortals.Domain.Entities.RequestStatus", "RequestStatus")
                         .WithMany()
                         .HasForeignKey("RequestStatusId");
@@ -1763,15 +1772,19 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                         .WithMany()
                         .HasForeignKey("RequestTypeId");
 
-                    b.Navigation("ITForm");
-
-                    b.Navigation("OrgPosition");
-
-                    b.Navigation("OrgUnit");
-
                     b.Navigation("RequestStatus");
 
                     b.Navigation("RequestType");
+                });
+
+            modelBuilder.Entity("ServicePortals.Domain.Entities.ApplicationFormItem", b =>
+                {
+                    b.HasOne("ServicePortals.Domain.Entities.ApplicationForm", "ApplicationForm")
+                        .WithMany("ApplicationFormItems")
+                        .HasForeignKey("ApplicationFormId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.Navigation("ApplicationForm");
                 });
 
             modelBuilder.Entity("ServicePortals.Domain.Entities.AssignedTask", b =>
@@ -1803,6 +1816,10 @@ namespace ServicePortals.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("ServicePortals.Domain.Entities.ITForm", b =>
                 {
+                    b.HasOne("ServicePortals.Domain.Entities.ApplicationForm", "ApplicationForm")
+                        .WithMany()
+                        .HasForeignKey("ApplicationFormId");
+
                     b.HasOne("ServicePortals.Domain.Entities.OrgUnit", "OrgUnit")
                         .WithMany()
                         .HasForeignKey("DepartmentId")
@@ -1812,6 +1829,8 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                         .WithMany()
                         .HasForeignKey("PriorityId")
                         .OnDelete(DeleteBehavior.NoAction);
+
+                    b.Navigation("ApplicationForm");
 
                     b.Navigation("OrgUnit");
 
@@ -1835,9 +1854,9 @@ namespace ServicePortals.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("ServicePortals.Domain.Entities.LeaveRequest", b =>
                 {
-                    b.HasOne("ServicePortals.Domain.Entities.ApplicationForm", "ApplicationForm")
-                        .WithOne("Leave")
-                        .HasForeignKey("ServicePortals.Domain.Entities.LeaveRequest", "ApplicationFormId")
+                    b.HasOne("ServicePortals.Domain.Entities.ApplicationFormItem", "ApplicationFormItem")
+                        .WithMany("LeaveRequests")
+                        .HasForeignKey("ApplicationFormItemId")
                         .OnDelete(DeleteBehavior.NoAction);
 
                     b.HasOne("ServicePortals.Domain.Entities.OrgUnit", "OrgUnit")
@@ -1855,27 +1874,20 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                         .HasForeignKey("TypeLeaveId")
                         .OnDelete(DeleteBehavior.NoAction);
 
-                    b.HasOne("ServicePortals.Domain.Entities.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId");
-
-                    b.Navigation("ApplicationForm");
+                    b.Navigation("ApplicationFormItem");
 
                     b.Navigation("OrgUnit");
 
                     b.Navigation("TimeLeave");
 
                     b.Navigation("TypeLeave");
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("ServicePortals.Domain.Entities.MemoNotification", b =>
                 {
                     b.HasOne("ServicePortals.Domain.Entities.ApplicationForm", "ApplicationForm")
-                        .WithOne("MemoNotification")
-                        .HasForeignKey("ServicePortals.Domain.Entities.MemoNotification", "ApplicationFormId")
-                        .OnDelete(DeleteBehavior.NoAction);
+                        .WithMany()
+                        .HasForeignKey("ApplicationFormId");
 
                     b.HasOne("ServicePortals.Domain.Entities.OrgUnit", "OrgUnit")
                         .WithMany()
@@ -1910,14 +1922,35 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                         .WithMany()
                         .HasForeignKey("OrgUnitId");
 
+                    b.HasOne("ServicePortals.Domain.Entities.OrgPosition", "ParentOrgPosition")
+                        .WithMany()
+                        .HasForeignKey("ParentOrgPositionId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("ServicePortals.Domain.Entities.Unit", "Unit")
+                        .WithMany()
+                        .HasForeignKey("UnitId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
                     b.Navigation("OrgUnit");
+
+                    b.Navigation("ParentOrgPosition");
+
+                    b.Navigation("Unit");
                 });
 
             modelBuilder.Entity("ServicePortals.Domain.Entities.OrgUnit", b =>
                 {
+                    b.HasOne("ServicePortals.Domain.Entities.OrgUnit", "ParentOrgUnit")
+                        .WithMany("Children")
+                        .HasForeignKey("ParentOrgUnitId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("ServicePortals.Domain.Entities.Unit", "Unit")
                         .WithMany()
                         .HasForeignKey("UnitId");
+
+                    b.Navigation("ParentOrgUnit");
 
                     b.Navigation("Unit");
                 });
@@ -1925,9 +1958,8 @@ namespace ServicePortals.Infrastructure.Data.Migrations
             modelBuilder.Entity("ServicePortals.Domain.Entities.Purchase", b =>
                 {
                     b.HasOne("ServicePortals.Domain.Entities.ApplicationForm", "ApplicationForm")
-                        .WithOne("Purchase")
-                        .HasForeignKey("ServicePortals.Domain.Entities.Purchase", "ApplicationFormId")
-                        .OnDelete(DeleteBehavior.NoAction);
+                        .WithMany()
+                        .HasForeignKey("ApplicationFormId");
 
                     b.HasOne("ServicePortals.Domain.Entities.OrgUnit", "OrgUnit")
                         .WithMany()
@@ -2020,27 +2052,31 @@ namespace ServicePortals.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("ServicePortals.Domain.Entities.ApplicationForm", b =>
                 {
+                    b.Navigation("ApplicationFormItems");
+
                     b.Navigation("AssignedTasks");
 
                     b.Navigation("HistoryApplicationForms");
+                });
 
-                    b.Navigation("Leave");
-
-                    b.Navigation("MemoNotification");
-
-                    b.Navigation("Purchase");
+            modelBuilder.Entity("ServicePortals.Domain.Entities.ApplicationFormItem", b =>
+                {
+                    b.Navigation("LeaveRequests");
                 });
 
             modelBuilder.Entity("ServicePortals.Domain.Entities.ITForm", b =>
                 {
-                    b.Navigation("ApplicationForm");
-
                     b.Navigation("ItFormCategories");
                 });
 
             modelBuilder.Entity("ServicePortals.Domain.Entities.MemoNotification", b =>
                 {
                     b.Navigation("MemoNotificationDepartments");
+                });
+
+            modelBuilder.Entity("ServicePortals.Domain.Entities.OrgUnit", b =>
+                {
+                    b.Navigation("Children");
                 });
 
             modelBuilder.Entity("ServicePortals.Domain.Entities.Permission", b =>

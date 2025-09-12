@@ -65,6 +65,7 @@ namespace ServicePortals.Application.Services.Auth
                 UserCode = request.UserCode,
                 IsActive = 1,
                 IsChangePassword = 0,
+                Password = Helper.HashString(request.UserCode),
                 Email = !string.IsNullOrWhiteSpace(userFromViclock.NVEmail) ? userFromViclock.NVEmail : null,
                 Phone = !string.IsNullOrWhiteSpace(userFromViclock.NVDienThoai) ? userFromViclock.NVDienThoai : null,
                 DateOfBirth = userFromViclock.NVNgaySinh ?? null

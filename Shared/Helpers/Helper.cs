@@ -4,6 +4,8 @@ using System.Reflection;
 using System.Text;
 using Newtonsoft.Json;
 using Serilog;
+using ClosedXML.Excel;
+using ServicePortals.Shared.Exceptions;
 
 namespace ServicePortals.Infrastructure.Helpers
 {
@@ -227,6 +229,18 @@ namespace ServicePortals.Infrastructure.Helpers
             string orderCode = $"{prefix}#{timestampPart}";
 
             return orderCode;
+        }
+
+        public static void ValidateExcelHeader(IXLWorksheet worksheet, string[] expectedHeaders)
+        {
+            for (int i = 0; i < expectedHeaders.Length; i++)
+            {
+                var actual = worksheet.Cell(1, i + 1).GetString().Trim();
+                if (!string.Equals(actual, expectedHeaders[i], StringComparison.OrdinalIgnoreCase))
+                {
+                    throw new ValidationException("File excel không đúng định dạng cột");
+                }
+            }
         }
     }
 }

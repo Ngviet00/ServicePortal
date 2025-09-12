@@ -10,7 +10,10 @@ namespace ServicePortals.Domain.Entities
         public string? Name { get; set; }
         public int? OrgUnitId { get; set; }
         public int? ParentOrgPositionId { get; set; }
+        public int? UnitId { get; set; }
+        public bool? IsStaff { get; set; }
         public OrgUnit? OrgUnit { get; set; }
         public OrgPosition? ParentOrgPosition { get; set; }
+        public Unit? Unit { get; set; }
     }
 }

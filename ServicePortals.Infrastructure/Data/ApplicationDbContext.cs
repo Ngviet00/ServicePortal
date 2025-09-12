@@ -42,6 +42,9 @@ namespace ServicePortals.Infrastructure.Data
         public DbSet<Purchase> Purchases { get; set; }
         public DbSet<PurchaseDetail> PurchaseDetails { get; set; }
         public DbSet<CostCenter> CostCenters { get; set; }
+        public DbSet<ApplicationFormItem> ApplicationFormItems { get; set; }
+
+
         public IDbConnection CreateConnection() => Database.GetDbConnection();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -229,12 +232,7 @@ namespace ServicePortals.Infrastructure.Data
             #endregion
 
 
-            //file - attach_file
-            modelBuilder.Entity<AttachFile>()
-                .HasOne(a => a.File)
-                .WithMany()
-                .HasForeignKey(a => a.FileId)
-                .OnDelete(DeleteBehavior.Cascade);
+            #region USER - ROLE - PERMISSION - USER_CONFIG
 
             //user → user_config
             modelBuilder.Entity<UserConfig>()
@@ -296,6 +294,11 @@ namespace ServicePortals.Infrastructure.Data
                 .IsRequired(false)
                 .OnDelete(DeleteBehavior.NoAction);
 
+            #endregion
+
+
+            #region History_Application_Form
+
             //application_from - history_application_form
             modelBuilder.Entity<HistoryApplicationForm>()
                 .HasOne(h => h.ApplicationForm)
@@ -305,15 +308,12 @@ namespace ServicePortals.Infrastructure.Data
                 .IsRequired(false)
                 .OnDelete(DeleteBehavior.NoAction);
 
-            //memo - memo dept
-            modelBuilder.Entity<MemoNotificationDepartment>()
-                .HasOne(mnd => mnd.MemoNotifications)
-                .WithMany(mn => mn.MemoNotificationDepartments)
-                .HasPrincipalKey(mn => mn.Id)
-                .IsRequired(false)
-                .OnDelete(DeleteBehavior.NoAction);
+            #endregion
 
-            //leave_request - type_leave
+
+            #region Leave_Request
+
+            //type_leave
             modelBuilder.Entity<LeaveRequest>()
                 .HasOne(lr => lr.TypeLeave)
                 .WithMany()
@@ -321,7 +321,7 @@ namespace ServicePortals.Infrastructure.Data
                 .IsRequired(false)
                 .OnDelete(DeleteBehavior.NoAction);
 
-            //leave_request - time_leavecls
+            //time_leavecls
             modelBuilder.Entity<LeaveRequest>()
                 .HasOne(lr => lr.TimeLeave)
                 .WithMany()
@@ -329,18 +329,7 @@ namespace ServicePortals.Infrastructure.Data
                 .IsRequired(false)
                 .OnDelete(DeleteBehavior.NoAction);
 
-            //leave_request - application_form
-            modelBuilder.Entity<LeaveRequest>()
-                .HasOne(lr => lr.ApplicationForm)
-                .WithOne(a => a.Leave)
-                .HasForeignKey<LeaveRequest>(p => p.ApplicationFormId)
-                .IsRequired(false)
-                .OnDelete(DeleteBehavior.NoAction);
-
-            modelBuilder.Entity<LeaveRequest>()
-                .Navigation(lr => lr.User)
-                .AutoInclude();
-
+            //org unit
             modelBuilder.Entity<LeaveRequest>()
                 .HasOne(lr => lr.OrgUnit)
                 .WithMany()
@@ -349,21 +338,37 @@ namespace ServicePortals.Infrastructure.Data
                 .IsRequired(false)
                 .OnDelete(DeleteBehavior.NoAction);
 
-            //leave_request - application_form
-            modelBuilder.Entity<MemoNotification>()
-                .HasOne(lr => lr.ApplicationForm)
-                .WithOne(a => a.MemoNotification)
-                .HasForeignKey<MemoNotification>(p => p.ApplicationFormId)
+            //application_form_item
+            modelBuilder.Entity<LeaveRequest>()
+                .HasOne(lr => lr.ApplicationFormItem)
+                .WithMany(afi => afi.LeaveRequests)
+                .HasPrincipalKey(afi => afi.Id)
+                .HasForeignKey(lr => lr.ApplicationFormItemId)
                 .IsRequired(false)
                 .OnDelete(DeleteBehavior.NoAction);
 
-            modelBuilder.Entity<MemoNotification>()
-                .HasOne(mnd => mnd.OrgUnit)
+
+            #endregion
+
+
+            #region Memo_Notification - File - Attach file
+
+            //file - attach_file
+            modelBuilder.Entity<AttachFile>()
+                .HasOne(a => a.File)
                 .WithMany()
-                .HasForeignKey(mnd => mnd.DepartmentId)
-                .HasPrincipalKey(ou => ou.Id)
+                .HasForeignKey(a => a.FileId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            //memo - memo dept
+            modelBuilder.Entity<MemoNotificationDepartment>()
+                .HasOne(mnd => mnd.MemoNotifications)
+                .WithMany(mn => mn.MemoNotificationDepartments)
+                .HasPrincipalKey(mn => mn.Id)
+                .IsRequired(false)
                 .OnDelete(DeleteBehavior.NoAction);
 
+            //memo department - org unit
             modelBuilder.Entity<MemoNotificationDepartment>()
                 .HasOne(mnd => mnd.OrgUnit)
                 .WithMany()
@@ -371,19 +376,18 @@ namespace ServicePortals.Infrastructure.Data
                 .HasPrincipalKey(ou => ou.Id)
                 .OnDelete(DeleteBehavior.NoAction);
 
-            modelBuilder.Entity<ApplicationForm>()
-                .HasOne(a => a.OrgUnit)
+            //memo - org unit
+            modelBuilder.Entity<MemoNotification>()
+                .HasOne(mnd => mnd.OrgUnit)
                 .WithMany()
-                .HasForeignKey(a => a.DepartmentId)
-                .IsRequired(false)
+                .HasForeignKey(mnd => mnd.DepartmentId)
+                .HasPrincipalKey(ou => ou.Id)
                 .OnDelete(DeleteBehavior.NoAction);
 
-            modelBuilder.Entity<ITForm>()
-                .HasOne(it => it.ApplicationForm)
-                .WithOne(a => a.ITForm)
-                .HasPrincipalKey<ITForm>(it => it.ApplicationFormId)
-                .IsRequired(false)
-                .OnDelete(DeleteBehavior.NoAction);
+            #endregion
+
+
+            #region IT_Form
 
             modelBuilder.Entity<ITForm>()
                 .HasOne(it => it.Priority)
@@ -400,21 +404,17 @@ namespace ServicePortals.Infrastructure.Data
                 .IsRequired(false)
                 .OnDelete(DeleteBehavior.NoAction);
 
-            //------------PURCHASING--------------
-            
+            #endregion
+
+
+            #region Purchasing
+
             modelBuilder.Entity<Purchase>()
                 .HasOne(p => p.OrgUnit)
                 .WithMany()
                 .HasForeignKey(p => p.DepartmentId)
                 .HasPrincipalKey(ou => ou.Id)
                 .OnDelete(DeleteBehavior.NoAction);
-
-            modelBuilder.Entity<Purchase>()
-                .HasOne(p => p.ApplicationForm)
-                .WithOne(a => a.Purchase)
-                .HasForeignKey<Purchase>(p => p.ApplicationFormId)
-                .OnDelete(DeleteBehavior.NoAction)
-                .IsRequired(false);
 
             modelBuilder.Entity<Purchase>()
                 .HasMany(p => p.PurchaseDetails)
@@ -430,12 +430,31 @@ namespace ServicePortals.Infrastructure.Data
                 .HasPrincipalKey(cc => cc.Id)
                 .OnDelete(DeleteBehavior.NoAction);
 
+            #endregion
+
+
+            #region OrgUnit
+
             modelBuilder.Entity<OrgUnit>(entity =>
             {
                 entity.HasKey(e => e.Id);
                 entity.HasOne(e => e.ParentOrgUnit)
                       .WithMany(e => e.Children)
                       .HasForeignKey(e => e.ParentOrgUnitId)
+                      .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            #endregion
+
+
+            #region OrgPosition
+
+            modelBuilder.Entity<OrgPosition>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.HasOne(e => e.ParentOrgPosition)
+                      .WithMany()
+                      .HasForeignKey(e => e.ParentOrgPositionId)
                       .OnDelete(DeleteBehavior.Restrict);
             });
 
@@ -447,6 +466,27 @@ namespace ServicePortals.Infrastructure.Data
                       .HasForeignKey(e => e.ParentOrgPositionId)
                       .OnDelete(DeleteBehavior.Restrict);
             });
+
+            modelBuilder.Entity<OrgPosition>()
+                .HasOne(op => op.Unit)
+                .WithMany()
+                .HasForeignKey(op => op.UnitId)
+                .HasPrincipalKey(unit => unit.Id)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            #endregion
+
+
+            #region ApplicationForm
+
+            modelBuilder.Entity<ApplicationForm>()
+                .HasMany(af => af.ApplicationFormItems)
+                .WithOne(afi => afi.ApplicationForm)
+                .HasForeignKey(afi => afi.ApplicationFormId)
+                .HasPrincipalKey(af => af.Id)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            #endregion
         }
     }
 }

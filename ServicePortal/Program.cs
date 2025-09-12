@@ -13,8 +13,8 @@ using ServicePortals.Application.Interfaces.Auth;
 using ServicePortals.Application.Interfaces.User;
 using ServicePortals.Application.Interfaces.Role;
 using ServicePortals.Application.Interfaces.TypeLeave;
-using ServicePortals.Application.Interfaces.LeaveRequest;
-using ServicePortals.Application.Interfaces.MemoNotification;
+//using ServicePortals.Application.Interfaces.LeaveRequest;
+//using ServicePortals.Application.Interfaces.MemoNotification;
 using ServicePortals.Infrastructure.Data;
 using ServicePortals.Infrastructure.Services.Auth;
 using ServicePortals.Infrastructure.Services.Role;
@@ -36,12 +36,12 @@ using ServicePortals.Application.Interfaces.DelegatedTemp;
 using ServicePortals.Application.Services.DelegatedTemp;
 using ServicePortals.Application.Services.Role;
 using ServicePortals.Application.Services.User;
-using ServicePortals.Application.Services.MemoNotification;
-using ServicePortals.Application.Services.LeaveRequest;
+//using ServicePortals.Application.Services.MemoNotification;
+//using ServicePortals.Application.Services.LeaveRequest;
 using ServicePortals.Application.Interfaces.RequestType;
 using ServicePortals.Application.Services.RequestType;
-using ServicePortals.Application.Interfaces.Approval;
-using ServicePortals.Application.Services.Approval;
+//using ServicePortals.Application.Interfaces.Approval;
+//using ServicePortals.Application.Services.Approval;
 using ServicePortals.Application.Services.TypeLeave;
 using ServicePortals.Application.Interfaces.ApprovalFlow;
 using ServicePortals.Application.Services.ApprovalFlow;
@@ -52,8 +52,8 @@ using ServicePortals.Application.Interfaces.Priority;
 using ServicePortals.Application.Services.Priority;
 using ServicePortals.Application.Interfaces.CostCenter;
 using ServicePortals.Application.Services.CostCenter;
-using ServicePortals.Application.Interfaces.Purchase;
-using ServicePortals.Application.Services.Purchase;
+//using ServicePortals.Application.Interfaces.Purchase;
+//using ServicePortals.Application.Services.Purchase;
 
 namespace ServicePortal
 {
@@ -126,11 +126,11 @@ namespace ServicePortal
 
             builder.Services.AddScoped<ITypeLeaveService, TypeLeaveService>();
 
-            builder.Services.AddScoped<ILeaveRequestService, LeaveRequestService>();
+            //builder.Services.AddScoped<ILeaveRequestService, LeaveRequestService>();
 
             builder.Services.AddScoped<IEmailService, SmtpEmailService>();
 
-            builder.Services.AddScoped<IMemoNotificationService, MemoNotificationService>();
+            //builder.Services.AddScoped<IMemoNotificationService, MemoNotificationService>();
 
             builder.Services.AddSingleton<ICacheService, CacheService>();
 
@@ -156,11 +156,11 @@ namespace ServicePortal
 
             builder.Services.AddScoped<IRequestTypeService, RequestTypeService>();
 
-            builder.Services.AddScoped<IApprovalService, ApprovalService>();
+            //builder.Services.AddScoped<IApprovalService, ApprovalService>();
 
             builder.Services.AddScoped<IOrgPositionService, OrgPositionService>();
 
-            builder.Services.AddScoped<ITFormService, ITFormServiceImpl>();
+            //builder.Services.AddScoped<ITFormService, ITFormServiceImpl>();
 
             builder.Services.AddScoped<ITCategoryService, ITCategoryServiceImpl>();
 
@@ -168,7 +168,7 @@ namespace ServicePortal
 
             builder.Services.AddScoped<ICostCenterService, CostCenterService>();
 
-            builder.Services.AddScoped<IPurchaseService, PurchaseService>();
+            //builder.Services.AddScoped<IPurchaseService, PurchaseService>();
             #endregion
 
             builder.Services.AddHttpContextAccessor();

@@ -5,6 +5,9 @@
         Company = 1,
         Manage_Department = 2,
         Department = 3,
-        Team = 4
+        Team = 4,
+        GM = 5,
+        Manager = 6,
+        AM = 7
     }
 }

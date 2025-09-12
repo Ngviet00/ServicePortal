@@ -302,14 +302,7 @@ namespace ServicePortals.Application.Services.OrgUnit
                 using var workbook = new XLWorkbook(file.OpenReadStream());
                 var worksheet = workbook.Worksheet(1);
 
-                var headerUserCode = worksheet.Cell(1, 1).GetString().Trim();
-                var headerOrgPositionId = worksheet.Cell(1, 2).GetString().Trim();
-
-                if (!string.Equals(headerUserCode, "user_code", StringComparison.OrdinalIgnoreCase) ||
-                    !string.Equals(headerOrgPositionId, "org_position_id", StringComparison.OrdinalIgnoreCase))
-                {
-                    throw new ValidationException("File excel không đúng định dạng cột");
-                }
+                Helper.ValidateExcelHeader(worksheet, ["user_code", "org_position_id"]);
 
                 var rows = worksheet?.RangeUsed()?.RowsUsed().Skip(1);
 
