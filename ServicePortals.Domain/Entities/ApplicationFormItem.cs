@@ -10,6 +10,11 @@ namespace ServicePortals.Domain.Entities
         public Guid? ApplicationFormId { get; set; }
         public string? UserCode { get; set; }
         public string? UserName { get; set; }
+        public bool Status { get; set; } = true; //false nghĩa là bị reject form đơn riêng lẻ
+        public string? Note { get; set; }
+        public DateTimeOffset? CreatedAt { get; set; }
+        public DateTimeOffset? RejectedAt { get; set; }
+        public DateTimeOffset? DeletedAt { get; set; }
 
         //relationship
         public ApplicationForm? ApplicationForm { get; set; } //ApplicationFormId

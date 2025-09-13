@@ -1,4 +1,5 @@
 ﻿using System.Data;
+using DocumentFormat.OpenXml.Wordprocessing;
 using Microsoft.EntityFrameworkCore;
 using ServicePortals.Domain.Entities;
 
@@ -227,6 +228,12 @@ namespace ServicePortals.Infrastructure.Data
                 .HasQueryFilter(e => e.DeletedAt == null);
 
             modelBuilder.Entity<MemoNotification>()
+                .HasQueryFilter(e => e.DeletedAt == null);
+
+            modelBuilder.Entity<ApplicationFormItem>()
+                .HasQueryFilter(e => e.DeletedAt == null);
+
+            modelBuilder.Entity<LeaveRequest>()
                 .HasQueryFilter(e => e.DeletedAt == null);
 
             #endregion

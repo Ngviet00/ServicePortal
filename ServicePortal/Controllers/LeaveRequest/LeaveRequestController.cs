@@ -51,9 +51,10 @@ namespace ServicePortal.Controllers.LeaveRequest
         //}
 
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] CreateLeaveRequest request)
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> Create([FromForm] CreateLeaveRequest request, [FromForm] IFormFile? fileExcel)
         {
-            var result = await _leaveRequestService.Create(request);
+            var result = await _leaveRequestService.Create(request, fileExcel);
 
             return Ok(new BaseResponse<object>(200, "success", result));
         }
@@ -130,13 +131,13 @@ namespace ServicePortal.Controllers.LeaveRequest
         //    return Ok(new BaseResponse<object>(200, "success", result));
         //}
 
-        //[HttpGet("search-user-register-leave-request")]
-        //public async Task<IActionResult> SearchUserRegisterLeaveRequest([FromQuery] SearchUserRegisterLeaveRequest request)
-        //{
-        //    var result = await _leaveRequestService.SearchUserRegisterLeaveRequest(request);
+        [HttpGet("search-user-register-leave-request")]
+        public async Task<IActionResult> SearchUserRegisterLeaveRequest([FromQuery] SearchUserRegisterLeaveRequest request)
+        {
+            var result = await _leaveRequestService.SearchUserRegisterLeaveRequest(request);
 
-        //    return Ok(new BaseResponse<object>(200, "success", result));
-        //}
+            return Ok(new BaseResponse<object>(200, "success", result));
+        }
 
         //[HttpPost("update-user-have-permission-hr-mng-leave-request")]
         //public async Task<IActionResult> UpdateUserHavePermissionHrMngLeaveRequest([FromBody] List<string> userCodes)

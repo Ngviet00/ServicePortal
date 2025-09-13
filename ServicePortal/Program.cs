@@ -13,7 +13,7 @@ using ServicePortals.Application.Interfaces.Auth;
 using ServicePortals.Application.Interfaces.User;
 using ServicePortals.Application.Interfaces.Role;
 using ServicePortals.Application.Interfaces.TypeLeave;
-//using ServicePortals.Application.Interfaces.LeaveRequest;
+using ServicePortals.Application.Interfaces.LeaveRequest;
 //using ServicePortals.Application.Interfaces.MemoNotification;
 using ServicePortals.Infrastructure.Data;
 using ServicePortals.Infrastructure.Services.Auth;
@@ -37,7 +37,7 @@ using ServicePortals.Application.Services.DelegatedTemp;
 using ServicePortals.Application.Services.Role;
 using ServicePortals.Application.Services.User;
 //using ServicePortals.Application.Services.MemoNotification;
-//using ServicePortals.Application.Services.LeaveRequest;
+using ServicePortals.Application.Services.LeaveRequest;
 using ServicePortals.Application.Interfaces.RequestType;
 using ServicePortals.Application.Services.RequestType;
 //using ServicePortals.Application.Interfaces.Approval;
@@ -126,7 +126,7 @@ namespace ServicePortal
 
             builder.Services.AddScoped<ITypeLeaveService, TypeLeaveService>();
 
-            //builder.Services.AddScoped<ILeaveRequestService, LeaveRequestService>();
+            builder.Services.AddScoped<ILeaveRequestService, LeaveRequestService>();
 
             builder.Services.AddScoped<IEmailService, SmtpEmailService>();
 

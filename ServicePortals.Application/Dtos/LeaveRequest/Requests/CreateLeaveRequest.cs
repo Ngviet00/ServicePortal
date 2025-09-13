@@ -9,7 +9,6 @@ namespace ServicePortals.Application.Dtos.LeaveRequest.Requests
         public string? UserCodeCreated { get; set; }
         public string? CreatedBy { get; set; }
         public List<CreateLeaveRequestDto> CreateLeaveRequestDto { get; set; } = [];
-        public IFormFile? ImportByExcel { get; set; }
     }
 
     public class CreateLeaveRequestDto

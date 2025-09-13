@@ -1,4 +1,5 @@
-﻿using ServicePortal.Applications.Modules.LeaveRequest.DTO.Requests;
+﻿using Microsoft.AspNetCore.Http;
+using ServicePortal.Applications.Modules.LeaveRequest.DTO.Requests;
 using ServicePortals.Application.Dtos.Approval.Request;
 using ServicePortals.Application.Dtos.LeaveRequest;
 using ServicePortals.Application.Dtos.LeaveRequest.Requests;
@@ -8,7 +9,7 @@ namespace ServicePortals.Application.Interfaces.LeaveRequest
 {
     public interface ILeaveRequestService
     {
-        Task<object> Create(CreateLeaveRequest request);
+        Task<object> Create(CreateLeaveRequest request, IFormFile? fileExcel);
         Task<Domain.Entities.LeaveRequest> GetById(Guid Id);
 
 
@@ -31,10 +32,10 @@ namespace ServicePortals.Application.Interfaces.LeaveRequest
         //Task<object> GetOrgUnitIdAttachedByUserCode(string userCode);
 
         //Task<object> CreateLeaveForManyPeople(CreateLeaveRequestForManyPeopleRequest request);
-        //Task<object> SearchUserRegisterLeaveRequest(SearchUserRegisterLeaveRequest request);
+        Task<object> SearchUserRegisterLeaveRequest(SearchUserRegisterLeaveRequest request);
         //Task<object> HrRegisterAllLeave(HrRegisterAllLeaveRequest request);
 
-        Task<List<HrMngLeaveRequestResponse>> GetHrWithManagementLeavePermission();
+        //Task<List<HrMngLeaveRequestResponse>> GetHrWithManagementLeavePermission();
         //Task<object> UpdateHrWithManagementLeavePermission(List<string> UserCode);
         //Task<byte[]> HrExportExcelLeaveRequest(List<string> leaveRequestIds);
     }
