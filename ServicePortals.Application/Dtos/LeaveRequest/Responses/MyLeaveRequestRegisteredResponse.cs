@@ -1,0 +1,14 @@
+﻿using ServicePortals.Domain.Entities;
+
+namespace ServicePortals.Application.Dtos.LeaveRequest.Responses
+{
+    public class MyLeaveRequestRegisteredResponse
+    {
+        public Guid Id { get;set; }
+        public string? Code { get;set; }
+        public string? CreatedBy { get;set; }
+        public DateTimeOffset? CreatedAt { get;set; }
+        public RequestStatus? RequestStatus { get; set; }
+        public Domain.Entities.RequestType? RequestType { get; set; }
+    }
+}

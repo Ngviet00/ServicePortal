@@ -9,10 +9,12 @@ namespace ServicePortals.Application.Dtos.LeaveRequest.Requests
         public string? UserCodeCreated { get; set; }
         public string? CreatedBy { get; set; }
         public List<CreateLeaveRequestDto> CreateLeaveRequestDto { get; set; } = [];
+        public IFormFile? File { get; set; }
     }
 
     public class CreateLeaveRequestDto
     {
+        public Guid? Id { get; set; }
         public string? UserCode { get; set; }
         public string? UserName { get; set; }
         public int? DepartmentId { get; set; }

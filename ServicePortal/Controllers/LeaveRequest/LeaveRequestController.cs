@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Azure;
+using Azure.Core;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ServicePortal.Applications.Modules.LeaveRequest.DTO.Requests;
 using ServicePortals.Application;
@@ -6,6 +8,7 @@ using ServicePortals.Application.Dtos.LeaveRequest;
 using ServicePortals.Application.Dtos.LeaveRequest.Requests;
 using ServicePortals.Application.Dtos.LeaveRequest.Responses;
 using ServicePortals.Application.Interfaces.LeaveRequest;
+using ServicePortals.Domain.Entities;
 
 namespace ServicePortal.Controllers.LeaveRequest
 {
@@ -21,6 +24,107 @@ namespace ServicePortal.Controllers.LeaveRequest
         {
             _leaveRequestService = leaveRequestService;
         }
+
+        [HttpPost]
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> Create([FromForm] CreateLeaveRequest request)
+        {
+            var result = await _leaveRequestService.Create(request);
+
+            return Ok(new BaseResponse<object>(200, "success", result));
+        }
+
+        [HttpGet("get-my-leave-request-application")]
+        public async Task<IActionResult> GetMyLeaveRequest([FromQuery] MyLeaveRequest request)
+        {
+            var results = await _leaveRequestService.GetMyLeaveRequest(request);
+
+            var response = new PageResponse<MyLeaveRequestResponse>(
+                200,
+                "Success",
+                results.Data,
+                results.TotalPages,
+                request.Page,
+                request.PageSize,
+                results.TotalItems,
+                results.CountPending,
+                results.CountInProcess
+            );
+
+            return Ok(response);
+        }
+
+        [HttpGet("get-my-leave-request-registered")]
+        public async Task<IActionResult> GetMyLeaveRequestRegistered([FromQuery] MyLeaveRequestRegistered request)
+        {
+            var results = await _leaveRequestService.GetMyLeaveRequestRegistered(request);
+
+            var response = new PageResponse<MyLeaveRequestRegisteredResponse>(
+                200,
+                "Success",
+                results.Data,
+                results.TotalPages,
+                request.Page,
+                request.PageSize,
+                results.TotalItems,
+                results.CountPending,
+                results.CountInProcess
+            );
+
+            return Ok(response);
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(Guid id)
+        {
+            var result = await _leaveRequestService.Delete(id);
+
+            return Ok(new BaseResponse<object>(200, "success", result));
+        }
+
+        [HttpDelete("delete-application-form-leave/{applicationFormId}")]
+        public async Task<IActionResult> DeleteApplicationFormLeave(Guid applicationFormId)
+        {
+            var result = await _leaveRequestService.DeleteApplicationFormLeave(applicationFormId);
+
+            return Ok(new BaseResponse<object>(200, "success", result));
+        }
+
+        [HttpGet("get-list-leave-to-update/{id}")]
+        public async Task<IActionResult> GetListLeaveToUpdate(Guid id)
+        {
+            var result = await _leaveRequestService.GetListLeaveToUpdate(id);
+
+            return Ok(new BaseResponse<List<ServicePortals.Domain.Entities.LeaveRequest>>(200, "success", result));
+        }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(Guid id, [FromForm] CreateLeaveRequestDto request)
+        {
+            var result = await _leaveRequestService.Update(id, request);
+
+            return Ok(new BaseResponse<object>(200, "success", result));
+        }
+
+        //[HttpGet("get-my-leave-request-registered")]
+        //public async Task<IActionResult> GetMyLeaveRequestRegisted()
+        //{
+        //    var results = await _leaveRequestService.GetMyLeaveRequest(request);
+
+        //    var response = new PageResponse<MyLeaveRequestResponse>(
+        //        200,
+        //        "Success",
+        //        results.Data,
+        //        results.TotalPages,
+        //        request.Page,
+        //        request.PageSize,
+        //        results.TotalItems,
+        //        results.CountPending,
+        //        results.CountInProcess
+        //    );
+
+        //    return Ok(response);
+        //}
 
         //[HttpGet("statistical-leave-request")]
         //public async Task<IActionResult> StatisticalFormIT([FromQuery] int year)
@@ -50,15 +154,6 @@ namespace ServicePortal.Controllers.LeaveRequest
         //    return Ok(response);
         //}
 
-        [HttpPost]
-        [Consumes("multipart/form-data")]
-        public async Task<IActionResult> Create([FromForm] CreateLeaveRequest request, [FromForm] IFormFile? fileExcel)
-        {
-            var result = await _leaveRequestService.Create(request, fileExcel);
-
-            return Ok(new BaseResponse<object>(200, "success", result));
-        }
-
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(Guid id)
         {
@@ -66,22 +161,6 @@ namespace ServicePortal.Controllers.LeaveRequest
 
             return Ok(new BaseResponse<ServicePortals.Domain.Entities.LeaveRequest>(200, "success", result));
         }
-
-        //[HttpPut("{id}")]
-        //public async Task<IActionResult> Update(Guid id, LeaveRequestDto dto)
-        //{
-        //    var result = await _leaveRequestService.Update(id, dto);
-
-        //    return Ok(new BaseResponse<object>(200, "success", result));
-        //}
-
-        //[HttpDelete("{id}")]
-        //public async Task<IActionResult> Delete(Guid id)
-        //{
-        //    var result = await _leaveRequestService.Delete(id);
-
-        //    return Ok(new BaseResponse<object>(200, "success", result));
-        //}
 
         //[HttpPost("hr-register-all-leave-rq")]
         //public async Task<IActionResult> HrRegisterAllLeave([FromBody] HrRegisterAllLeaveRequest request)

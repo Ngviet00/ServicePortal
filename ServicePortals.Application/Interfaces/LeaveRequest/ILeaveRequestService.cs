@@ -4,26 +4,31 @@ using ServicePortals.Application.Dtos.Approval.Request;
 using ServicePortals.Application.Dtos.LeaveRequest;
 using ServicePortals.Application.Dtos.LeaveRequest.Requests;
 using ServicePortals.Application.Dtos.LeaveRequest.Responses;
+using ServicePortals.Domain.Entities;
 
 namespace ServicePortals.Application.Interfaces.LeaveRequest
 {
     public interface ILeaveRequestService
     {
-        Task<object> Create(CreateLeaveRequest request, IFormFile? fileExcel);
+        Task<object> Create(CreateLeaveRequest request);
+        Task<PagedResults<MyLeaveRequestResponse>> GetMyLeaveRequest(MyLeaveRequest request);
+        Task<PagedResults<MyLeaveRequestRegisteredResponse>> GetMyLeaveRequestRegistered(MyLeaveRequestRegistered request);
+        Task<object> Delete(Guid Id);
+        Task<object> DeleteApplicationFormLeave(Guid ApplicationFormId);
+        Task<List<Domain.Entities.LeaveRequest>> GetListLeaveToUpdate(Guid Id);
         Task<Domain.Entities.LeaveRequest> GetById(Guid Id);
+        Task<object> Update(Guid Id, CreateLeaveRequestDto dto);
 
 
 
         //Task<object> GetAll();
         //Task<object> Approval(ApprovalRequest request);
-        //Task<object> Update(Guid Id, LeaveRequestDto dto);
-        //Task<object> Delete(Guid Id);
         //Task<object> HrSaveNote(Guid Id);
 
         //Task<LeaveRequest> GetAllFormLeaveRequest();
         //Task<LeaveRequestStatisticalResponse> StatisticalLeaveRequest(int year);
         //Task<PagedResults<Domain.Entities.LeaveRequest>> GetAll(GetAllLeaveRequest request);
-        
+
 
         //Task<object> UpdateUserHavePermissionCreateMultipleLeaveRequest(List<string> UserCodes);
         //Task<object> GetUserCodeHavePermissionCreateMultipleLeaveRequest();

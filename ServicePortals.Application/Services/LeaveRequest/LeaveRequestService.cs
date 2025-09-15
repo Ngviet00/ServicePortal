@@ -1,13 +1,16 @@
 ﻿using System.Data;
 using ClosedXML.Excel;
 using Dapper;
+using DocumentFormat.OpenXml.Office2010.Excel;
+using DocumentFormat.OpenXml.Spreadsheet;
 using Hangfire;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using ServicePortals.Application.Common;
-//using ServicePortals.Application.Common;
 using ServicePortals.Application.Dtos.LeaveRequest.Requests;
+using ServicePortals.Application.Dtos.LeaveRequest.Responses;
+using ServicePortals.Application.Dtos.User.Responses;
 using ServicePortals.Application.Interfaces.LeaveRequest;
 using ServicePortals.Application.Interfaces.User;
 using ServicePortals.Domain.Entities;
@@ -46,9 +49,9 @@ namespace ServicePortals.Application.Services.LeaveRequest
         /// <summary>
         /// Tạo đơn xin nghỉ phép, hàm này có thể import nhập từ excel hoặc nhập tay
         /// </summary>
-        public async Task<object> Create(CreateLeaveRequest request, IFormFile? fileExcel)
+        public async Task<object> Create(CreateLeaveRequest request)
         {
-            int orgPositionId = request.OrgPositionId ?? 0;
+            int orgPositionId = request?.OrgPositionId ?? 0;
 
             if (orgPositionId <= 0)
             {
@@ -70,9 +73,9 @@ namespace ServicePortals.Application.Services.LeaveRequest
                 Code = Helper.GenerateFormCode("LR"),
                 RequestTypeId = (int)RequestTypeEnum.LEAVE_REQUEST,
                 RequestStatusId = status,
-                UserCodeCreatedBy = request.UserCodeCreated,
+                UserCodeCreatedBy = request?.UserCodeCreated,
                 OrgPositionId = nextOrgPositionId,
-                CreatedBy = request.CreatedBy,
+                CreatedBy = request?.CreatedBy,
                 CreatedAt = DateTimeOffset.Now
             };
 
@@ -81,7 +84,7 @@ namespace ServicePortals.Application.Services.LeaveRequest
                 Id = Guid.NewGuid(),
                 ApplicationFormId = newApplicationForm.Id,
                 Action = "Created",
-                ActionBy = request.CreatedBy,
+                ActionBy = request?.CreatedBy,
                 ActionAt = DateTimeOffset.Now,
             };
 
@@ -125,7 +128,7 @@ namespace ServicePortals.Application.Services.LeaveRequest
                         {
                             await leave.Image.CopyToAsync(memoryStream);
                             var imageData = memoryStream.ToArray();
-                            
+
                             newLeaveRequest.Image = imageData;
                         }
                     }
@@ -137,7 +140,7 @@ namespace ServicePortals.Application.Services.LeaveRequest
             {
                 var orgUnitDepartments = await _context.OrgUnits.Where(e => e.UnitId == (int)UnitEnum.Department).ToListAsync();
 
-                using var workbook = new XLWorkbook(fileExcel?.OpenReadStream());
+                using var workbook = new XLWorkbook(request?.File?.OpenReadStream());
                 var worksheet = workbook.Worksheet(1);
 
                 var resultApplicationFormItemAndLeaveRequets = await ValidateExcel(worksheet, newApplicationForm.Id);
@@ -305,13 +308,13 @@ namespace ServicePortals.Application.Services.LeaveRequest
 
             Helper.ValidateExcelHeader(worksheet, ["Mã nhân viên", "Họ tên", "Bộ phận", "Chức vụ", "Loại phép", "Thời gian nghỉ", "Nghỉ từ ngày", "Nghỉ đến ngày", "Lý do"]);
 
-            var rows = (worksheet?.RangeUsed()?.RowsUsed().Skip(1)) ?? throw new ValidationException("Không có dữ liệu nào, kiểm tra lại file excel");
+            var rows = (worksheet?.RangeUsed()?.RowsUsed().Skip(2)) ?? throw new ValidationException("Không có dữ liệu nào, kiểm tra lại file excel");
 
             var orgUnitDepartments = await _context.OrgUnits.Where(e => e.UnitId == (int)UnitEnum.Department).ToListAsync();
             var timeLeaves = await _context.TimeLeaves.ToListAsync();
             var typeLeaves = await _context.TypeLeaves.ToListAsync();
 
-            int currentRow = 2;
+            int currentRow = 3;
 
             foreach (var row in rows)
             {
@@ -321,9 +324,26 @@ namespace ServicePortals.Application.Services.LeaveRequest
                 string position = row.Cell(4).GetValue<string>();
                 string typeLeave = row.Cell(5).GetValue<string>();
                 string timeLeave = row.Cell(6).GetValue<string>();
+                string strFromDate = row.Cell(7).GetValue<string>();
+                string strToDate = row.Cell(7).GetValue<string>();
                 DateTimeOffset fromDate;
                 DateTimeOffset toDate;
                 string reason = row.Cell(9).GetValue<string>();
+
+                bool isEmptyRow = string.IsNullOrWhiteSpace(userCode)
+                    && string.IsNullOrWhiteSpace(userName)
+                    && string.IsNullOrWhiteSpace(department)
+                    && string.IsNullOrWhiteSpace(position)
+                    && string.IsNullOrWhiteSpace(typeLeave)
+                    && string.IsNullOrWhiteSpace(timeLeave)
+                    && string.IsNullOrWhiteSpace(strFromDate)
+                    && string.IsNullOrWhiteSpace(strToDate)
+                    && string.IsNullOrWhiteSpace(reason);
+
+                if (isEmptyRow)
+                {
+                    break;
+                }
 
                 var errors = new List<string>();
 
@@ -367,7 +387,7 @@ namespace ServicePortals.Application.Services.LeaveRequest
                 int timeLeaveId = timeLeaves?.FirstOrDefault(e => e.Id == (timeLeave == "CN" ? 1 : timeLeave == "S" ? 2 : 3))?.Id 
                     ?? throw new ValidationException($"Lỗi ở dòng {currentRow}, thời gian nghỉ không chính xác");
 
-                int typeLeaveId = typeLeaves?.FirstOrDefault(e => e.Name == typeLeave)?.Id
+                int typeLeaveId = typeLeaves?.FirstOrDefault(e => e.Code?.ToLower() == typeLeave.ToLower())?.Id
                     ?? throw new ValidationException($"Lỗi ở dòng {currentRow}, loại nghỉ phép không chính xác");
 
                 var newApplicationFormItem = new ApplicationFormItem
@@ -408,11 +428,109 @@ namespace ServicePortals.Application.Services.LeaveRequest
             return (applicationFormItems, leaveRequests);
         }
 
+        public async Task<PagedResults<MyLeaveRequestResponse>> GetMyLeaveRequest(MyLeaveRequest request)
+        {
+            var parameters = new DynamicParameters();
+
+            parameters.Add("@Page", request.Page, DbType.Int32, ParameterDirection.Input);
+            parameters.Add("@PageSize", request.PageSize, DbType.Int32, ParameterDirection.Input);
+            parameters.Add("@UserCode", request.UserCode, DbType.String, ParameterDirection.Input);
+            parameters.Add("@Status", request.Status, DbType.Int32, ParameterDirection.Input);
+            parameters.Add("@TotalRecords", dbType: DbType.Int32, direction: ParameterDirection.Output);
+
+            var results = await _context.Database.GetDbConnection()
+                .QueryAsync<MyLeaveRequestResponse>(
+                    "dbo.Leave_GET_GetMyLeave",
+                    parameters,
+                    commandType: CommandType.StoredProcedure
+            );
+
+            int totalRecords = parameters.Get<int>("@TotalRecords");
+            int totalPages = (int)Math.Ceiling((double)totalRecords / request.PageSize);
+
+            return new PagedResults<MyLeaveRequestResponse>
+            {
+                Data = (List<MyLeaveRequestResponse>)results,
+                TotalItems = totalRecords,
+                TotalPages = totalPages
+            };
+        }
+
+        public async Task<PagedResults<MyLeaveRequestRegisteredResponse>> GetMyLeaveRequestRegistered(MyLeaveRequestRegistered request)
+        {
+            var query = _context.ApplicationForms.AsQueryable().Where(e => e.UserCodeCreatedBy == request.UserCode && e.DeletedAt == null && e.RequestTypeId == (int)RequestTypeEnum.LEAVE_REQUEST);
+
+            var totalItem = await query.CountAsync();
+
+            var results = await query
+                .Include(e => e.RequestStatus)
+                .Include(e => e.RequestType)
+                .Select(x => new MyLeaveRequestRegisteredResponse
+                {
+                    Id = x.Id,
+                    Code = x.Code,
+                    CreatedBy = x.CreatedBy,
+                    CreatedAt = x.CreatedAt,
+                    RequestStatus = x.RequestStatus,
+                    RequestType = x.RequestType
+                })
+                .ToListAsync();
+
+            int totalPages = (int)Math.Ceiling((double)totalItem / request.PageSize);
+
+            return new PagedResults<MyLeaveRequestRegisteredResponse>
+            {
+                Data = results,
+                TotalItems = totalItem,
+                TotalPages = totalPages
+            };
+        }
+
+        public async Task<object> Delete(Guid Id)
+        {
+            await _context.LeaveRequests.Where(e => e.Id == Id).ExecuteUpdateAsync(s => s.SetProperty(e => e.DeletedAt, DateTimeOffset.Now));
+
+            return true;
+        }
+
+        public async Task<object> DeleteApplicationFormLeave(Guid applicationFormId)
+        {
+            var now = DateTimeOffset.Now;
+
+            await _context.LeaveRequests
+                .Where(lr => _context.ApplicationFormItems
+                    .Where(afi => afi.ApplicationFormId == applicationFormId)
+                    .Select(afi => afi.Id)
+                    .Contains(lr.ApplicationFormItemId ?? Guid.Empty))
+                .ExecuteUpdateAsync(s => s.SetProperty(lr => lr.DeletedAt, now));
+
+            await _context.ApplicationFormItems
+                .Where(afi => afi.ApplicationFormId == applicationFormId)
+                .ExecuteUpdateAsync(s => s.SetProperty(afi => afi.DeletedAt, now));
+
+            await _context.ApplicationForms
+                .Where(af => af.Id == applicationFormId)
+                .ExecuteUpdateAsync(s => s.SetProperty(af => af.DeletedAt, now));
+
+            return true;
+        }
+        public async Task<List<Domain.Entities.LeaveRequest>> GetListLeaveToUpdate(Guid Id)
+        {
+            return await _context.LeaveRequests
+                .Include(e => e.OrgUnit)
+                .Where(e => e.ApplicationFormItem != null && (e.Id == Id || e.ApplicationFormItem.ApplicationFormId == Id))
+                .ToListAsync();
+        }
+
+
+        public Task<object> Update(Guid id, CreateLeaveRequestDto dto)
+        {
+            throw new NotImplementedException();
+        }
         public Task<Domain.Entities.LeaveRequest> GetById(Guid id)
         {
             throw new NotImplementedException();
         }
-
 
         //public Task<object> Approval(ApprovalRequest request)
         //{
@@ -431,10 +549,6 @@ namespace ServicePortals.Application.Services.LeaveRequest
         //    throw new NotImplementedException();
         //}
 
-        //public Task<object> Update(Guid id, LeaveRequestDto dto)
-        //{
-        //    throw new NotImplementedException();
-        //}
 
         /// <summary>
         /// Lấy danh sách nhưng đơn nghỉ phép của user, nếu như request gửi lên là in process thì hthi những đơn có trạng thái là in process hoặc wait hr
@@ -577,18 +691,7 @@ namespace ServicePortals.Application.Services.LeaveRequest
         //    return true;
         //}
 
-        //public async Task<object> Delete(Guid id)
-        //{
-        //    var leaveRequest = await _context.LeaveRequests.FirstOrDefaultAsync(e => e.Id == id || e.ApplicationFormId == id) ?? throw new NotFoundException("Leave request not found!");
 
-        //    await _context.HistoryApplicationForms.Where(e => e.ApplicationFormId == leaveRequest.ApplicationFormId).ExecuteUpdateAsync(s => s.SetProperty(e => e.DeletedAt, DateTimeOffset.Now));
-
-        //    await _context.ApplicationForms.Where(e => e.Id == leaveRequest.ApplicationFormId).ExecuteUpdateAsync(s => s.SetProperty(e => e.DeletedAt, DateTimeOffset.Now));
-
-        //    await _context.LeaveRequests.Where(e => e.Id == leaveRequest.Id).ExecuteUpdateAsync(s => s.SetProperty(e => e.DeletedAt, DateTimeOffset.Now));
-
-        //    return true;
-        //}
 
         ///// <summary>
         ///// Hàm duyệt đơn nghỉ phép, cần orgUnitId, lấy luồng duyệt theo workflowstep nếu approval thì gửi đến người tiếp theo, hoặc k có người tiếp thì gửi đến hr

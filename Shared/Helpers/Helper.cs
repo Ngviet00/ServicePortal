@@ -235,7 +235,7 @@ namespace ServicePortals.Infrastructure.Helpers
         {
             for (int i = 0; i < expectedHeaders.Length; i++)
             {
-                var actual = worksheet.Cell(1, i + 1).GetString().Trim();
+                var actual = worksheet.Cell(2, i + 1).GetString().Trim();
                 if (!string.Equals(actual, expectedHeaders[i], StringComparison.OrdinalIgnoreCase))
                 {
                     throw new ValidationException("File excel không đúng định dạng cột");
