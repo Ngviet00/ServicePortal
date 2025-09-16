@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ServicePortals.Infrastructure.Data;
 
@@ -11,9 +12,11 @@ using ServicePortals.Infrastructure.Data;
 namespace ServicePortals.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250916104839_ChangeColumnApplcationFormToApplicationFormItem")]
+    partial class ChangeColumnApplcationFormToApplicationFormItem
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -387,7 +390,7 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                     b.Property<DateTimeOffset?>("ActualCompletionDate")
                         .HasColumnType("datetimeoffset");
 
-                    b.Property<Guid?>("ApplicationFormItemId")
+                    b.Property<Guid?>("ApplicationFormId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTimeOffset?>("CreatedAt")
@@ -428,7 +431,7 @@ namespace ServicePortals.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ApplicationFormItemId");
+                    b.HasIndex("ApplicationFormId");
 
                     b.HasIndex("DepartmentId");
 
@@ -1066,7 +1069,7 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("ApplicationFormItemId")
+                    b.Property<Guid?>("ApplicationFormId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTimeOffset?>("CreatedAt")
@@ -1086,7 +1089,7 @@ namespace ServicePortals.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ApplicationFormItemId");
+                    b.HasIndex("ApplicationFormId");
 
                     b.HasIndex("DepartmentId");
 
@@ -1831,10 +1834,9 @@ namespace ServicePortals.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("ServicePortals.Domain.Entities.ITForm", b =>
                 {
-                    b.HasOne("ServicePortals.Domain.Entities.ApplicationFormItem", "ApplicationFormItem")
-                        .WithMany("ITForms")
-                        .HasForeignKey("ApplicationFormItemId")
-                        .OnDelete(DeleteBehavior.NoAction);
+                    b.HasOne("ServicePortals.Domain.Entities.ApplicationForm", "ApplicationForm")
+                        .WithMany()
+                        .HasForeignKey("ApplicationFormId");
 
                     b.HasOne("ServicePortals.Domain.Entities.OrgUnit", "OrgUnit")
                         .WithMany()
@@ -1846,7 +1848,7 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                         .HasForeignKey("PriorityId")
                         .OnDelete(DeleteBehavior.NoAction);
 
-                    b.Navigation("ApplicationFormItem");
+                    b.Navigation("ApplicationForm");
 
                     b.Navigation("OrgUnit");
 
@@ -1974,17 +1976,16 @@ namespace ServicePortals.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("ServicePortals.Domain.Entities.Purchase", b =>
                 {
-                    b.HasOne("ServicePortals.Domain.Entities.ApplicationFormItem", "ApplicationFormItem")
-                        .WithMany("Purchases")
-                        .HasForeignKey("ApplicationFormItemId")
-                        .OnDelete(DeleteBehavior.NoAction);
+                    b.HasOne("ServicePortals.Domain.Entities.ApplicationForm", "ApplicationForm")
+                        .WithMany()
+                        .HasForeignKey("ApplicationFormId");
 
                     b.HasOne("ServicePortals.Domain.Entities.OrgUnit", "OrgUnit")
                         .WithMany()
                         .HasForeignKey("DepartmentId")
                         .OnDelete(DeleteBehavior.NoAction);
 
-                    b.Navigation("ApplicationFormItem");
+                    b.Navigation("ApplicationForm");
 
                     b.Navigation("OrgUnit");
                 });
@@ -2079,13 +2080,9 @@ namespace ServicePortals.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("ServicePortals.Domain.Entities.ApplicationFormItem", b =>
                 {
-                    b.Navigation("ITForms");
-
                     b.Navigation("LeaveRequests");
 
                     b.Navigation("MemoNotifications");
-
-                    b.Navigation("Purchases");
                 });
 
             modelBuilder.Entity("ServicePortals.Domain.Entities.ITForm", b =>

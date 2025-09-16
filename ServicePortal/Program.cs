@@ -14,7 +14,7 @@ using ServicePortals.Application.Interfaces.User;
 using ServicePortals.Application.Interfaces.Role;
 using ServicePortals.Application.Interfaces.TypeLeave;
 using ServicePortals.Application.Interfaces.LeaveRequest;
-//using ServicePortals.Application.Interfaces.MemoNotification;
+using ServicePortals.Application.Interfaces.MemoNotification;
 using ServicePortals.Infrastructure.Data;
 using ServicePortals.Infrastructure.Services.Auth;
 using ServicePortals.Infrastructure.Services.Role;
@@ -36,12 +36,12 @@ using ServicePortals.Application.Interfaces.DelegatedTemp;
 using ServicePortals.Application.Services.DelegatedTemp;
 using ServicePortals.Application.Services.Role;
 using ServicePortals.Application.Services.User;
-//using ServicePortals.Application.Services.MemoNotification;
+using ServicePortals.Application.Services.MemoNotification;
 using ServicePortals.Application.Services.LeaveRequest;
 using ServicePortals.Application.Interfaces.RequestType;
 using ServicePortals.Application.Services.RequestType;
-//using ServicePortals.Application.Interfaces.Approval;
-//using ServicePortals.Application.Services.Approval;
+using ServicePortals.Application.Interfaces.Approval;
+using ServicePortals.Application.Services.Approval;
 using ServicePortals.Application.Services.TypeLeave;
 using ServicePortals.Application.Interfaces.ApprovalFlow;
 using ServicePortals.Application.Services.ApprovalFlow;
@@ -130,7 +130,7 @@ namespace ServicePortal
 
             builder.Services.AddScoped<IEmailService, SmtpEmailService>();
 
-            //builder.Services.AddScoped<IMemoNotificationService, MemoNotificationService>();
+            builder.Services.AddScoped<IMemoNotificationService, MemoNotificationService>();
 
             builder.Services.AddSingleton<ICacheService, CacheService>();
 
@@ -156,7 +156,7 @@ namespace ServicePortal
 
             builder.Services.AddScoped<IRequestTypeService, RequestTypeService>();
 
-            //builder.Services.AddScoped<IApprovalService, ApprovalService>();
+            builder.Services.AddScoped<IApprovalService, ApprovalService>();
 
             builder.Services.AddScoped<IOrgPositionService, OrgPositionService>();
 

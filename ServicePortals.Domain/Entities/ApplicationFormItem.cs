@@ -19,5 +19,8 @@ namespace ServicePortals.Domain.Entities
         //relationship
         public ApplicationForm? ApplicationForm { get; set; } //ApplicationFormId
         public List<LeaveRequest> LeaveRequests { get; set; } = [];
+        public List<MemoNotification> MemoNotifications { get; set; } = [];
+        public List<ITForm> ITForms { get; set; } = [];
+        public List<Purchase> Purchases { get; set; } = [];
     }
 }

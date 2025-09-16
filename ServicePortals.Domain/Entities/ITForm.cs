@@ -6,7 +6,7 @@ namespace ServicePortals.Domain.Entities
     public class ITForm
     {
         public Guid? Id { get; set; }
-        public Guid? ApplicationFormId { get; set; }
+        public Guid? ApplicationFormItemId { get; set; }
         public int? DepartmentId { get; set; }
         public string? Email { get; set; }
         public string? Position { get; set; }
@@ -22,7 +22,7 @@ namespace ServicePortals.Domain.Entities
         public DateTimeOffset? DeletedAt { get; set; }
         public OrgUnit? OrgUnit { get; set; }
         public Priority? Priority { get; set; }
-        public ApplicationForm? ApplicationForm { get; set; }
+        public ApplicationFormItem? ApplicationFormItem { get; set; }
         public ICollection<ITFormCategory> ItFormCategories { get; set; } = [];
     }
 }

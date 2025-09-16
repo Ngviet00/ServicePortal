@@ -129,7 +129,7 @@
 //            if (approvalFlowCurrentPositionId != null)
 //            {
 //                nextOrgPositionId = approvalFlowCurrentPositionId.ToOrgPositionId;
-                
+
 //                if (approvalFlowCurrentPositionId.IsFinal == true)
 //                {
 //                    status = (int)StatusApplicationFormEnum.FINAL_APPROVAL;
@@ -384,7 +384,7 @@
 //            applicationForm.OrgPositionId = nextOrgPositionId;
 //            applicationForm.UpdatedAt = DateTimeOffset.Now;
 //            historyApplicationForm.Action = "APPROVAL";
-            
+
 //            _context.ApplicationForms.Update(applicationForm);
 //            _context.HistoryApplicationForms.Add(historyApplicationForm);
 
@@ -532,7 +532,7 @@
 
 //            List<string> ccUserCode = [];
 //            ccUserCode.Add(applicationForm?.HistoryApplicationForms?.First()?.UserCodeApproval ?? ""); //latest manager assigned, get usercode
-            
+
 //            //get usercode everybody assigned task
 //            foreach (var itemAss in applicationForm!.AssignedTasks)
 //            {

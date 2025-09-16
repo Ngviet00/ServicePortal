@@ -6,7 +6,7 @@ namespace ServicePortals.Domain.Entities
     public class MemoNotification
     {
         public Guid? Id { get; set; }
-        public Guid? ApplicationFormId { get; set; }
+        public Guid? ApplicationFormItemId { get; set; }
         public int? DepartmentId { get; set;}
         public string? Title { get; set; }
         public string? Content { get; set; }
@@ -19,7 +19,7 @@ namespace ServicePortals.Domain.Entities
         public DateTimeOffset? UpdatedAt { get; set; }
         public DateTimeOffset? DeletedAt { get; set; }
         public ICollection<MemoNotificationDepartment> MemoNotificationDepartments { get; set; } = [];
-        public ApplicationForm? ApplicationForm { get; set; }
+        public ApplicationFormItem? ApplicationFormItem { get; set; }
         public OrgUnit? OrgUnit { get; set; }
 
         [NotMapped]

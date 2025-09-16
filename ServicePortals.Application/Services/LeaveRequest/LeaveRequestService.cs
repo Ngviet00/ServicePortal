@@ -1,8 +1,11 @@
 ﻿using System.Data;
+using System.Dynamic;
 using ClosedXML.Excel;
 using Dapper;
+using DocumentFormat.OpenXml.Drawing.Charts;
 using DocumentFormat.OpenXml.Office2010.Excel;
 using DocumentFormat.OpenXml.Spreadsheet;
+using DocumentFormat.OpenXml.Wordprocessing;
 using Hangfire;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
@@ -20,6 +23,7 @@ using ServicePortals.Infrastructure.Email;
 using ServicePortals.Infrastructure.Excel;
 using ServicePortals.Infrastructure.Helpers;
 using ServicePortals.Shared.Exceptions;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace ServicePortals.Application.Services.LeaveRequest
 {
@@ -384,7 +388,7 @@ namespace ServicePortals.Application.Services.LeaveRequest
                 int departmentId = orgUnitDepartments?.FirstOrDefault(e => e.Name == department)?.Id
                     ?? throw new ValidationException($"Lỗi ở dòng {currentRow}, phòng ban không chính xác");
 
-                int timeLeaveId = timeLeaves?.FirstOrDefault(e => e.Id == (timeLeave == "CN" ? 1 : timeLeave == "S" ? 2 : 3))?.Id 
+                int timeLeaveId = timeLeaves?.FirstOrDefault(e => e.Id == (timeLeave == "CN" ? 1 : timeLeave == "S" ? 2 : 3))?.Id
                     ?? throw new ValidationException($"Lỗi ở dòng {currentRow}, thời gian nghỉ không chính xác");
 
                 int typeLeaveId = typeLeaves?.FirstOrDefault(e => e.Code?.ToLower() == typeLeave.ToLower())?.Id
@@ -463,6 +467,7 @@ namespace ServicePortals.Application.Services.LeaveRequest
             var totalItem = await query.CountAsync();
 
             var results = await query
+                .OrderByDescending(e => e.CreatedAt)
                 .Include(e => e.RequestStatus)
                 .Include(e => e.RequestType)
                 .Select(x => new MyLeaveRequestRegisteredResponse
@@ -514,6 +519,7 @@ namespace ServicePortals.Application.Services.LeaveRequest
 
             return true;
         }
+
         public async Task<List<Domain.Entities.LeaveRequest>> GetListLeaveToUpdate(Guid Id)
         {
             return await _context.LeaveRequests
@@ -522,11 +528,144 @@ namespace ServicePortals.Application.Services.LeaveRequest
                 .ToListAsync();
         }
 
-
-        public Task<object> Update(Guid id, CreateLeaveRequestDto dto)
+        public async Task<object> Update(Guid id, List<CreateLeaveRequestDto> listLeaveRequests)
         {
-            throw new NotImplementedException();
+            var applicationFormId = id;
+
+            //delete
+            var leaveDeletes = await _context.LeaveRequests
+                .Include(e => e.ApplicationFormItem)
+                .Where(e => e.ApplicationFormItem != null && e.ApplicationFormItem.ApplicationFormId == applicationFormId && !listLeaveRequests.Select(e => e.Id).Contains(e.Id))
+                .ToListAsync();
+
+            await _context.ApplicationFormItems
+                .Where(afi => leaveDeletes.Select(l => l.ApplicationFormItemId).Contains(afi.Id))
+                .ExecuteUpdateAsync(s => s.SetProperty(afi => afi.DeletedAt, DateTimeOffset.Now));
+
+            await _context.LeaveRequests
+                .Where(e => leaveDeletes.Select(l => l.Id).Contains(e.Id))
+                .ExecuteUpdateAsync(s => s.SetProperty(afi => afi.DeletedAt, DateTimeOffset.Now));
+
+            //update
+            var existingLeaves = await _context.LeaveRequests.Where(l => listLeaveRequests.Select(u => u.Id).Contains(l.Id)).ToListAsync();
+
+            foreach (var itemUpdateLeave in listLeaveRequests)
+            {
+                var leave = existingLeaves.FirstOrDefault(x => x.Id == itemUpdateLeave.Id);
+
+                if (leave != null)
+                {
+                    leave.Position = itemUpdateLeave.Position;
+                    leave.FromDate = itemUpdateLeave.FromDate;
+                    leave.ToDate = itemUpdateLeave.ToDate;
+                    leave.TypeLeaveId = itemUpdateLeave.TypeLeaveId;
+                    leave.TimeLeaveId = itemUpdateLeave.TimeLeaveId;
+                    leave.Reason = itemUpdateLeave.Reason;
+                    leave.UpdateAt = DateTimeOffset.Now;
+
+                    _context.LeaveRequests.Update(leave);
+                }
+                else //add new
+                {
+                    var newApplicationFormItem = new ApplicationFormItem
+                    {
+                        Id = Guid.NewGuid(),
+                        ApplicationFormId = applicationFormId,
+                        UserCode = itemUpdateLeave?.UserCode,
+                        UserName = itemUpdateLeave?.UserName,
+                        Status = true,
+                        CreatedAt = DateTimeOffset.Now
+                    };
+
+                    var newLeave = new Domain.Entities.LeaveRequest
+                    {
+                        Id = Guid.NewGuid(),
+                        ApplicationFormItemId = newApplicationFormItem.Id,
+                        UserCode = itemUpdateLeave?.UserCode,
+                        UserName = itemUpdateLeave?.UserName,
+                        DepartmentId = itemUpdateLeave?.DepartmentId,
+                        Position = itemUpdateLeave?.Position,
+                        FromDate = itemUpdateLeave?.FromDate,
+                        ToDate = itemUpdateLeave?.ToDate,
+                        TypeLeaveId = itemUpdateLeave?.TypeLeaveId,
+                        TimeLeaveId = itemUpdateLeave?.TimeLeaveId,
+                        Reason = itemUpdateLeave?.Reason,
+                        CreatedAt = DateTimeOffset.Now
+                    };
+                    _context.ApplicationFormItems.Add(newApplicationFormItem);
+                    _context.LeaveRequests.Add(newLeave);
+                }
+            }
+
+            await _context.SaveChangesAsync();
+
+            return true;
         }
+
+        public async Task<ViewDetailLeaveRequestWithHistoryResponse?> ViewDetailLeaveRequestWithHistory(Guid Id)
+        {
+            var leaveRequest = await _context.LeaveRequests
+                .Include(e => e.TimeLeave).Include(e => e.TypeLeave).Include(e => e.ApplicationFormItem).Include(e => e.OrgUnit)
+                .FirstOrDefaultAsync(e => e.Id == Id) ?? throw new NotFoundException("Leave request not found");
+
+            var applicationFormId = leaveRequest?.ApplicationFormItem?.ApplicationFormId;
+
+            if (leaveRequest != null)
+            {
+                leaveRequest.ApplicationFormItem = null;
+            }
+
+            var applicationForm = await _context.ApplicationForms
+                .Select(x => new ApplicationForm
+                {
+                    Id = x.Id,
+                    Code = x.Code,
+                    RequestTypeId = x.RequestTypeId,
+                    RequestStatusId = x.RequestStatusId,
+                    OrgPositionId = x.OrgPositionId,
+                    UserCodeCreatedBy = x.UserCodeCreatedBy,
+                    CreatedBy =  x.CreatedBy,
+                    Note = x.Note,
+                    Step = x.Step,
+                    MetaData = x.MetaData,
+                    CreatedAt = x.CreatedAt,
+                    HistoryApplicationForms = x.HistoryApplicationForms.Select(h => new HistoryApplicationForm
+                    {
+                        Id = h.Id,
+                        ApplicationFormId = h.ApplicationFormId,
+                        Note = h.Note,
+                        Action = h.Action,
+                        ActionBy = h.ActionBy,
+                        ActionAt = h.ActionAt
+                    })
+                    .ToList()
+                })
+                .FirstOrDefaultAsync(e => e.Id == applicationFormId);
+
+            var result = new ViewDetailLeaveRequestWithHistoryResponse
+            {
+                Id = leaveRequest?.Id,
+                ApplicationFormItemId = leaveRequest?.ApplicationFormItemId,
+                UserCode = leaveRequest?.UserCode,
+                UserName = leaveRequest?.UserName,
+                DepartmentId = leaveRequest?.DepartmentId,
+                Position = leaveRequest?.Position,
+                FromDate = leaveRequest?.FromDate,
+                ToDate = leaveRequest?.ToDate,
+                TypeLeaveId = leaveRequest?.TypeLeaveId,
+                TimeLeaveId = leaveRequest?.TimeLeaveId,
+                Reason = leaveRequest?.Reason,
+                NoteOfHR = leaveRequest?.NoteOfHR,
+                CreatedAt = leaveRequest?.CreatedAt,
+                OrgUnit = leaveRequest?.OrgUnit,
+                TimeLeave = leaveRequest?.TimeLeave,
+                TypeLeave = leaveRequest?.TypeLeave,
+                ApplicationForm = applicationForm
+            };
+
+            return result;
+        }
+
         public Task<Domain.Entities.LeaveRequest> GetById(Guid id)
         {
             throw new NotImplementedException();

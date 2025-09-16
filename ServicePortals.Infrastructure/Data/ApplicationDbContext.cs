@@ -391,6 +391,14 @@ namespace ServicePortals.Infrastructure.Data
                 .HasPrincipalKey(ou => ou.Id)
                 .OnDelete(DeleteBehavior.NoAction);
 
+            modelBuilder.Entity<MemoNotification>()
+                .HasOne(lr => lr.ApplicationFormItem)
+                .WithMany(afi => afi.MemoNotifications)
+                .HasPrincipalKey(afi => afi.Id)
+                .HasForeignKey(lr => lr.ApplicationFormItemId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.NoAction);
+
             #endregion
 
 
@@ -408,6 +416,14 @@ namespace ServicePortals.Infrastructure.Data
                 .WithMany()
                 .HasPrincipalKey(o => o.Id)
                 .HasForeignKey(lr => lr.DepartmentId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<ITForm>()
+                .HasOne(lr => lr.ApplicationFormItem)
+                .WithMany(afi => afi.ITForms)
+                .HasPrincipalKey(afi => afi.Id)
+                .HasForeignKey(lr => lr.ApplicationFormItemId)
                 .IsRequired(false)
                 .OnDelete(DeleteBehavior.NoAction);
 
@@ -435,6 +451,14 @@ namespace ServicePortals.Infrastructure.Data
                 .WithMany()
                 .HasForeignKey(pl => pl.CostCenterId)
                 .HasPrincipalKey(cc => cc.Id)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<Purchase>()
+                .HasOne(lr => lr.ApplicationFormItem)
+                .WithMany(afi => afi.Purchases)
+                .HasPrincipalKey(afi => afi.Id)
+                .HasForeignKey(lr => lr.ApplicationFormItemId)
+                .IsRequired(false)
                 .OnDelete(DeleteBehavior.NoAction);
 
             #endregion

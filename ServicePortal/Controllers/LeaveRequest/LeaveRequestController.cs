@@ -12,7 +12,7 @@ using ServicePortals.Domain.Entities;
 
 namespace ServicePortal.Controllers.LeaveRequest
 {
-    [Authorize]
+    //[Authorize]
     [ApiController, Route("api/leave-request")]
     public class LeaveRequestController : ControllerBase
     {
@@ -99,32 +99,20 @@ namespace ServicePortal.Controllers.LeaveRequest
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(Guid id, [FromForm] CreateLeaveRequestDto request)
+        public async Task<IActionResult> Update(Guid id, [FromBody] List<CreateLeaveRequestDto> request)
         {
             var result = await _leaveRequestService.Update(id, request);
 
             return Ok(new BaseResponse<object>(200, "success", result));
         }
 
-        //[HttpGet("get-my-leave-request-registered")]
-        //public async Task<IActionResult> GetMyLeaveRequestRegisted()
-        //{
-        //    var results = await _leaveRequestService.GetMyLeaveRequest(request);
+        [HttpGet("view-detail-leave-request-with-history/{id}")]
+        public async Task<IActionResult> ViewDetailLeaveRequestWithHistory(Guid id)
+        {
+            var result = await _leaveRequestService.ViewDetailLeaveRequestWithHistory(id);
 
-        //    var response = new PageResponse<MyLeaveRequestResponse>(
-        //        200,
-        //        "Success",
-        //        results.Data,
-        //        results.TotalPages,
-        //        request.Page,
-        //        request.PageSize,
-        //        results.TotalItems,
-        //        results.CountPending,
-        //        results.CountInProcess
-        //    );
-
-        //    return Ok(response);
-        //}
+            return Ok(new BaseResponse<ViewDetailLeaveRequestWithHistoryResponse?>(200, "success", result));
+        }
 
         //[HttpGet("statistical-leave-request")]
         //public async Task<IActionResult> StatisticalFormIT([FromQuery] int year)
