@@ -10,6 +10,7 @@ namespace ServicePortals.Domain.Entities
         public Guid? ApplicationFormId { get; set; }
         public string? Note { get; set; }
         public string? Action { get; set; } //Created, Submitted, Approved, Rejected, Cancelled
+        public string? UserCodeAction { get; set; }
         public string? ActionBy { get; set; }
         public DateTimeOffset? ActionAt { get; set; }
         public DateTimeOffset? DeletedAt { get; set; }

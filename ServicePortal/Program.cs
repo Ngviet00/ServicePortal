@@ -160,7 +160,7 @@ namespace ServicePortal
 
             builder.Services.AddScoped<IOrgPositionService, OrgPositionService>();
 
-            //builder.Services.AddScoped<ITFormService, ITFormServiceImpl>();
+            builder.Services.AddScoped<ITFormService, ITFormServiceImpl>();
 
             builder.Services.AddScoped<ITCategoryService, ITCategoryServiceImpl>();
 

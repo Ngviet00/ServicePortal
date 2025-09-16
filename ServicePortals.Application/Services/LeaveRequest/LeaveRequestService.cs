@@ -88,6 +88,7 @@ namespace ServicePortals.Application.Services.LeaveRequest
                 Id = Guid.NewGuid(),
                 ApplicationFormId = newApplicationForm.Id,
                 Action = "Created",
+                UserCodeAction = request?.UserCodeCreated,
                 ActionBy = request?.CreatedBy,
                 ActionAt = DateTimeOffset.Now,
             };

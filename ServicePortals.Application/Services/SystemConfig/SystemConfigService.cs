@@ -20,9 +20,9 @@ namespace ServicePortals.Application.Services.SystemConfig
         /// lấy config theo key
         /// 
         /// </summary>
-        public async Task<Entities.SystemConfig> GetByConfigKey(string configkey)
+        public async Task<Entities.SystemConfig?> GetByConfigKey(string configkey)
         {
-            var result = await _context.SystemConfigs.FirstOrDefaultAsync(e => e.ConfigKey == configkey) ?? throw new NotFoundException("Config not found!");
+            var result = await _context.SystemConfigs.FirstOrDefaultAsync(e => e.ConfigKey == configkey);
 
             return result;
         }
