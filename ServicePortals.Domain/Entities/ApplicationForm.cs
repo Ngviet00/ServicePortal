@@ -17,6 +17,7 @@ namespace ServicePortals.Domain.Entities
         public int? OrgPositionId { get; set; } //vị trí người tiếp theo duyệt đơn này
         public string? UserCodeCreatedBy { get; set; } //mã nhân viên người tạo đơn
         public string? CreatedBy { get; set; } //tên người tạo đơn
+        public int? DepartmentId { get; set; } //cho việc filter, department id của người tạo đơn
         public string? Note { get; set; }
         public int? Step { get; set; }
         public string? MetaData { get; set; } //type json
@@ -26,6 +27,7 @@ namespace ServicePortals.Domain.Entities
 
 
         //relationship
+        public OrgUnit? OrgUnit { get; set; }
         public RequestType? RequestType { get; set; } //foreign key RequestTypeId
         public RequestStatus? RequestStatus { get; set; } //foreign key RequestStatusId
         public ICollection<AssignedTask> AssignedTasks { get; set; } = []; //assigned task, đơn này sếp gán cho nhân viên nào,..

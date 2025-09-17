@@ -517,6 +517,13 @@ namespace ServicePortals.Infrastructure.Data
                 .HasPrincipalKey(af => af.Id)
                 .OnDelete(DeleteBehavior.NoAction);
 
+            modelBuilder.Entity<ApplicationForm>()
+                .HasOne(af => af.OrgUnit)
+                .WithMany()
+                .HasForeignKey(af => af.DepartmentId)
+                .HasPrincipalKey(ou => ou.Id)
+                .OnDelete(DeleteBehavior.NoAction);
+
             #endregion
         }
     }

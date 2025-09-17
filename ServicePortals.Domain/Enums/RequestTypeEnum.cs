@@ -6,6 +6,6 @@
         TIMEKEEPING = 2,
         CREATE_MEMO_NOTIFICATION = 3,
         FORM_IT = 4,
-        PURCHASE = 6,
+        PURCHASE = 5,
     }
 }

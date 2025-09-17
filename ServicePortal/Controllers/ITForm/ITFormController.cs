@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using ServicePortals.Application;
 using ServicePortals.Application.Dtos.ITForm.Requests;
+using ServicePortals.Application.Dtos.ITForm.Responses;
 using ServicePortals.Application.Interfaces.ITForm;
 using ServicePortals.Shared.SharedDto;
 using ServicePortals.Shared.SharedDto.Requests;
@@ -33,7 +34,7 @@ namespace ServicePortal.Controllers.ITForm
         {
             var results = await _iITFormService.GetAll(request);
 
-            var response = new PageResponse<Entity.ITForm>(
+            var response = new PageResponse<GetListITFormResponse>(
                 200,
                 "Success",
                 results.Data,

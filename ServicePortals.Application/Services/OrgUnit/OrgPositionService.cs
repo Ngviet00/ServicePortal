@@ -19,17 +19,17 @@ namespace ServicePortals.Application.Services.OrgUnit
         public async Task<OrgPosition?> GetManagerOrgPostionIdByOrgPositionId(int orgPostionId)
         {
             var result = await _context.Database.GetDbConnection().QueryFirstOrDefaultAsync<OrgPosition>($@"
-                    WITH ParentPositions AS (
-                        SELECT Id, PositionCode, Name, ParentOrgPositionId
-                        FROM org_positions
-                        WHERE Id = @OrgPositionId
-                        UNION ALL
-                        SELECT o.Id, o.PositionCode, o.Name, o.ParentOrgPositionId
-                        FROM org_positions o
-                        INNER JOIN ParentPositions p ON o.Id = p.ParentOrgPositionId
-                    )
-                    SELECT TOP 1 * FROM ParentPositions WHERE ParentOrgPositionId IS NULL
-                    ", new { OrgPositionId = orgPostionId });
+                WITH ParentPositions AS (
+                    SELECT Id, PositionCode, Name, ParentOrgPositionId, UnitId
+                    FROM org_positions
+                    WHERE Id = @OrgPositionId
+                    UNION ALL
+                    SELECT o.Id, o.PositionCode, o.Name, o.ParentOrgPositionId, o.UnitId
+                    FROM org_positions o
+                    INNER JOIN ParentPositions p ON o.Id = p.ParentOrgPositionId
+                )
+                SELECT TOP 1 * FROM ParentPositions WHERE UnitId = 6
+                ", new { OrgPositionId = orgPostionId });
 
             return result;
         }

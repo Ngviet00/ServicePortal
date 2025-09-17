@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ServicePortals.Infrastructure.Data;
 
@@ -11,9 +12,11 @@ using ServicePortals.Infrastructure.Data;
 namespace ServicePortals.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250917005916_AddColumnUserCodeTblHistoryApplicationForm")]
+    partial class AddColumnUserCodeTblHistoryApplicationForm
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -40,9 +43,6 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                     b.Property<DateTimeOffset?>("DeletedAt")
                         .HasColumnType("datetimeoffset");
 
-                    b.Property<int?>("DepartmentId")
-                        .HasColumnType("int");
-
                     b.Property<string>("MetaData")
                         .HasColumnType("nvarchar(max)");
 
@@ -68,8 +68,6 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                         .HasColumnType("nvarchar(450)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("DepartmentId");
 
                     b.HasIndex("OrgPositionId");
 
@@ -1787,11 +1785,6 @@ namespace ServicePortals.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("ServicePortals.Domain.Entities.ApplicationForm", b =>
                 {
-                    b.HasOne("ServicePortals.Domain.Entities.OrgUnit", "OrgUnit")
-                        .WithMany()
-                        .HasForeignKey("DepartmentId")
-                        .OnDelete(DeleteBehavior.NoAction);
-
                     b.HasOne("ServicePortals.Domain.Entities.RequestStatus", "RequestStatus")
                         .WithMany()
                         .HasForeignKey("RequestStatusId");
@@ -1799,8 +1792,6 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                     b.HasOne("ServicePortals.Domain.Entities.RequestType", "RequestType")
                         .WithMany()
                         .HasForeignKey("RequestTypeId");
-
-                    b.Navigation("OrgUnit");
 
                     b.Navigation("RequestStatus");
 

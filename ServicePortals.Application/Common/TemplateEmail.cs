@@ -179,78 +179,78 @@ namespace ServicePortals.Application.Common
                 </table>";
         }
 
-        //public static string EmailFormIT(ITForm? itForm)
-        //{
-        //    return $@"
-        //        <table style=""width: 100%; border-collapse: collapse; margin-top: 15px; margin-bottom: 20px; font-family: Arial, sans-serif; font-size: 14px;"">
-        //            <tr>
-        //                <th style=""border: 1px solid #cccccc; padding: 8px; background-color: #f2f2f2; text-align: left;"">Information</th>
-        //                <th style=""border: 1px solid #cccccc; padding: 8px; background-color: #f2f2f2; text-align: left;"">Detail</th>
-        //            </tr>
-        //            <tr>
-        //                <td style=""border: 1px solid #cccccc; padding: 8px;"">UserCode</td>
-        //                <td style=""border: 1px solid #cccccc; padding: 8px;"">{itForm?.ApplicationForm?.UserCodeRequestor}</td>
-        //            </tr>
-        //            <tr>
-        //                <td style=""border: 1px solid #cccccc; padding: 8px;"">UserName</td>
-        //                <td style=""border: 1px solid #cccccc; padding: 8px;"">{itForm?.ApplicationForm?.UserNameRequestor}</td>
-        //            </tr>
-        //            <tr>
-        //                <td style=""border: 1px solid #cccccc; padding: 8px;"">Date request</td>
-        //                <td style=""border: 1px solid #cccccc; padding: 8px;"">{itForm?.RequestDate?.ToString("yyyy-MM-dd")}</td>
-        //            </tr>
-        //            <tr>
-        //                <td style=""border: 1px solid #cccccc; padding: 8px;"">IT Category</td>
-        //                <td style=""border: 1px solid #cccccc; padding: 8px;"">{string.Join(", ", itForm != null ? itForm.ItFormCategories.Select(e => e.ITCategory?.Name ?? "").ToList() : [])}</td>
-        //            </tr>
-        //            <tr>
-        //                <td style=""border: 1px solid #cccccc; padding: 8px;"">Reason</td>
-        //                <td style=""border: 1px solid #cccccc; padding: 8px;"">{itForm?.Reason}</td>
-        //            </tr>
-        //            <tr>
-        //                <td style=""border: 1px solid #cccccc; padding: 8px;"">Priority</td>
-        //                <td style=""border: 1px solid #cccccc; padding: 8px;"">{itForm?.Priority?.NameE}</td>
-        //            </tr>
-        //        </table>
-        //    ";
-        //}
+        public static string EmailFormIT(ITForm? itForm)
+        {
+            return $@"
+                <table style=""width: 100%; border-collapse: collapse; margin-top: 15px; margin-bottom: 20px; font-family: Arial, sans-serif; font-size: 14px;"">
+                    <tr>
+                        <th style=""border: 1px solid #cccccc; padding: 8px; background-color: #f2f2f2; text-align: left;"">Information</th>
+                        <th style=""border: 1px solid #cccccc; padding: 8px; background-color: #f2f2f2; text-align: left;"">Detail</th>
+                    </tr>
+                    <tr>
+                        <td style=""border: 1px solid #cccccc; padding: 8px;"">UserCode</td>
+                        <td style=""border: 1px solid #cccccc; padding: 8px;"">{itForm?.ApplicationFormItem?.ApplicationForm?.UserCodeCreatedBy}</td>
+                    </tr>
+                    <tr>
+                        <td style=""border: 1px solid #cccccc; padding: 8px;"">UserName</td>
+                        <td style=""border: 1px solid #cccccc; padding: 8px;"">{itForm?.ApplicationFormItem?.ApplicationForm?.CreatedBy}</td>
+                    </tr>
+                    <tr>
+                        <td style=""border: 1px solid #cccccc; padding: 8px;"">Date request</td>
+                        <td style=""border: 1px solid #cccccc; padding: 8px;"">{itForm?.RequestDate?.ToString("yyyy-MM-dd")}</td>
+                    </tr>
+                    <tr>
+                        <td style=""border: 1px solid #cccccc; padding: 8px;"">IT Category</td>
+                        <td style=""border: 1px solid #cccccc; padding: 8px;"">{string.Join(", ", itForm != null ? itForm.ItFormCategories.Select(e => e.ITCategory?.Name ?? "").ToList() : [])}</td>
+                    </tr>
+                    <tr>
+                        <td style=""border: 1px solid #cccccc; padding: 8px;"">Reason</td>
+                        <td style=""border: 1px solid #cccccc; padding: 8px;"">{itForm?.Reason}</td>
+                    </tr>
+                    <tr>
+                        <td style=""border: 1px solid #cccccc; padding: 8px;"">Priority</td>
+                        <td style=""border: 1px solid #cccccc; padding: 8px;"">{itForm?.Priority?.NameE}</td>
+                    </tr>
+                </table>
+            ";
+        }
 
-        //public static string EmailPurchase(Purchase? purchase)
-        //{
-        //    StringBuilder sb = new StringBuilder();
+        public static string EmailPurchase(Purchase? purchase)
+        {
+            StringBuilder sb = new StringBuilder();
 
-        //    if (purchase != null && purchase.PurchaseDetails != null)
-        //    {
-        //        foreach (var item in purchase.PurchaseDetails)
-        //        {
-        //            sb.AppendLine($@"<li style=""margin-bottom: 5px;""><strong>Item name:</strong> {item.ItemName} - <strong>Qty:</strong> {item.Quantity} - <strong>Unit:</strong> {item.UnitMeasurement}</li>");
-        //        }
-        //    }
+            if (purchase != null && purchase.PurchaseDetails != null)
+            {
+                foreach (var item in purchase.PurchaseDetails)
+                {
+                    sb.AppendLine($@"<li style=""margin-bottom: 5px;""><strong>Item name:</strong> {item.ItemName} - <strong>Qty:</strong> {item.Quantity} - <strong>Unit:</strong> {item.UnitMeasurement}</li>");
+                }
+            }
 
-        //    return $@"
-        //        <body style=""font-family: Arial, sans-serif; margin: 0; padding: 0; color: #333;"">
-        //            <div>
-        //                <div style=""padding: 20px 0; line-height: 1.6;"">
-        //                    <div>
-        //                        <ul style=""list-style: none; padding: 0;"">
-        //                            <li style=""margin-bottom: 5px;""><strong>Code:</strong> {purchase?.ApplicationForm?.Code}</li>
-        //                            <li style=""margin-bottom: 5px;""><strong>UserName:</strong> {purchase?.ApplicationForm?.UserNameRequestor}</li>
-        //                            <li style=""margin-bottom: 5px;""><strong>Department:</strong> {purchase?.OrgUnit?.Name}</li>
-        //                            <li style=""margin-bottom: 5px;""><strong>Date Created:</strong> {purchase?.CreatedAt}</li>
-        //                            <li style=""margin-bottom: 5px;""><strong>Order Summary:</strong>
-        //                                <ul style=""list-style: none; padding: 0; margin-top: 5px;"">
-        //                                    {sb?.ToString()}
-        //                                </ul>
-        //                            </li>
-        //                        </ul>
-        //                    </div>
-        //                </div>
-        //                <div style=""text-align: center; padding-top: 20px; margin-top: 20px; border-top: 1px solid #ddd; font-size: 12px; color: #999;"">
-        //                    <p style=""margin: 0 0 10px;"">This is an automated notification. Please do not reply to this email.</p>
-        //                </div>
-        //            </div>
-        //        </body>
-        //    ";
-        //}
+            return $@"
+                <body style=""font-family: Arial, sans-serif; margin: 0; padding: 0; color: #333;"">
+                    <div>
+                        <div style=""padding: 20px 0; line-height: 1.6;"">
+                            <div>
+                                <ul style=""list-style: none; padding: 0;"">
+                                    <li style=""margin-bottom: 5px;""><strong>Code:</strong> {purchase?.ApplicationFormItem?.ApplicationForm?.Code}</li>
+                                    <li style=""margin-bottom: 5px;""><strong>UserName:</strong> {purchase?.ApplicationFormItem?.ApplicationForm?.CreatedBy}</li>
+                                    <li style=""margin-bottom: 5px;""><strong>Department:</strong> {purchase?.OrgUnit?.Name}</li>
+                                    <li style=""margin-bottom: 5px;""><strong>Date Created:</strong> {purchase?.CreatedAt}</li>
+                                    <li style=""margin-bottom: 5px;""><strong>Order Summary:</strong>
+                                        <ul style=""list-style: none; padding: 0; margin-top: 5px;"">
+                                            {sb?.ToString()}
+                                        </ul>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div style=""text-align: center; padding-top: 20px; margin-top: 20px; border-top: 1px solid #ddd; font-size: 12px; color: #999;"">
+                            <p style=""margin: 0 0 10px;"">This is an automated notification. Please do not reply to this email.</p>
+                        </div>
+                    </div>
+                </body>
+            ";
+        }
     }
 }

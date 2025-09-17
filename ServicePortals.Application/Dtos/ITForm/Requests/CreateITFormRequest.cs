@@ -2,10 +2,8 @@
 {
     public class CreateITFormRequest
     {
-        public string? UserCodeRequestor { get; set; }
-        public string? UserNameRequestor { get; set; }
-        public string? UserCodeCreated { get; set; }
-        public string? UserNameCreated { get; set; }
+        public string? UserCode { get; set; }
+        public string? UserName { get; set; }
         public int? DepartmentId { get; set; }
         public string? Email { get; set; }
         public string? Position { get; set; }

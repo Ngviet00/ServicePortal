@@ -52,8 +52,8 @@ using ServicePortals.Application.Interfaces.Priority;
 using ServicePortals.Application.Services.Priority;
 using ServicePortals.Application.Interfaces.CostCenter;
 using ServicePortals.Application.Services.CostCenter;
-//using ServicePortals.Application.Interfaces.Purchase;
-//using ServicePortals.Application.Services.Purchase;
+using ServicePortals.Application.Interfaces.Purchase;
+using ServicePortals.Application.Services.Purchase;
 
 namespace ServicePortal
 {
@@ -168,7 +168,7 @@ namespace ServicePortal
 
             builder.Services.AddScoped<ICostCenterService, CostCenterService>();
 
-            //builder.Services.AddScoped<IPurchaseService, PurchaseService>();
+            builder.Services.AddScoped<IPurchaseService, PurchaseService>();
             #endregion
 
             builder.Services.AddHttpContextAccessor();

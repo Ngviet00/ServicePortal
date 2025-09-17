@@ -9,7 +9,7 @@ namespace ServicePortals.Application.Interfaces.ITForm
     public interface ITFormService
     {
         Task<StatisticalFormITResponse> StatisticalFormIT(int year);
-        Task<PagedResults<Domain.Entities.ITForm>> GetAll(GetAllITFormRequest request);
+        Task<PagedResults<GetListITFormResponse>> GetAll(GetAllITFormRequest request);
         Task<Domain.Entities.ITForm?> GetById(Guid Id);
         Task<object> Create(CreateITFormRequest request);
         Task<object> Update(Guid Id, UpdateITFormRequest request);
