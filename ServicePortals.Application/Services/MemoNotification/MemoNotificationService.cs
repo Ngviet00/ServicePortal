@@ -42,7 +42,7 @@ namespace ServicePortals.Application.Services.MemoNotification
             _configuration = configuration;
         }
 
-        public async Task<PagedResults<Entities.MemoNotification>> GetAll(GetAllMemoNotiRequest request)
+        public async Task<PagedResults<Entities.MemoNotification>> GetAll(GetAllMemoNotificationRequest request)
         {
             return null;
             //int pageSize = request.PageSize;
@@ -130,15 +130,10 @@ namespace ServicePortals.Application.Services.MemoNotification
         /// còn thành viên trong bộ phận tạo thì có trạng thái là PENDING
         /// sau khi tạo xong thì sẽ gửi email cho người tiếp theo duyệt
         /// </summary>
-        public async Task<object> Create(CreateMemoNotiRequest request, IFormFile[] files)
+        public async Task<object> Create(CreateMemoNotificationRequest request, IFormFile[] files)
         {
             int? orgPositionId = request.OrgPositionId;
-            int? departmentId = request.DepartmentId;
-
-            if (departmentId == null)
-            {
-                throw new ValidationException(Global.UserNotSetInformation);
-            }
+            int? departmentId = request.DepartmentId ?? throw new ValidationException(Global.UserNotSetInformation);
 
             int requestTypeId = (int)RequestTypeEnum.CREATE_MEMO_NOTIFICATION;
 
@@ -151,13 +146,11 @@ namespace ServicePortals.Application.Services.MemoNotification
             int? nextOrgPositionId = -1;
             int statusApplicationForm = -1;
 
+            var orgPosition = await _context.OrgPositions.FirstOrDefaultAsync(e => e.Id == orgPositionId);
+
             if (isGM)
             {
-                if (orgPositionId == null)
-                {
-                    throw new ValidationException(Global.UserNotSetInformation);
-                }
-                nextOrgPositionId = orgPositionId;
+                nextOrgPositionId = orgPositionId ?? throw new ValidationException(Global.UserNotSetInformation);
                 statusApplicationForm = (int)StatusApplicationFormEnum.FINAL_APPROVAL;
             }
             else if (isUnion) //công đoàn
@@ -203,6 +196,7 @@ namespace ServicePortals.Application.Services.MemoNotification
                 Code = Helper.GenerateFormCode("MNT"),
                 RequestTypeId = (int)RequestTypeEnum.CREATE_MEMO_NOTIFICATION,
                 RequestStatusId = statusApplicationForm,
+                DepartmentId = departmentId,
                 OrgPositionId = nextOrgPositionId,
                 UserCodeCreatedBy = request.UserCodeCreated,
                 CreatedBy = request.CreatedBy,
@@ -215,7 +209,7 @@ namespace ServicePortals.Application.Services.MemoNotification
                 ApplicationFormId = applicationForm.Id,
                 Action = "Created",
                 ActionBy = request?.CreatedBy,
-                UserCodeAction = request.UserCodeCreated,
+                UserCodeAction = request?.UserCodeCreated,
                 ActionAt = DateTimeOffset.Now,
             };
 
@@ -234,13 +228,13 @@ namespace ServicePortals.Application.Services.MemoNotification
                 Id = Guid.NewGuid(),
                 DepartmentId = departmentId,
                 ApplicationFormItemId = applicationFormItem.Id,
-                Title = request.Title,
-                Content = request.Content,
-                Status = request.Status,
-                FromDate = request.FromDate,
-                ToDate = request.ToDate,
+                Title = request?.Title,
+                Content = request?.Content,
+                Status = request?.Status,
+                FromDate = request?.FromDate,
+                ToDate = request?.ToDate,
                 CreatedAt = DateTimeOffset.Now,
-                ApplyAllDepartment = request.ApplyAllDepartment,
+                ApplyAllDepartment = request?.ApplyAllDepartment,
             };
 
             _context.ApplicationForms.Add(applicationForm);
@@ -249,7 +243,7 @@ namespace ServicePortals.Application.Services.MemoNotification
             _context.MemoNotifications.Add(memoNotify);
 
             //memo department
-            if (request.ApplyAllDepartment == false)
+            if (request?.ApplyAllDepartment == false)
             {
                 List<MemoNotificationDepartment> memoNotificationDepartments = [];
 
@@ -270,7 +264,7 @@ namespace ServicePortals.Application.Services.MemoNotification
             //memo file
             if (files.Length > 0)
             {
-                List<Domain.Entities.File> listEntityFiles = [];
+                List<Entities.File> listEntityFiles = [];
                 List<AttachFile> listAttachFiles = [];
 
                 foreach (var file in files)
@@ -278,7 +272,7 @@ namespace ServicePortals.Application.Services.MemoNotification
                     using var ms = new MemoryStream();
                     await file.CopyToAsync(ms);
 
-                    var attach = new Domain.Entities.File
+                    var attach = new Entities.File
                     {
                         Id = Guid.NewGuid(),
                         FileName = file.FileName,
@@ -323,7 +317,7 @@ namespace ServicePortals.Application.Services.MemoNotification
         }
 
         //update thông báo
-        public async Task<object> Update(Guid id, CreateMemoNotiRequest dto, IFormFile[] files)
+        public async Task<object> Update(Guid id, CreateMemoNotificationRequest dto, IFormFile[] files)
         {
             var memoNotify = await _context.MemoNotifications.FirstOrDefaultAsync(e => e.Id == id) ?? throw new NotFoundException("Memo notification not found!");
 

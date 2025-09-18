@@ -1,6 +1,6 @@
 ﻿namespace ServicePortals.Application.Dtos.MemoNotification.Requests
 {
-    public class GetAllMemoNotiRequest
+    public class GetAllMemoNotificationRequest
     {
         public string? CurrentUserCode { get; set; }
         public int Page { get; set; } = 1;

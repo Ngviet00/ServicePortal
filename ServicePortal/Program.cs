@@ -27,8 +27,6 @@ using ServicePortals.Application.Interfaces.UserConfig;
 using ServicePortals.Application.ScheduleJob;
 using ServicePortals.Application.Interfaces.OrgUnit;
 using ServicePortals.Application.Services.OrgUnit;
-using ServicePortals.Application.Interfaces;
-using ServicePortals.Application.Services;
 using Microsoft.OpenApi.Models;
 using ServicePortals.Application.Interfaces.SystemConfig;
 using ServicePortals.Application.Services.SystemConfig;
@@ -145,8 +143,6 @@ namespace ServicePortal
             builder.Services.AddScoped<IOrgUnitService, OrgUnitService>();
 
             builder.Services.AddScoped<IApprovalFlowService, ApprovalFlowService>();
-
-            builder.Services.AddScoped<ICommonDataService, CommonDataService>();
 
             builder.Services.AddScoped<ISystemConfigService, SystemConfigService>();
 

@@ -2,7 +2,6 @@
 using System.Text.Json;
 using Dapper;
 using Hangfire;
-using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using ServicePortals.Application.Common;
@@ -82,11 +81,46 @@ namespace ServicePortals.Application.Services.ITForm
         {
             var query = _context.ITForms.AsQueryable();
 
-            var applicationFormItem = await _context.ApplicationFormItems.FirstOrDefaultAsync(e => e.ApplicationFormId == Id);
+            var applicationFormItem = await _context.ApplicationFormItems
+                .FirstOrDefaultAsync(e => e.ApplicationFormId == Id);
 
-            var result = await SelectITForm(query).FirstOrDefaultAsync(e => e.Id == Id || (applicationFormItem != null && e.ApplicationFormItemId == applicationFormItem.Id));
+            var itForm = await _context.ITForms
+                .Include(e => e.ApplicationFormItem)
+                .Include(e => e.OrgUnit)
+                .Include(e => e.Priority)
+                .FirstOrDefaultAsync(e => e.Id == Id || (applicationFormItem != null && e.ApplicationFormItemId == applicationFormItem.Id));
 
-            return result;
+            if (itForm == null)
+            {
+                throw new NotFoundException("FormIT not found, please check again");
+            }
+
+            var itCategoryFormIT = await _context.ITFormCategories
+                .Include(e => e.ITCategory)
+                .Where(e => e.ITFormId == itForm.Id)
+                .ToListAsync();
+
+            itForm!.ApplicationFormItem!.ITForms = [];
+            itForm.ItFormCategories = itCategoryFormIT;
+
+            var applicationForm = await _context.ApplicationForms
+                .Include(e => e.RequestType)
+                .Include(e => e.RequestStatus)
+                .Include(e => e.OrgUnit)
+                .Include(e => e.AssignedTasks)
+                .FirstOrDefaultAsync(e => applicationFormItem != null && e.Id == applicationFormItem.ApplicationFormId);
+
+            if (applicationForm != null)
+            {
+                applicationForm.HistoryApplicationForms = await _context.HistoryApplicationForms
+                    .Where(e => e.ApplicationFormId == applicationForm.Id)
+                    .OrderByDescending(e => e.ActionAt)
+                    .ToListAsync();
+
+                itForm.ApplicationFormItem.ApplicationForm = applicationForm;
+            }
+
+            return itForm;
         }
 
         public async Task<object> Create(CreateITFormRequest request)
@@ -96,54 +130,11 @@ namespace ServicePortals.Application.Services.ITForm
                 throw new ValidationException(Global.UserNotSetInformation);
             }
 
-            int? nextOrgPositionId = -1;
-
-            int status = (int)StatusApplicationFormEnum.PENDING;
-
             var orgPosition = await _context.OrgPositions.Include(e => e.Unit).FirstOrDefaultAsync(e => e.Id == request.OrgPositionId) ?? throw new ValidationException(Global.UserNotSetInformation);
-
-            var approvalFlowCurrentPositionId = await _context.ApprovalFlows.FirstOrDefaultAsync(e => e.RequestTypeId == (int)RequestTypeEnum.FORM_IT && e.FromOrgPositionId == orgPosition.Id);
-
-            //nếu có custom approval flow
-            if (approvalFlowCurrentPositionId != null)
-            {
-                nextOrgPositionId = approvalFlowCurrentPositionId.ToOrgPositionId;
-
-                if (approvalFlowCurrentPositionId.IsFinal == true)
-                {
-                    status = (int)StatusApplicationFormEnum.FINAL_APPROVAL;
-                }
-            }
-            else
-            {
-                //manager các bộ phận
-                if (orgPosition?.UnitId == (int)UnitEnum.Manager)
-                {
-                    var approvalFlows = await _context.ApprovalFlows.Where(e => e.RequestTypeId == (int)RequestTypeEnum.FORM_IT && e.PositonContext == "MANAGER").ToListAsync();
-
-                    //nếu như đơn có các trạng thái như Server,... thì cần qua sếp trên, nếu k thì qua luôn manager IT
-                    var finalStep = approvalFlows
-                        .FirstOrDefault(step => !string.IsNullOrEmpty(step.Condition) &&
-                            JsonDocument.Parse(step.Condition)
-                                .RootElement.GetProperty("it_category")
-                                .EnumerateArray()
-                                .Select(e => e.GetProperty("id").GetInt32())
-                                .Any(id => request.ITCategories.Contains(id)))
-                        ?? approvalFlows.FirstOrDefault(step => step.Condition == null);
-
-                    nextOrgPositionId = finalStep?.ToOrgPositionId;
-
-                    if (finalStep?.IsFinal == true)
-                    {
-                        status = (int)StatusApplicationFormEnum.FINAL_APPROVAL;
-                    }
-                }
-                else
-                {
-                    var getManagerOrgPostionId = await _orgPositionService.GetManagerOrgPostionIdByOrgPositionId(request.OrgPositionId);
-                    nextOrgPositionId = getManagerOrgPostionId?.Id;
-                }
-            }
+            
+            var nextOrgPositionAndStatus = await GetNextOrgPositionIdAndStatusFormIT(orgPosition, request.ITCategories, (int)StatusApplicationFormEnum.PENDING);
+            int? nextOrgPositionId = nextOrgPositionAndStatus.nextOrgPositionId;
+            int status = nextOrgPositionAndStatus.status;
 
             var applicationForm = new ApplicationForm
             {
@@ -327,7 +318,7 @@ namespace ServicePortals.Application.Services.ITForm
                 ActionAt = DateTimeOffset.Now
             };
 
-            List<int?>? ITFormCategoryIds = itemFormIT?.ItFormCategories.Select(e => e.ITCategoryId)?.ToList();
+            List<int> ITFormCategoryIds = itemFormIT.ItFormCategories.Select(e => e.ITCategoryId ?? -1).ToList();
 
             if (request?.Status == false)
             {
@@ -358,51 +349,11 @@ namespace ServicePortals.Application.Services.ITForm
                 return true;
             }
 
-            int? nextOrgPositionId = 0;
-
-            int status = (int)StatusApplicationFormEnum.IN_PROCESS;
-
             var orgPosition = await _context.OrgPositions.FirstOrDefaultAsync(e => e.Id == orgPositionId) ?? throw new ValidationException(Global.UserNotSetInformation);
 
-            var approvalFlowCurrentPositionId = await _context.ApprovalFlows.FirstOrDefaultAsync(e => e.RequestTypeId == (int)RequestTypeEnum.FORM_IT && e.FromOrgPositionId == orgPosition.Id);
-
-            //nếu có custom approval flow
-            if (approvalFlowCurrentPositionId != null)
-            {
-                nextOrgPositionId = approvalFlowCurrentPositionId.ToOrgPositionId;
-
-                if (approvalFlowCurrentPositionId.IsFinal == true)
-                {
-                    status = (int)StatusApplicationFormEnum.FINAL_APPROVAL;
-                }
-            }
-            else
-            {
-                //manager các bộ phận
-                if (orgPosition.UnitId == (int)UnitEnum.Manager)
-                {
-                    var approvalFlows = await _context.ApprovalFlows.Where(e => e.RequestTypeId == (int)RequestTypeEnum.FORM_IT && e.PositonContext == "MANAGER").ToListAsync();
-                    var finalStep = approvalFlows
-                        .FirstOrDefault(step => !string.IsNullOrEmpty(step.Condition) &&
-                            JsonDocument.Parse(step.Condition)
-                                .RootElement.EnumerateArray()
-                                .Select(e => e.GetProperty("id").GetInt32())
-                                .Any(id => ITFormCategoryIds != null && ITFormCategoryIds.Contains(id)))
-                        ?? approvalFlows.FirstOrDefault(step => string.IsNullOrEmpty(step.Condition));
-
-                    nextOrgPositionId = finalStep?.ToOrgPositionId;
-
-                    if (finalStep?.IsFinal == true)
-                    {
-                        status = (int)StatusApplicationFormEnum.FINAL_APPROVAL;
-                    }
-                }
-                else
-                {
-                    var getManagerOrgPostionId = await _orgPositionService.GetManagerOrgPostionIdByOrgPositionId(request?.OrgPositionId ?? -1);
-                    nextOrgPositionId = getManagerOrgPostionId?.Id;
-                }
-            }
+            var nextOrgPositionAndStatus = await GetNextOrgPositionIdAndStatusFormIT(orgPosition, ITFormCategoryIds, (int)StatusApplicationFormEnum.IN_PROCESS);
+            int? nextOrgPositionId = nextOrgPositionAndStatus.nextOrgPositionId;
+            int status = nextOrgPositionAndStatus.status;
 
             applicationForm!.RequestStatusId = status;
             applicationForm.OrgPositionId = nextOrgPositionId;
@@ -457,7 +408,7 @@ namespace ServicePortals.Application.Services.ITForm
             }
 
             applicationForm.UpdatedAt = DateTimeOffset.Now;
-            applicationForm.RequestStatusId = (int)StatusApplicationFormEnum.ASSIGNED; //set sang trạng thái là đẫ được gắn task
+            applicationForm.RequestStatusId = (int)StatusApplicationFormEnum.ASSIGNED; //set sang trạng thái là đã được gắn task
             applicationForm.OrgPositionId = (int)StatusApplicationFormEnum.ORG_POSITION_ID_AFTER_ASSIGNED_TASK; //SET 0 để không còn ai, dựa vào usercode để xử lý tiếp theo
             _context.ApplicationForms.Update(applicationForm);
 
@@ -465,23 +416,27 @@ namespace ServicePortals.Application.Services.ITForm
             _context.ITForms.Update(itemITForm);
 
             List<AssignedTask> assignedTasks = [];
-            foreach (var itemUserAssigned in request.UserAssignedTasks)
+            
+            if (request?.UserAssignedTasks != null && request.UserAssignedTasks.Count > 0)
             {
-                assignedTasks.Add(new AssignedTask
+                foreach (var itemUserAssigned in request.UserAssignedTasks)
                 {
-                    ApplicationFormId = applicationForm.Id,
-                    UserCode = itemUserAssigned.UserCode
-                });
+                    assignedTasks.Add(new AssignedTask
+                    {
+                        ApplicationFormId = applicationForm.Id,
+                        UserCode = itemUserAssigned.UserCode
+                    });
+                }
+                _context.AssignTasks.AddRange(assignedTasks);
             }
-            _context.AssignTasks.AddRange(assignedTasks);
 
             var historyApplicationForm = new HistoryApplicationForm
             {
-                UserCodeAction = request.UserCodeApproval,
-                ActionBy = request.UserNameApproval,
+                UserCodeAction = request?.UserCodeApproval,
+                ActionBy = request?.UserNameApproval,
                 ApplicationFormId = applicationForm.Id,
                 Action = "Assigned",
-                Note = request.NoteManager,
+                Note = request?.NoteManager,
                 ActionAt = DateTimeOffset.Now
             };
 
@@ -499,7 +454,7 @@ namespace ServicePortals.Application.Services.ITForm
 
             BackgroundJob.Enqueue<IEmailService>(job =>
                 job.SendEmailFormIT(
-                    request.UserAssignedTasks.Select(e => e.Email ?? "").ToList(),
+                    request != null ? request.UserAssignedTasks.Select(e => e.Email ?? "").ToList() : new List<string> { },
                     null,
                     "New Task Assigned",
                     bodyMail,
@@ -553,6 +508,7 @@ namespace ServicePortals.Application.Services.ITForm
                 ActionBy = request.UserNameApproval,
                 ApplicationFormId = applicationForm.Id,
                 Action = "Resolved",
+                Note = request.Note,
                 ActionAt = DateTimeOffset.Now
             };
 
@@ -603,7 +559,7 @@ namespace ServicePortals.Application.Services.ITForm
                 await connection.OpenAsync();
             }
 
-            using var multi = await connection.QueryMultipleAsync("GetITFormStatisticalData", new { Year = year }, commandType: CommandType.StoredProcedure);
+            using var multi = await connection.QueryMultipleAsync("ITForm_GET_Statistical", new { Year = year }, commandType: CommandType.StoredProcedure);
 
             var result = new StatisticalFormITResponse
             {
@@ -619,113 +575,63 @@ namespace ServicePortals.Application.Services.ITForm
 
         public async Task<List<InfoUserAssigned>> GetMemberITAssigned()
         {
-            var connection = (SqlConnection)_context.CreateConnection();
+            var results = await _context.Database.GetDbConnection()
+                .QueryAsync<InfoUserAssigned>(
+                    "dbo.ITForm_GET_GetListMemberAssigned",
+                    commandType: CommandType.StoredProcedure
+            );
 
-            if (connection.State != ConnectionState.Open)
-            {
-                await connection.OpenAsync();
-            }
-
-            string sql = $@"
-                SELECT
-                    NVMa,
-                    NVMaNV,
-                    {Global.DbViClock}.dbo.funTCVN2Unicode(NVHoTen) AS NVHoTen,
-                    ViTriToChucId AS OrgPositionId,
-	                COALESCE(NULLIF(Email, ''), NVEmail, '') AS Email
-                FROM {Global.DbViClock}.[dbo].[tblNhanVien] AS NV
-                LEFT JOIN {Global.DbWeb}.dbo.users as U
-	                ON NV.NVMaNV = U.UserCode
-                WHERE
-                    NV.NVNgayRa > GETDATE() AND NV.ViTriToChucId = 8
-            ";
-
-            var result = await connection.QueryAsync<InfoUserAssigned>(sql);
-
-            return (List<InfoUserAssigned>)result;
+            return (List<InfoUserAssigned>)results;
         }
 
-        private static IQueryable<Domain.Entities.ITForm> SelectITForm(IQueryable<Domain.Entities.ITForm> query)
+        private async Task<(int? nextOrgPositionId, int status)> GetNextOrgPositionIdAndStatusFormIT(OrgPosition orgPosition, List<int> iTFormCategoryIds, int currentStatus)
         {
-            return query.Select(x => new Domain.Entities.ITForm
-            {
-                Id = x.Id,
-                ApplicationFormItemId = x.ApplicationFormItemId,
-                DepartmentId = x.DepartmentId,
-                Email = x.Email,
-                Position = x.Position,
-                Reason = x.Reason,
-                PriorityId = x.PriorityId,
-                NoteManagerIT = x.NoteManagerIT,
-                RequestDate = x.RequestDate,
-                RequiredCompletionDate = x.RequiredCompletionDate,
-                TargetCompletionDate = x.TargetCompletionDate,
-                ActualCompletionDate = x.ActualCompletionDate,
-                CreatedAt = x.CreatedAt,
-                UpdatedAt = x.UpdatedAt,
-                DeletedAt = x.DeletedAt,
-                Priority = x.Priority == null ? null : new Domain.Entities.Priority
-                {
-                    Id = x.Priority.Id,
-                    Name = x.Priority.Name,
-                    NameE = x.Priority.NameE
-                },
-                OrgUnit = x.OrgUnit == null ? null : new Domain.Entities.OrgUnit
-                {
-                    Id = x.OrgUnit.Id,
-                    Name = x.OrgUnit.Name,
-                    ParentOrgUnitId = x.OrgUnit.ParentOrgUnitId
-                },
-                ApplicationFormItem = x.ApplicationFormItem == null ? null : new ApplicationFormItem
-                {
-                    ApplicationForm = x.ApplicationFormItem.ApplicationForm == null ? null : new ApplicationForm
-                    {
-                        Id = x.ApplicationFormItem.ApplicationForm.Id,
-                        Code = x.ApplicationFormItem.ApplicationForm.Code,
-                        UserCodeCreatedBy = x.ApplicationFormItem.ApplicationForm.UserCodeCreatedBy,
-                        CreatedBy = x.ApplicationFormItem.ApplicationForm.CreatedBy,
+            int? nextOrgPositionId = 0;
+            int status = currentStatus;
 
-                        RequestStatusId = x.ApplicationFormItem.ApplicationForm.RequestStatusId,
-                        RequestTypeId = x.ApplicationFormItem.ApplicationForm.RequestTypeId,
-                        OrgPositionId = x.ApplicationFormItem.ApplicationForm.OrgPositionId,
-                        CreatedAt = x.ApplicationFormItem.ApplicationForm.CreatedAt,
-                        RequestStatus = x.ApplicationFormItem.ApplicationForm.RequestStatus == null ? null : new RequestStatus
-                        {
-                            Id = x.ApplicationFormItem.ApplicationForm.RequestStatus.Id,
-                            Name = x.ApplicationFormItem.ApplicationForm.RequestStatus.Name,
-                            NameE = x.ApplicationFormItem.ApplicationForm.RequestStatus.NameE,
-                        },
-                        RequestType = x.ApplicationFormItem.ApplicationForm.RequestType == null ? null : new Domain.Entities.RequestType
-                        {
-                            Id = x.ApplicationFormItem.ApplicationForm.RequestType.Id,
-                            Name = x.ApplicationFormItem.ApplicationForm.RequestType.Name,
-                            NameE = x.ApplicationFormItem.ApplicationForm.RequestType.NameE,
-                        },
-                        HistoryApplicationForms = x.ApplicationFormItem.ApplicationForm.HistoryApplicationForms.OrderByDescending(e => e.ActionAt).Select(itemHistory => new HistoryApplicationForm
-                        {
-                            Id = itemHistory.Id,
-                            ActionBy = itemHistory.ActionBy,
-                            UserCodeAction = itemHistory.UserCodeAction,
-                            Action = itemHistory.Action,
-                            Note = itemHistory.Note,
-                            ActionAt = itemHistory.ActionAt
-                        }).ToList(),
-                        AssignedTasks = x.ApplicationFormItem.ApplicationForm.AssignedTasks.ToList(),
-                    },
-                },
-                ItFormCategories = x.ItFormCategories.Select(ift => new ITFormCategory
+            var approvalFlowCurrentPositionId = await _context.ApprovalFlows.FirstOrDefaultAsync(e => e.RequestTypeId == (int)RequestTypeEnum.FORM_IT && e.FromOrgPositionId == orgPosition.Id);
+
+            //nếu có custom approval flow
+            if (approvalFlowCurrentPositionId != null)
+            {
+                nextOrgPositionId = approvalFlowCurrentPositionId.ToOrgPositionId;
+
+                if (approvalFlowCurrentPositionId.IsFinal == true)
                 {
-                    Id = ift.Id,
-                    ITCategoryId = ift.ITCategoryId,
-                    ITFormId = ift.ITFormId,
-                    ITCategory = ift.ITCategory == null ? null : new ITCategory
+                    status = (int)StatusApplicationFormEnum.FINAL_APPROVAL;
+                }
+            }
+            else
+            {
+                //manager các bộ phận
+                if (orgPosition?.UnitId == (int)UnitEnum.Manager)
+                {
+                    var approvalFlows = await _context.ApprovalFlows.Where(e => e.RequestTypeId == (int)RequestTypeEnum.FORM_IT && e.PositonContext == "MANAGER").ToListAsync();
+
+                    //nếu như đơn có các trạng thái như Server,... thì cần qua sếp trên, nếu k thì qua luôn manager IT
+                    var finalStep = approvalFlows
+                        .FirstOrDefault(step => !string.IsNullOrEmpty(step.Condition) &&
+                            JsonDocument.Parse(step.Condition)
+                                .RootElement.EnumerateArray()
+                                .Select(e => e.GetProperty("id").GetInt32())
+                        .Any(id => iTFormCategoryIds != null && iTFormCategoryIds.Contains(id)))
+                        ?? approvalFlows.FirstOrDefault(step => string.IsNullOrEmpty(step.Condition));
+
+                    nextOrgPositionId = finalStep?.ToOrgPositionId;
+
+                    if (finalStep?.IsFinal == true)
                     {
-                        Id = ift.ITCategory.Id,
-                        Name = ift.ITCategory.Name,
-                        Code = ift.ITCategory.Code
+                        status = (int)StatusApplicationFormEnum.FINAL_APPROVAL;
                     }
-                }).ToList(),
-            });
+                }
+                else
+                {
+                    var getManagerOrgPostionId = await _orgPositionService.GetManagerOrgPostionIdByOrgPositionId(orgPosition?.Id ?? -1);
+                    nextOrgPositionId = getManagerOrgPostionId?.Id;
+                }
+            }
+
+            return (nextOrgPositionId, status);
         }
     }
 }

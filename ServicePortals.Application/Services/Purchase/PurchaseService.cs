@@ -410,7 +410,7 @@ namespace ServicePortals.Application.Services.Purchase
             {
                 applicationForm.RequestStatusId = (int)StatusApplicationFormEnum.REJECT;
                 applicationForm.UpdatedAt = DateTimeOffset.Now;
-                historyApplicationForm.Action = "REJECT";
+                historyApplicationForm.Action = "Reject";
 
                 _context.ApplicationForms.Update(applicationForm);
                 _context.HistoryApplicationForms.Add(historyApplicationForm);
@@ -546,6 +546,7 @@ namespace ServicePortals.Application.Services.Purchase
                 ActionBy = request.UserNameApproval,
                 ApplicationFormId = applicationForm.Id,
                 Action = "Assigned",
+                Note = request.Note,
                 ActionAt = DateTimeOffset.Now
             };
 
@@ -609,6 +610,7 @@ namespace ServicePortals.Application.Services.Purchase
                 ActionBy = request.UserNameApproval,
                 ApplicationFormId = applicationForm.Id,
                 Action = "Resolved",
+                Note = request.Note,
                 ActionAt = DateTimeOffset.Now
             };
 
@@ -657,30 +659,13 @@ namespace ServicePortals.Application.Services.Purchase
 
         public async Task<List<InfoUserAssigned>> GetMemberPurchaseAssigned()
         {
-            var connection = (SqlConnection)_context.CreateConnection();
+            var results = await _context.Database.GetDbConnection()
+                .QueryAsync<InfoUserAssigned>(
+                    "dbo.Purchasing_GET_GetListMemberAssigned",
+                    commandType: CommandType.StoredProcedure
+            );
 
-            if (connection.State != ConnectionState.Open)
-            {
-                await connection.OpenAsync();
-            }
-
-            string sql = $@"
-                SELECT
-                    NVMa,
-                    NVMaNV,
-                    {Global.DbViClock}.dbo.funTCVN2Unicode(NVHoTen) AS NVHoTen,
-                    ViTriToChucId AS OrgPositionId,
-	                COALESCE(NULLIF(Email, ''), NVEmail, '') AS Email
-                FROM {Global.DbViClock}.[dbo].[tblNhanVien] AS NV
-                LEFT JOIN {Global.DbWeb}.dbo.users as U
-	                ON NV.NVMaNV = U.UserCode
-                WHERE
-                    NV.NVNgayRa > GETDATE() AND NV.ViTriToChucId IN (27, 28)
-            ";
-
-            var result = await connection.QueryAsync<InfoUserAssigned>(sql);
-
-            return (List<InfoUserAssigned>)result;
+            return (List<InfoUserAssigned>)results;
         }
 
         private static IQueryable<Domain.Entities.Purchase> SelectPurchase(IQueryable<Domain.Entities.Purchase> query)

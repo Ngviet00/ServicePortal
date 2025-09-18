@@ -23,14 +23,12 @@
         public Guid Id { get; set; }
         public string Code { get; set; } = string.Empty;
         public string Reason { get; set; } = string.Empty;
-        public string UserNameRequestor { get; set; } = string.Empty;
+        public string CreatedBy { get; set; } = string.Empty;
         public string DepartmentName { get; set; } = string.Empty;
         public DateTimeOffset? CreatedAt { get; set; }
         public string NamePriority { get; set; } = string.Empty;
         public string NamePriorityE { get; set; } = string.Empty;
         public int? RequestStatusId { get; set; }
-        public string RequestStatus { get; set; } = string.Empty;
-        public string RequestStatusE { get; set; } = string.Empty;
     }
 
     public class GroupByDepartment

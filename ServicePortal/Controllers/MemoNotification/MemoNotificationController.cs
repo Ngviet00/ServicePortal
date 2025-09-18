@@ -9,7 +9,8 @@ using Entities = ServicePortals.Domain.Entities;
 
 namespace ServicePortal.Controllers.MemoNotification
 {
-    [ApiController, Route("api/memo-notification"), Authorize]
+    [Authorize]
+    [ApiController, Route("api/memo-notification")]
     public class MemoNotificationController : ControllerBase
     {
         private readonly IMemoNotificationService _memoNotificationService;
@@ -21,7 +22,7 @@ namespace ServicePortal.Controllers.MemoNotification
 
         [HttpGet]
         [RoleOrPermission("HR", "union", "IT", "memo_notification.create")]
-        public async Task<IActionResult> GetAll([FromQuery] GetAllMemoNotiRequest request)
+        public async Task<IActionResult> GetAll([FromQuery] GetAllMemoNotificationRequest request)
         {
             var results = await _memoNotificationService.GetAll(request);
 
@@ -56,7 +57,7 @@ namespace ServicePortal.Controllers.MemoNotification
 
         [HttpPost]
         [RoleOrPermission("HR", "union", "IT", "memo_notification.create")]
-        public async Task<IActionResult> Create([FromForm] CreateMemoNotiRequest request, [FromForm] IFormFile[] files)
+        public async Task<IActionResult> Create([FromForm] CreateMemoNotificationRequest request, [FromForm] IFormFile[] files)
         {
             var result = await _memoNotificationService.Create(request, files);
 
@@ -65,7 +66,7 @@ namespace ServicePortal.Controllers.MemoNotification
 
         [HttpPut("{id}")]
         [RoleOrPermission("HR", "union", "IT", "memo_notification.create")]
-        public async Task<IActionResult> Update(Guid id, [FromForm] CreateMemoNotiRequest request, [FromForm] IFormFile[] files)
+        public async Task<IActionResult> Update(Guid id, [FromForm] CreateMemoNotificationRequest request, [FromForm] IFormFile[] files)
         {
             var result = await _memoNotificationService.Update(id, request, files);
 

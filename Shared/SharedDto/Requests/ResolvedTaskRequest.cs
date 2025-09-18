@@ -14,6 +14,7 @@ namespace ServicePortals.Shared.SharedDto.Requests
         public Guid ITFormId { get; set; }
         public Guid PurchaseId { get; set; }
         public string? UrlFrontend { get; set; }
+        public string? Note { get; set; }
         public DateTimeOffset? TargetCompletionDate { get; set; }
         public DateTimeOffset? ActualCompletionDate { get; set; }
     }
