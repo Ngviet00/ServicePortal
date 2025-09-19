@@ -186,29 +186,8 @@ namespace ServicePortals.Application.Services.LeaveRequest
                 AND (UC.UserCode IS NULL OR (UC.UserCode IS NOT NULL AND UC.[Key] = 'RECEIVE_MAIL_LEAVE_REQUEST' AND UC.Value = 'true'))
                 ", new { UserCodes = userCodeReceiveEmail.Distinct().ToList() });
 
-            string emailLinkApproval = $@"
-                <h4>
-                    <span>Detail: </span>
-                    <a href=""{_configuration["Setting:UrlFrontEnd"]}/approval/pending-approval"">
-                        {_configuration["Setting:UrlFrontEnd"]}/approval/pending-approval                    
-                    </a>
-                </h4>";
-
-            string bodyMail = $@"";
-
-            var leaveRequestIdLatests = leaveRequests.Select(e => e.Id).ToList();
-
-            var leaveRequestLatests = await _context.LeaveRequests
-                .Include(e => e.TimeLeave)
-                .Include(e => e.TypeLeave)
-                .Include(e => e.OrgUnit)
-                .Where(e => leaveRequestIdLatests.Contains(e.Id))
-                .ToListAsync();
-
-            foreach (var itemLeave in leaveRequestLatests)
-            {
-                bodyMail += TemplateEmail.EmailContentLeaveRequest(itemLeave) + "<br/>";
-            }
+            string urlView = $@"{_configuration["Setting:UrlFrontEnd"]}/leave/view/{newApplicationForm.Id}";
+            string urlApproval = $@"{_configuration["Setting:UrlFrontEnd"]}/leave/approval/{newApplicationForm.Id}";
 
             //gửi email cho người nộp đơn và người xin nghỉ
             BackgroundJob.Enqueue<IEmailService>(job =>
@@ -216,7 +195,7 @@ namespace ServicePortals.Application.Services.LeaveRequest
                     emailSendNoti.ToList(),
                     null,
                     "Leave request has been submitted.",
-                    bodyMail,
+                    TemplateEmail.SendContentEmail("Leave request has been submitted.", urlView, newApplicationForm.Code),
                     null,
                     true
                 )
@@ -236,7 +215,7 @@ namespace ServicePortals.Application.Services.LeaveRequest
                         hr.Select(e => e.Email ?? "").ToList(),
                         null,
                         "Request for leave request approval",
-                        emailLinkApproval + bodyMail,
+                        TemplateEmail.SendContentEmail("Request for leave request approval", urlApproval, newApplicationForm.Code),
                         null,
                         true
                     )
@@ -251,7 +230,7 @@ namespace ServicePortals.Application.Services.LeaveRequest
                         nextUserOrgPositions.Select(e => e.Email ?? "").ToList(),
                         null,
                         "Request for leave request approval",
-                        emailLinkApproval + bodyMail,
+                        TemplateEmail.SendContentEmail("Request for leave request approval", urlApproval, newApplicationForm.Code),
                         null,
                         true
                     )
@@ -490,13 +469,6 @@ namespace ServicePortals.Application.Services.LeaveRequest
                 TotalItems = totalItem,
                 TotalPages = totalPages
             };
-        }
-
-        public async Task<object> Delete(Guid Id)
-        {
-            await _context.LeaveRequests.Where(e => e.Id == Id).ExecuteUpdateAsync(s => s.SetProperty(e => e.DeletedAt, DateTimeOffset.Now));
-
-            return true;
         }
 
         public async Task<object> DeleteApplicationFormLeave(Guid applicationFormId)

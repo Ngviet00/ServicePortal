@@ -13,7 +13,6 @@ namespace ServicePortals.Application.Interfaces.LeaveRequest
         Task<object> Create(CreateLeaveRequest request);
         Task<PagedResults<MyLeaveRequestResponse>> GetMyLeaveRequest(MyLeaveRequest request);
         Task<PagedResults<MyLeaveRequestRegisteredResponse>> GetMyLeaveRequestRegistered(MyLeaveRequestRegistered request);
-        Task<object> Delete(Guid Id);
         Task<object> DeleteApplicationFormLeave(Guid ApplicationFormId);
         Task<List<Domain.Entities.LeaveRequest>> GetListLeaveToUpdate(Guid Id);
         Task<Domain.Entities.LeaveRequest> GetById(Guid Id);

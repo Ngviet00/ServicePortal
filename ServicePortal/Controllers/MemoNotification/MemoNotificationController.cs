@@ -2,8 +2,8 @@
 using Microsoft.AspNetCore.Mvc;
 using ServicePortal.Filters;
 using ServicePortals.Application;
-using ServicePortals.Application.Dtos.MemoNotification;
 using ServicePortals.Application.Dtos.MemoNotification.Requests;
+using ServicePortals.Application.Dtos.MemoNotification.Responses;
 using ServicePortals.Application.Interfaces.MemoNotification;
 using Entities = ServicePortals.Domain.Entities;
 
@@ -26,7 +26,7 @@ namespace ServicePortal.Controllers.MemoNotification
         {
             var results = await _memoNotificationService.GetAll(request);
 
-            var response = new PageResponse<Entities.MemoNotification>(
+            var response = new PageResponse<GetAllMemoNotifyResponse>(
                 200,
                 "Success",
                 results.Data,
@@ -44,7 +44,7 @@ namespace ServicePortal.Controllers.MemoNotification
         {
             var result = await _memoNotificationService.GetAllInHomePage(DepartmentId);
 
-            return Ok(new BaseResponse<List<MemoNotificationDto>>(200, "success", result));
+            return Ok(new BaseResponse<List<GetAllMemoNotifyResponse>>(200, "success", result));
         }
 
         [HttpGet("{id}")]

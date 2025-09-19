@@ -29,7 +29,7 @@ namespace ServicePortals.Infrastructure.Email
         #region Email memo notification approval
 
         [AutomaticRetry(Attempts = 10)]
-        Task EmailSendMemoNotificationNeedApproval(List<string>? to, List<string>? cc, string subject, string? body, List<(string, byte[])>? attachments, bool isHtml = true);
+        Task EmailSendMemoNotification(List<string>? to, List<string>? cc, string subject, string? body, List<(string, byte[])>? attachments, bool isHtml = true);
 
         [AutomaticRetry(Attempts = 10)]
         Task EmailSendMemoNotificationHasBeenCompletedOrReject(List<string>? to, List<string>? cc, string subject, string? body, List<(string, byte[])>? attachments, bool isHtml = true);

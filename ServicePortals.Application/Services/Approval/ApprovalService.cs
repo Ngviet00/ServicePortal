@@ -21,7 +21,7 @@ namespace ServicePortals.Application.Services.Approval
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly ILeaveRequestService _leaveRequestService;
         private readonly ITFormService _IitFormService;
-        //private readonly IMemoNotificationService _memoNotificationService;
+        private readonly IMemoNotificationService _memoNotificationService;
         private readonly IPurchaseService _purchaseService;
 
         public ApprovalService
@@ -29,7 +29,7 @@ namespace ServicePortals.Application.Services.Approval
             ApplicationDbContext context,
             IHttpContextAccessor httpContextAccessor,
             ILeaveRequestService leaveRequestService,
-            //IMemoNotificationService memoNotificationService,
+            IMemoNotificationService memoNotificationService,
             ITFormService IitFormService,
             IPurchaseService purchaseService
         )
@@ -37,7 +37,7 @@ namespace ServicePortals.Application.Services.Approval
             _context = context;
             _httpContextAccessor = httpContextAccessor;
             _leaveRequestService = leaveRequestService;
-            //_memoNotificationService = memoNotificationService;
+            _memoNotificationService = memoNotificationService;
             _IitFormService = IitFormService;
             _purchaseService = purchaseService;
         }
@@ -124,7 +124,7 @@ namespace ServicePortals.Application.Services.Approval
 
             if (request.RequestTypeId == (int)RequestTypeEnum.CREATE_MEMO_NOTIFICATION)
             {
-                //await _memoNotificationService.Approval(request);
+                await _memoNotificationService.Approval(request);
             }
             else if (request.RequestTypeId == (int)RequestTypeEnum.LEAVE_REQUEST)
             {

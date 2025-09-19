@@ -74,14 +74,6 @@ namespace ServicePortal.Controllers.LeaveRequest
             return Ok(response);
         }
 
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(Guid id)
-        {
-            var result = await _leaveRequestService.Delete(id);
-
-            return Ok(new BaseResponse<object>(200, "success", result));
-        }
-
         [HttpDelete("delete-application-form-leave/{applicationFormId}")]
         public async Task<IActionResult> DeleteApplicationFormLeave(Guid applicationFormId)
         {
