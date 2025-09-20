@@ -44,75 +44,76 @@ namespace ServicePortals.Application.Services.Approval
 
         public async Task<PagedResults<PendingApproval>> ListWaitApprovals(ListWaitApprovalRequest request)
         {
-            var userClaims = _httpContextAccessor.HttpContext.User;
+            return null;
+            //var userClaims = _httpContextAccessor.HttpContext.User;
 
-            double page = request.Page;
-            double pageSize = request.PageSize;
+            //double page = request.Page;
+            //double pageSize = request.PageSize;
 
-            var roleClaims = userClaims.Claims.Where(c => c.Type == ClaimTypes.Role).Select(c => c.Value).ToHashSet(StringComparer.OrdinalIgnoreCase);
-            var permissionClaims = userClaims.Claims.Where(c => c.Type == "permission").Select(c => c.Value).ToHashSet(StringComparer.OrdinalIgnoreCase);
-            bool isHR = roleClaims?.Contains("HR") == true && permissionClaims?.Contains("leave_request.hr_management_leave_request") == true;
+            //var roleClaims = userClaims.Claims.Where(c => c.Type == ClaimTypes.Role).Select(c => c.Value).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            //var permissionClaims = userClaims.Claims.Where(c => c.Type == "permission").Select(c => c.Value).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            //bool isHR = roleClaims?.Contains("HR") == true && permissionClaims?.Contains("leave_request.hr_management_leave_request") == true;
 
-            var query = _context.ApplicationForms
-                .OrderByDescending(e => e.CreatedAt)
-                .Where(e => e.DeletedAt == null)
-                .AsQueryable();
+            //var query = _context.ApplicationForms
+            //    .OrderByDescending(e => e.CreatedAt)
+            //    .Where(e => e.DeletedAt == null)
+            //    .AsQueryable();
 
-            if (request.RequestTypeId != null)
-            {
-                query = query.Where(e => e.RequestTypeId == request.RequestTypeId);
-            }
+            //if (request.RequestTypeId != null)
+            //{
+            //    query = query.Where(e => e.RequestTypeId == request.RequestTypeId);
+            //}
 
-            if (request.DepartmentId != null)
-            {
-                query = query.Where(e => e.DepartmentId == request.DepartmentId);
-            }
+            //if (request.DepartmentId != null)
+            //{
+            //    query = query.Where(e => e.DepartmentId == request.DepartmentId);
+            //}
 
-            if (isHR)
-            {
-                query = query.Where(e => e.OrgPositionId == request.OrgPositionId &&
-                    (
-                        e.RequestStatusId == (int)StatusApplicationFormEnum.PENDING ||
-                        e.RequestStatusId == (int)StatusApplicationFormEnum.IN_PROCESS
-                    ) ||
-                    e.RequestStatusId == (int)StatusApplicationFormEnum.WAIT_HR
-                );
-            }
-            else
-            {
-                query = query.Where(e =>
-                    e.OrgPositionId == request.OrgPositionId &&
-                    e.RequestStatusId != (int)StatusApplicationFormEnum.COMPLETE &&
-                    e.RequestStatusId != (int)StatusApplicationFormEnum.REJECT
-                );
-            }
+            //if (isHR)
+            //{
+            //    query = query.Where(e => e.OrgPositionId == request.OrgPositionId &&
+            //        (
+            //            e.RequestStatusId == (int)StatusApplicationFormEnum.PENDING ||
+            //            e.RequestStatusId == (int)StatusApplicationFormEnum.IN_PROCESS
+            //        ) ||
+            //        e.RequestStatusId == (int)StatusApplicationFormEnum.WAIT_HR
+            //    );
+            //}
+            //else
+            //{
+            //    query = query.Where(e =>
+            //        e.OrgPositionId == request.OrgPositionId &&
+            //        e.RequestStatusId != (int)StatusApplicationFormEnum.COMPLETE &&
+            //        e.RequestStatusId != (int)StatusApplicationFormEnum.REJECT
+            //    );
+            //}
 
-            var totalItems = await query.CountAsync();
+            //var totalItems = await query.CountAsync();
 
-            var totalPages = (int)Math.Ceiling(totalItems / pageSize);
+            //var totalPages = (int)Math.Ceiling(totalItems / pageSize);
 
-            var results = await query
-                .Select(r => new PendingApproval
-                {
-                    Id = r.Id,
-                    Code = r.Code,
-                    UserCodeRequestor = r.UserCodeCreatedBy,
-                    UserNameCreated = r.CreatedBy,
-                    UserNameRequestor = r.CreatedBy,
-                    CreatedAt = r.CreatedAt,
-                    RequestStatus = r.RequestStatus,
-                    RequestType = r.RequestType,
-                })
-                .Skip((int)(page - 1) * (int)pageSize)
-                .Take((int)pageSize)
-                .ToListAsync();
+            //var results = await query
+            //    .Select(r => new PendingApproval
+            //    {
+            //        Id = r.Id,
+            //        Code = r.Code,
+            //        UserCodeRequestor = r.UserCodeCreatedBy,
+            //        UserNameCreated = r.CreatedBy,
+            //        UserNameRequestor = r.CreatedBy,
+            //        CreatedAt = r.CreatedAt,
+            //        RequestStatus = r.RequestStatus,
+            //        RequestType = r.RequestType,
+            //    })
+            //    .Skip((int)(page - 1) * (int)pageSize)
+            //    .Take((int)pageSize)
+            //    .ToListAsync();
 
-            return new PagedResults<PendingApproval>
-            {
-                Data = results,
-                TotalItems = totalItems,
-                TotalPages = totalPages,
-            };
+            //return new PagedResults<PendingApproval>
+            //{
+            //    Data = results,
+            //    TotalItems = totalItems,
+            //    TotalPages = totalPages,
+            //};
         }
 
         public async Task<object> Approval(ApprovalRequest request)
@@ -193,174 +194,176 @@ namespace ServicePortals.Application.Services.Approval
 
         public async Task<PagedResults<HistoryApprovalProcessResponse>> ListHistoryApprovedOrProcessed(ListHistoryApprovalProcessedRequest request)
         {
-            string? userCode = request.UserCode;
-            double page = request.Page;
-            double pageSize = request.PageSize;
-            int? requestTypeId = request.RequestTypeId;
-            int? departmentId = request.DepartmentId;
-            int? status = request.Status;
+            return null;
+            //string? userCode = request.UserCode;
+            //double page = request.Page;
+            //double pageSize = request.PageSize;
+            //int? requestTypeId = request.RequestTypeId;
+            //int? departmentId = request.DepartmentId;
+            //int? status = request.Status;
 
-            if (string.IsNullOrWhiteSpace(userCode))
-            {
-                throw new ValidationException("UserCode is required");
-            }
-
-            var query = _context.HistoryApplicationForms
-                .Where(e =>
-                    (
-                        e.UserCodeAction == userCode ||
-                        (
-                            e.ApplicationForm != null &&
-                            (
-                                (
-                                    e.ApplicationForm.RequestTypeId == (int)RequestTypeEnum.FORM_IT || e.ApplicationForm.RequestTypeId == (int)RequestTypeEnum.PURCHASE
-                                ) &&
-                                e.ApplicationForm.AssignedTasks.Any(at => at.UserCode == userCode)
-                            )
-                        )
-                    )
-                    && e.DeletedAt == null
-                    && e.ApplicationForm != null
-                    && e.ApplicationForm.DeletedAt == null
-                );
-
-            //filter by request type
-            if (requestTypeId != null)
-            {
-                query = query.Where(e => e.ApplicationForm != null && e.ApplicationForm.RequestTypeId == requestTypeId);
-            }
-
-            //filter by department
-            //if (departmentId != null)
+            //if (string.IsNullOrWhiteSpace(userCode))
             //{
-            //    query = query.Where(e =>
-            //        (e.ApplicationForm.RequestType.Id == (int)RequestTypeEnum.LEAVE_REQUEST && e.ApplicationForm.Leave.DepartmentId == request.DepartmentId) ||
-            //        (e.ApplicationForm.RequestType.Id == (int)RequestTypeEnum.CREATE_MEMO_NOTIFICATION && e.ApplicationForm.MemoNotification.DepartmentId == request.DepartmentId) ||
-            //        (e.ApplicationForm.RequestType.Id == (int)RequestTypeEnum.FORM_IT && e.ApplicationForm.ITForm.DepartmentId == request.DepartmentId) ||
-            //        (e.ApplicationForm.RequestType.Id == (int)RequestTypeEnum.PURCHASE && e.ApplicationForm.Purchase.DepartmentId == request.DepartmentId)
-            //    );
+            //    throw new ValidationException("UserCode is required");
             //}
 
-            //filter by status
-            if (status != null)
-            {
-                if (status == (int)StatusApplicationFormEnum.PENDING || status == (int)StatusApplicationFormEnum.FINAL_APPROVAL)
-                {
-                    query = query.Where(e => e.ApplicationForm != null &&
-                        (e.ApplicationForm.RequestStatusId == (int)StatusApplicationFormEnum.PENDING ||
-                         e.ApplicationForm.RequestStatusId == (int)StatusApplicationFormEnum.FINAL_APPROVAL));
-                }
-                else if (status == (int)StatusApplicationFormEnum.IN_PROCESS || status == (int)StatusApplicationFormEnum.ASSIGNED)
-                {
-                    query = query.Where(e => e.ApplicationForm != null &&
-                        (e.ApplicationForm.RequestStatusId == (int)StatusApplicationFormEnum.IN_PROCESS ||
-                         e.ApplicationForm.RequestStatusId == (int)StatusApplicationFormEnum.ASSIGNED));
-                }
-                else
-                {
-                    query = query.Where(e => e.ApplicationForm != null && e.ApplicationForm.RequestStatusId == status);
-                }
-            }
+            //var query = _context.HistoryApplicationForms
+            //    .Where(e =>
+            //        (
+            //            e.UserCodeAction == userCode ||
+            //            (
+            //                e.ApplicationForm != null &&
+            //                (
+            //                    (
+            //                        e.ApplicationForm.RequestTypeId == (int)RequestTypeEnum.FORM_IT || e.ApplicationForm.RequestTypeId == (int)RequestTypeEnum.PURCHASE
+            //                    ) &&
+            //                    e.ApplicationForm.AssignedTasks.Any(at => at.UserCode == userCode)
+            //                )
+            //            )
+            //        )
+            //        && e.DeletedAt == null
+            //        && e.ApplicationForm != null
+            //        && e.ApplicationForm.DeletedAt == null
+            //    );
 
-            var totalItems = await query
-                .Select(e => e.ApplicationFormId)
-                .Distinct()
-                .CountAsync();
+            ////filter by request type
+            //if (requestTypeId != null)
+            //{
+            //    query = query.Where(e => e.ApplicationForm != null && e.ApplicationForm.RequestTypeId == requestTypeId);
+            //}
 
-            var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+            ////filter by department
+            ////if (departmentId != null)
+            ////{
+            ////    query = query.Where(e =>
+            ////        (e.ApplicationForm.RequestType.Id == (int)RequestTypeEnum.LEAVE_REQUEST && e.ApplicationForm.Leave.DepartmentId == request.DepartmentId) ||
+            ////        (e.ApplicationForm.RequestType.Id == (int)RequestTypeEnum.CREATE_MEMO_NOTIFICATION && e.ApplicationForm.MemoNotification.DepartmentId == request.DepartmentId) ||
+            ////        (e.ApplicationForm.RequestType.Id == (int)RequestTypeEnum.FORM_IT && e.ApplicationForm.ITForm.DepartmentId == request.DepartmentId) ||
+            ////        (e.ApplicationForm.RequestType.Id == (int)RequestTypeEnum.PURCHASE && e.ApplicationForm.Purchase.DepartmentId == request.DepartmentId)
+            ////    );
+            ////}
 
-            var latestHistories = await query
-                .GroupBy(e => e.ApplicationFormId)
-                .Select(g => g.OrderByDescending(x => x.ActionAt).Select(x => x.Id).First())
-                .OrderByDescending(id => id)
-                .Skip((int)((page - 1) * pageSize))
-                .Take((int)pageSize)
-                .ToListAsync();
+            ////filter by status
+            //if (status != null)
+            //{
+            //    if (status == (int)StatusApplicationFormEnum.PENDING || status == (int)StatusApplicationFormEnum.FINAL_APPROVAL)
+            //    {
+            //        query = query.Where(e => e.ApplicationForm != null &&
+            //            (e.ApplicationForm.RequestStatusId == (int)StatusApplicationFormEnum.PENDING ||
+            //             e.ApplicationForm.RequestStatusId == (int)StatusApplicationFormEnum.FINAL_APPROVAL));
+            //    }
+            //    else if (status == (int)StatusApplicationFormEnum.IN_PROCESS || status == (int)StatusApplicationFormEnum.ASSIGNED)
+            //    {
+            //        query = query.Where(e => e.ApplicationForm != null &&
+            //            (e.ApplicationForm.RequestStatusId == (int)StatusApplicationFormEnum.IN_PROCESS ||
+            //             e.ApplicationForm.RequestStatusId == (int)StatusApplicationFormEnum.ASSIGNED));
+            //    }
+            //    else
+            //    {
+            //        query = query.Where(e => e.ApplicationForm != null && e.ApplicationForm.RequestStatusId == status);
+            //    }
+            //}
 
-            var results = await _context.HistoryApplicationForms
-                .Where(e => latestHistories.Contains(e.Id))
-                .Select(x => new HistoryApprovalProcessResponse
-                {
-                    Id = x.ApplicationForm == null ? null : x.ApplicationForm.Id,
-                    Code = x.ApplicationForm == null ? null : x.ApplicationForm.Code,
-                    Action = x.Action,
-                    RequestStatus = x.ApplicationForm == null ? null : x.ApplicationForm.RequestStatus,
-                    RequestType = x.ApplicationForm == null ? null : x.ApplicationForm.RequestType,
-                    OrgUnit = x.ApplicationForm == null ? null : x.ApplicationForm.OrgUnit,
-                    UserNameRequestor = x.ApplicationForm == null ? null : x.ApplicationForm.CreatedBy,
-                    UserCodeRequestor = x.ApplicationForm == null ? null : x.ApplicationForm.UserCodeCreatedBy,
-                    ApprovedAt = x.ActionAt
-                })
-                .OrderByDescending(x => x.ApprovedAt)
-                .ToListAsync();
+            //var totalItems = await query
+            //    .Select(e => e.ApplicationFormId)
+            //    .Distinct()
+            //    .CountAsync();
 
-            return new PagedResults<HistoryApprovalProcessResponse>
-            {
-                Data = results,
-                TotalItems = totalItems,
-                TotalPages = totalPages,
-            };
+            //var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+
+            //var latestHistories = await query
+            //    .GroupBy(e => e.ApplicationFormId)
+            //    .Select(g => g.OrderByDescending(x => x.ActionAt).Select(x => x.Id).First())
+            //    .OrderByDescending(id => id)
+            //    .Skip((int)((page - 1) * pageSize))
+            //    .Take((int)pageSize)
+            //    .ToListAsync();
+
+            //var results = await _context.HistoryApplicationForms
+            //    .Where(e => latestHistories.Contains(e.Id))
+            //    .Select(x => new HistoryApprovalProcessResponse
+            //    {
+            //        Id = x.ApplicationForm == null ? null : x.ApplicationForm.Id,
+            //        Code = x.ApplicationForm == null ? null : x.ApplicationForm.Code,
+            //        Action = x.Action,
+            //        RequestStatus = x.ApplicationForm == null ? null : x.ApplicationForm.RequestStatus,
+            //        RequestType = x.ApplicationForm == null ? null : x.ApplicationForm.RequestType,
+            //        OrgUnit = x.ApplicationForm == null ? null : x.ApplicationForm.OrgUnit,
+            //        UserNameRequestor = x.ApplicationForm == null ? null : x.ApplicationForm.CreatedBy,
+            //        UserCodeRequestor = x.ApplicationForm == null ? null : x.ApplicationForm.UserCodeCreatedBy,
+            //        ApprovedAt = x.ActionAt
+            //    })
+            //    .OrderByDescending(x => x.ApprovedAt)
+            //    .ToListAsync();
+
+            //return new PagedResults<HistoryApprovalProcessResponse>
+            //{
+            //    Data = results,
+            //    TotalItems = totalItems,
+            //    TotalPages = totalPages,
+            //};
         }
 
         public async Task<PagedResults<PendingApproval>> ListAssigned(ListAssignedTaskRequest request)
         {
-            double page = request.Page;
-            double pageSize = request.PageSize;
-            int? departmentId = request.DepartmentId;
-            int? requestTypeId = request.RequestTypeId;
+            return null;
+            //double page = request.Page;
+            //double pageSize = request.PageSize;
+            //int? departmentId = request.DepartmentId;
+            //int? requestTypeId = request.RequestTypeId;
 
-            var query = _context.ApplicationForms
-                .Where(e =>
-                    e.AssignedTasks.Any(at => at.UserCode == request.UserCode) &&
-                    e.RequestStatusId != (int)StatusApplicationFormEnum.COMPLETE &&
-                    e.RequestStatusId != (int)StatusApplicationFormEnum.REJECT
-                )
-                .AsQueryable();
+            //var query = _context.ApplicationForms
+            //    .Where(e =>
+            //        e.AssignedTasks.Any(at => at.UserCode == request.UserCode) &&
+            //        e.RequestStatusId != (int)StatusApplicationFormEnum.COMPLETE &&
+            //        e.RequestStatusId != (int)StatusApplicationFormEnum.REJECT
+            //    )
+            //    .AsQueryable();
 
-            //filter by request type
-            if (requestTypeId != null)
-            {
-                query = query.Where(e => e.RequestTypeId == requestTypeId);
-            }
+            ////filter by request type
+            //if (requestTypeId != null)
+            //{
+            //    query = query.Where(e => e.RequestTypeId == requestTypeId);
+            //}
 
-            //filter by department
-            if (request.DepartmentId != null)
-            {
-                query = query.Where(e => e.DepartmentId == request.DepartmentId);
-            }
+            ////filter by department
+            //if (request.DepartmentId != null)
+            //{
+            //    query = query.Where(e => e.DepartmentId == request.DepartmentId);
+            //}
 
-            var totalItems = await query.CountAsync();
+            //var totalItems = await query.CountAsync();
 
-            var totalPages = (int)Math.Ceiling(totalItems / pageSize);
+            //var totalPages = (int)Math.Ceiling(totalItems / pageSize);
 
-            var results = await query
-                .OrderByDescending(r => r.CreatedAt)
-                .Select(r => new PendingApproval
-                {
-                    Id = r.Id,
-                    Code = r.Code,
-                    UserCodeRequestor = r.UserCodeCreatedBy,
-                    UserNameCreated = r.CreatedBy,
-                    UserNameRequestor = r.CreatedBy,
-                    OrgUnit = r.OrgUnit,
-                    CreatedAt = r.CreatedAt,
-                    RequestStatus = r.RequestStatus,
-                    RequestType = r.RequestType,
-                    HistoryApplicationForm = r.HistoryApplicationForms
-                        .OrderByDescending(h => h.Action)
-                        .Select(h => new HistoryApplicationForm { ActionBy = h.ActionBy })
-                        .FirstOrDefault(),
-                })
-                .Skip((int)(page - 1) * (int)pageSize)
-                .Take((int)pageSize)
-                .ToListAsync();
+            //var results = await query
+            //    .OrderByDescending(r => r.CreatedAt)
+            //    .Select(r => new PendingApproval
+            //    {
+            //        Id = r.Id,
+            //        Code = r.Code,
+            //        UserCodeRequestor = r.UserCodeCreatedBy,
+            //        UserNameCreated = r.CreatedBy,
+            //        UserNameRequestor = r.CreatedBy,
+            //        OrgUnit = r.OrgUnit,
+            //        CreatedAt = r.CreatedAt,
+            //        RequestStatus = r.RequestStatus,
+            //        RequestType = r.RequestType,
+            //        HistoryApplicationForm = r.HistoryApplicationForms
+            //            .OrderByDescending(h => h.Action)
+            //            .Select(h => new HistoryApplicationForm { ActionBy = h.ActionBy })
+            //            .FirstOrDefault(),
+            //    })
+            //    .Skip((int)(page - 1) * (int)pageSize)
+            //    .Take((int)pageSize)
+            //    .ToListAsync();
 
-            return new PagedResults<PendingApproval>
-            {
-                Data = results,
-                TotalItems = totalItems,
-                TotalPages = totalPages,
-            };
+            //return new PagedResults<PendingApproval>
+            //{
+            //    Data = results,
+            //    TotalItems = totalItems,
+            //    TotalPages = totalPages,
+            //};
         }
     }
 }

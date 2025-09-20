@@ -222,14 +222,20 @@ namespace ServicePortals.Infrastructure.Helpers
             return finalRoundedTime.ToString();
         }
 
+        #region Code Generator
+
+        [ThreadStatic]
+        private static Random? _threadRandom;
+        private static Random ThreadRandom => _threadRandom ??= new Random(Guid.NewGuid().GetHashCode());
+
         public static string GenerateFormCode(string prefix)
         {
-            DateTimeOffset now = DateTimeOffset.Now;
-            string timestampPart = now.ToString("yyMMddHHmmssfff");
-            string orderCode = $"{prefix}#{timestampPart}";
-
-            return orderCode;
+            var now = DateTimeOffset.UtcNow;
+            int subSecondTicks = (int)(now.Ticks % TimeSpan.TicksPerSecond);
+            int rand = ThreadRandom.Next(10, 99);
+            return $"{prefix}{now:yyMMddHHmmss}{subSecondTicks:D5}{rand}";
         }
+        #endregion
 
         public static void ValidateExcelHeader(IXLWorksheet worksheet, string[] expectedHeaders)
         {

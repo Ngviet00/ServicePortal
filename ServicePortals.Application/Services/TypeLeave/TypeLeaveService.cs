@@ -44,13 +44,13 @@ namespace ServicePortals.Application.Services.TypeLeave
             return result;
         }
 
-        public async Task<Domain.Entities.TypeLeave> Create(TypeLeaveDto dto)
+        public async Task<Domain.Entities.TypeLeave> Create(TypeLeaveDto request)
         {
             var typeLeave = new Domain.Entities.TypeLeave
             {
-                Name = dto.Name,
-                NameE = dto.NameE,
-                Code = dto.Code,
+                Name = request.Name,
+                NameE = request.NameE,
+                Code = request.Code,
             };
 
             _context.TypeLeaves.Add(typeLeave);
@@ -62,14 +62,14 @@ namespace ServicePortals.Application.Services.TypeLeave
             return typeLeave;
         }
 
-        public async Task<Domain.Entities.TypeLeave> Update(int id, TypeLeaveDto dto)
+        public async Task<Domain.Entities.TypeLeave> Update(int id, TypeLeaveDto request)
         {
             var typeLeave = await _context.TypeLeaves.FirstOrDefaultAsync(e => e.Id == id) ?? throw new NotFoundException("Type leave not found!");
 
             typeLeave.Id = id;
-            typeLeave.Name = dto.Name;
-            typeLeave.NameE = dto.NameE;
-            typeLeave.Code = dto.Code;
+            typeLeave.Name = request.Name;
+            typeLeave.NameE = request.NameE;
+            typeLeave.Code = request.Code;
 
             _context.TypeLeaves.Update(typeLeave);
 

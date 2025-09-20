@@ -3,7 +3,7 @@
     public class GetAllMemoNotifyResponse
     {
         public string? Code { get; set; }
-        public Guid Id { get; set; }
+        public long Id { get; set; }
         public string? Title { get; set; }
         public string? Content { get; set; }
         public string? Departments { get; set; }

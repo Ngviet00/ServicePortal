@@ -1,17 +1,17 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
-using Microsoft.EntityFrameworkCore;
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ServicePortals.Domain.Entities
 {
     [Table("attach_files")]
-    [Index(nameof(FileId))]
-    [Index(nameof(EntityType), nameof(EntityId))]
     public class AttachFile
     {
-        public Guid? Id { get; set; }
-        public Guid? FileId { get; set; }
+        [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public long Id { get; set; }
+        public int FileId { get; set; }
         public string? EntityType { get; set; }
-        public Guid? EntityId { get; set; }
+        public long EntityId { get; set; }
         public File? File { get; set; }
     }
 }

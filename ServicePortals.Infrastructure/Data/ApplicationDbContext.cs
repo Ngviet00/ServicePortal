@@ -1,5 +1,4 @@
 ﻿using System.Data;
-using DocumentFormat.OpenXml.Wordprocessing;
 using Microsoft.EntityFrameworkCore;
 using ServicePortals.Domain.Entities;
 
@@ -66,9 +65,8 @@ namespace ServicePortals.Infrastructure.Data
 
             modelBuilder.Entity<Permission>().HasData(
                 new Permission { Id = 1, Name = "time_keeping.mng_time_keeping", Group = "TIME_KEEPING" },
-                new Permission { Id = 2, Name = "leave_request.create_multiple_leave_request", Group = "LEAVE_REQUEST" },
-                new Permission { Id = 3, Name = "leave_request.hr_management_leave_request", Group = "LEAVE_REQUEST" },
-                new Permission { Id = 4, Name = "memo_notification.create", Group = "MEMO_NOTIFICATION" }
+                new Permission { Id = 2, Name = "leave_request.hr_management_leave_request", Group = "LEAVE_REQUEST" },
+                new Permission { Id = 3, Name = "memo_notification.create", Group = "MEMO_NOTIFICATION" }
             );
 
             modelBuilder.Entity<TypeLeave>().HasData(
@@ -77,11 +75,11 @@ namespace ServicePortals.Infrastructure.Data
                 new TypeLeave { Id = 3, Code = "MC", NameE = "Sick Leave", Name = "Nghỉ Ốm" },
                 new TypeLeave { Id = 4, Code = "ML", NameE = "Wedding Leave", Name = "Nghỉ Cưới" },
                 new TypeLeave { Id = 5, Code = "ACC", NameE = "Accident Leave", Name = "Nghỉ TNLĐ" },
-                new TypeLeave { Id = 6, Code = "PL", NameE = "Paternity Leave", Name = "Nghỉ vợ sinh" },
-                new TypeLeave { Id = 7, Code = "MAT", NameE = "Maternity Leave", Name = "Nghỉ đẻ" },
-                new TypeLeave { Id = 8, Code = "UL", NameE = "Compensatory Leave", Name = "Nghỉ bù" },
-                new TypeLeave { Id = 9, Code = "COMP", NameE = "Funeral Leave", Name = "Nghỉ tang lễ" },
-                new TypeLeave { Id = 10, Code = "Wo", NameE = "Working Outside", Name = "Làm ở ngoài" }
+                new TypeLeave { Id = 6, Code = "PL", NameE = "Paternity Leave", Name = "Nghỉ Vợ Sinh" },
+                new TypeLeave { Id = 7, Code = "MAT", NameE = "Maternity Leave", Name = "Nghỉ Đẻ" },
+                new TypeLeave { Id = 8, Code = "UL", NameE = "Compensatory Leave", Name = "Nghỉ Bù" },
+                new TypeLeave { Id = 9, Code = "COMP", NameE = "Funeral Leave", Name = "Nghỉ Tang Lễ" },
+                new TypeLeave { Id = 10, Code = "WO", NameE = "Working Outside", Name = "Làm Ở Ngoài" }
             );
 
             modelBuilder.Entity<User>().HasData(
@@ -90,8 +88,8 @@ namespace ServicePortals.Infrastructure.Data
                     Id = Guid.Parse("00000000-0000-0000-0000-000000000001"),
                     UserCode = "0",
                     Password = "$2a$12$GAJGsDDQUCEPfSqOLbPwmu5agSkYoaH6eUzLPJLRx2hnA89LSkiey", //123456
-                    IsChangePassword = 1,
-                    IsActive = 1,
+                    IsChangePassword = true,
+                    IsActive = true,
                     Email = "superadmin@vsvn.com.vn",
                     Phone = "0999999999",
                 }
@@ -124,73 +122,94 @@ namespace ServicePortals.Infrastructure.Data
 
             modelBuilder.Entity<RequestType>().HasData(
                 new RequestType { Id = 1, Name = "Nghỉ phép", NameE = "Leave request" },
-                new RequestType { Id = 2, Name = "Chấm công", NameE = "Time Keeping" },
-                new RequestType { Id = 3, Name = "Thông báo", NameE = "Memo Notification" },
-                new RequestType { Id = 4, Name = "Form IT", NameE = "Form IT" }
+                new RequestType { Id = 2, Name = "Thông báo", NameE = "Memo Notification" },
+                new RequestType { Id = 3, Name = "Form IT", NameE = "Form IT" },
+                new RequestType { Id = 4, Name = "Mua bán", NameE = "Purchase" }
             );
 
             modelBuilder.Entity<Unit>().HasData(
                 new Unit { Id = 1, Name = "Company" },
                 new Unit { Id = 2, Name = "Manage Department" },
                 new Unit { Id = 3, Name = "Department" },
-                new Unit { Id = 4, Name = "Team" }
+                new Unit { Id = 4, Name = "Team" },
+                new Unit { Id = 5, Name = "GM" },
+                new Unit { Id = 6, Name = "Manager" },
+                new Unit { Id = 7, Name = "AM" }
             );
 
             modelBuilder.Entity<OrgUnit>().HasData(
                 new OrgUnit { Id = 1, Name = "VS Industry VietNam", ParentOrgUnitId = null, UnitId = 1 },
 
-                new OrgUnit { Id = 2, Name = "Business Development", ParentOrgUnitId = 1, UnitId = 2 },
+                new OrgUnit { Id = 2, Name = "Business Development", ParentOrgUnitId = 1, UnitId = 2 }, 
                 new OrgUnit { Id = 3, Name = "Finance & Admin", ParentOrgUnitId = 1, UnitId = 2 },
                 new OrgUnit { Id = 4, Name = "Operations", ParentOrgUnitId = 1, UnitId = 2 },
                 new OrgUnit { Id = 5, Name = "VS Technology", ParentOrgUnitId = 1, UnitId = 2 },
 
-                new OrgUnit { Id = 6, Name = "General Manager", ParentOrgUnitId = 1, UnitId = 3 }, //bộ phận GM boss
-                new OrgUnit { Id = 7, Name = "Production", ParentOrgUnitId = 4, UnitId = 3 },
-                new OrgUnit { Id = 8, Name = "MIS", ParentOrgUnitId = 1, UnitId = 3 },
-                new OrgUnit { Id = 9, Name = "HR", ParentOrgUnitId = 3, UnitId = 3 },
-                new OrgUnit { Id = 10, Name = "Commercial", ParentOrgUnitId = 4, UnitId = 3 },
+                //department
+                new OrgUnit { Id = 6, Name = "General Manager", ParentOrgUnitId = 1, UnitId = 3 },
+                new OrgUnit { Id = 7, Name = "Admin", ParentOrgUnitId = 1, UnitId = 3 },
+                new OrgUnit { Id = 8, Name = "Production", ParentOrgUnitId = 4, UnitId = 3 },
+                new OrgUnit { Id = 9, Name = "MIS", ParentOrgUnitId = 1, UnitId = 3 },
+                new OrgUnit { Id = 10, Name = "HR", ParentOrgUnitId = 3, UnitId = 3 },
+                new OrgUnit { Id = 11, Name = "Commercial", ParentOrgUnitId = 2, UnitId = 3 },
+                new OrgUnit { Id = 12, Name = "Purchasing", ParentOrgUnitId = 1, UnitId = 3 },
 
-                new OrgUnit { Id = 14, Name = "12A_A", ParentOrgUnitId = 6, UnitId = 4 },
-                new OrgUnit { Id = 15, Name = "12A_B", ParentOrgUnitId = 6, UnitId = 4 },
-                new OrgUnit { Id = 16, Name = "12B_A", ParentOrgUnitId = 6, UnitId = 4 },
-                new OrgUnit { Id = 17, Name = "12B_H", ParentOrgUnitId = 6, UnitId = 4 },
-                new OrgUnit { Id = 18, Name = "Kỹ thuật A_AGH", ParentOrgUnitId = 6, UnitId = 4 },
-                new OrgUnit { Id = 19, Name = "Kỹ thuật B_BCDEF", ParentOrgUnitId = 6, UnitId = 4 }
+                //team
+                new OrgUnit { Id = 13, Name = "Production_VPSX", ParentOrgUnitId = 8, UnitId = 4 },
+                new OrgUnit { Id = 14, Name = "12A_A", ParentOrgUnitId = 8, UnitId = 4 },
+                new OrgUnit { Id = 15, Name = "12A_B", ParentOrgUnitId = 8, UnitId = 4 },
+                new OrgUnit { Id = 16, Name = "12B_A", ParentOrgUnitId = 8, UnitId = 4 },
+                new OrgUnit { Id = 17, Name = "12B_H", ParentOrgUnitId = 8, UnitId = 4 },
+                new OrgUnit { Id = 18, Name = "Kỹ thuật A_AGH", ParentOrgUnitId = 8, UnitId = 4 },
+                new OrgUnit { Id = 19, Name = "Kỹ thuật B_BCDEF", ParentOrgUnitId = 8, UnitId = 4 }
             );
 
             modelBuilder.Entity<OrgPosition>().HasData(
-                new OrgPosition { Id = 1, PositionCode = "GD", Name = "General Director", OrgUnitId = 6, ParentOrgPositionId = null },
-                new OrgPosition { Id = 2, PositionCode = "AM_GD", Name = "AM General Director", OrgUnitId = 6, ParentOrgPositionId = 1 },
-                new OrgPosition { Id = 3, PositionCode = "BDGM", Name = "BD General Manager", OrgUnitId = 6, ParentOrgPositionId = 1 },
-                new OrgPosition { Id = 4, PositionCode = "FGM", Name = "Finance General Manage", OrgUnitId = 6, ParentOrgPositionId = 1 },
-                new OrgPosition { Id = 5, PositionCode = "OGM", Name = "Operations General Manager", OrgUnitId = 6, ParentOrgPositionId = 1 },
-                new OrgPosition { Id = 6, PositionCode = "OM", Name = "Operations Manager", OrgUnitId = 6, ParentOrgPositionId = 1 },
+                new OrgPosition { Id = 1, PositionCode = "GD", Name = "General Director", OrgUnitId = 6, ParentOrgPositionId = null, UnitId = 5, IsStaff = true },
+                new OrgPosition { Id = 2, PositionCode = "AM_GD", Name = "AM General Director", OrgUnitId = 6, ParentOrgPositionId = 1, UnitId = 5, IsStaff = true },
+                new OrgPosition { Id = 3, PositionCode = "BDGM", Name = "BD General Manager", OrgUnitId = 6, ParentOrgPositionId = 1, UnitId = 5, IsStaff = true },
+                new OrgPosition { Id = 4, PositionCode = "FGM", Name = "Finance General Manage", OrgUnitId = 6, ParentOrgPositionId = 1, UnitId = 5, IsStaff = true },
+                new OrgPosition { Id = 5, PositionCode = "OGM", Name = "Operations General Manager", OrgUnitId = 6, ParentOrgPositionId = 1, UnitId = 5, IsStaff = true },
+                new OrgPosition { Id = 6, PositionCode = "OM", Name = "Operations Manager", OrgUnitId = 6, ParentOrgPositionId = 1, UnitId = 5, IsStaff = true },
 
-                new OrgPosition { Id = 7, PositionCode = "MIS-MGR", Name = "Manager MIS/IT", OrgUnitId = 8, ParentOrgPositionId = null },
-                new OrgPosition { Id = 8, PositionCode = "MIS-Staff", Name = "Staff IT", OrgUnitId = 8, ParentOrgPositionId = 7 },
+                new OrgPosition { Id = 7, PositionCode = "ADMIN-MGR", Name = "Manager Admin", OrgUnitId = 7, ParentOrgPositionId = 1, UnitId = 5, IsStaff = true },
 
-                new OrgPosition { Id = 9, PositionCode = "COM-MGR", Name = "Manager Commercial", OrgUnitId = 10, ParentOrgPositionId = null },
-                new OrgPosition { Id = 10, PositionCode = "COM-AM", Name = "AM Commercial", OrgUnitId = 10, ParentOrgPositionId = 9 },
-                new OrgPosition { Id = 11, PositionCode = "COM-Staff", Name = "Staff Commercial", OrgUnitId = 10, ParentOrgPositionId = 10 },
+                new OrgPosition { Id = 8, PositionCode = "MIS-MGR", Name = "Manager MIS/IT", OrgUnitId = 9, ParentOrgPositionId = 5, UnitId = 6, IsStaff = true },
+                new OrgPosition { Id = 9, PositionCode = "MIS-Staff", Name = "Staff IT", OrgUnitId = 9, ParentOrgPositionId = 8, IsStaff = true },
 
-                new OrgPosition { Id = 12, PositionCode = "HR-MGR", Name = "Manager HR", OrgUnitId = 9, ParentOrgPositionId = null },
-                new OrgPosition { Id = 13, PositionCode = "HR-AM", Name = "AM HR", OrgUnitId = 9, ParentOrgPositionId = 12 },
-                new OrgPosition { Id = 14, PositionCode = "HR-Staff", Name = "Staff HR", OrgUnitId = 9, ParentOrgPositionId = 13 },
+                new OrgPosition { Id = 10, PositionCode = "COM-MGR", Name = "Manager Commercial", OrgUnitId = 11, ParentOrgPositionId = 3, UnitId = 6, IsStaff = true },
+                new OrgPosition { Id = 11, PositionCode = "COM-AM", Name = "Assistant Manager Commercial", OrgUnitId = 11, ParentOrgPositionId = 10, IsStaff = true },
+                new OrgPosition { Id = 12, PositionCode = "COM-Staff", Name = "Staff Commercial", OrgUnitId = 11, ParentOrgPositionId = 10, IsStaff = true },
 
-                new OrgPosition { Id = 15, PositionCode = "PRD-MGR", Name = "Manager Production", OrgUnitId = 7, ParentOrgPositionId = null },
-                new OrgPosition { Id = 16, PositionCode = "PRD-S-AGH", Name = "Supervisor A_AGH", OrgUnitId = 18, ParentOrgPositionId = 15 },
-                new OrgPosition { Id = 17, PositionCode = "PRD-S-BBCDEF", Name = "Supervisor B_BCDEF", OrgUnitId = 19, ParentOrgPositionId = 15 },
-                new OrgPosition { Id = 18, PositionCode = "PRD-S-SA", Name = "Supervisor Shift A", OrgUnitId = 14, ParentOrgPositionId = 15 },
-                new OrgPosition { Id = 19, PositionCode = "PRD-S-SB", Name = "Supervisor Shift B", OrgUnitId = 17, ParentOrgPositionId = 15 },
+                new OrgPosition { Id = 13, PositionCode = "HR-MGR", Name = "Manager HR", OrgUnitId = 10, ParentOrgPositionId = 1, UnitId = 6, IsStaff = true },
+                new OrgPosition { Id = 14, PositionCode = "HR-AM", Name = "Assistant Manager HR", OrgUnitId = 10, ParentOrgPositionId = 7, IsStaff = true },
+                new OrgPosition { Id = 15, PositionCode = "HR-Staff", Name = "Staff HR", OrgUnitId = 10, ParentOrgPositionId = 14, IsStaff = true },
 
-                new OrgPosition { Id = 20, PositionCode = "PRD-12AA-L", Name = "12A_A Leader", OrgUnitId = 14, ParentOrgPositionId = 18 },
-                new OrgPosition { Id = 21, PositionCode = "PRD-12AA-OP", Name = "12A_A Operator", OrgUnitId = 14, ParentOrgPositionId = 20 },
+                new OrgPosition { Id = 16, PositionCode = "PUR-MGR", Name = "Manager Purchasing", OrgUnitId = 12, ParentOrgPositionId = 5, UnitId = 6, IsStaff = true },
+                new OrgPosition { Id = 17, PositionCode = "PUR-AM", Name = "Assistant Manager Purchasing", OrgUnitId = 12, ParentOrgPositionId = 16, IsStaff = true },
+                new OrgPosition { Id = 18, PositionCode = "PUR-Staff", Name = "Staff Purchasing", OrgUnitId = 12, ParentOrgPositionId = 16, IsStaff = true },
 
-                new OrgPosition { Id = 22, PositionCode = "PRD-12BA-L", Name = "12B_A Leader", OrgUnitId = 16, ParentOrgPositionId = 19 },
-                new OrgPosition { Id = 23, PositionCode = "PRD-12BA-OP", Name = "12B_A Operator", OrgUnitId = 16, ParentOrgPositionId = 23 },
+                new OrgPosition { Id = 19, PositionCode = "PRD-MGR", Name = "Manager Production", OrgUnitId = 8, ParentOrgPositionId = 5, UnitId = 6, IsStaff = true },
 
-                new OrgPosition { Id = 24, PositionCode = "PRD-T-AAH", Name = "Technician A_AGH", OrgUnitId = 18, ParentOrgPositionId = 16 },
-                new OrgPosition { Id = 25, PositionCode = "PRD-T-BCDEF", Name = "Technician B_BCDEF", OrgUnitId = 19, ParentOrgPositionId = 17 }
+                new OrgPosition { Id = 20, PositionCode = "PRD-SUP-AGH", Name = "Supervisor Tech A_AGH", OrgUnitId = 18, ParentOrgPositionId = 19 },
+                new OrgPosition { Id = 21, PositionCode = "PRD-SUP-BBCDEF", Name = "Supervisor Tech B_BCDEF", OrgUnitId = 19, ParentOrgPositionId = 19 },
+                new OrgPosition { Id = 22, PositionCode = "PRD-SUP-SHIFT-A", Name = "Supervisor Shift A", OrgUnitId = 14, ParentOrgPositionId = 19 },
+                new OrgPosition { Id = 23, PositionCode = "PRD-SUP-SHIFT-B", Name = "Supervisor Shift B", OrgUnitId = 17, ParentOrgPositionId = 19 },
+
+                new OrgPosition { Id = 24, PositionCode = "PRD-L-12AA", Name = "Leader 12A_A", OrgUnitId = 14, ParentOrgPositionId = 22 },
+                new OrgPosition { Id = 25, PositionCode = "PRD-OP-12AA", Name = "Operator 12A_A", OrgUnitId = 14, ParentOrgPositionId = 24 },
+
+                new OrgPosition { Id = 26, PositionCode = "PRD-L-12AB", Name = "Leader 12A_B", OrgUnitId = 15, ParentOrgPositionId = 22 },
+                new OrgPosition { Id = 27, PositionCode = "PRD-OP-12AB", Name = "Operator 12A_B", OrgUnitId = 15, ParentOrgPositionId = 26 },
+
+                new OrgPosition { Id = 28, PositionCode = "PRD-L-12BA", Name = "Leader 12B_A", OrgUnitId = 16, ParentOrgPositionId = 23 },
+                new OrgPosition { Id = 29, PositionCode = "PRD-OP-12BA", Name = "Operator 12B_A", OrgUnitId = 16, ParentOrgPositionId = 28 },
+
+                new OrgPosition { Id = 30, PositionCode = "PRD-L-12BH", Name = "Leader 12B_H", OrgUnitId = 17, ParentOrgPositionId = 23 },
+                new OrgPosition { Id = 31, PositionCode = "PRD-OP-12BH", Name = "Operator 12B_H", OrgUnitId = 17, ParentOrgPositionId = 30 },
+
+                new OrgPosition { Id = 32, PositionCode = "PRD-TECH-AAH", Name = "Technician A_AGH", OrgUnitId = 18, ParentOrgPositionId = 20 },
+                new OrgPosition { Id = 33, PositionCode = "PRD-TECH-BCDEF", Name = "Technician B_BCDEF", OrgUnitId = 19, ParentOrgPositionId = 21 }
             );
 
             modelBuilder.Entity<Priority>().HasData(
@@ -204,7 +223,7 @@ namespace ServicePortals.Infrastructure.Data
                 new ITCategory { Id = 2, Name = "Network device", Code = "NETWORK" },
                 new ITCategory { Id = 3, Name = "Email", Code = "EMAIL" },
                 new ITCategory { Id = 4, Name = "Software Installation", Code = "SOFTWARE" },
-                new ITCategory { Id = 5, Name = "ERP Login Id", Code = "ERP" },
+                new ITCategory { Id = 5, Name = "SAP Form", Code = "SAP" },
                 new ITCategory { Id = 6, Name = "Other", Code = "OTHER" }
             );
 
@@ -212,32 +231,27 @@ namespace ServicePortals.Infrastructure.Data
                 new CostCenter { Id = 1, Code = "V1013202", Description = "MIS" }
             );
 
-            modelBuilder.Entity<ApplicationForm>()
-                .HasQueryFilter(e => e.DeletedAt == null);
-
-            modelBuilder.Entity<HistoryApplicationForm>()
-                .HasQueryFilter(e => e.DeletedAt == null);
-
-            modelBuilder.Entity<ITForm>()
-                .HasQueryFilter(e => e.DeletedAt == null);
-
-            modelBuilder.Entity<Purchase>()
-                .HasQueryFilter(e => e.DeletedAt == null);
-
-            modelBuilder.Entity<PurchaseDetail>()
-                .HasQueryFilter(e => e.DeletedAt == null);
-
-            modelBuilder.Entity<MemoNotification>()
-                .HasQueryFilter(e => e.DeletedAt == null);
-
-            modelBuilder.Entity<ApplicationFormItem>()
-                .HasQueryFilter(e => e.DeletedAt == null);
-
-            modelBuilder.Entity<LeaveRequest>()
-                .HasQueryFilter(e => e.DeletedAt == null);
-
             #endregion
 
+            #region QUERY FILTER
+
+            modelBuilder.Entity<ApplicationForm>().HasQueryFilter(e => e.DeletedAt == null);
+
+            modelBuilder.Entity<ApplicationFormItem>().HasQueryFilter(e => e.DeletedAt == null);
+
+            modelBuilder.Entity<HistoryApplicationForm>().HasQueryFilter(e => e.DeletedAt == null);
+
+            modelBuilder.Entity<ITForm>().HasQueryFilter(e => e.DeletedAt == null);
+
+            modelBuilder.Entity<Purchase>().HasQueryFilter(e => e.DeletedAt == null);
+
+            modelBuilder.Entity<PurchaseDetail>().HasQueryFilter(e => e.DeletedAt == null);
+
+            modelBuilder.Entity<MemoNotification>().HasQueryFilter(e => e.DeletedAt == null);
+
+            modelBuilder.Entity<LeaveRequest>().HasQueryFilter(e => e.DeletedAt == null);
+
+            #endregion
 
             #region USER - ROLE - PERMISSION - USER_CONFIG
 
@@ -303,21 +317,6 @@ namespace ServicePortals.Infrastructure.Data
 
             #endregion
 
-
-            #region History_Application_Form
-
-            //application_from - history_application_form
-            modelBuilder.Entity<HistoryApplicationForm>()
-                .HasOne(h => h.ApplicationForm)
-                .WithMany(a => a.HistoryApplicationForms)
-                .HasForeignKey(h => h.ApplicationFormId)
-                .HasPrincipalKey(a => a.Id)
-                .IsRequired(false)
-                .OnDelete(DeleteBehavior.NoAction);
-
-            #endregion
-
-
             #region Leave_Request
 
             //type_leave
@@ -354,9 +353,7 @@ namespace ServicePortals.Infrastructure.Data
                 .IsRequired(false)
                 .OnDelete(DeleteBehavior.NoAction);
 
-
             #endregion
-
 
             #region Memo_Notification - File - Attach file
 
@@ -401,7 +398,6 @@ namespace ServicePortals.Infrastructure.Data
 
             #endregion
 
-
             #region IT_Form
 
             modelBuilder.Entity<ITForm>()
@@ -428,7 +424,6 @@ namespace ServicePortals.Infrastructure.Data
                 .OnDelete(DeleteBehavior.NoAction);
 
             #endregion
-
 
             #region Purchasing
 
@@ -463,7 +458,6 @@ namespace ServicePortals.Infrastructure.Data
 
             #endregion
 
-
             #region OrgUnit
 
             modelBuilder.Entity<OrgUnit>(entity =>
@@ -477,17 +471,7 @@ namespace ServicePortals.Infrastructure.Data
 
             #endregion
 
-
             #region OrgPosition
-
-            modelBuilder.Entity<OrgPosition>(entity =>
-            {
-                entity.HasKey(e => e.Id);
-                entity.HasOne(e => e.ParentOrgPosition)
-                      .WithMany()
-                      .HasForeignKey(e => e.ParentOrgPositionId)
-                      .OnDelete(DeleteBehavior.Restrict);
-            });
 
             modelBuilder.Entity<OrgPosition>(entity =>
             {
@@ -507,8 +491,7 @@ namespace ServicePortals.Infrastructure.Data
 
             #endregion
 
-
-            #region ApplicationForm
+            #region ApplicationForm - History_Application_Form
 
             modelBuilder.Entity<ApplicationForm>()
                 .HasMany(af => af.ApplicationFormItems)
@@ -522,6 +505,14 @@ namespace ServicePortals.Infrastructure.Data
                 .WithMany()
                 .HasForeignKey(af => af.DepartmentId)
                 .HasPrincipalKey(ou => ou.Id)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<HistoryApplicationForm>()
+                .HasOne(h => h.ApplicationForm)
+                .WithMany(a => a.HistoryApplicationForms)
+                .HasForeignKey(h => h.ApplicationFormId)
+                .HasPrincipalKey(a => a.Id)
+                .IsRequired(false)
                 .OnDelete(DeleteBehavior.NoAction);
 
             #endregion

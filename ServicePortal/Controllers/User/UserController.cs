@@ -1,12 +1,10 @@
-﻿using System.Text.Json;
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ServicePortal.Filters;
 using ServicePortals.Application;
 using ServicePortals.Application.Dtos.User.Requests;
 using ServicePortals.Application.Dtos.User.Responses;
 using ServicePortals.Application.Interfaces.User;
-using ServicePortals.Infrastructure.Excel;
 
 namespace ServicePortal.Controllers.User
 {
@@ -15,15 +13,10 @@ namespace ServicePortal.Controllers.User
     public class UserController : ControllerBase
     {
         private readonly IUserService _userService;
-        private readonly ExcelService _excelService;
 
-        public UserController(
-            IUserService userService,
-            ExcelService excelService
-        )
+        public UserController(IUserService userService)
         {
             _userService = userService;
-            _excelService = excelService;
         }
 
         [HttpGet("me")]
@@ -152,14 +145,6 @@ namespace ServicePortal.Controllers.User
             ));
         }
 
-        [HttpPost("import-excel-test-insert-new-user"), AllowAnonymous]
-        public async Task<IActionResult> ImportExcelTestInsertNewUser(IFormFile file)
-        {
-            await _excelService.InsertFromExcelAsync(file);
-
-            return Ok("Nhập dữ liệu thành công");
-        }
-
         [HttpGet("search-user-combine-viclock-and-web-system"), AllowAnonymous]
         public async Task<IActionResult> SearchUserCombineViClockAndWebSystem([FromQuery] string userCode)
         {
@@ -174,12 +159,6 @@ namespace ServicePortal.Controllers.User
             var results = await _userService.GetMultipleUserViclockByOrgPositionId(orgPositionId);
 
             return Ok(new BaseResponse<List<GetMultiUserViClockByOrgPositionIdResponse>>(200, "Success", results));
-        }
-
-        [HttpGet("test112"), AllowAnonymous]
-        public async Task<IActionResult> Test112()
-        {
-            return Ok("OK");
         }
     }
 }

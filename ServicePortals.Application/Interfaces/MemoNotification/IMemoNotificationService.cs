@@ -11,7 +11,7 @@ namespace ServicePortals.Application.Interfaces.MemoNotification
         Task<Domain.Entities.MemoNotification?> GetById(Guid id);
         Task<object> Create(CreateMemoNotificationRequest request, IFormFile[] files);
         Task<object> Update(Guid id, CreateMemoNotificationRequest request, IFormFile[] files);
-        Task<object> Delete(Guid id);
+        Task<object> Delete(string applicationFormCode);
         Task<List<GetAllMemoNotifyResponse>> GetAllInHomePage(int? DepartmentId);
         Task<Domain.Entities.File> GetFileDownload(Guid id);
         Task<object> Approval(ApprovalRequest request);

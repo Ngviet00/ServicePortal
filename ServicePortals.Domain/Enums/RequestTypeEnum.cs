@@ -3,9 +3,8 @@
     public enum RequestTypeEnum
     {
         LEAVE_REQUEST = 1,
-        TIMEKEEPING = 2,
-        CREATE_MEMO_NOTIFICATION = 3,
-        FORM_IT = 4,
-        PURCHASE = 5,
+        CREATE_MEMO_NOTIFICATION = 2,
+        FORM_IT = 3,
+        PURCHASE = 4,
     }
 }

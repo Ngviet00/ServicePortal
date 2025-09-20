@@ -1,19 +1,16 @@
 ﻿using System.Data;
 using System.Text;
 using Dapper;
-using Hangfire;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 using ServicePortal.Infrastructure.Cache;
-//using ServicePortals.Application.Common;
 using ServicePortals.Application.Dtos.User.Requests;
 using ServicePortals.Application.Dtos.User.Responses;
 using ServicePortals.Application.Interfaces.User;
 using ServicePortals.Domain.Entities;
 using ServicePortals.Domain.Enums;
 using ServicePortals.Infrastructure.Data;
-using ServicePortals.Infrastructure.Email;
 using ServicePortals.Infrastructure.Helpers;
 using ServicePortals.Infrastructure.Mappers;
 using ServicePortals.Shared.Exceptions;
@@ -170,7 +167,7 @@ namespace ServicePortals.Application.Services.User
 
             user.Password = Helper.HashString(password);
 
-            user.IsChangePassword = 0;
+            user.IsChangePassword = false;
 
             _context.Users.Update(user);
 
@@ -566,13 +563,6 @@ namespace ServicePortals.Application.Services.User
             var info = infoFromDb ?? new PersonalInfoResponse();
 
             return info;
-        }
-
-        public async Task<object> Test()
-        {
-            var approvalFlows = await _context.ApprovalFlows.Where(e => e.RequestTypeId == (int)RequestTypeEnum.FORM_IT && e.PositonContext == "MANAGER").ToListAsync();
-
-            return approvalFlows;
         }
     }
 }

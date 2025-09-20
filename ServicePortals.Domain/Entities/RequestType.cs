@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ServicePortals.Domain.Entities
 {
@@ -6,8 +7,14 @@ namespace ServicePortals.Domain.Entities
     [Table("request_types")]
     public class RequestType
     {
-        public int? Id { get; set; }
+        [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public int Id { get; set; }
+
+        [MaxLength(50)]
         public string? Name { get; set; } //tiếng việt
+
+        [MaxLength(50)]
         public string? NameE { get; set; } //tiếng anh
     }
 }

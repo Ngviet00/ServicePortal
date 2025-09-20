@@ -6,7 +6,7 @@
         NETWORK = 2,
         EMAIL = 3,
         SOFTWARE = 4,
-        ERP = 5,
+        SAP = 5,
         OTHER = 6
     }
 }

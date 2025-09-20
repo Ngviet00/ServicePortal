@@ -37,41 +37,43 @@ namespace ServicePortal.Controllers.LeaveRequest
         [HttpGet("get-my-leave-request-application")]
         public async Task<IActionResult> GetMyLeaveRequest([FromQuery] MyLeaveRequest request)
         {
-            var results = await _leaveRequestService.GetMyLeaveRequest(request);
+            //var results = await _leaveRequestService.GetMyLeaveRequest(request);
 
-            var response = new PageResponse<MyLeaveRequestResponse>(
-                200,
-                "Success",
-                results.Data,
-                results.TotalPages,
-                request.Page,
-                request.PageSize,
-                results.TotalItems,
-                results.CountPending,
-                results.CountInProcess
-            );
+            //var response = new PageResponse<MyLeaveRequestResponse>(
+            //    200,
+            //    "Success",
+            //    results.Data,
+            //    results.TotalPages,
+            //    request.Page,
+            //    request.PageSize,
+            //    results.TotalItems,
+            //    results.CountPending,
+            //    results.CountInProcess
+            //);
 
-            return Ok(response);
+            //return Ok(response);
+            return Ok();
         }
 
         [HttpGet("get-my-leave-request-registered")]
         public async Task<IActionResult> GetMyLeaveRequestRegistered([FromQuery] MyLeaveRequestRegistered request)
         {
-            var results = await _leaveRequestService.GetMyLeaveRequestRegistered(request);
+            //var results = await _leaveRequestService.GetMyLeaveRequestRegistered(request);
 
-            var response = new PageResponse<MyLeaveRequestRegisteredResponse>(
-                200,
-                "Success",
-                results.Data,
-                results.TotalPages,
-                request.Page,
-                request.PageSize,
-                results.TotalItems,
-                results.CountPending,
-                results.CountInProcess
-            );
+            //var response = new PageResponse<MyLeaveRequestRegisteredResponse>(
+            //    200,
+            //    "Success",
+            //    results.Data,
+            //    results.TotalPages,
+            //    request.Page,
+            //    request.PageSize,
+            //    results.TotalItems,
+            //    results.CountPending,
+            //    results.CountInProcess
+            //);
 
-            return Ok(response);
+            //return Ok(response);
+            return Ok();
         }
 
         [HttpDelete("delete-application-form-leave/{applicationFormId}")]

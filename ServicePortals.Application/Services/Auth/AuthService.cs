@@ -63,8 +63,8 @@ namespace ServicePortals.Application.Services.Auth
             var newUser = new Domain.Entities.User
             {
                 UserCode = request.UserCode,
-                IsActive = 1,
-                IsChangePassword = 0,
+                IsActive = true,
+                IsChangePassword = false,
                 Password = Helper.HashString(request.UserCode),
                 Email = !string.IsNullOrWhiteSpace(userFromViclock.NVEmail) ? userFromViclock.NVEmail : null,
                 Phone = !string.IsNullOrWhiteSpace(userFromViclock.NVDienThoai) ? userFromViclock.NVDienThoai : null,
@@ -78,7 +78,7 @@ namespace ServicePortals.Application.Services.Auth
             _context.UserRoles.Add(new UserRole
             {
                 UserCode = request.UserCode,
-                RoleId = role?.Id,
+                RoleId = role != null ? role.Id : 0,
             });
 
             await _context.SaveChangesAsync();
@@ -224,7 +224,7 @@ namespace ServicePortals.Application.Services.Auth
             var user = await _context.Users.FirstOrDefaultAsync(e => e.UserCode == userCode) ?? throw new NotFoundException("User not found!");
 
             user.Password = Helper.HashString(request.NewPassword);
-            user.IsChangePassword = 1;
+            user.IsChangePassword = true;
 
             if (!string.IsNullOrWhiteSpace(request.Email))
             {

@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 
 namespace ServicePortals.Domain.Entities
@@ -6,19 +7,27 @@ namespace ServicePortals.Domain.Entities
     [Table("leave_requests"), Index(nameof(Id))]
     public class LeaveRequest
     {
-        public Guid Id { get; set; }
-        public Guid? ApplicationFormItemId { get; set; }
+        [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public long Id { get; set; }
+        public long ApplicationFormItemId { get; set; }
+
+        [MaxLength(30)]
         public string? UserCode { get; set; }
+
+        [MaxLength(50)]
         public string? UserName { get; set; }
-        public int? DepartmentId { get; set; }
+        public int DepartmentId { get; set; }
+
+        [MaxLength(30)]
         public string? Position { get; set; }
         public DateTimeOffset? FromDate { get; set; }
         public DateTimeOffset? ToDate { get; set; }
-        public int? TypeLeaveId { get; set; }
-        public int? TimeLeaveId { get; set; }
+        public int TypeLeaveId { get; set; }
+        public int TimeLeaveId { get; set; }
         public string? Reason { get; set; }
         public byte[]? Image { get; set; }
-        public byte? HaveSalary { get; set; }
+        public bool HaveSalary { get; set; } = false;
         public string? NoteOfHR { get; set; } //ghi chú của HR về đơn nghỉ phép này
         public DateTimeOffset? CreatedAt { get; set; }
         public DateTimeOffset? UpdateAt { get; set; }

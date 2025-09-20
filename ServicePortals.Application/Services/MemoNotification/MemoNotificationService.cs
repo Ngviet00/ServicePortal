@@ -78,63 +78,64 @@ namespace ServicePortals.Application.Services.MemoNotification
         /// </summary>
         public async Task<Entities.MemoNotification?> GetById(Guid Id)
         {
-            var memoNotification = await _context.MemoNotifications
-                .Include(e => e.OrgUnit)
-                .Include(e => e.ApplicationFormItem)
-                .Include(e => e.MemoNotificationDepartments)
-                    .ThenInclude(e => e.OrgUnit)
-                .FirstOrDefaultAsync(
-                    e => e.Id == Id || 
-                        (e.ApplicationFormItem != null && e.ApplicationFormItem.ApplicationFormId == Id)
-                );
+            return null;
+            //var memoNotification = await _context.MemoNotifications
+            //    .Include(e => e.OrgUnit)
+            //    .Include(e => e.ApplicationFormItem)
+            //    .Include(e => e.MemoNotificationDepartments)
+            //        .ThenInclude(e => e.OrgUnit)
+            //    .FirstOrDefaultAsync(
+            //        e => e.Id == Id || 
+            //            (e.ApplicationFormItem != null && e.ApplicationFormItem.ApplicationFormId == Id)
+            //    );
 
-            if (memoNotification == null)
-            {
-                throw new NotFoundException("Memo notification not found, please check again");
-            }
+            //if (memoNotification == null)
+            //{
+            //    throw new NotFoundException("Memo notification not found, please check again");
+            //}
 
-            var applicationForm = await _context.ApplicationForms
-                .Include(e => e.RequestType)
-                .Include(e => e.RequestStatus)
-                .Include(e => e.OrgUnit)
-                .Include(e => e.AssignedTasks)
-                .FirstOrDefaultAsync(e =>
-                    memoNotification != null &&
-                    memoNotification.ApplicationFormItem != null && 
-                    e.Id == memoNotification.ApplicationFormItem.ApplicationFormId
-                );
+            //var applicationForm = await _context.ApplicationForms
+            //    .Include(e => e.RequestType)
+            //    .Include(e => e.RequestStatus)
+            //    .Include(e => e.OrgUnit)
+            //    .Include(e => e.AssignedTasks)
+            //    .FirstOrDefaultAsync(e =>
+            //        memoNotification != null &&
+            //        memoNotification.ApplicationFormItem != null && 
+            //        e.Id == memoNotification.ApplicationFormItem.ApplicationFormId
+            //    );
 
-            var files = await _context.AttachFiles
-                .Where(at => at.EntityId == memoNotification!.Id && at.EntityType == nameof(Entities.MemoNotification))
-                .Select(f => new Entities.File
-                {
-                    Id = f.File != null ? f.File.Id : null,
-                    FileName = f.File != null ? f.File.FileName : null,
-                    ContentType = f.File != null ? f.File.ContentType : null
-                })
-                .ToListAsync();
+            //var files = await _context.AttachFiles
+            //    .Where(at => at.EntityId == memoNotification!.Id && at.EntityType == nameof(Entities.MemoNotification))
+            //    .Select(f => new Entities.File
+            //    {
+            //        Id = f.File != null ? f.File.Id : null,
+            //        FileName = f.File != null ? f.File.FileName : null,
+            //        ContentType = f.File != null ? f.File.ContentType : null
+            //    })
+            //    .ToListAsync();
 
-            memoNotification!.Files = files;
+            //memoNotification!.Files = files;
 
-            if (memoNotification.ApplicationFormItem != null)
-            {
-                memoNotification.ApplicationFormItem.MemoNotifications = [];
-            }
+            //if (memoNotification.ApplicationFormItem != null)
+            //{
+            //    memoNotification.ApplicationFormItem.MemoNotifications = [];
+            //}
 
-            foreach (var item in memoNotification.MemoNotificationDepartments)
-            {
-                item.MemoNotifications = null;
-            }
+            //foreach (var item in memoNotification.MemoNotificationDepartments)
+            //{
+            //    item.MemoNotifications = null;
+            //}
 
-            if (applicationForm != null)
-            {
-                var historyApplicationForms = await _context.HistoryApplicationForms.Where(e => e.ApplicationFormId == applicationForm.Id).OrderByDescending(e => e.ActionAt).ToListAsync();
+            //if (applicationForm != null)
+            //{
+            //    var historyApplicationForms = await _context.HistoryApplicationForms.Where(e => e.ApplicationFormId == applicationForm.Id).OrderByDescending(e => e.ActionAt).ToListAsync();
 
-                applicationForm.HistoryApplicationForms = historyApplicationForms;
-                memoNotification!.ApplicationFormItem!.ApplicationForm = applicationForm;
-            }
+            //    applicationForm.HistoryApplicationForms = historyApplicationForms;
+            //    memoNotification!.ApplicationFormItem!.ApplicationForm = applicationForm;
+            //}
 
-            return memoNotification;
+            //return memoNotification;
         }
 
         /// <summary>
@@ -171,7 +172,7 @@ namespace ServicePortals.Application.Services.MemoNotification
             {
                 var approvalFlow = await _context.ApprovalFlows.FirstOrDefaultAsync(e => e.RequestTypeId == requestTypeId && e.PositonContext == "ROLE_UNION");
                 nextOrgPositionId = approvalFlow?.ToOrgPositionId;
-                
+
                 if (approvalFlow?.IsFinal == true)
                 {
                     statusApplicationForm = (int)StatusApplicationFormEnum.FINAL_APPROVAL;
@@ -196,56 +197,52 @@ namespace ServicePortals.Application.Services.MemoNotification
                 }
                 else
                 {
-                    var managerOrgPositionOfStaff = await _orgPositionService.GetManagerOrgPostionIdByOrgPositionId(orgPosition.Id ?? -1);
+                    var managerOrgPositionOfStaff = await _orgPositionService.GetManagerOrgPostionIdByOrgPositionId(orgPosition.Id);
                     nextOrgPositionId = managerOrgPositionOfStaff?.Id ?? -1;
                 }
             }
 
             var applicationForm = new ApplicationForm
             {
-                Id = Guid.NewGuid(),
                 Code = Helper.GenerateFormCode("MNT"),
-                RequestTypeId = (int)RequestTypeEnum.CREATE_MEMO_NOTIFICATION,
+                RequestTypeId = requestTypeId,
                 RequestStatusId = statusApplicationForm,
-                DepartmentId = departmentId,
-                OrgPositionId = nextOrgPositionId,
-                UserCodeCreatedBy = request.UserCodeCreated,
-                CreatedBy = request.CreatedBy,
+                DepartmentId = (int)departmentId,
+                OrgPositionId = nextOrgPositionId ?? -1,
+                UserCodeCreatedForm = request.UserCodeCreated,
+                UserNameCreatedForm = request.UserNameCreated,
                 CreatedAt = DateTimeOffset.Now,
             };
 
             var historyApplicationForm = new HistoryApplicationForm
             {
-                Id = Guid.NewGuid(),
-                ApplicationFormId = applicationForm.Id,
+                ApplicationForm = applicationForm,
                 Action = "Created",
-                ActionBy = request?.CreatedBy,
+                UserNameAction = request?.UserNameCreated,
                 UserCodeAction = request?.UserCodeCreated,
                 ActionAt = DateTimeOffset.Now,
             };
 
             var applicationFormItem = new ApplicationFormItem
             {
-                Id = Guid.NewGuid(),
-                ApplicationFormId = applicationForm.Id,
+                ApplicationForm = applicationForm,
                 UserCode = request?.UserCodeCreated,
-                UserName = request?.CreatedBy,
+                UserName = request?.UserNameCreated,
                 Status = true,
                 CreatedAt = DateTimeOffset.Now
             };
 
             var memoNotify = new Entities.MemoNotification
             {
-                Id = Guid.NewGuid(),
-                DepartmentId = departmentId,
-                ApplicationFormItemId = applicationFormItem.Id,
+                DepartmentId = (int)departmentId,
+                ApplicationFormItem = applicationFormItem,
                 Title = request?.Title,
                 Content = request?.Content,
-                Status = request?.Status,
+                Status = request!.Status,
                 FromDate = request?.FromDate,
                 ToDate = request?.ToDate,
                 CreatedAt = DateTimeOffset.Now,
-                ApplyAllDepartment = request?.ApplyAllDepartment,
+                ApplyAllDepartment = request!.ApplyAllDepartment,
             };
 
             _context.ApplicationForms.Add(applicationForm);
@@ -253,23 +250,19 @@ namespace ServicePortals.Application.Services.MemoNotification
             _context.ApplicationFormItems.Add(applicationFormItem);
             _context.MemoNotifications.Add(memoNotify);
 
-            //memo department
-            if (request?.ApplyAllDepartment == false)
-            {
-                List<MemoNotificationDepartment> memoNotificationDepartments = [];
+            await _context.SaveChangesAsync();
 
-                if (request.DepartmentIdApply != null)
-                {
-                    foreach (var item in request.DepartmentIdApply)
+            //memo department
+            if (request?.ApplyAllDepartment == false && request.DepartmentIdApply != null)
+            {
+                List<MemoNotificationDepartment> memoNotificationDepartments = request.DepartmentIdApply
+                    .Select(item => new MemoNotificationDepartment
                     {
-                        memoNotificationDepartments.Add(new MemoNotificationDepartment
-                        {
-                            MemoNotificationId = memoNotify.Id,
-                            DepartmentId = item
-                        });
-                    }
-                    _context.MemoNotificationDepartments.AddRange(memoNotificationDepartments);
-                }
+                        MemoNotifications = memoNotify,
+                        DepartmentId = item
+                    }).ToList();
+
+                _context.MemoNotificationDepartments.AddRange(memoNotificationDepartments);
             }
 
             //memo file
@@ -285,7 +278,6 @@ namespace ServicePortals.Application.Services.MemoNotification
 
                     var attach = new Entities.File
                     {
-                        Id = Guid.NewGuid(),
                         FileName = file.FileName,
                         ContentType = file.ContentType,
                         FileData = ms.ToArray(),
@@ -295,23 +287,22 @@ namespace ServicePortals.Application.Services.MemoNotification
 
                     var attachFile = new AttachFile
                     {
-                        FileId = attach.Id,
+                        File = attach,
                         EntityType = nameof(MemoNotification),
                         EntityId = memoNotify.Id
                     };
 
                     listAttachFiles.Add(attachFile);
                 }
-
                 _context.Files.AddRange(listEntityFiles);
                 _context.AttachFiles.AddRange(listAttachFiles);
-            }
 
-            await _context.SaveChangesAsync();
+                await _context.SaveChangesAsync();
+            }
 
             var receiveUser = await _userService.GetMultipleUserViclockByOrgPositionId(nextOrgPositionId ?? 0);
 
-            string urlApproval = $@"{_configuration["Setting:UrlFrontEnd"]}/approval/approval-memo-notify/{memoNotify.Id}";
+            string urlApproval = $@"{_configuration["Setting:UrlFrontEnd"]}/approval/approval-memo-notify/{applicationForm.Code}";
 
             BackgroundJob.Enqueue<IEmailService>(job =>
                 job.EmailSendMemoNotification(
@@ -329,105 +320,112 @@ namespace ServicePortals.Application.Services.MemoNotification
 
         public async Task<object> Update(Guid id, CreateMemoNotificationRequest dto, IFormFile[] files)
         {
-            var memoNotify = await _context.MemoNotifications.FirstOrDefaultAsync(e => e.Id == id) ?? throw new NotFoundException("Memo notification not found!");
+            return null;
+            //var memoNotify = await _context.MemoNotifications.FirstOrDefaultAsync(e => e.Id == id) ?? throw new NotFoundException("Memo notification not found!");
 
-            memoNotify.Title = dto.Title;
-            memoNotify.Content = dto.Content;
-            memoNotify.Status = dto.Status;
-            memoNotify.FromDate = dto.FromDate;
-            memoNotify.ToDate = dto.ToDate;
-            memoNotify.ApplyAllDepartment = dto.ApplyAllDepartment;
-            memoNotify.UpdatedAt = dto.UpdatedAt;
+            //memoNotify.Title = dto.Title;
+            //memoNotify.Content = dto.Content;
+            //memoNotify.Status = dto.Status;
+            //memoNotify.FromDate = dto.FromDate;
+            //memoNotify.ToDate = dto.ToDate;
+            //memoNotify.ApplyAllDepartment = dto.ApplyAllDepartment;
+            //memoNotify.UpdatedAt = dto.UpdatedAt;
 
-            _context.MemoNotifications.Update(memoNotify);
+            //_context.MemoNotifications.Update(memoNotify);
 
-            //delete file
-            if (dto.DeleteFiles != null && dto.DeleteFiles.Count() > 0)
-            {
-                var attachFiles = await _context.AttachFiles.Where(at => dto.DeleteFiles.Contains(at.FileId.ToString() ?? "")).ToListAsync();
-                var fileDelete = await _context.Files.Where(f => dto.DeleteFiles.Contains(f.Id.ToString() ?? "")).ToListAsync();
+            ////delete file
+            //if (dto.DeleteFiles != null && dto.DeleteFiles.Count() > 0)
+            //{
+            //    var attachFiles = await _context.AttachFiles.Where(at => dto.DeleteFiles.Contains(at.FileId.ToString() ?? "")).ToListAsync();
+            //    var fileDelete = await _context.Files.Where(f => dto.DeleteFiles.Contains(f.Id.ToString() ?? "")).ToListAsync();
 
-                _context.AttachFiles.RemoveRange(attachFiles);
-                _context.Files.RemoveRange(fileDelete);
-            }
+            //    _context.AttachFiles.RemoveRange(attachFiles);
+            //    _context.Files.RemoveRange(fileDelete);
+            //}
 
-            //memo file
-            if (files.Length > 0)
-            {
-                List<Domain.Entities.File> listEntityFiles = [];
-                List<AttachFile> listAttachFiles = [];
+            ////memo file
+            //if (files.Length > 0)
+            //{
+            //    List<Domain.Entities.File> listEntityFiles = [];
+            //    List<AttachFile> listAttachFiles = [];
 
-                foreach (var file in files)
-                {
-                    using var ms = new MemoryStream();
-                    await file.CopyToAsync(ms);
+            //    foreach (var file in files)
+            //    {
+            //        using var ms = new MemoryStream();
+            //        await file.CopyToAsync(ms);
 
-                    var attach = new Domain.Entities.File
-                    {
-                        Id = Guid.NewGuid(),
-                        FileName = file.FileName,
-                        ContentType = file.ContentType,
-                        FileData = ms.ToArray(),
-                        CreatedAt = DateTimeOffset.Now
-                    };
-                    listEntityFiles.Add(attach);
+            //        var attach = new Domain.Entities.File
+            //        {
+            //            Id = Guid.NewGuid(),
+            //            FileName = file.FileName,
+            //            ContentType = file.ContentType,
+            //            FileData = ms.ToArray(),
+            //            CreatedAt = DateTimeOffset.Now
+            //        };
+            //        listEntityFiles.Add(attach);
 
-                    var attachfile = new AttachFile
-                    {
-                        FileId = attach.Id,
-                        EntityId = memoNotify.Id,
-                        EntityType = nameof(MemoNotification)
-                    };
+            //        var attachfile = new AttachFile
+            //        {
+            //            FileId = attach.Id,
+            //            EntityId = memoNotify.Id,
+            //            EntityType = nameof(MemoNotification)
+            //        };
 
-                    listAttachFiles.Add(attachfile);
-                }
+            //        listAttachFiles.Add(attachfile);
+            //    }
 
-                _context.Files.AddRange(listEntityFiles);
-                _context.AttachFiles.AddRange(listAttachFiles);
-            }
+            //    _context.Files.AddRange(listEntityFiles);
+            //    _context.AttachFiles.AddRange(listAttachFiles);
+            //}
 
-            var memoNotifyDept = await _context.MemoNotificationDepartments.Where(e => e.MemoNotificationId == memoNotify.Id).ToListAsync();
+            //var memoNotifyDept = await _context.MemoNotificationDepartments.Where(e => e.MemoNotificationId == memoNotify.Id).ToListAsync();
 
-            _context.MemoNotificationDepartments.RemoveRange(memoNotifyDept);
+            //_context.MemoNotificationDepartments.RemoveRange(memoNotifyDept);
 
-            if (dto.ApplyAllDepartment == false)
-            {
-                List<MemoNotificationDepartment> memoNotificationDepartments = [];
+            //if (dto.ApplyAllDepartment == false)
+            //{
+            //    List<MemoNotificationDepartment> memoNotificationDepartments = [];
 
-                if (dto.DepartmentIdApply != null)
-                {
-                    foreach (var item in dto.DepartmentIdApply)
-                    {
-                        memoNotificationDepartments.Add(new MemoNotificationDepartment
-                        {
-                            MemoNotificationId = memoNotify.Id,
-                            DepartmentId = item
-                        });
-                    }
-                    _context.MemoNotificationDepartments.AddRange(memoNotificationDepartments);
-                }
-            }
+            //    if (dto.DepartmentIdApply != null)
+            //    {
+            //        foreach (var item in dto.DepartmentIdApply)
+            //        {
+            //            memoNotificationDepartments.Add(new MemoNotificationDepartment
+            //            {
+            //                MemoNotificationId = memoNotify.Id,
+            //                DepartmentId = item
+            //            });
+            //        }
+            //        _context.MemoNotificationDepartments.AddRange(memoNotificationDepartments);
+            //    }
+            //}
 
-            await _context.SaveChangesAsync();
+            //await _context.SaveChangesAsync();
 
-            return true;
+            //return true;
         }
 
-        public async Task<object> Delete(Guid id)
+        public async Task<object> Delete(string applicationFormCode)
         {
-            var memoNotify = await _context.MemoNotifications.Include(e => e.ApplicationFormItem).FirstOrDefaultAsync(e => e.Id == id) ?? throw new NotFoundException("Notification not found to delete!");
+            var memoNotify = await _context.MemoNotifications
+                .Include(e => e.ApplicationFormItem)
+                .FirstOrDefaultAsync(e => e.ApplicationFormItem != null && e.ApplicationFormItem.ApplicationForm != null && e.ApplicationFormItem.ApplicationForm.Code == applicationFormCode);
 
-            var applicationFormId = memoNotify.ApplicationFormItem?.ApplicationFormId;
 
-            await _context.HistoryApplicationForms.Where(e => e.ApplicationFormId == applicationFormId).ExecuteUpdateAsync(s => s.SetProperty(e => e.DeletedAt, DateTimeOffset.Now));
+            return null;
+            //var memoNotify = await _context.MemoNotifications.Include(e => e.ApplicationFormItem).FirstOrDefaultAsync(e => e.Id == id) ?? throw new NotFoundException("Notification not found to delete!");
 
-            await _context.ApplicationForms.Where(e => e.Id == applicationFormId).ExecuteUpdateAsync(s => s.SetProperty(e => e.DeletedAt, DateTimeOffset.Now));
+            //var applicationFormId = memoNotify.ApplicationFormItem?.ApplicationFormId;
 
-            await _context.ApplicationFormItems.Where(e => e.Id == memoNotify.ApplicationFormItemId).ExecuteUpdateAsync(s => s.SetProperty(e => e.DeletedAt, DateTimeOffset.Now));
+            //await _context.HistoryApplicationForms.Where(e => e.ApplicationFormId == applicationFormId).ExecuteUpdateAsync(s => s.SetProperty(e => e.DeletedAt, DateTimeOffset.Now));
 
-            await _context.MemoNotifications.Where(e => e.Id == memoNotify.Id).ExecuteUpdateAsync(s => s.SetProperty(e => e.DeletedAt, DateTimeOffset.Now));
+            //await _context.ApplicationForms.Where(e => e.Id == applicationFormId).ExecuteUpdateAsync(s => s.SetProperty(e => e.DeletedAt, DateTimeOffset.Now));
 
-            return true;
+            //await _context.ApplicationFormItems.Where(e => e.Id == memoNotify.ApplicationFormItemId).ExecuteUpdateAsync(s => s.SetProperty(e => e.DeletedAt, DateTimeOffset.Now));
+
+            //await _context.MemoNotifications.Where(e => e.Id == memoNotify.Id).ExecuteUpdateAsync(s => s.SetProperty(e => e.DeletedAt, DateTimeOffset.Now));
+
+            //return true;
         }
 
         /// <summary>
@@ -459,9 +457,10 @@ namespace ServicePortals.Application.Services.MemoNotification
         //tìm kiếm file để trả về file cần download
         public async Task<Domain.Entities.File> GetFileDownload(Guid id)
         {
-            var file = await _context.Files.FirstOrDefaultAsync(e => e.Id == id) ?? throw new NotFoundException("Memo Notification not found!");
+            return null;
+            //var file = await _context.Files.FirstOrDefaultAsync(e => e.Id == id) ?? throw new NotFoundException("Memo Notification not found!");
 
-            return file;
+            //return file;
         }
 
         /// <summary>
@@ -472,135 +471,136 @@ namespace ServicePortals.Application.Services.MemoNotification
         /// </summary>
         public async Task<object> Approval(ApprovalRequest request)
         {
-            var orgPositionId = request.OrgPositionId;
+            return null;
+            //var orgPositionId = request.OrgPositionId;
 
-            var memoNotify = await _context.MemoNotifications
-                .Include(e => e.ApplicationFormItem)
-                .FirstOrDefaultAsync(e => e.Id == request.MemoNotificationId || (e.ApplicationFormItem != null && e.ApplicationFormItem.ApplicationFormId == request.MemoNotificationId))
-                ?? throw new NotFoundException("Memo notify not found");
+            //var memoNotify = await _context.MemoNotifications
+            //    .Include(e => e.ApplicationFormItem)
+            //    .FirstOrDefaultAsync(e => e.Id == request.MemoNotificationId || (e.ApplicationFormItem != null && e.ApplicationFormItem.ApplicationFormId == request.MemoNotificationId))
+            //    ?? throw new NotFoundException("Memo notify not found");
 
-            var applicationForm = await _context.ApplicationForms.FirstOrDefaultAsync(e => memoNotify.ApplicationFormItem != null && e.Id == memoNotify.ApplicationFormItem.ApplicationFormId);
+            //var applicationForm = await _context.ApplicationForms.FirstOrDefaultAsync(e => memoNotify.ApplicationFormItem != null && e.Id == memoNotify.ApplicationFormItem.ApplicationFormId);
 
-            //nếu không tìm thấy
-            if (applicationForm == null)
-            {
-                throw new NotFoundException("Application form memo notify not found");
-            }
+            ////nếu không tìm thấy
+            //if (applicationForm == null)
+            //{
+            //    throw new NotFoundException("Application form memo notify not found");
+            //}
 
-            //nếu như đơn này hiện tại k phải người này duyệt
-            if (applicationForm.OrgPositionId != request.OrgPositionId)
-            {
-                throw new ValidationException(Global.NotPermissionApproval);
-            }
+            ////nếu như đơn này hiện tại k phải người này duyệt
+            //if (applicationForm.OrgPositionId != request.OrgPositionId)
+            //{
+            //    throw new ValidationException(Global.NotPermissionApproval);
+            //}
 
-            //nếu như là vị trí người này duyệt nhưng trạng thái đã là complete hoặc reject => đã có người approval
-            if (applicationForm.OrgPositionId == request.OrgPositionId &&
-                (
-                    applicationForm.RequestStatusId == (int)StatusApplicationFormEnum.COMPLETE ||
-                    applicationForm.RequestStatusId == (int)StatusApplicationFormEnum.REJECT
-                )
-            )
-            {
-                throw new ValidationException(Global.HasBeenApproval);
-            }
+            ////nếu như là vị trí người này duyệt nhưng trạng thái đã là complete hoặc reject => đã có người approval
+            //if (applicationForm.OrgPositionId == request.OrgPositionId &&
+            //    (
+            //        applicationForm.RequestStatusId == (int)StatusApplicationFormEnum.COMPLETE ||
+            //        applicationForm.RequestStatusId == (int)StatusApplicationFormEnum.REJECT
+            //    )
+            //)
+            //{
+            //    throw new ValidationException(Global.HasBeenApproval);
+            //}
 
-            applicationForm.Id = applicationForm.Id;
+            //applicationForm.Id = applicationForm.Id;
 
-            var historyApplicationForm = new HistoryApplicationForm
-            {
-                Id = Guid.NewGuid(),
-                ApplicationFormId = applicationForm?.Id,
-                ActionBy = request.UserNameApproval,
-                UserCodeAction = request.UserCodeApproval,
-                Note = request.Note,
-                Action = request.Status == true ? "Approved" : "Reject",
-                ActionAt = DateTimeOffset.Now
-            };
+            //var historyApplicationForm = new HistoryApplicationForm
+            //{
+            //    Id = Guid.NewGuid(),
+            //    ApplicationFormId = applicationForm?.Id,
+            //    ActionBy = request.UserNameApproval,
+            //    UserCodeAction = request.UserCodeApproval,
+            //    Note = request.Note,
+            //    Action = request.Status == true ? "Approved" : "Reject",
+            //    ActionAt = DateTimeOffset.Now
+            //};
 
-            int? nextOrgPositionId = -1;
+            //int? nextOrgPositionId = -1;
             
-            bool isFinal = false;
+            //bool isFinal = false;
 
-            //reject
-            if (request.Status == false)
-            {
-                applicationForm!.RequestStatusId = (int)StatusApplicationFormEnum.REJECT;
-            }
-            else //approval
-            {
-                if (applicationForm!.RequestStatusId == (int)StatusApplicationFormEnum.FINAL_APPROVAL) //if is final -> approval will publish
-                {
-                    applicationForm.RequestStatusId = (int)StatusApplicationFormEnum.COMPLETE;
-                    isFinal = true;
-                }
-                else
-                {
-                    var orgPosition = await _context.OrgPositions.FirstOrDefaultAsync(e => e.Id == orgPositionId) ?? throw new ValidationException(Global.UserNotSetInformation);
+            ////reject
+            //if (request.Status == false)
+            //{
+            //    applicationForm!.RequestStatusId = (int)StatusApplicationFormEnum.REJECT;
+            //}
+            //else //approval
+            //{
+            //    if (applicationForm!.RequestStatusId == (int)StatusApplicationFormEnum.FINAL_APPROVAL) //if is final -> approval will publish
+            //    {
+            //        applicationForm.RequestStatusId = (int)StatusApplicationFormEnum.COMPLETE;
+            //        isFinal = true;
+            //    }
+            //    else
+            //    {
+            //        var orgPosition = await _context.OrgPositions.FirstOrDefaultAsync(e => e.Id == orgPositionId) ?? throw new ValidationException(Global.UserNotSetInformation);
 
-                    if (orgPosition.UnitId == (int)UnitEnum.Manager)
-                    {
-                        var approvalFlowManager = await _context.ApprovalFlows.FirstOrDefaultAsync(e => e.RequestTypeId == (int)RequestTypeEnum.CREATE_MEMO_NOTIFICATION && e.PositonContext == "MANAGER");
-                        nextOrgPositionId = approvalFlowManager?.ToOrgPositionId;
+            //        if (orgPosition.UnitId == (int)UnitEnum.Manager)
+            //        {
+            //            var approvalFlowManager = await _context.ApprovalFlows.FirstOrDefaultAsync(e => e.RequestTypeId == (int)RequestTypeEnum.CREATE_MEMO_NOTIFICATION && e.PositonContext == "MANAGER");
+            //            nextOrgPositionId = approvalFlowManager?.ToOrgPositionId;
 
-                        if (approvalFlowManager?.IsFinal == true)
-                        {
-                            applicationForm.RequestStatusId = (int)StatusApplicationFormEnum.FINAL_APPROVAL;
-                        }
-                    }
-                    else
-                    {
-                        var managerOrgPositionOfStaff = await _orgPositionService.GetManagerOrgPostionIdByOrgPositionId(orgPositionId ?? -1);
-                        nextOrgPositionId = managerOrgPositionOfStaff?.Id ?? -1;
-                        applicationForm.RequestStatusId = (int)StatusApplicationFormEnum.IN_PROCESS;
-                    }
-                }
-            }
+            //            if (approvalFlowManager?.IsFinal == true)
+            //            {
+            //                applicationForm.RequestStatusId = (int)StatusApplicationFormEnum.FINAL_APPROVAL;
+            //            }
+            //        }
+            //        else
+            //        {
+            //            var managerOrgPositionOfStaff = await _orgPositionService.GetManagerOrgPostionIdByOrgPositionId(orgPositionId ?? -1);
+            //            nextOrgPositionId = managerOrgPositionOfStaff?.Id ?? -1;
+            //            applicationForm.RequestStatusId = (int)StatusApplicationFormEnum.IN_PROCESS;
+            //        }
+            //    }
+            //}
 
-            applicationForm.OrgPositionId = nextOrgPositionId;
+            //applicationForm.OrgPositionId = nextOrgPositionId;
 
-            _context.HistoryApplicationForms.Add(historyApplicationForm);
-            _context.ApplicationForms.Update(applicationForm);
-            await _context.SaveChangesAsync();
+            //_context.HistoryApplicationForms.Add(historyApplicationForm);
+            //_context.ApplicationForms.Update(applicationForm);
+            //await _context.SaveChangesAsync();
 
-            if (request.Status == false || request.Status == true && isFinal) //gửi email cho người tạo thông báo là complete or reject
-            {
-                var userRequest = await _context.Users.Where(e => e.UserCode == applicationForm.UserCodeCreatedBy).ToListAsync();
+            //if (request.Status == false || request.Status == true && isFinal) //gửi email cho người tạo thông báo là complete or reject
+            //{
+            //    var userRequest = await _context.Users.Where(e => e.UserCode == applicationForm.UserCodeCreatedBy).ToListAsync();
 
-                bool isApproved = request.Status == true;
-                string title = isApproved ? "approved" : "reject";
+            //    bool isApproved = request.Status == true;
+            //    string title = isApproved ? "approved" : "reject";
 
-                string urlView = $@"{_configuration["Setting:UrlFrontEnd"]}/approval/view-memo-notify/{memoNotify.Id}";
+            //    string urlView = $@"{_configuration["Setting:UrlFrontEnd"]}/approval/view-memo-notify/{memoNotify.Id}";
 
-                BackgroundJob.Enqueue<IEmailService>(job =>
-                    job.EmailSendMemoNotification(
-                        userRequest.Select(e => e.Email ?? "").ToList(),
-                        null,
-                        $"Your request memo notification has been {title}",
-                        TemplateEmail.SendContentEmail($"Your request memo notification has been {title}", urlView, applicationForm.Code ?? ""),
-                        null,
-                        true
-                    )
-                );
-            }
-            else //gửi cho người tiếp theo duyệt
-            {
-                var receiveUser = await _userService.GetMultipleUserViclockByOrgPositionId(nextOrgPositionId ?? 0);
+            //    BackgroundJob.Enqueue<IEmailService>(job =>
+            //        job.EmailSendMemoNotification(
+            //            userRequest.Select(e => e.Email ?? "").ToList(),
+            //            null,
+            //            $"Your request memo notification has been {title}",
+            //            TemplateEmail.SendContentEmail($"Your request memo notification has been {title}", urlView, applicationForm.Code ?? ""),
+            //            null,
+            //            true
+            //        )
+            //    );
+            //}
+            //else //gửi cho người tiếp theo duyệt
+            //{
+            //    var receiveUser = await _userService.GetMultipleUserViclockByOrgPositionId(nextOrgPositionId ?? 0);
 
-                string urlApproval = $@"{_configuration["Setting:UrlFrontEnd"]}/approval/approval-memo-notify/{memoNotify.Id}";
+            //    string urlApproval = $@"{_configuration["Setting:UrlFrontEnd"]}/approval/approval-memo-notify/{memoNotify.Id}";
 
-                BackgroundJob.Enqueue<IEmailService>(job =>
-                    job.EmailSendMemoNotification(
-                        receiveUser.Select(e => e.Email ?? "").ToList(),
-                        null,
-                        "Request for memo notification approval",
-                        TemplateEmail.SendContentEmail($"Request for memo notification approval", urlApproval, applicationForm.Code ?? ""),
-                        null,
-                        true
-                    )
-                );
-            }
+            //    BackgroundJob.Enqueue<IEmailService>(job =>
+            //        job.EmailSendMemoNotification(
+            //            receiveUser.Select(e => e.Email ?? "").ToList(),
+            //            null,
+            //            "Request for memo notification approval",
+            //            TemplateEmail.SendContentEmail($"Request for memo notification approval", urlApproval, applicationForm.Code ?? ""),
+            //            null,
+            //            true
+            //        )
+            //    );
+            //}
 
-            return true;
+            //return true;
         }
     }
 }

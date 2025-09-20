@@ -1,10 +1,11 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using ServicePortals.Application;
 using ServicePortals.Application.Interfaces.CostCenter;
 
 namespace ServicePortal.Controllers.CostCenter
 {
-    [ApiController, Route("api/cost-center")]
+    [ApiController, Route("api/cost-center"), Authorize]
     public class CostCenterController : ControllerBase
     {
         private readonly ICostCenterService _costCenterService;

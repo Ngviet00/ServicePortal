@@ -34,14 +34,7 @@ namespace ServicePortals.Application
         [JsonPropertyName("total_items")]
         public int TotalItems { get; set; }
 
-        [JsonPropertyName("count_pending")]
-        public int? CountPending { get; set; }
-
-        [JsonPropertyName("count_in_process")]
-        public int? CountInProcess { get; set; }
-
-
-        public PageResponse(int status, string message, List<T>? data, int totalPage, int currentPage, int perPage, int totalItem, int? countPending = null, int? countInProcess = null)
+        public PageResponse(int status, string message, List<T>? data, int totalPage, int currentPage, int perPage, int totalItem)
         {
             Status = status;
             Message = message;
@@ -50,8 +43,6 @@ namespace ServicePortals.Application
             CurrentPage = currentPage;
             PerPage = perPage;
             TotalItems = totalItem;
-            CountPending = countPending;
-            CountInProcess = countInProcess;
         }
     }
 
@@ -60,7 +51,5 @@ namespace ServicePortals.Application
         public List<T>? Data { get; set; }
         public int TotalItems { get; set; }
         public int TotalPages { get; set; }
-        public int? CountPending { get; set; }
-        public int? CountInProcess { get; set; }
     }
 }

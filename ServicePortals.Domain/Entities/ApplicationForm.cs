@@ -1,30 +1,39 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
-using System.Text.Json.Serialization;
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 
 namespace ServicePortals.Domain.Entities
 {
     [Table("application_forms")]
-    [Index(nameof(RequestStatusId))]
+    [Index(nameof(Id))]
     [Index(nameof(OrgPositionId))]
-    [Index(nameof(UserCodeCreatedBy))]
+    [Index(nameof(Code))]
     public class ApplicationForm
     {
-        public Guid Id { get; set; }
+        [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public long Id { get; set; }
+
+        [MaxLength(100)]
         public string? Code { get; set; } //mã đơn
-        public int? RequestTypeId { get; set; } //loại đơn
-        public int? RequestStatusId { get; set; } //trạng thái của đơn
-        public int? OrgPositionId { get; set; } //vị trí người tiếp theo duyệt đơn này
-        public string? UserCodeCreatedBy { get; set; } //mã nhân viên người tạo đơn
-        public string? CreatedBy { get; set; } //tên người tạo đơn
-        public int? DepartmentId { get; set; } //cho việc filter, department id của người tạo đơn
+
+        public int RequestTypeId { get; set; } //loại đơn
+        public int RequestStatusId { get; set; } //trạng thái của đơn
+        public int OrgPositionId { get; set; } //vị trí người tiếp theo duyệt đơn này
+
+        [MaxLength(30)]
+        public string? UserCodeCreatedForm { get; set; } //mã nhân viên người tạo đơn
+
+        [MaxLength(50)]
+        public string? UserNameCreatedForm { get; set; } //tên người tạo đơn
+
+        public int DepartmentId { get; set; } //cho việc filter, department id của người tạo đơn
         public string? Note { get; set; }
-        public int? Step { get; set; }
+        public int Step { get; set; }
         public string? MetaData { get; set; } //type json
         public DateTimeOffset? CreatedAt { get; set; }
         public DateTimeOffset? UpdatedAt { get; set; }
         public DateTimeOffset? DeletedAt { get; set; }
-
 
         //relationship
         public OrgUnit? OrgUnit { get; set; }
@@ -33,12 +42,5 @@ namespace ServicePortals.Domain.Entities
         public ICollection<AssignedTask> AssignedTasks { get; set; } = []; //assigned task, đơn này sếp gán cho nhân viên nào,..
         public ICollection<ApplicationFormItem> ApplicationFormItems { get; set; } = []; //khi đăng ký nhiều người cùng 1 đơn
         public ICollection<HistoryApplicationForm> HistoryApplicationForms { get; set; } = []; //lịch sử của form, ai approved, ai tạo,...
-
-        //public LeaveRequest? Leave { get; set; }
-        //public MemoNotification? MemoNotification { get; set; }
-        //public OrgPosition? OrgPosition { get; set; }
-        //public OrgUnit? OrgUnit { get; set; }
-        //public ITForm? ITForm { get; set; }
-        //public Purchase? Purchase { get; set; }
     }
 }

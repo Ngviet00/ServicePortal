@@ -1,11 +1,15 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ServicePortals.Domain.Entities
 {
     [Table("system_configs")]
     public class SystemConfig
     {
-        public int? Id { get; set; }
+        [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public int Id { get; set; }
+
         public string? ConfigKey { get; set; }
         public string? ConfigValue { get; set; }
         public string? ValueType { get; set; }

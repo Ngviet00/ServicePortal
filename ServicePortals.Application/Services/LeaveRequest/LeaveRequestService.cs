@@ -55,588 +55,596 @@ namespace ServicePortals.Application.Services.LeaveRequest
         /// </summary>
         public async Task<object> Create(CreateLeaveRequest request)
         {
-            int orgPositionId = request?.OrgPositionId ?? 0;
+            return null;
+            //int orgPositionId = request?.OrgPositionId ?? 0;
 
-            if (orgPositionId <= 0)
-            {
-                throw new ValidationException(Global.UserNotSetInformation);
-            }
+            //if (orgPositionId <= 0)
+            //{
+            //    throw new ValidationException(Global.UserNotSetInformation);
+            //}
 
-            List<ApplicationFormItem> applicationFormItems = [];
-            List<Domain.Entities.LeaveRequest> leaveRequests = [];
-            List<string> userCodeReceiveEmail = [];
+            //List<ApplicationFormItem> applicationFormItems = [];
+            //List<Domain.Entities.LeaveRequest> leaveRequests = [];
+            //List<string> userCodeReceiveEmail = [];
 
-            var nextOrgPositionAndStatus = await GetNextOrgPositionAndStatusLeaveRequest(orgPositionId);
+            //var nextOrgPositionAndStatus = await GetNextOrgPositionAndStatusLeaveRequest(orgPositionId);
 
-            int nextOrgPositionId = nextOrgPositionAndStatus.nextOrgPositionId;
-            int status = nextOrgPositionAndStatus.status;
+            //int nextOrgPositionId = nextOrgPositionAndStatus.nextOrgPositionId;
+            //int status = nextOrgPositionAndStatus.status;
 
-            var newApplicationForm = new ApplicationForm
-            {
-                Id = Guid.NewGuid(),
-                Code = Helper.GenerateFormCode("LR"),
-                RequestTypeId = (int)RequestTypeEnum.LEAVE_REQUEST,
-                RequestStatusId = status,
-                UserCodeCreatedBy = request?.UserCodeCreated,
-                OrgPositionId = nextOrgPositionId,
-                CreatedBy = request?.CreatedBy,
-                CreatedAt = DateTimeOffset.Now
-            };
+            //var newApplicationForm = new ApplicationForm
+            //{
+            //    Id = Guid.NewGuid(),
+            //    Code = Helper.GenerateFormCode("LR"),
+            //    RequestTypeId = (int)RequestTypeEnum.LEAVE_REQUEST,
+            //    RequestStatusId = status,
+            //    UserCodeCreatedBy = request?.UserCodeCreated,
+            //    OrgPositionId = nextOrgPositionId,
+            //    CreatedBy = request?.CreatedBy,
+            //    CreatedAt = DateTimeOffset.Now
+            //};
 
-            var newHistoryApplicationForm = new HistoryApplicationForm
-            {
-                Id = Guid.NewGuid(),
-                ApplicationFormId = newApplicationForm.Id,
-                Action = "Created",
-                UserCodeAction = request?.UserCodeCreated,
-                ActionBy = request?.CreatedBy,
-                ActionAt = DateTimeOffset.Now,
-            };
+            //var newHistoryApplicationForm = new HistoryApplicationForm
+            //{
+            //    Id = Guid.NewGuid(),
+            //    ApplicationFormId = newApplicationForm.Id,
+            //    Action = "Created",
+            //    UserCodeAction = request?.UserCodeCreated,
+            //    ActionBy = request?.CreatedBy,
+            //    ActionAt = DateTimeOffset.Now,
+            //};
 
-            if (request?.CreateLeaveRequestDto.Count > 0) //dữ liệu nhập bằng tay
-            {
-                foreach (var leave in request.CreateLeaveRequestDto)
-                {
-                    userCodeReceiveEmail.Add(leave?.UserCode ?? "");
+            //if (request?.CreateLeaveRequestDto.Count > 0) //dữ liệu nhập bằng tay
+            //{
+            //    foreach (var leave in request.CreateLeaveRequestDto)
+            //    {
+            //        userCodeReceiveEmail.Add(leave?.UserCode ?? "");
 
-                    var newApplicationFormItem = new ApplicationFormItem
-                    {
-                        Id = Guid.NewGuid(),
-                        ApplicationFormId = newApplicationForm.Id,
-                        UserCode = leave?.UserCode,
-                        UserName = leave?.UserName,
-                        Status = true,
-                        CreatedAt = DateTimeOffset.Now
-                    };
+            //        var newApplicationFormItem = new ApplicationFormItem
+            //        {
+            //            Id = Guid.NewGuid(),
+            //            ApplicationFormId = newApplicationForm.Id,
+            //            UserCode = leave?.UserCode,
+            //            UserName = leave?.UserName,
+            //            Status = true,
+            //            CreatedAt = DateTimeOffset.Now
+            //        };
 
-                    applicationFormItems.Add(newApplicationFormItem);
+            //        applicationFormItems.Add(newApplicationFormItem);
 
-                    var newLeaveRequest = new Domain.Entities.LeaveRequest
-                    {
-                        Id = Guid.NewGuid(),
-                        ApplicationFormItemId = newApplicationFormItem.Id,
-                        UserCode = leave?.UserCode,
-                        UserName = leave?.UserName,
-                        DepartmentId = leave?.DepartmentId,
-                        Position = leave?.Position,
-                        FromDate = leave?.FromDate,
-                        ToDate = leave?.ToDate,
-                        TypeLeaveId = leave?.TypeLeaveId,
-                        TimeLeaveId = leave?.TimeLeaveId,
-                        Reason = leave?.Reason,
-                        CreatedAt = DateTimeOffset.Now
-                    };
+            //        var newLeaveRequest = new Domain.Entities.LeaveRequest
+            //        {
+            //            Id = Guid.NewGuid(),
+            //            ApplicationFormItemId = newApplicationFormItem.Id,
+            //            UserCode = leave?.UserCode,
+            //            UserName = leave?.UserName,
+            //            DepartmentId = leave?.DepartmentId,
+            //            Position = leave?.Position,
+            //            FromDate = leave?.FromDate,
+            //            ToDate = leave?.ToDate,
+            //            TypeLeaveId = leave?.TypeLeaveId,
+            //            TimeLeaveId = leave?.TimeLeaveId,
+            //            Reason = leave?.Reason,
+            //            CreatedAt = DateTimeOffset.Now
+            //        };
 
-                    if (leave?.Image != null)
-                    {
-                        using (var memoryStream = new MemoryStream())
-                        {
-                            await leave.Image.CopyToAsync(memoryStream);
-                            var imageData = memoryStream.ToArray();
+            //        if (leave?.Image != null)
+            //        {
+            //            using (var memoryStream = new MemoryStream())
+            //            {
+            //                await leave.Image.CopyToAsync(memoryStream);
+            //                var imageData = memoryStream.ToArray();
 
-                            newLeaveRequest.Image = imageData;
-                        }
-                    }
+            //                newLeaveRequest.Image = imageData;
+            //            }
+            //        }
 
-                    leaveRequests.Add(newLeaveRequest);
-                }
-            }
-            else //import bằng excel
-            {
-                var orgUnitDepartments = await _context.OrgUnits.Where(e => e.UnitId == (int)UnitEnum.Department).ToListAsync();
+            //        leaveRequests.Add(newLeaveRequest);
+            //    }
+            //}
+            //else //import bằng excel
+            //{
+            //    var orgUnitDepartments = await _context.OrgUnits.Where(e => e.UnitId == (int)UnitEnum.Department).ToListAsync();
 
-                using var workbook = new XLWorkbook(request?.File?.OpenReadStream());
-                var worksheet = workbook.Worksheet(1);
+            //    using var workbook = new XLWorkbook(request?.File?.OpenReadStream());
+            //    var worksheet = workbook.Worksheet(1);
 
-                var resultApplicationFormItemAndLeaveRequets = await ValidateExcel(worksheet, newApplicationForm.Id);
+            //    var resultApplicationFormItemAndLeaveRequets = await ValidateExcel(worksheet, newApplicationForm.Id);
 
-                applicationFormItems = resultApplicationFormItemAndLeaveRequets.applicationFormItems;
-                leaveRequests = resultApplicationFormItemAndLeaveRequets.leaveRequests;
-            }
+            //    applicationFormItems = resultApplicationFormItemAndLeaveRequets.applicationFormItems;
+            //    leaveRequests = resultApplicationFormItemAndLeaveRequets.leaveRequests;
+            //}
 
-            //transaction
-            using var transaction = await _context.Database.BeginTransactionAsync();
+            ////transaction
+            //using var transaction = await _context.Database.BeginTransactionAsync();
 
-            try
-            {
-                _context.ApplicationForms.Add(newApplicationForm);
-                _context.HistoryApplicationForms.Add(newHistoryApplicationForm);
-                _context.ApplicationFormItems.AddRange(applicationFormItems);
-                _context.LeaveRequests.AddRange(leaveRequests);
+            //try
+            //{
+            //    _context.ApplicationForms.Add(newApplicationForm);
+            //    _context.HistoryApplicationForms.Add(newHistoryApplicationForm);
+            //    _context.ApplicationFormItems.AddRange(applicationFormItems);
+            //    _context.LeaveRequests.AddRange(leaveRequests);
 
-                await _context.SaveChangesAsync();
-                await transaction.CommitAsync();
-            }
-            catch
-            {
-                await transaction.RollbackAsync();
-                throw new ValidationException("Server error!");
-            }
+            //    await _context.SaveChangesAsync();
+            //    await transaction.CommitAsync();
+            //}
+            //catch
+            //{
+            //    await transaction.RollbackAsync();
+            //    throw new ValidationException("Server error!");
+            //}
 
-            #region Send Email
+            //#region Send Email
 
-            userCodeReceiveEmail.Add(request?.EmailCreated ?? "");
+            //userCodeReceiveEmail.Add(request?.EmailCreated ?? "");
 
-            //gửi email cho người nộp đơn và người xin nghỉ
-            List<string> emailSendNoti = (List<string>)await _context.Database.GetDbConnection().QueryAsync<string>($@"
-                SELECT COALESCE(NULLIF(U.Email, ''), NV.NVEmail, '') AS Email FROM {Global.DbViClock}.dbo.tblNhanVien AS NV
-                LEFT JOIN {Global.DbWeb}.dbo.user_configs AS UC ON NV.NVMaNV = UC.UserCode 
-                LEFT JOIN {Global.DbWeb}.dbo.users AS U ON NV.NVMaNV = U.UserCode
-                WHERE NV.NVMaNV IN @UserCodes
-                AND (UC.UserCode IS NULL OR (UC.UserCode IS NOT NULL AND UC.[Key] = 'RECEIVE_MAIL_LEAVE_REQUEST' AND UC.Value = 'true'))
-                ", new { UserCodes = userCodeReceiveEmail.Distinct().ToList() });
+            ////gửi email cho người nộp đơn và người xin nghỉ
+            //List<string> emailSendNoti = (List<string>)await _context.Database.GetDbConnection().QueryAsync<string>($@"
+            //    SELECT COALESCE(NULLIF(U.Email, ''), NV.NVEmail, '') AS Email FROM {Global.DbViClock}.dbo.tblNhanVien AS NV
+            //    LEFT JOIN {Global.DbWeb}.dbo.user_configs AS UC ON NV.NVMaNV = UC.UserCode 
+            //    LEFT JOIN {Global.DbWeb}.dbo.users AS U ON NV.NVMaNV = U.UserCode
+            //    WHERE NV.NVMaNV IN @UserCodes
+            //    AND (UC.UserCode IS NULL OR (UC.UserCode IS NOT NULL AND UC.[Key] = 'RECEIVE_MAIL_LEAVE_REQUEST' AND UC.Value = 'true'))
+            //    ", new { UserCodes = userCodeReceiveEmail.Distinct().ToList() });
 
-            string urlView = $@"{_configuration["Setting:UrlFrontEnd"]}/leave/view/{newApplicationForm.Id}";
-            string urlApproval = $@"{_configuration["Setting:UrlFrontEnd"]}/leave/approval/{newApplicationForm.Id}";
+            //string urlView = $@"{_configuration["Setting:UrlFrontEnd"]}/leave/view/{newApplicationForm.Id}";
+            //string urlApproval = $@"{_configuration["Setting:UrlFrontEnd"]}/leave/approval/{newApplicationForm.Id}";
 
-            //gửi email cho người nộp đơn và người xin nghỉ
-            BackgroundJob.Enqueue<IEmailService>(job =>
-                job.SendEmailRequestHasBeenSent(
-                    emailSendNoti.ToList(),
-                    null,
-                    "Leave request has been submitted.",
-                    TemplateEmail.SendContentEmail("Leave request has been submitted.", urlView, newApplicationForm.Code),
-                    null,
-                    true
-                )
-            );
+            ////gửi email cho người nộp đơn và người xin nghỉ
+            //BackgroundJob.Enqueue<IEmailService>(job =>
+            //    job.SendEmailRequestHasBeenSent(
+            //        emailSendNoti.ToList(),
+            //        null,
+            //        "Leave request has been submitted.",
+            //        TemplateEmail.SendContentEmail("Leave request has been submitted.", urlView, newApplicationForm.Code),
+            //        null,
+            //        true
+            //    )
+            //);
 
-            //gửi email cho hr
-            if (status == (int)StatusApplicationFormEnum.WAIT_HR)
-            {
-                var permissionHrMngLeaveRequest = await _context.Permissions
-                    .Include(e => e.UserPermissions)
-                    .FirstOrDefaultAsync(e => e.Name == "leave_request.hr_management_leave_request");
+            ////gửi email cho hr
+            //if (status == (int)StatusApplicationFormEnum.WAIT_HR)
+            //{
+            //    var permissionHrMngLeaveRequest = await _context.Permissions
+            //        .Include(e => e.UserPermissions)
+            //        .FirstOrDefaultAsync(e => e.Name == "leave_request.hr_management_leave_request");
 
-                var hr = await _userService.GetMultipleUserViclockByOrgPositionId(-1, permissionHrMngLeaveRequest?.UserPermissions?.Select(e => e.UserCode ?? "")?.ToList());
+            //    var hr = await _userService.GetMultipleUserViclockByOrgPositionId(-1, permissionHrMngLeaveRequest?.UserPermissions?.Select(e => e.UserCode ?? "")?.ToList());
 
-                BackgroundJob.Enqueue<IEmailService>(job =>
-                    job.SendEmailRequestHasBeenSent(
-                        hr.Select(e => e.Email ?? "").ToList(),
-                        null,
-                        "Request for leave request approval",
-                        TemplateEmail.SendContentEmail("Request for leave request approval", urlApproval, newApplicationForm.Code),
-                        null,
-                        true
-                    )
-                );
-            }
-            else //gửi email cho người duyệt tiếp theo
-            {
-                var nextUserOrgPositions = await _userService.GetMultipleUserViclockByOrgPositionId(nextOrgPositionId);
+            //    BackgroundJob.Enqueue<IEmailService>(job =>
+            //        job.SendEmailRequestHasBeenSent(
+            //            hr.Select(e => e.Email ?? "").ToList(),
+            //            null,
+            //            "Request for leave request approval",
+            //            TemplateEmail.SendContentEmail("Request for leave request approval", urlApproval, newApplicationForm.Code),
+            //            null,
+            //            true
+            //        )
+            //    );
+            //}
+            //else //gửi email cho người duyệt tiếp theo
+            //{
+            //    var nextUserOrgPositions = await _userService.GetMultipleUserViclockByOrgPositionId(nextOrgPositionId);
 
-                BackgroundJob.Enqueue<IEmailService>(job =>
-                    job.SendEmailManyPeopleLeaveRequest(
-                        nextUserOrgPositions.Select(e => e.Email ?? "").ToList(),
-                        null,
-                        "Request for leave request approval",
-                        TemplateEmail.SendContentEmail("Request for leave request approval", urlApproval, newApplicationForm.Code),
-                        null,
-                        true
-                    )
-                );
-            }
+            //    BackgroundJob.Enqueue<IEmailService>(job =>
+            //        job.SendEmailManyPeopleLeaveRequest(
+            //            nextUserOrgPositions.Select(e => e.Email ?? "").ToList(),
+            //            null,
+            //            "Request for leave request approval",
+            //            TemplateEmail.SendContentEmail("Request for leave request approval", urlApproval, newApplicationForm.Code),
+            //            null,
+            //            true
+            //        )
+            //    );
+            //}
 
-            #endregion
+            //#endregion
 
-            return true;
+            //return true;
         }
 
         private async Task<(int nextOrgPositionId, int status)> GetNextOrgPositionAndStatusLeaveRequest(int orgPositionId, string type = "create", int? orgPositionIdApplicationForm = null) //type approval or create
         {
-            int nextOrgPositionId = 0;
-            int status = (int)StatusApplicationFormEnum.PENDING;
+            return (1,1);
+            //int nextOrgPositionId = 0;
+            //int status = (int)StatusApplicationFormEnum.PENDING;
 
-            var orgUnits = await _context.OrgUnits.Where(e => e.UnitId == (int)UnitEnum.Department).ToListAsync();
+            //var orgUnits = await _context.OrgUnits.Where(e => e.UnitId == (int)UnitEnum.Department).ToListAsync();
 
-            var approvalFlows = await _context.ApprovalFlows
-                .Where(e => e.RequestTypeId == (int)RequestTypeEnum.LEAVE_REQUEST && e.FromOrgPositionId == orgPositionId)
-                .FirstOrDefaultAsync();
+            //var approvalFlows = await _context.ApprovalFlows
+            //    .Where(e => e.RequestTypeId == (int)RequestTypeEnum.LEAVE_REQUEST && e.FromOrgPositionId == orgPositionId)
+            //    .FirstOrDefaultAsync();
 
-            var orgPosition = await _context.OrgPositions
-                .Include(e => e.Unit)
-                .FirstOrDefaultAsync(e => e.Id == orgPositionId) ?? throw new ValidationException(Global.UserNotSetInformation);
+            //var orgPosition = await _context.OrgPositions
+            //    .Include(e => e.Unit)
+            //    .FirstOrDefaultAsync(e => e.Id == orgPositionId) ?? throw new ValidationException(Global.UserNotSetInformation);
 
-            if (approvalFlows != null)
-            {
+            //if (approvalFlows != null)
+            //{
 
-            }
-            else if (approvalFlows == null)
-            {
-                //1. là general manager, 2 là trường hợp approval của manager thì gửi đến hr
-                if (
-                    orgPosition.UnitId == (int)UnitEnum.GM ||
-                    (type == "approved" && orgPositionIdApplicationForm != null && orgPositionIdApplicationForm == orgPositionId && orgPosition.UnitId == (int)UnitEnum.Manager)
-                )
-                {
-                    nextOrgPositionId = 0;
-                    status = (int)StatusApplicationFormEnum.WAIT_HR;
-                }
-                else
-                {
-                    nextOrgPositionId = orgPosition?.ParentOrgPositionId ?? 0;
-                    status = (int)StatusApplicationFormEnum.PENDING;
-                }
-            }
+            //}
+            //else if (approvalFlows == null)
+            //{
+            //    //1. là general manager, 2 là trường hợp approval của manager thì gửi đến hr
+            //    if (
+            //        orgPosition.UnitId == (int)UnitEnum.GM ||
+            //        (type == "approved" && orgPositionIdApplicationForm != null && orgPositionIdApplicationForm == orgPositionId && orgPosition.UnitId == (int)UnitEnum.Manager)
+            //    )
+            //    {
+            //        nextOrgPositionId = 0;
+            //        status = (int)StatusApplicationFormEnum.WAIT_HR;
+            //    }
+            //    else
+            //    {
+            //        nextOrgPositionId = orgPosition?.ParentOrgPositionId ?? 0;
+            //        status = (int)StatusApplicationFormEnum.PENDING;
+            //    }
+            //}
 
-            return (nextOrgPositionId, status);
+            //return (nextOrgPositionId, status);
         }
 
-        private async Task<(List<ApplicationFormItem> applicationFormItems, List<Domain.Entities.LeaveRequest> leaveRequests)> ValidateExcel(IXLWorksheet worksheet, Guid applicationFormId)
-        {
-            List<string> checkDepartments = [];
-            List<string> checkUserCodesCanLeaveRq = [];
+        //private async Task<(List<ApplicationFormItem> applicationFormItems, List<Domain.Entities.LeaveRequest> leaveRequests)> ValidateExcel(IXLWorksheet worksheet, Guid applicationFormId)
+        //{
+            //List<string> checkDepartments = [];
+            //List<string> checkUserCodesCanLeaveRq = [];
 
-            List<ApplicationFormItem> applicationFormItems = [];
-            List<Domain.Entities.LeaveRequest> leaveRequests = [];
+            //List<ApplicationFormItem> applicationFormItems = [];
+            //List<Domain.Entities.LeaveRequest> leaveRequests = [];
 
-            Helper.ValidateExcelHeader(worksheet, ["Mã nhân viên", "Họ tên", "Bộ phận", "Chức vụ", "Loại phép", "Thời gian nghỉ", "Nghỉ từ ngày", "Nghỉ đến ngày", "Lý do"]);
+            //Helper.ValidateExcelHeader(worksheet, ["Mã nhân viên", "Họ tên", "Bộ phận", "Chức vụ", "Loại phép", "Thời gian nghỉ", "Nghỉ từ ngày", "Nghỉ đến ngày", "Lý do"]);
 
-            var rows = (worksheet?.RangeUsed()?.RowsUsed().Skip(2)) ?? throw new ValidationException("Không có dữ liệu nào, kiểm tra lại file excel");
+            //var rows = (worksheet?.RangeUsed()?.RowsUsed().Skip(2)) ?? throw new ValidationException("Không có dữ liệu nào, kiểm tra lại file excel");
 
-            var orgUnitDepartments = await _context.OrgUnits.Where(e => e.UnitId == (int)UnitEnum.Department).ToListAsync();
-            var timeLeaves = await _context.TimeLeaves.ToListAsync();
-            var typeLeaves = await _context.TypeLeaves.ToListAsync();
+            //var orgUnitDepartments = await _context.OrgUnits.Where(e => e.UnitId == (int)UnitEnum.Department).ToListAsync();
+            //var timeLeaves = await _context.TimeLeaves.ToListAsync();
+            //var typeLeaves = await _context.TypeLeaves.ToListAsync();
 
-            int currentRow = 3;
+            //int currentRow = 3;
 
-            foreach (var row in rows)
-            {
-                string userCode = row.Cell(1).GetValue<string>();
-                string userName = row.Cell(2).GetValue<string>();
-                string department = row.Cell(3).GetValue<string>();
-                string position = row.Cell(4).GetValue<string>();
-                string typeLeave = row.Cell(5).GetValue<string>();
-                string timeLeave = row.Cell(6).GetValue<string>();
-                string strFromDate = row.Cell(7).GetValue<string>();
-                string strToDate = row.Cell(7).GetValue<string>();
-                DateTimeOffset fromDate;
-                DateTimeOffset toDate;
-                string reason = row.Cell(9).GetValue<string>();
+            //foreach (var row in rows)
+            //{
+            //    string userCode = row.Cell(1).GetValue<string>();
+            //    string userName = row.Cell(2).GetValue<string>();
+            //    string department = row.Cell(3).GetValue<string>();
+            //    string position = row.Cell(4).GetValue<string>();
+            //    string typeLeave = row.Cell(5).GetValue<string>();
+            //    string timeLeave = row.Cell(6).GetValue<string>();
+            //    string strFromDate = row.Cell(7).GetValue<string>();
+            //    string strToDate = row.Cell(7).GetValue<string>();
+            //    DateTimeOffset fromDate;
+            //    DateTimeOffset toDate;
+            //    string reason = row.Cell(9).GetValue<string>();
 
-                bool isEmptyRow = string.IsNullOrWhiteSpace(userCode)
-                    && string.IsNullOrWhiteSpace(userName)
-                    && string.IsNullOrWhiteSpace(department)
-                    && string.IsNullOrWhiteSpace(position)
-                    && string.IsNullOrWhiteSpace(typeLeave)
-                    && string.IsNullOrWhiteSpace(timeLeave)
-                    && string.IsNullOrWhiteSpace(strFromDate)
-                    && string.IsNullOrWhiteSpace(strToDate)
-                    && string.IsNullOrWhiteSpace(reason);
+            //    bool isEmptyRow = string.IsNullOrWhiteSpace(userCode)
+            //        && string.IsNullOrWhiteSpace(userName)
+            //        && string.IsNullOrWhiteSpace(department)
+            //        && string.IsNullOrWhiteSpace(position)
+            //        && string.IsNullOrWhiteSpace(typeLeave)
+            //        && string.IsNullOrWhiteSpace(timeLeave)
+            //        && string.IsNullOrWhiteSpace(strFromDate)
+            //        && string.IsNullOrWhiteSpace(strToDate)
+            //        && string.IsNullOrWhiteSpace(reason);
 
-                if (isEmptyRow)
-                {
-                    break;
-                }
+            //    if (isEmptyRow)
+            //    {
+            //        break;
+            //    }
 
-                var errors = new List<string>();
+            //    var errors = new List<string>();
 
-                if (string.IsNullOrWhiteSpace(userCode))
-                    errors.Add("Mã nhân viên không được để trống");
+            //    if (string.IsNullOrWhiteSpace(userCode))
+            //        errors.Add("Mã nhân viên không được để trống");
 
-                if (string.IsNullOrWhiteSpace(userName))
-                    errors.Add("Họ tên không được để trống");
+            //    if (string.IsNullOrWhiteSpace(userName))
+            //        errors.Add("Họ tên không được để trống");
 
-                if (string.IsNullOrWhiteSpace(department))
-                    errors.Add("Phòng ban không được để trống");
+            //    if (string.IsNullOrWhiteSpace(department))
+            //        errors.Add("Phòng ban không được để trống");
 
-                if (string.IsNullOrWhiteSpace(position))
-                    errors.Add("Chức vụ không được để trống");
+            //    if (string.IsNullOrWhiteSpace(position))
+            //        errors.Add("Chức vụ không được để trống");
 
-                if (string.IsNullOrWhiteSpace(typeLeave))
-                    errors.Add("Loại nghỉ phép không được để trống");
+            //    if (string.IsNullOrWhiteSpace(typeLeave))
+            //        errors.Add("Loại nghỉ phép không được để trống");
 
-                if (string.IsNullOrWhiteSpace(timeLeave))
-                    errors.Add("Số giờ/ngày nghỉ không được để trống");
+            //    if (string.IsNullOrWhiteSpace(timeLeave))
+            //        errors.Add("Số giờ/ngày nghỉ không được để trống");
 
-                if (!DateTimeOffset.TryParse(row.Cell(7).GetValue<string>(), out fromDate))
-                    errors.Add("Ngày bắt đầu không hợp lệ");
+            //    if (!DateTimeOffset.TryParse(row.Cell(7).GetValue<string>(), out fromDate))
+            //        errors.Add("Ngày bắt đầu không hợp lệ");
 
-                if (!DateTimeOffset.TryParse(row.Cell(8).GetValue<string>(), out toDate))
-                    errors.Add("Ngày kết thúc không hợp lệ");
+            //    if (!DateTimeOffset.TryParse(row.Cell(8).GetValue<string>(), out toDate))
+            //        errors.Add("Ngày kết thúc không hợp lệ");
 
-                if (string.IsNullOrWhiteSpace(reason))
-                    errors.Add("Lý do không được để trống");
+            //    if (string.IsNullOrWhiteSpace(reason))
+            //        errors.Add("Lý do không được để trống");
 
-                if (errors.Any())
-                {
-                    throw new ValidationException($"Lỗi ở dòng {currentRow}: {string.Join("; ", errors)}");
-                }
+            //    if (errors.Any())
+            //    {
+            //        throw new ValidationException($"Lỗi ở dòng {currentRow}: {string.Join("; ", errors)}");
+            //    }
 
-                checkUserCodesCanLeaveRq.Add(userCode);
+            //    checkUserCodesCanLeaveRq.Add(userCode);
 
-                int departmentId = orgUnitDepartments?.FirstOrDefault(e => e.Name == department)?.Id
-                    ?? throw new ValidationException($"Lỗi ở dòng {currentRow}, phòng ban không chính xác");
+            //    int departmentId = orgUnitDepartments?.FirstOrDefault(e => e.Name == department)?.Id
+            //        ?? throw new ValidationException($"Lỗi ở dòng {currentRow}, phòng ban không chính xác");
 
-                int timeLeaveId = timeLeaves?.FirstOrDefault(e => e.Id == (timeLeave == "CN" ? 1 : timeLeave == "S" ? 2 : 3))?.Id
-                    ?? throw new ValidationException($"Lỗi ở dòng {currentRow}, thời gian nghỉ không chính xác");
+            //    int timeLeaveId = timeLeaves?.FirstOrDefault(e => e.Id == (timeLeave == "CN" ? 1 : timeLeave == "S" ? 2 : 3))?.Id
+            //        ?? throw new ValidationException($"Lỗi ở dòng {currentRow}, thời gian nghỉ không chính xác");
 
-                int typeLeaveId = typeLeaves?.FirstOrDefault(e => e.Code?.ToLower() == typeLeave.ToLower())?.Id
-                    ?? throw new ValidationException($"Lỗi ở dòng {currentRow}, loại nghỉ phép không chính xác");
+            //    int typeLeaveId = typeLeaves?.FirstOrDefault(e => e.Code?.ToLower() == typeLeave.ToLower())?.Id
+            //        ?? throw new ValidationException($"Lỗi ở dòng {currentRow}, loại nghỉ phép không chính xác");
 
-                var newApplicationFormItem = new ApplicationFormItem
-                {
-                    Id = Guid.NewGuid(),
-                    ApplicationFormId = applicationFormId,
-                    UserCode = userCode,
-                    UserName = userName,
-                    Status = true,
-                    CreatedAt = DateTimeOffset.Now
-                };
+            //    var newApplicationFormItem = new ApplicationFormItem
+            //    {
+            //        Id = Guid.NewGuid(),
+            //        ApplicationFormId = applicationFormId,
+            //        UserCode = userCode,
+            //        UserName = userName,
+            //        Status = true,
+            //        CreatedAt = DateTimeOffset.Now
+            //    };
 
-                applicationFormItems.Add(newApplicationFormItem);
+            //    applicationFormItems.Add(newApplicationFormItem);
 
-                var newLeaveRequest = new Domain.Entities.LeaveRequest
-                {
-                    Id = Guid.NewGuid(),
-                    ApplicationFormItemId = newApplicationFormItem.Id,
-                    UserCode = userCode,
-                    UserName = userName,
-                    DepartmentId = departmentId,
-                    Position = position,
-                    FromDate = fromDate,
-                    ToDate = toDate,
-                    TypeLeaveId = typeLeaveId,
-                    TimeLeaveId = timeLeaveId,
-                    Reason = reason,
-                    CreatedAt = DateTimeOffset.Now
-                };
+            //    var newLeaveRequest = new Domain.Entities.LeaveRequest
+            //    {
+            //        Id = Guid.NewGuid(),
+            //        ApplicationFormItemId = newApplicationFormItem.Id,
+            //        UserCode = userCode,
+            //        UserName = userName,
+            //        DepartmentId = departmentId,
+            //        Position = position,
+            //        FromDate = fromDate,
+            //        ToDate = toDate,
+            //        TypeLeaveId = typeLeaveId,
+            //        TimeLeaveId = timeLeaveId,
+            //        Reason = reason,
+            //        CreatedAt = DateTimeOffset.Now
+            //    };
 
-                leaveRequests.Add(newLeaveRequest);
+            //    leaveRequests.Add(newLeaveRequest);
 
-                currentRow++;
-            }
+            //    currentRow++;
+            //}
 
-            //check xem co ton tai khong
-            //checkUserCodesCanLeaveRq
-            return (applicationFormItems, leaveRequests);
-        }
+            ////check xem co ton tai khong
+            ////checkUserCodesCanLeaveRq
+            //return (applicationFormItems, leaveRequests);
+        //}
 
         public async Task<PagedResults<MyLeaveRequestResponse>> GetMyLeaveRequest(MyLeaveRequest request)
         {
-            var parameters = new DynamicParameters();
+            return null;
+            //var parameters = new DynamicParameters();
 
-            parameters.Add("@Page", request.Page, DbType.Int32, ParameterDirection.Input);
-            parameters.Add("@PageSize", request.PageSize, DbType.Int32, ParameterDirection.Input);
-            parameters.Add("@UserCode", request.UserCode, DbType.String, ParameterDirection.Input);
-            parameters.Add("@Status", request.Status, DbType.Int32, ParameterDirection.Input);
-            parameters.Add("@TotalRecords", dbType: DbType.Int32, direction: ParameterDirection.Output);
+            //parameters.Add("@Page", request.Page, DbType.Int32, ParameterDirection.Input);
+            //parameters.Add("@PageSize", request.PageSize, DbType.Int32, ParameterDirection.Input);
+            //parameters.Add("@UserCode", request.UserCode, DbType.String, ParameterDirection.Input);
+            //parameters.Add("@Status", request.Status, DbType.Int32, ParameterDirection.Input);
+            //parameters.Add("@TotalRecords", dbType: DbType.Int32, direction: ParameterDirection.Output);
 
-            var results = await _context.Database.GetDbConnection()
-                .QueryAsync<MyLeaveRequestResponse>(
-                    "dbo.Leave_GET_GetMyLeave",
-                    parameters,
-                    commandType: CommandType.StoredProcedure
-            );
+            //var results = await _context.Database.GetDbConnection()
+            //    .QueryAsync<MyLeaveRequestResponse>(
+            //        "dbo.Leave_GET_GetMyLeave",
+            //        parameters,
+            //        commandType: CommandType.StoredProcedure
+            //);
 
-            int totalRecords = parameters.Get<int>("@TotalRecords");
-            int totalPages = (int)Math.Ceiling((double)totalRecords / request.PageSize);
+            //int totalRecords = parameters.Get<int>("@TotalRecords");
+            //int totalPages = (int)Math.Ceiling((double)totalRecords / request.PageSize);
 
-            return new PagedResults<MyLeaveRequestResponse>
-            {
-                Data = (List<MyLeaveRequestResponse>)results,
-                TotalItems = totalRecords,
-                TotalPages = totalPages
-            };
+            //return new PagedResults<MyLeaveRequestResponse>
+            //{
+            //    Data = (List<MyLeaveRequestResponse>)results,
+            //    TotalItems = totalRecords,
+            //    TotalPages = totalPages
+            //};
         }
 
         public async Task<PagedResults<MyLeaveRequestRegisteredResponse>> GetMyLeaveRequestRegistered(MyLeaveRequestRegistered request)
         {
-            var query = _context.ApplicationForms.AsQueryable().Where(e => e.UserCodeCreatedBy == request.UserCode && e.DeletedAt == null && e.RequestTypeId == (int)RequestTypeEnum.LEAVE_REQUEST);
+            return null;
+            //var query = _context.ApplicationForms.AsQueryable().Where(e => e.UserCodeCreatedBy == request.UserCode && e.DeletedAt == null && e.RequestTypeId == (int)RequestTypeEnum.LEAVE_REQUEST);
 
-            var totalItem = await query.CountAsync();
+            //var totalItem = await query.CountAsync();
 
-            var results = await query
-                .OrderByDescending(e => e.CreatedAt)
-                .Include(e => e.RequestStatus)
-                .Include(e => e.RequestType)
-                .Select(x => new MyLeaveRequestRegisteredResponse
-                {
-                    Id = x.Id,
-                    Code = x.Code,
-                    CreatedBy = x.CreatedBy,
-                    CreatedAt = x.CreatedAt,
-                    RequestStatus = x.RequestStatus,
-                    RequestType = x.RequestType
-                })
-                .ToListAsync();
+            //var results = await query
+            //    .OrderByDescending(e => e.CreatedAt)
+            //    .Include(e => e.RequestStatus)
+            //    .Include(e => e.RequestType)
+            //    .Select(x => new MyLeaveRequestRegisteredResponse
+            //    {
+            //        Id = x.Id,
+            //        Code = x.Code,
+            //        CreatedBy = x.CreatedBy,
+            //        CreatedAt = x.CreatedAt,
+            //        RequestStatus = x.RequestStatus,
+            //        RequestType = x.RequestType
+            //    })
+            //    .ToListAsync();
 
-            int totalPages = (int)Math.Ceiling((double)totalItem / request.PageSize);
+            //int totalPages = (int)Math.Ceiling((double)totalItem / request.PageSize);
 
-            return new PagedResults<MyLeaveRequestRegisteredResponse>
-            {
-                Data = results,
-                TotalItems = totalItem,
-                TotalPages = totalPages
-            };
+            //return new PagedResults<MyLeaveRequestRegisteredResponse>
+            //{
+            //    Data = results,
+            //    TotalItems = totalItem,
+            //    TotalPages = totalPages
+            //};
         }
 
         public async Task<object> DeleteApplicationFormLeave(Guid applicationFormId)
         {
-            var now = DateTimeOffset.Now;
+            return null;
+            //var now = DateTimeOffset.Now;
 
-            await _context.LeaveRequests
-                .Where(lr => _context.ApplicationFormItems
-                    .Where(afi => afi.ApplicationFormId == applicationFormId)
-                    .Select(afi => afi.Id)
-                    .Contains(lr.ApplicationFormItemId ?? Guid.Empty))
-                .ExecuteUpdateAsync(s => s.SetProperty(lr => lr.DeletedAt, now));
+            //await _context.LeaveRequests
+            //    .Where(lr => _context.ApplicationFormItems
+            //        .Where(afi => afi.ApplicationFormId == applicationFormId)
+            //        .Select(afi => afi.Id)
+            //        .Contains(lr.ApplicationFormItemId ?? Guid.Empty))
+            //    .ExecuteUpdateAsync(s => s.SetProperty(lr => lr.DeletedAt, now));
 
-            await _context.ApplicationFormItems
-                .Where(afi => afi.ApplicationFormId == applicationFormId)
-                .ExecuteUpdateAsync(s => s.SetProperty(afi => afi.DeletedAt, now));
+            //await _context.ApplicationFormItems
+            //    .Where(afi => afi.ApplicationFormId == applicationFormId)
+            //    .ExecuteUpdateAsync(s => s.SetProperty(afi => afi.DeletedAt, now));
 
-            await _context.ApplicationForms
-                .Where(af => af.Id == applicationFormId)
-                .ExecuteUpdateAsync(s => s.SetProperty(af => af.DeletedAt, now));
+            //await _context.ApplicationForms
+            //    .Where(af => af.Id == applicationFormId)
+            //    .ExecuteUpdateAsync(s => s.SetProperty(af => af.DeletedAt, now));
 
-            return true;
+            //return true;
         }
 
         public async Task<List<Domain.Entities.LeaveRequest>> GetListLeaveToUpdate(Guid Id)
         {
-            return await _context.LeaveRequests
-                .Include(e => e.OrgUnit)
-                .Where(e => e.ApplicationFormItem != null && (e.Id == Id || e.ApplicationFormItem.ApplicationFormId == Id))
-                .ToListAsync();
+            return null;
+            //return await _context.LeaveRequests
+            //    .Include(e => e.OrgUnit)
+            //    .Where(e => e.ApplicationFormItem != null && (e.Id == Id || e.ApplicationFormItem.ApplicationFormId == Id))
+            //    .ToListAsync();
         }
 
         public async Task<object> Update(Guid id, List<CreateLeaveRequestDto> listLeaveRequests)
         {
-            var applicationFormId = id;
+            return null;
+            //var applicationFormId = id;
 
-            //delete
-            var leaveDeletes = await _context.LeaveRequests
-                .Include(e => e.ApplicationFormItem)
-                .Where(e => e.ApplicationFormItem != null && e.ApplicationFormItem.ApplicationFormId == applicationFormId && !listLeaveRequests.Select(e => e.Id).Contains(e.Id))
-                .ToListAsync();
+            ////delete
+            //var leaveDeletes = await _context.LeaveRequests
+            //    .Include(e => e.ApplicationFormItem)
+            //    .Where(e => e.ApplicationFormItem != null && e.ApplicationFormItem.ApplicationFormId == applicationFormId && !listLeaveRequests.Select(e => e.Id).Contains(e.Id))
+            //    .ToListAsync();
 
-            await _context.ApplicationFormItems
-                .Where(afi => leaveDeletes.Select(l => l.ApplicationFormItemId).Contains(afi.Id))
-                .ExecuteUpdateAsync(s => s.SetProperty(afi => afi.DeletedAt, DateTimeOffset.Now));
+            //await _context.ApplicationFormItems
+            //    .Where(afi => leaveDeletes.Select(l => l.ApplicationFormItemId).Contains(afi.Id))
+            //    .ExecuteUpdateAsync(s => s.SetProperty(afi => afi.DeletedAt, DateTimeOffset.Now));
 
-            await _context.LeaveRequests
-                .Where(e => leaveDeletes.Select(l => l.Id).Contains(e.Id))
-                .ExecuteUpdateAsync(s => s.SetProperty(afi => afi.DeletedAt, DateTimeOffset.Now));
+            //await _context.LeaveRequests
+            //    .Where(e => leaveDeletes.Select(l => l.Id).Contains(e.Id))
+            //    .ExecuteUpdateAsync(s => s.SetProperty(afi => afi.DeletedAt, DateTimeOffset.Now));
 
-            //update
-            var existingLeaves = await _context.LeaveRequests.Where(l => listLeaveRequests.Select(u => u.Id).Contains(l.Id)).ToListAsync();
+            ////update
+            //var existingLeaves = await _context.LeaveRequests.Where(l => listLeaveRequests.Select(u => u.Id).Contains(l.Id)).ToListAsync();
 
-            foreach (var itemUpdateLeave in listLeaveRequests)
-            {
-                var leave = existingLeaves.FirstOrDefault(x => x.Id == itemUpdateLeave.Id);
+            //foreach (var itemUpdateLeave in listLeaveRequests)
+            //{
+            //    var leave = existingLeaves.FirstOrDefault(x => x.Id == itemUpdateLeave.Id);
 
-                if (leave != null)
-                {
-                    leave.Position = itemUpdateLeave.Position;
-                    leave.FromDate = itemUpdateLeave.FromDate;
-                    leave.ToDate = itemUpdateLeave.ToDate;
-                    leave.TypeLeaveId = itemUpdateLeave.TypeLeaveId;
-                    leave.TimeLeaveId = itemUpdateLeave.TimeLeaveId;
-                    leave.Reason = itemUpdateLeave.Reason;
-                    leave.UpdateAt = DateTimeOffset.Now;
+            //    if (leave != null)
+            //    {
+            //        leave.Position = itemUpdateLeave.Position;
+            //        leave.FromDate = itemUpdateLeave.FromDate;
+            //        leave.ToDate = itemUpdateLeave.ToDate;
+            //        leave.TypeLeaveId = itemUpdateLeave.TypeLeaveId;
+            //        leave.TimeLeaveId = itemUpdateLeave.TimeLeaveId;
+            //        leave.Reason = itemUpdateLeave.Reason;
+            //        leave.UpdateAt = DateTimeOffset.Now;
 
-                    _context.LeaveRequests.Update(leave);
-                }
-                else //add new
-                {
-                    var newApplicationFormItem = new ApplicationFormItem
-                    {
-                        Id = Guid.NewGuid(),
-                        ApplicationFormId = applicationFormId,
-                        UserCode = itemUpdateLeave?.UserCode,
-                        UserName = itemUpdateLeave?.UserName,
-                        Status = true,
-                        CreatedAt = DateTimeOffset.Now
-                    };
+            //        _context.LeaveRequests.Update(leave);
+            //    }
+            //    else //add new
+            //    {
+            //        var newApplicationFormItem = new ApplicationFormItem
+            //        {
+            //            Id = Guid.NewGuid(),
+            //            ApplicationFormId = applicationFormId,
+            //            UserCode = itemUpdateLeave?.UserCode,
+            //            UserName = itemUpdateLeave?.UserName,
+            //            Status = true,
+            //            CreatedAt = DateTimeOffset.Now
+            //        };
 
-                    var newLeave = new Domain.Entities.LeaveRequest
-                    {
-                        Id = Guid.NewGuid(),
-                        ApplicationFormItemId = newApplicationFormItem.Id,
-                        UserCode = itemUpdateLeave?.UserCode,
-                        UserName = itemUpdateLeave?.UserName,
-                        DepartmentId = itemUpdateLeave?.DepartmentId,
-                        Position = itemUpdateLeave?.Position,
-                        FromDate = itemUpdateLeave?.FromDate,
-                        ToDate = itemUpdateLeave?.ToDate,
-                        TypeLeaveId = itemUpdateLeave?.TypeLeaveId,
-                        TimeLeaveId = itemUpdateLeave?.TimeLeaveId,
-                        Reason = itemUpdateLeave?.Reason,
-                        CreatedAt = DateTimeOffset.Now
-                    };
-                    _context.ApplicationFormItems.Add(newApplicationFormItem);
-                    _context.LeaveRequests.Add(newLeave);
-                }
-            }
+            //        var newLeave = new Domain.Entities.LeaveRequest
+            //        {
+            //            Id = Guid.NewGuid(),
+            //            ApplicationFormItemId = newApplicationFormItem.Id,
+            //            UserCode = itemUpdateLeave?.UserCode,
+            //            UserName = itemUpdateLeave?.UserName,
+            //            DepartmentId = itemUpdateLeave?.DepartmentId,
+            //            Position = itemUpdateLeave?.Position,
+            //            FromDate = itemUpdateLeave?.FromDate,
+            //            ToDate = itemUpdateLeave?.ToDate,
+            //            TypeLeaveId = itemUpdateLeave?.TypeLeaveId,
+            //            TimeLeaveId = itemUpdateLeave?.TimeLeaveId,
+            //            Reason = itemUpdateLeave?.Reason,
+            //            CreatedAt = DateTimeOffset.Now
+            //        };
+            //        _context.ApplicationFormItems.Add(newApplicationFormItem);
+            //        _context.LeaveRequests.Add(newLeave);
+            //    }
+            //}
 
-            await _context.SaveChangesAsync();
+            //await _context.SaveChangesAsync();
 
-            return true;
+            //return true;
         }
 
         public async Task<ViewDetailLeaveRequestWithHistoryResponse?> ViewDetailLeaveRequestWithHistory(Guid Id)
         {
-            var leaveRequest = await _context.LeaveRequests
-                .Include(e => e.TimeLeave).Include(e => e.TypeLeave).Include(e => e.ApplicationFormItem).Include(e => e.OrgUnit)
-                .FirstOrDefaultAsync(e => e.Id == Id) ?? throw new NotFoundException("Leave request not found");
+            return null;
+            //var leaveRequest = await _context.LeaveRequests
+            //    .Include(e => e.TimeLeave).Include(e => e.TypeLeave).Include(e => e.ApplicationFormItem).Include(e => e.OrgUnit)
+            //    .FirstOrDefaultAsync(e => e.Id == Id) ?? throw new NotFoundException("Leave request not found");
 
-            var applicationFormId = leaveRequest?.ApplicationFormItem?.ApplicationFormId;
+            //var applicationFormId = leaveRequest?.ApplicationFormItem?.ApplicationFormId;
 
-            if (leaveRequest != null)
-            {
-                leaveRequest.ApplicationFormItem = null;
-            }
+            //if (leaveRequest != null)
+            //{
+            //    leaveRequest.ApplicationFormItem = null;
+            //}
 
-            var applicationForm = await _context.ApplicationForms
-                .Select(x => new ApplicationForm
-                {
-                    Id = x.Id,
-                    Code = x.Code,
-                    RequestTypeId = x.RequestTypeId,
-                    RequestStatusId = x.RequestStatusId,
-                    OrgPositionId = x.OrgPositionId,
-                    UserCodeCreatedBy = x.UserCodeCreatedBy,
-                    CreatedBy =  x.CreatedBy,
-                    Note = x.Note,
-                    Step = x.Step,
-                    MetaData = x.MetaData,
-                    CreatedAt = x.CreatedAt,
-                    HistoryApplicationForms = x.HistoryApplicationForms.Select(h => new HistoryApplicationForm
-                    {
-                        Id = h.Id,
-                        ApplicationFormId = h.ApplicationFormId,
-                        Note = h.Note,
-                        Action = h.Action,
-                        ActionBy = h.ActionBy,
-                        ActionAt = h.ActionAt
-                    })
-                    .ToList()
-                })
-                .FirstOrDefaultAsync(e => e.Id == applicationFormId);
+            //var applicationForm = await _context.ApplicationForms
+            //    .Select(x => new ApplicationForm
+            //    {
+            //        Id = x.Id,
+            //        Code = x.Code,
+            //        RequestTypeId = x.RequestTypeId,
+            //        RequestStatusId = x.RequestStatusId,
+            //        OrgPositionId = x.OrgPositionId,
+            //        UserCodeCreatedBy = x.UserCodeCreatedBy,
+            //        CreatedBy =  x.CreatedBy,
+            //        Note = x.Note,
+            //        Step = x.Step,
+            //        MetaData = x.MetaData,
+            //        CreatedAt = x.CreatedAt,
+            //        HistoryApplicationForms = x.HistoryApplicationForms.Select(h => new HistoryApplicationForm
+            //        {
+            //            Id = h.Id,
+            //            ApplicationFormId = h.ApplicationFormId,
+            //            Note = h.Note,
+            //            Action = h.Action,
+            //            ActionBy = h.ActionBy,
+            //            ActionAt = h.ActionAt
+            //        })
+            //        .ToList()
+            //    })
+            //    .FirstOrDefaultAsync(e => e.Id == applicationFormId);
 
-            var result = new ViewDetailLeaveRequestWithHistoryResponse
-            {
-                Id = leaveRequest?.Id,
-                ApplicationFormItemId = leaveRequest?.ApplicationFormItemId,
-                UserCode = leaveRequest?.UserCode,
-                UserName = leaveRequest?.UserName,
-                DepartmentId = leaveRequest?.DepartmentId,
-                Position = leaveRequest?.Position,
-                FromDate = leaveRequest?.FromDate,
-                ToDate = leaveRequest?.ToDate,
-                TypeLeaveId = leaveRequest?.TypeLeaveId,
-                TimeLeaveId = leaveRequest?.TimeLeaveId,
-                Reason = leaveRequest?.Reason,
-                NoteOfHR = leaveRequest?.NoteOfHR,
-                CreatedAt = leaveRequest?.CreatedAt,
-                OrgUnit = leaveRequest?.OrgUnit,
-                TimeLeave = leaveRequest?.TimeLeave,
-                TypeLeave = leaveRequest?.TypeLeave,
-                ApplicationForm = applicationForm
-            };
+            //var result = new ViewDetailLeaveRequestWithHistoryResponse
+            //{
+            //    Id = leaveRequest?.Id,
+            //    ApplicationFormItemId = leaveRequest?.ApplicationFormItemId,
+            //    UserCode = leaveRequest?.UserCode,
+            //    UserName = leaveRequest?.UserName,
+            //    DepartmentId = leaveRequest?.DepartmentId,
+            //    Position = leaveRequest?.Position,
+            //    FromDate = leaveRequest?.FromDate,
+            //    ToDate = leaveRequest?.ToDate,
+            //    TypeLeaveId = leaveRequest?.TypeLeaveId,
+            //    TimeLeaveId = leaveRequest?.TimeLeaveId,
+            //    Reason = leaveRequest?.Reason,
+            //    NoteOfHR = leaveRequest?.NoteOfHR,
+            //    CreatedAt = leaveRequest?.CreatedAt,
+            //    OrgUnit = leaveRequest?.OrgUnit,
+            //    TimeLeave = leaveRequest?.TimeLeave,
+            //    TypeLeave = leaveRequest?.TypeLeave,
+            //    ApplicationForm = applicationForm
+            //};
 
-            return result;
+            //return result;
         }
 
         public Task<Domain.Entities.LeaveRequest> GetById(Guid id)

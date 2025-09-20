@@ -73,11 +73,11 @@ namespace ServicePortal.Controllers.MemoNotification
             return Ok(new BaseResponse<object>(200, "success", result));
         }
 
-        [HttpDelete("{id}")]
+        [HttpDelete("{applicationFormCode}")]
         [RoleOrPermission("HR", "union", "IT", "memo_notification.create")]
-        public async Task<IActionResult> Delete(Guid id)
+        public async Task<IActionResult> Delete(string applicationFormCode)
         {
-            var result = await _memoNotificationService.Delete(id);
+            var result = await _memoNotificationService.Delete(applicationFormCode);
 
             return Ok(new BaseResponse<object>(200, "success", result));
         }

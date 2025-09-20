@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 
 namespace ServicePortals.Domain.Entities
@@ -7,11 +8,16 @@ namespace ServicePortals.Domain.Entities
     public class User
     {
         public Guid Id { get; set; }
+
+        [MaxLength(30)]
         public string? UserCode { get; set; }
         public string? Password { get; set; }
-        public byte? IsChangePassword { get; set; }
-        public byte? IsActive { get; set; }
+        public bool IsChangePassword { get; set; } = false;
+        public bool IsActive { get; set; } = true;
+
+        [MaxLength(50)]
         public string? Email { get; set; }
+        [MaxLength(50)]
         public string? Phone { get; set; }
         public DateTimeOffset? DateOfBirth { get; set; }
         public DateTimeOffset? DeletedAt { get; set; }

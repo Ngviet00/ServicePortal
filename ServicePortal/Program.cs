@@ -30,8 +30,6 @@ using ServicePortals.Application.Services.OrgUnit;
 using Microsoft.OpenApi.Models;
 using ServicePortals.Application.Interfaces.SystemConfig;
 using ServicePortals.Application.Services.SystemConfig;
-using ServicePortals.Application.Interfaces.DelegatedTemp;
-using ServicePortals.Application.Services.DelegatedTemp;
 using ServicePortals.Application.Services.Role;
 using ServicePortals.Application.Services.User;
 using ServicePortals.Application.Services.MemoNotification;
@@ -52,7 +50,6 @@ using ServicePortals.Application.Interfaces.CostCenter;
 using ServicePortals.Application.Services.CostCenter;
 using ServicePortals.Application.Interfaces.Purchase;
 using ServicePortals.Application.Services.Purchase;
-using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
 
 namespace ServicePortal
 {
@@ -146,8 +143,6 @@ namespace ServicePortal
             builder.Services.AddScoped<IApprovalFlowService, ApprovalFlowService>();
 
             builder.Services.AddScoped<ISystemConfigService, SystemConfigService>();
-
-            builder.Services.AddScoped<IDelegatedTempService, DelegatedTempService>();
 
             builder.Services.AddScoped<IPermissionService, PermissionService>();
 
