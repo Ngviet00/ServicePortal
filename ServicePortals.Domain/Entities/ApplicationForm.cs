@@ -27,7 +27,7 @@ namespace ServicePortals.Domain.Entities
         [MaxLength(50)]
         public string? UserNameCreatedForm { get; set; } //tên người tạo đơn
 
-        public int DepartmentId { get; set; } //cho việc filter, department id của người tạo đơn
+        public int? DepartmentId { get; set; } //cho việc filter, department id của người tạo đơn
         public string? Note { get; set; }
         public int Step { get; set; }
         public string? MetaData { get; set; } //type json

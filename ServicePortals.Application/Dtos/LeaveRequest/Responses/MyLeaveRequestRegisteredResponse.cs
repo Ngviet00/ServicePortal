@@ -4,9 +4,9 @@ namespace ServicePortals.Application.Dtos.LeaveRequest.Responses
 {
     public class MyLeaveRequestRegisteredResponse
     {
-        public Guid Id { get;set; }
+        public long Id { get;set; }
         public string? Code { get;set; }
-        public string? CreatedBy { get;set; }
+        public string? UserNameCreatedForm { get;set; }
         public DateTimeOffset? CreatedAt { get;set; }
         public RequestStatus? RequestStatus { get; set; }
         public Domain.Entities.RequestType? RequestType { get; set; }

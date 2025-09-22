@@ -20,21 +20,14 @@ namespace ServicePortals.Infrastructure.Email
         Task SendEmailForNextUserApproval(List<string>? to, List<string>? cc, string subject, string? body, List<(string, byte[])>? attachments, bool isHtml = true);
 
         [AutomaticRetry(Attempts = 10)]
-        Task SendEmailSuccessLeaveRequest(List<string>? to, List<string>? cc, string subject, string? body, List<(string, byte[])>? attachments, bool isHtml = true);
+        Task SendEmailLeaveRequest(List<string>? to, List<string>? cc, string subject, string? body, List<(string, byte[])>? attachments, bool isHtml = true);
 
         [AutomaticRetry(Attempts = 10)]
         Task SendEmailManyPeopleLeaveRequest(List<string>? to, List<string>? cc, string subject, string? body, List<(string, byte[])>? attachments, bool isHtml = true);
 
 
-        #region Email memo notification approval
-
         [AutomaticRetry(Attempts = 10)]
         Task EmailSendMemoNotification(List<string>? to, List<string>? cc, string subject, string? body, List<(string, byte[])>? attachments, bool isHtml = true);
-
-        [AutomaticRetry(Attempts = 10)]
-        Task EmailSendMemoNotificationHasBeenCompletedOrReject(List<string>? to, List<string>? cc, string subject, string? body, List<(string, byte[])>? attachments, bool isHtml = true);
-
-        #endregion
 
         #region Email gửi chấm công đến HR
         [AutomaticRetry(Attempts = 10)]

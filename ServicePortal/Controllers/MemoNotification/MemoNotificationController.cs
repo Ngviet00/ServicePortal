@@ -47,10 +47,10 @@ namespace ServicePortal.Controllers.MemoNotification
             return Ok(new BaseResponse<List<GetAllMemoNotifyResponse>>(200, "success", result));
         }
 
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetById(Guid id)
+        [HttpGet("{applicationFormCode}")]
+        public async Task<IActionResult> GetById(string applicationFormCode)
         {
-            var result = await _memoNotificationService.GetById(id);
+            var result = await _memoNotificationService.GetById(applicationFormCode);
 
             return Ok(new BaseResponse<Entities.MemoNotification>(200, "success", result));
         }
@@ -64,11 +64,11 @@ namespace ServicePortal.Controllers.MemoNotification
             return Ok(new BaseResponse<object>(200, "success", result));
         }
 
-        [HttpPut("{id}")]
+        [HttpPut("{applicationFormCode}")]
         [RoleOrPermission("HR", "union", "IT", "memo_notification.create")]
-        public async Task<IActionResult> Update(Guid id, [FromForm] CreateMemoNotificationRequest request, [FromForm] IFormFile[] files)
+        public async Task<IActionResult> Update(string applicationFormCode, [FromForm] CreateMemoNotificationRequest request, [FromForm] IFormFile[] files)
         {
-            var result = await _memoNotificationService.Update(id, request, files);
+            var result = await _memoNotificationService.Update(applicationFormCode, request, files);
 
             return Ok(new BaseResponse<object>(200, "success", result));
         }
@@ -83,7 +83,7 @@ namespace ServicePortal.Controllers.MemoNotification
         }
 
         [HttpGet("download/{id}")]
-        public async Task<IActionResult> DownloadFile(Guid id)
+        public async Task<IActionResult> DownloadFile(int id)
         {
             var file = await _memoNotificationService.GetFileDownload(id);
 

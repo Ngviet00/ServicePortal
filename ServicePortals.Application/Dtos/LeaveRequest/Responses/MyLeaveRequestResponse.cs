@@ -2,7 +2,7 @@
 {
     public class MyLeaveRequestResponse
     {
-        public Guid? LeaveRequestId { get; set; } // LR.Id
+        public long LeaveRequestId { get; set; } // LR.Id
         public string? UserCode { get; set; } // LR.UserCode
         public string? UserName { get; set; } // LR.UserName
         public string? DepartmentName { get; set; } // OU.Name
@@ -15,7 +15,7 @@
         public DateTimeOffset? ToDate { get; set; } // LR.ToDate
         public string? Reason { get; set; } // LR.Reason
         public DateTimeOffset? CreatedAt { get; set; } // LR.CreatedAt
-        public string? CreatedBy { get; set; } // AF.CreatedBy
+        public string? UserNameCreatedForm { get; set; } // AF.CreatedBy
         public int? RequestStatusId { get; set; } // AF.RequestStatusId
         public string? RequestStatusName { get; set; } // RS.Name
         public string? RequestStatusNameE { get; set; } // RS.NameE

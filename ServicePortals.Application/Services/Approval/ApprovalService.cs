@@ -1,8 +1,11 @@
-﻿using System.Security.Claims;
+﻿using System.Data;
+using System.Security.Claims;
+using Dapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using ServicePortals.Application.Dtos.Approval.Request;
 using ServicePortals.Application.Dtos.Approval.Response;
+using ServicePortals.Application.Dtos.ITForm.Responses;
 using ServicePortals.Application.Interfaces.Approval;
 using ServicePortals.Application.Interfaces.ITForm;
 using ServicePortals.Application.Interfaces.LeaveRequest;
@@ -11,6 +14,7 @@ using ServicePortals.Application.Interfaces.Purchase;
 using ServicePortals.Domain.Entities;
 using ServicePortals.Domain.Enums;
 using ServicePortals.Infrastructure.Data;
+using ServicePortals.Infrastructure.Helpers;
 using ServicePortals.Shared.Exceptions;
 
 namespace ServicePortals.Application.Services.Approval
@@ -44,83 +48,49 @@ namespace ServicePortals.Application.Services.Approval
 
         public async Task<PagedResults<PendingApproval>> ListWaitApprovals(ListWaitApprovalRequest request)
         {
-            return null;
-            //var userClaims = _httpContextAccessor.HttpContext.User;
+            var userClaims = _httpContextAccessor.HttpContext.User;
+            var roleClaims = userClaims.Claims.Where(c => c.Type == ClaimTypes.Role).Select(c => c.Value).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var permissionClaims = userClaims.Claims.Where(c => c.Type == "permission").Select(c => c.Value).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            bool isHR = roleClaims?.Contains("HR") == true && permissionClaims?.Contains("leave_request.hr_management_leave_request") == true;
 
-            //double page = request.Page;
-            //double pageSize = request.PageSize;
+            if (request.OrgPositionId == 0)
+            {
+                throw new ValidationException(Global.UserNotSetInformation);
+            }
 
-            //var roleClaims = userClaims.Claims.Where(c => c.Type == ClaimTypes.Role).Select(c => c.Value).ToHashSet(StringComparer.OrdinalIgnoreCase);
-            //var permissionClaims = userClaims.Claims.Where(c => c.Type == "permission").Select(c => c.Value).ToHashSet(StringComparer.OrdinalIgnoreCase);
-            //bool isHR = roleClaims?.Contains("HR") == true && permissionClaims?.Contains("leave_request.hr_management_leave_request") == true;
+            var parameters = new DynamicParameters();
 
-            //var query = _context.ApplicationForms
-            //    .OrderByDescending(e => e.CreatedAt)
-            //    .Where(e => e.DeletedAt == null)
-            //    .AsQueryable();
+            parameters.Add("@Page", request.Page, DbType.Int32, ParameterDirection.Input);
+            parameters.Add("@PageSize", request.PageSize, DbType.Int32, ParameterDirection.Input);
+            parameters.Add("@IsHR", isHR, DbType.Boolean, ParameterDirection.Input);
+            parameters.Add("@DepartmentId", request.DepartmentId, DbType.Int32, ParameterDirection.Input);
+            parameters.Add("@OrgPositionId", request.OrgPositionId, DbType.Int32, ParameterDirection.Input);
+            parameters.Add("@RequestTypeId", request.RequestTypeId, DbType.Int32, ParameterDirection.Input);
+            parameters.Add("@TotalRecords", dbType: DbType.Int32, direction: ParameterDirection.Output);
 
-            //if (request.RequestTypeId != null)
-            //{
-            //    query = query.Where(e => e.RequestTypeId == request.RequestTypeId);
-            //}
+            var results = await _context.Database.GetDbConnection()
+                .QueryAsync<PendingApproval>(
+                    "dbo.Approval_GET_GetListWaitApproval",
+                    parameters,
+                    commandType: CommandType.StoredProcedure
+            );
 
-            //if (request.DepartmentId != null)
-            //{
-            //    query = query.Where(e => e.DepartmentId == request.DepartmentId);
-            //}
+            int totalRecords = parameters.Get<int>("@TotalRecords");
+            int totalPages = (int)Math.Ceiling((double)totalRecords / request.PageSize);
 
-            //if (isHR)
-            //{
-            //    query = query.Where(e => e.OrgPositionId == request.OrgPositionId &&
-            //        (
-            //            e.RequestStatusId == (int)StatusApplicationFormEnum.PENDING ||
-            //            e.RequestStatusId == (int)StatusApplicationFormEnum.IN_PROCESS
-            //        ) ||
-            //        e.RequestStatusId == (int)StatusApplicationFormEnum.WAIT_HR
-            //    );
-            //}
-            //else
-            //{
-            //    query = query.Where(e =>
-            //        e.OrgPositionId == request.OrgPositionId &&
-            //        e.RequestStatusId != (int)StatusApplicationFormEnum.COMPLETE &&
-            //        e.RequestStatusId != (int)StatusApplicationFormEnum.REJECT
-            //    );
-            //}
-
-            //var totalItems = await query.CountAsync();
-
-            //var totalPages = (int)Math.Ceiling(totalItems / pageSize);
-
-            //var results = await query
-            //    .Select(r => new PendingApproval
-            //    {
-            //        Id = r.Id,
-            //        Code = r.Code,
-            //        UserCodeRequestor = r.UserCodeCreatedBy,
-            //        UserNameCreated = r.CreatedBy,
-            //        UserNameRequestor = r.CreatedBy,
-            //        CreatedAt = r.CreatedAt,
-            //        RequestStatus = r.RequestStatus,
-            //        RequestType = r.RequestType,
-            //    })
-            //    .Skip((int)(page - 1) * (int)pageSize)
-            //    .Take((int)pageSize)
-            //    .ToListAsync();
-
-            //return new PagedResults<PendingApproval>
-            //{
-            //    Data = results,
-            //    TotalItems = totalItems,
-            //    TotalPages = totalPages,
-            //};
+            return new PagedResults<PendingApproval>
+            {
+                Data = (List<PendingApproval>)results,
+                TotalItems = totalRecords,
+                TotalPages = totalPages
+            };
         }
 
         public async Task<object> Approval(ApprovalRequest request)
         {
-            if (request.RequestTypeId == null)
+            if (request.RequestTypeId <= 0)
             {
-                throw new ValidationException("Loại yêu cầu không hợp lệ");
+                throw new ValidationException("Request type is invalid");
             }
 
             if (request.RequestTypeId == (int)RequestTypeEnum.CREATE_MEMO_NOTIFICATION)

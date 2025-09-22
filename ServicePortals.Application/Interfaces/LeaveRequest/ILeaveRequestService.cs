@@ -10,14 +10,42 @@ namespace ServicePortals.Application.Interfaces.LeaveRequest
 {
     public interface ILeaveRequestService
     {
-        Task<object> Create(CreateLeaveRequest request);
+        /// <summary>
+        /// Hàm tạo đơn nghỉ phép, đăng ký thủ công 1 người, nhiều người, đăng ký bằng excel
+        /// </summary>
+        Task<object> Create(CreateLeaveRequest request); 
+
+        /// <summary>
+        /// Danh sách đơn xin nghỉ phép của cá nhân
+        /// </summary>
         Task<PagedResults<MyLeaveRequestResponse>> GetMyLeaveRequest(MyLeaveRequest request);
+
+        /// <summary>
+        /// Danh sách các đơn nghỉ phép đã đăng ký, đã đăng ký cho chính mình, người khác
+        /// </summary>
         Task<PagedResults<MyLeaveRequestRegisteredResponse>> GetMyLeaveRequestRegistered(MyLeaveRequestRegistered request);
-        Task<object> DeleteApplicationFormLeave(Guid ApplicationFormId);
-        Task<List<Domain.Entities.LeaveRequest>> GetListLeaveToUpdate(Guid Id);
-        Task<Domain.Entities.LeaveRequest> GetById(Guid Id);
-        Task<object> Update(Guid Id, List<CreateLeaveRequestDto> dto);
-        Task<ViewDetailLeaveRequestWithHistoryResponse?> ViewDetailLeaveRequestWithHistory(Guid Id);
+
+        /// <summary>
+        /// Xóa đơn nghỉ phép, set deleted at, set delete các bảng liên quan application form, application form item
+        /// </summary>
+        Task<object> Delete(string ApplicationFormCode);
+
+        //Task<List<Domain.Entities.LeaveRequest>> GetListLeaveToUpdate(Guid Id);
+
+        /// <summary>
+        /// Lấy chi tiết đơn nghỉ phép, bao gồm trạng thái, lịch sử phê duyệt
+        /// </summary>
+        Task<object> GetLeaveByAppliationFormCode(string applicationFormCode);
+
+        //update
+        Task<object> Update(string applicationFormCode, List<CreateListLeaveRequest> request);
+
+
+        //Task<ViewDetailLeaveRequestWithHistoryResponse?> ViewDetailLeaveRequestWithHistory(Guid Id);
+
+        /// <summary>
+        /// Tìm kiếm người dùng khi nhập mã nhân viên ở màn hình tạo đơn nghỉ phép
+        /// </summary>
         Task<object> SearchUserRegisterLeaveRequest(SearchUserRegisterLeaveRequest request);
 
 

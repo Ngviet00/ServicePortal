@@ -8,12 +8,12 @@ namespace ServicePortals.Application.Interfaces.MemoNotification
     public interface IMemoNotificationService
     {
         Task<PagedResults<GetAllMemoNotifyResponse>> GetAll(GetAllMemoNotificationRequest request);
-        Task<Domain.Entities.MemoNotification?> GetById(Guid id);
+        Task<Domain.Entities.MemoNotification?> GetById(string applicationFormCode);
         Task<object> Create(CreateMemoNotificationRequest request, IFormFile[] files);
-        Task<object> Update(Guid id, CreateMemoNotificationRequest request, IFormFile[] files);
+        Task<object> Update(string applicationFormCode, CreateMemoNotificationRequest request, IFormFile[] files);
         Task<object> Delete(string applicationFormCode);
         Task<List<GetAllMemoNotifyResponse>> GetAllInHomePage(int? DepartmentId);
-        Task<Domain.Entities.File> GetFileDownload(Guid id);
+        Task<Domain.Entities.File> GetFileDownload(int id);
         Task<object> Approval(ApprovalRequest request);
     }
 }

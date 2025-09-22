@@ -1,28 +1,32 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Http;
 
 namespace ServicePortals.Application.Dtos.LeaveRequest.Requests
 {
     public class CreateLeaveRequest
     {
         public string? EmailCreated { get; set; }
-        public int? OrgPositionId { get; set; }
+        public int OrgPositionId { get; set; }
         public string? UserCodeCreated { get; set; }
-        public string? CreatedBy { get; set; }
-        public List<CreateLeaveRequestDto> CreateLeaveRequestDto { get; set; } = [];
+        public string? UserNameCreated { get; set; }
+        public List<CreateListLeaveRequest> CreateListLeaveRequests { get; set; } = [];
         public IFormFile? File { get; set; }
     }
 
-    public class CreateLeaveRequestDto
+    public class CreateListLeaveRequest
     {
-        public Guid? Id { get; set; }
+        public long Id { get; set; }
         public string? UserCode { get; set; }
         public string? UserName { get; set; }
-        public int? DepartmentId { get; set; }
+        [Required]
+        public int DepartmentId { get; set; }
         public string? Position { get; set; }
         public DateTimeOffset? FromDate { get; set; }
         public DateTimeOffset? ToDate { get; set; }
-        public int? TypeLeaveId { get; set; }
-        public int? TimeLeaveId { get; set; }
+        [Required]
+        public int TypeLeaveId { get; set; }
+        [Required]
+        public int TimeLeaveId { get; set; }
         public string? Reason { get; set; }
         public IFormFile? Image { get; set; }
     }

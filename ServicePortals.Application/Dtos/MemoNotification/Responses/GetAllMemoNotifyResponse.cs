@@ -13,6 +13,6 @@
         public bool ApplyAllDepartment { get; set; }
         public DateTimeOffset? CreatedAt { get; set; }
         public int RequestStatusId { get; set; }
-        public string? CreatedBy { get; set; }
+        public string? UserNameCreatedForm { get; set; }
     }
 }

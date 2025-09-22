@@ -505,7 +505,8 @@ namespace ServicePortals.Infrastructure.Data
                 .WithMany()
                 .HasForeignKey(af => af.DepartmentId)
                 .HasPrincipalKey(ou => ou.Id)
-                .OnDelete(DeleteBehavior.NoAction);
+                .OnDelete(DeleteBehavior.NoAction)
+                .IsRequired(false);
 
             modelBuilder.Entity<HistoryApplicationForm>()
                 .HasOne(h => h.ApplicationForm)

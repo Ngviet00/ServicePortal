@@ -40,7 +40,7 @@ namespace ServicePortals.Infrastructure.Email
             await SendAsync(to, cc, subject, body, attachments, isHtml);
         }
 
-        public async Task SendEmailSuccessLeaveRequest(List<string>? to, List<string>? cc, string subject, string? body, List<(string, byte[])>? attachments, bool isHtml = true)
+        public async Task SendEmailLeaveRequest(List<string>? to, List<string>? cc, string subject, string? body, List<(string, byte[])>? attachments, bool isHtml = true)
         {
             await SendAsync(to, cc, subject, body, attachments, isHtml);
         }
@@ -51,11 +51,6 @@ namespace ServicePortals.Infrastructure.Email
         }
 
         public async Task EmailSendMemoNotification(List<string>? to, List<string>? cc, string subject, string? body, List<(string, byte[])>? attachments, bool isHtml = true)
-        {
-            await SendAsync(to, cc, subject, body, attachments, isHtml);
-        }
-
-        public async Task EmailSendMemoNotificationHasBeenCompletedOrReject(List<string>? to, List<string>? cc, string subject, string? body, List<(string, byte[])>? attachments, bool isHtml = true)
         {
             await SendAsync(to, cc, subject, body, attachments, isHtml);
         }
