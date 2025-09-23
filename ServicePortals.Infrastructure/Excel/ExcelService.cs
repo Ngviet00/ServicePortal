@@ -3,6 +3,7 @@ using ServicePortals.Infrastructure.Data;
 using ServicePortals.Infrastructure.Helpers;
 using ServicePortals.Domain.Entities;
 using System.Globalization;
+using DocumentFormat.OpenXml.Spreadsheet;
 
 namespace ServicePortals.Infrastructure.Excel
 {
@@ -58,21 +59,16 @@ namespace ServicePortals.Infrastructure.Excel
                 ws.Row(row).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
                 ws.Row(row).Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
 
-                //ws.Cell(row, 1).Value = item?.ApplicationForm?.UserCodeRequestor;
+                ws.Cell(row, 1).Value = item?.UserCode;
                 ws.Cell(row, 2).Value = item?.TypeLeave?.Code;
 
-                var dateFrom = item!.FromDate != null ? ((DateTimeOffset)item.FromDate).DateTime : DateTimeOffset.Now;
-                var dateTo = item!.ToDate != null ? ((DateTimeOffset)item.ToDate).DateTime : DateTimeOffset.Now;
+                var dateFromStr = item!.FromDate?.ToString("yyyy-MM-dd HH:mm") ?? DateTimeOffset.Now.ToString("yyyy-MM-dd HH:mm");
+                var dateToStr = item!.ToDate?.ToString("yyyy-MM-dd HH:mm") ?? DateTimeOffset.Now.ToString("yyyy-MM-dd HH:mm");
 
-                var cellFrom = ws.Cell(row, 3);
-                cellFrom.Value = dateFrom.ToString();
-                cellFrom.Style.NumberFormat.Format = "yyyy-M-d HH:mm";
+                ws.Cell(row, 3).Value = dateFromStr;
+                ws.Cell(row, 4).Value = dateToStr;
 
-                var cellTo = ws.Cell(row, 4);
-                cellTo.Value = dateTo.ToString();
-                cellTo.Style.NumberFormat.Format = "yyyy-M-d HH:mm";
-
-                ws.Cell(row, 5).Value = "";
+                ws.Cell(row, 5).Value = item?.TimeLeave?.Name;
                 ws.Cell(row, 6).Value = "";
                 ws.Cell(row, 7).Value = item!.FromDate != null ? ((DateTimeOffset)item.FromDate).DateTime : DateTimeOffset.Now.ToString("d-MMM", CultureInfo.InvariantCulture);
                 ws.Cell(row, 8).Value = item!.ToDate != null ? ((DateTimeOffset)item.ToDate).DateTime : DateTimeOffset.Now.ToString("d-MMM", CultureInfo.InvariantCulture);

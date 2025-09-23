@@ -99,7 +99,7 @@ namespace ServicePortals.Application.Services.Approval
             }
             else if (request.RequestTypeId == (int)RequestTypeEnum.LEAVE_REQUEST)
             {
-                //await _leaveRequestService.Approval(request);
+                await _leaveRequestService.Approval(request);
             }
             else if (request.RequestTypeId == (int)RequestTypeEnum.FORM_IT)
             {

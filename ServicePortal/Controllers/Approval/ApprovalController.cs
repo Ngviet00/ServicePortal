@@ -61,17 +61,17 @@ namespace ServicePortal.Controllers.Approval
         {
             var results = await _approvalService.ListAssigned(request);
 
-            var response = new PageResponse<PendingApproval>(
-                200,
-                "Success",
-                results.Data,
-                results.TotalPages,
-                request.Page,
-                request.PageSize,
-                results.TotalItems
-            );
-
-            return Ok(response);
+            //var response = new PageResponse<PendingApproval>(
+            //    200,
+            //    "Success",
+            //    results.Data,
+            //    results.TotalPages,
+            //    request.Page,
+            //    request.PageSize,
+            //    results.TotalItems
+            //);
+            return Ok();
+            //return Ok(response);
         }
 
         [HttpGet("list-history-approval-or-processed"), AllowAnonymous]
@@ -79,17 +79,19 @@ namespace ServicePortal.Controllers.Approval
         {
             var results = await _approvalService.ListHistoryApprovedOrProcessed(request);
 
-            var response = new PageResponse<HistoryApprovalProcessResponse>(
-                200,
-                "Success",
-                results.Data,
-                results.TotalPages,
-                request.Page,
-                request.PageSize,
-                results.TotalItems
-            );
+            return Ok();
 
-            return Ok(response);
+            //var response = new PageResponse<HistoryApprovalProcessResponse>(
+            //    200,
+            //    "Success",
+            //    results.Data,
+            //    results.TotalPages,
+            //    request.Page,
+            //    request.PageSize,
+            //    results.TotalItems
+            //);
+
+            //return Ok(response);
         }
 
         private bool HasApprovalRolePermission(ApprovalRequest request)

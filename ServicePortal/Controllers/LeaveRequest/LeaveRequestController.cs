@@ -86,18 +86,44 @@ namespace ServicePortal.Controllers.LeaveRequest
             return Ok(new BaseResponse<object>(200, "success", result));
         }
 
-        //[HttpGet("statistical-leave-request")]
-        //public async Task<IActionResult> StatisticalFormIT([FromQuery] int year)
-        //{
-        //    var results = await _leaveRequestService.StatisticalLeaveRequest(year);
-
-        //    return Ok(new BaseResponse<object>(200, "success", results));
-        //}
-
         [HttpGet("{applicationFormCode}")]
         public async Task<IActionResult> GetLeaveByAppliationFormCode(string applicationFormCode)
         {
             var result = await _leaveRequestService.GetLeaveByAppliationFormCode(applicationFormCode);
+
+            return Ok(new BaseResponse<object>(200, "success", result));
+        }
+
+        [HttpGet("search-user-register-leave-request")]
+        public async Task<IActionResult> SearchUserRegisterLeaveRequest([FromQuery] SearchUserRegisterLeaveRequest request)
+        {
+            var result = await _leaveRequestService.SearchUserRegisterLeaveRequest(request);
+
+            return Ok(new BaseResponse<object>(200, "success", result));
+        }
+
+        [HttpPost("reject-some-leaves")]
+        public async Task<IActionResult> RejectSomeLeaves([FromBody] RejectSomeLeavesRequest request)
+        {
+            var result = await _leaveRequestService.RejectSomeLeaves(request);
+
+            return Ok(new BaseResponse<object>(200, "success", result));
+        }
+
+        [HttpPost("hr-export-excel-leave-request")]
+        public async Task<IActionResult> HrExportExcelLeaveRequest([FromBody] long applicationFormId)
+        {
+            var fileContent = await _leaveRequestService.HrExportExcelLeaveRequest(applicationFormId);
+
+            var fileName = $"LeaveRequests_{DateTime.Now:yyyy_MM_dd_HH_mm_ss_fff}.xlsx";
+
+            return File(fileContent ?? [], "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+        }
+
+        [HttpPost("hr-note")]
+        public async Task<IActionResult> HrNote([FromBody] HrNoteRequest request)
+        {
+            var result = await _leaveRequestService.HrNote(request);
 
             return Ok(new BaseResponse<object>(200, "success", result));
         }
@@ -150,13 +176,7 @@ namespace ServicePortal.Controllers.LeaveRequest
         //    return Ok(new BaseResponse<object>(200, "success", result));
         //}
 
-        [HttpGet("search-user-register-leave-request")]
-        public async Task<IActionResult> SearchUserRegisterLeaveRequest([FromQuery] SearchUserRegisterLeaveRequest request)
-        {
-            var result = await _leaveRequestService.SearchUserRegisterLeaveRequest(request);
 
-            return Ok(new BaseResponse<object>(200, "success", result));
-        }
 
         //[HttpPost("update-user-have-permission-hr-mng-leave-request")]
         //public async Task<IActionResult> UpdateUserHavePermissionHrMngLeaveRequest([FromBody] List<string> userCodes)
@@ -174,14 +194,5 @@ namespace ServicePortal.Controllers.LeaveRequest
         //    return Ok(new BaseResponse<List<HrMngLeaveRequestResponse>>(200, "success", results));
         //}
 
-        //[HttpPost("hr-export-excel-leave-request")]
-        //public async Task<IActionResult> HrExportExcelLeaveRequest([FromBody] List<string> leaveRequestIds)
-        //{
-        //    var fileContent = await _leaveRequestService.HrExportExcelLeaveRequest(leaveRequestIds);
-
-        //    var fileName = $"LeaveRequests_{DateTime.Now:yyyy_MM_dd_HH_mm_ss_fff}.xlsx";
-
-        //    return File(fileContent ?? [], "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
-        //}
     }
 }

@@ -40,17 +40,19 @@ namespace ServicePortals.Application.Interfaces.LeaveRequest
         //update
         Task<object> Update(string applicationFormCode, List<CreateListLeaveRequest> request);
 
-
-        //Task<ViewDetailLeaveRequestWithHistoryResponse?> ViewDetailLeaveRequestWithHistory(Guid Id);
-
         /// <summary>
         /// Tìm kiếm người dùng khi nhập mã nhân viên ở màn hình tạo đơn nghỉ phép
         /// </summary>
         Task<object> SearchUserRegisterLeaveRequest(SearchUserRegisterLeaveRequest request);
 
+        /// <summary>
+        /// Từ chối 1 vài đơn của người khác
+        /// </summary>
+        Task<object> RejectSomeLeaves(RejectSomeLeavesRequest request);
+        Task<object> Approval(ApprovalRequest request);
+        Task<byte[]> HrExportExcelLeaveRequest(long applicationFormId);
+        Task<object> HrNote(HrNoteRequest request);
 
-        //Task<object> Approval(ApprovalRequest request);
-        //Task<object> HrSaveNote(Guid Id);
 
         //Task<LeaveRequest> GetAllFormLeaveRequest();
         //Task<LeaveRequestStatisticalResponse> StatisticalLeaveRequest(int year);
@@ -67,6 +69,5 @@ namespace ServicePortals.Application.Interfaces.LeaveRequest
 
         //Task<List<HrMngLeaveRequestResponse>> GetHrWithManagementLeavePermission();
         //Task<object> UpdateHrWithManagementLeavePermission(List<string> UserCode);
-        //Task<byte[]> HrExportExcelLeaveRequest(List<string> leaveRequestIds);
     }
 }
