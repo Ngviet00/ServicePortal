@@ -29,7 +29,6 @@ namespace ServicePortals.Infrastructure.Data
         public DbSet<ApprovalFlow> ApprovalFlows { get; set; }
         public DbSet<UserMngOrgUnitId> UserMngOrgUnitId { get; set; }
         public DbSet<SystemConfig> SystemConfigs { get; set; }
-        public DbSet<Delegation> Delegations { get; set; }
         public DbSet<Unit> Units { get; set; }
         public DbSet<OrgUnit> OrgUnits { get; set; }
         public DbSet<OrgPosition> OrgPositions { get; set; }
@@ -43,7 +42,9 @@ namespace ServicePortals.Infrastructure.Data
         public DbSet<PurchaseDetail> PurchaseDetails { get; set; }
         public DbSet<CostCenter> CostCenters { get; set; }
         public DbSet<ApplicationFormItem> ApplicationFormItems { get; set; }
-
+        public DbSet<Delegations> Delegations { get; set; }
+        public DbSet<TypeOverTime> TypeOverTimes { get; set; }
+        public DbSet<OverTime> OverTimes { get; set; }
 
         public IDbConnection CreateConnection() => Database.GetDbConnection();
 
@@ -229,6 +230,12 @@ namespace ServicePortals.Infrastructure.Data
 
             modelBuilder.Entity<CostCenter>().HasData(
                 new CostCenter { Id = 1, Code = "V1013202", Description = "MIS" }
+            );
+
+            modelBuilder.Entity<TypeOverTime>().HasData(
+                new TypeOverTime { Id = 1, Name = "Từ thứ 2 đến thứ 7", NameE = "Form monday to saturday" },
+                new TypeOverTime { Id = 2, Name = "Chủ nhật", NameE = "Sunday"},
+                new TypeOverTime { Id = 3, Name = "Ngày lễ", NameE = "Holiday"}
             );
 
             #endregion
@@ -513,6 +520,25 @@ namespace ServicePortals.Infrastructure.Data
                 .WithMany(a => a.HistoryApplicationForms)
                 .HasForeignKey(h => h.ApplicationFormId)
                 .HasPrincipalKey(a => a.Id)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            #endregion
+
+            #region Over Time
+
+            modelBuilder.Entity<OverTime>()
+                .HasOne(ot => ot.TypeOverTime)
+                .WithMany()
+                .HasPrincipalKey(t => t.Id)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<OverTime>()
+                .HasOne(ot => ot.ApplicationFormItem)
+                .WithMany(afi => afi.OverTimes)
+                .HasPrincipalKey(afi => afi.Id)
+                .HasForeignKey(ot => ot.ApplicationFormItemId)
                 .IsRequired(false)
                 .OnDelete(DeleteBehavior.NoAction);
 

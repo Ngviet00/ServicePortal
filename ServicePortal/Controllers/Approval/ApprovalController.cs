@@ -61,37 +61,35 @@ namespace ServicePortal.Controllers.Approval
         {
             var results = await _approvalService.ListAssigned(request);
 
-            //var response = new PageResponse<PendingApproval>(
-            //    200,
-            //    "Success",
-            //    results.Data,
-            //    results.TotalPages,
-            //    request.Page,
-            //    request.PageSize,
-            //    results.TotalItems
-            //);
-            return Ok();
-            //return Ok(response);
+            var response = new PageResponse<PendingApproval>(
+                200,
+                "Success",
+                results.Data,
+                results.TotalPages,
+                request.Page,
+                request.PageSize,
+                results.TotalItems
+            );
+
+            return Ok(response);
         }
 
-        [HttpGet("list-history-approval-or-processed"), AllowAnonymous]
-        public async Task<IActionResult> ListHistoryApprovalOrProcessed([FromQuery] ListHistoryApprovalProcessedRequest request)
+        [HttpGet("list-history-approval")]
+        public async Task<IActionResult> ListHistoryApprovalOrProcessed([FromQuery] ListHistoryApprovalRequest request)
         {
             var results = await _approvalService.ListHistoryApprovedOrProcessed(request);
 
-            return Ok();
+            var response = new PageResponse<HistoryApprovalResponse>(
+                200,
+                "Success",
+                results.Data,
+                results.TotalPages,
+                request.Page,
+                request.PageSize,
+                results.TotalItems
+            );
 
-            //var response = new PageResponse<HistoryApprovalProcessResponse>(
-            //    200,
-            //    "Success",
-            //    results.Data,
-            //    results.TotalPages,
-            //    request.Page,
-            //    request.PageSize,
-            //    results.TotalItems
-            //);
-
-            //return Ok(response);
+            return Ok(response);
         }
 
         private bool HasApprovalRolePermission(ApprovalRequest request)

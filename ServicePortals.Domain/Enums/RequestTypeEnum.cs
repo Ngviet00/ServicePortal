@@ -6,5 +6,6 @@
         CREATE_MEMO_NOTIFICATION = 2,
         FORM_IT = 3,
         PURCHASE = 4,
+        OVERTIME = 5,
     }
 }

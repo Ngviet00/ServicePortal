@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ServicePortals.Infrastructure.Data;
 
@@ -11,9 +12,11 @@ using ServicePortals.Infrastructure.Data;
 namespace ServicePortals.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250924020706_AddTblDelegations")]
+    partial class AddTblDelegations
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1174,62 +1177,6 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                         });
                 });
 
-            modelBuilder.Entity("ServicePortals.Domain.Entities.OverTime", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
-
-                    b.Property<long>("ApplicationFormItemId")
-                        .HasColumnType("bigint");
-
-                    b.Property<DateTimeOffset?>("CreatedAt")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<DateTimeOffset?>("DeletedAt")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<DateTimeOffset?>("FromHour")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<string>("Note")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("NumberHour")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Position")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<DateTimeOffset?>("ToHour")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<int>("TypeOverTimeId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTimeOffset?>("UpdatedAt")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<string>("UserCode")
-                        .HasMaxLength(30)
-                        .HasColumnType("nvarchar(30)");
-
-                    b.Property<string>("UserName")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ApplicationFormItemId");
-
-                    b.HasIndex("TypeOverTimeId");
-
-                    b.ToTable("over_times");
-                });
-
             modelBuilder.Entity("ServicePortals.Domain.Entities.Permission", b =>
                 {
                     b.Property<int>("Id")
@@ -1870,47 +1817,6 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                         });
                 });
 
-            modelBuilder.Entity("ServicePortals.Domain.Entities.TypeOverTime", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Name")
-                        .HasMaxLength(40)
-                        .HasColumnType("nvarchar(40)");
-
-                    b.Property<string>("NameE")
-                        .HasMaxLength(40)
-                        .HasColumnType("nvarchar(40)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("type_over_times");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Name = "Từ thứ 2 đến thứ 7",
-                            NameE = "Form monday to saturday"
-                        },
-                        new
-                        {
-                            Id = 2,
-                            Name = "Chủ nhật",
-                            NameE = "Sunday"
-                        },
-                        new
-                        {
-                            Id = 3,
-                            Name = "Ngày lễ",
-                            NameE = "Holiday"
-                        });
-                });
-
             modelBuilder.Entity("ServicePortals.Domain.Entities.Unit", b =>
                 {
                     b.Property<int>("Id")
@@ -2346,23 +2252,6 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                     b.Navigation("Unit");
                 });
 
-            modelBuilder.Entity("ServicePortals.Domain.Entities.OverTime", b =>
-                {
-                    b.HasOne("ServicePortals.Domain.Entities.ApplicationFormItem", "ApplicationFormItem")
-                        .WithMany("OverTimes")
-                        .HasForeignKey("ApplicationFormItemId")
-                        .OnDelete(DeleteBehavior.NoAction);
-
-                    b.HasOne("ServicePortals.Domain.Entities.TypeOverTime", "TypeOverTime")
-                        .WithMany()
-                        .HasForeignKey("TypeOverTimeId")
-                        .OnDelete(DeleteBehavior.NoAction);
-
-                    b.Navigation("ApplicationFormItem");
-
-                    b.Navigation("TypeOverTime");
-                });
-
             modelBuilder.Entity("ServicePortals.Domain.Entities.Purchase", b =>
                 {
                     b.HasOne("ServicePortals.Domain.Entities.ApplicationFormItem", "ApplicationFormItem")
@@ -2478,8 +2367,6 @@ namespace ServicePortals.Infrastructure.Data.Migrations
                     b.Navigation("LeaveRequests");
 
                     b.Navigation("MemoNotifications");
-
-                    b.Navigation("OverTimes");
 
                     b.Navigation("Purchases");
                 });

@@ -1,6 +1,6 @@
 ﻿namespace ServicePortals.Application.Dtos.Approval.Request
 {
-    public class ListHistoryApprovalProcessedRequest
+    public class ListHistoryApprovalRequest
     {
         public int? RequestTypeId { get; set; }
         public string? UserCode { get; set; }

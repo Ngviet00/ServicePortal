@@ -481,37 +481,54 @@ namespace ServicePortals.Application.Services.MemoNotification
                 throw new ValidationException("Not found application form, please check again");
             }
 
-            //validate nếu như đơn này k phải là của người này duyệt
-            if (applicationForm.OrgPositionId != request.OrgPositionId)
+            var todayDate = DateTimeOffset.Now.Date;
+
+            //delegation
+            var isDelegation = await _context.Delegations
+                .AnyAsync(e =>
+                    e.FromOrgPositionId == applicationForm.OrgPositionId &&
+                    e.IsActive == true &&
+                    e.UserCodeDelegation == request.UserCodeApproval &&
+                    todayDate >= e.StartDate!.Value.Date && todayDate <= e.EndDate!.Value.Date
+                );
+
+            //validate nếu như đơn này k phải là của người này duyệt và k được ủy quyền duyệt đơn
+            if (applicationForm.OrgPositionId != request.OrgPositionId && isDelegation == false)
             {
                 throw new ValidationException(Global.NotPermissionApproval);
             }
+            
+            if (isDelegation)
+            {
+                orgPositionId = applicationForm.OrgPositionId;
+            }
 
             //nếu như đơn này của người này đã có trạng thái là complete hoặc reject thì k được approval nữa
-            if (applicationForm.OrgPositionId == request.OrgPositionId &&
-                (
-                    applicationForm.RequestStatusId == (int)StatusApplicationFormEnum.COMPLETE ||
-                    applicationForm.RequestStatusId == (int)StatusApplicationFormEnum.REJECT
-                )
-            )
+            if (applicationForm.RequestStatusId == (int)StatusApplicationFormEnum.COMPLETE || applicationForm.RequestStatusId == (int)StatusApplicationFormEnum.REJECT)
             {
                 throw new ValidationException(Global.HasBeenApproval);
             }
 
+            string userNameAction = request?.UserNameApproval ?? "";
+            if (isDelegation && applicationForm.OrgPositionId != request?.OrgPositionId)
+            {
+                userNameAction = $"{userNameAction} (Delegated)";
+            }
+
             var historyApplicationForm = new HistoryApplicationForm
             {
-                ApplicationForm = applicationForm,
-                Note = request.Note ?? null,
-                Action = request.Status == true ? "Approved" : "Reject",
-                UserCodeAction = request.UserCodeApproval ?? null,
-                UserNameAction = request.UserNameApproval ?? null,
+                ApplicationFormId = applicationForm.Id,
+                Note = request?.Note ?? null,
+                Action = request?.Status == true ? "Approved" : "Reject",
+                UserCodeAction = request?.UserCodeApproval ?? null,
+                UserNameAction = userNameAction,
                 ActionAt = DateTimeOffset.Now
             };
-
+            
             bool isFinal = false;
 
             //reject
-            if (request.Status == false)
+            if (request?.Status == false)
             {
                 applicationForm.RequestStatusId = (int)StatusApplicationFormEnum.REJECT;
                 applicationForm.OrgPositionId = orgPositionId;
@@ -547,7 +564,7 @@ namespace ServicePortals.Application.Services.MemoNotification
             _context.ApplicationForms.Update(applicationForm);
             await _context.SaveChangesAsync();
 
-            if (request.Status == false || (request.Status == true && isFinal)) //gửi email cho người tạo thông báo là complete or reject
+            if (request?.Status == false || (request?.Status == true && isFinal)) //gửi email cho người tạo thông báo là complete or reject
             {
                 var userRequest = await _context.Users.Where(e => e.UserCode == applicationForm.UserCodeCreatedForm).ToListAsync();
 

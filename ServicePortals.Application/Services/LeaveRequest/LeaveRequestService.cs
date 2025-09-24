@@ -741,21 +741,38 @@ namespace ServicePortals.Application.Services.LeaveRequest
                 throw new ValidationException(Global.UserNotSetInformation);
             }
 
-            var orgPosition = await _context.OrgPositions
-                .FirstOrDefaultAsync(e => e.Id == request.OrgPositionId) 
-                ?? throw new ValidationException(Global.UserNotSetInformation);
-
             var applicationForm = await _context.ApplicationForms
                 .Include(e => e.ApplicationFormItems)
                 .FirstOrDefaultAsync(e => e.Id == request.ApplicationFormId)
                 ?? throw new NotFoundException("Application form not found, please check again");
 
+            var todayDate = DateTimeOffset.Now.Date;
+
+            //delegation
+            var isDelegation = await _context.Delegations
+                .AnyAsync(e =>
+                    e.FromOrgPositionId == applicationForm.OrgPositionId &&
+                    e.IsActive == true &&
+                    e.UserCodeDelegation == request.UserCodeApproval &&
+                    todayDate >= e.StartDate!.Value.Date && todayDate <= e.EndDate!.Value.Date
+                );
+
+            var orgPosition = await _context.OrgPositions
+                .FirstOrDefaultAsync(e => e.Id == (isDelegation ? applicationForm.OrgPositionId : request.OrgPositionId ))
+                ?? throw new ValidationException(Global.UserNotSetInformation);
+
+            string userNameAction = request?.UserNameApproval ?? "";
+            if (isDelegation && applicationForm.OrgPositionId != request?.OrgPositionId)
+            {
+                userNameAction = $"{userNameAction} (Delegated)"; 
+            }
+
             var historyApplicationForm = new HistoryApplicationForm
             {
                 ApplicationFormId = applicationForm.Id,
-                Note = request.Note,
-                UserCodeAction = request.UserCodeApproval,
-                UserNameAction = request.UserNameApproval,
+                Note = request?.Note,
+                UserCodeAction = request?.UserCodeApproval,
+                UserNameAction = userNameAction,
                 ActionAt = DateTimeOffset.Now
             };
 
@@ -764,7 +781,7 @@ namespace ServicePortals.Application.Services.LeaveRequest
             UserCodeCreatedFormAndLeave = UserCodeCreatedFormAndLeave.Distinct().ToList();
 
             //case hr approved
-            if (request.Status == true && applicationForm.RequestStatusId == (int)StatusApplicationFormEnum.WAIT_HR)
+            if (request?.Status == true && applicationForm.RequestStatusId == (int)StatusApplicationFormEnum.WAIT_HR)
             {
                 var userPermissionHrMngLeave = await _context.Permissions.Include(e => e.UserPermissions).FirstOrDefaultAsync(e => e.Name == "leave_request.hr_management_leave_request");
                 var userCodes = userPermissionHrMngLeave?.UserPermissions?.Select(e => e.UserCode).ToList();
@@ -801,13 +818,14 @@ namespace ServicePortals.Application.Services.LeaveRequest
                 return true;
             }
 
-            if (applicationForm.OrgPositionId != orgPosition.Id)
+            //validate nếu như đơn này k phải là của người này duyệt và k được ủy quyền duyệt đơn
+            if (applicationForm.OrgPositionId != request?.OrgPositionId && isDelegation == false)
             {
                 throw new ValidationException(Global.NotPermissionApproval);
             }
 
             //case reject
-            if (request.Status == false)
+            if (request?.Status == false)
             {
                 applicationForm.RequestStatusId = (int)StatusApplicationFormEnum.REJECT;
                 applicationForm.UpdatedAt = DateTimeOffset.Now;

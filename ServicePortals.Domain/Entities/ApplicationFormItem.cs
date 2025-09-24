@@ -33,5 +33,6 @@ namespace ServicePortals.Domain.Entities
         public List<MemoNotification> MemoNotifications { get; set; } = [];
         public List<ITForm> ITForms { get; set; } = [];
         public List<Purchase> Purchases { get; set; } = [];
+        public List<OverTime> OverTimes { get; set; } = [];
     }
 }

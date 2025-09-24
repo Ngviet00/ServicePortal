@@ -5,13 +5,11 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using ServicePortals.Application.Dtos.Approval.Request;
 using ServicePortals.Application.Dtos.Approval.Response;
-using ServicePortals.Application.Dtos.ITForm.Responses;
 using ServicePortals.Application.Interfaces.Approval;
 using ServicePortals.Application.Interfaces.ITForm;
 using ServicePortals.Application.Interfaces.LeaveRequest;
 using ServicePortals.Application.Interfaces.MemoNotification;
 using ServicePortals.Application.Interfaces.Purchase;
-using ServicePortals.Domain.Entities;
 using ServicePortals.Domain.Enums;
 using ServicePortals.Infrastructure.Data;
 using ServicePortals.Infrastructure.Helpers;
@@ -66,6 +64,7 @@ namespace ServicePortals.Application.Services.Approval
             parameters.Add("@DepartmentId", request.DepartmentId, DbType.Int32, ParameterDirection.Input);
             parameters.Add("@OrgPositionId", request.OrgPositionId, DbType.Int32, ParameterDirection.Input);
             parameters.Add("@RequestTypeId", request.RequestTypeId, DbType.Int32, ParameterDirection.Input);
+            parameters.Add("@UserCode", request.UserCode, DbType.String, ParameterDirection.Input);
             parameters.Add("@TotalRecords", dbType: DbType.Int32, direction: ParameterDirection.Output);
 
             var results = await _context.Database.GetDbConnection()
@@ -120,220 +119,83 @@ namespace ServicePortals.Application.Services.Approval
             var permissionClaims = userClaims?.Claims.Where(c => c.Type == "permission").Select(c => c.Value).ToHashSet(StringComparer.OrdinalIgnoreCase);
             bool isHR = roleClaims?.Contains("HR") == true && permissionClaims?.Contains("leave_request.hr_management_leave_request") == true;
 
-            var query = _context.ApplicationForms
-                .Where(e => e.DeletedAt == null)
-                .OrderByDescending(e => e.CreatedAt)
-                .AsQueryable();
+            var parameters = new DynamicParameters();
 
-            if (isHR)
+            parameters.Add("@OrgPositionId", request.OrgPositionId, DbType.Int32, ParameterDirection.Input);
+            parameters.Add("@IsHR", isHR, DbType.Boolean, ParameterDirection.Input);
+            parameters.Add("@UserCode", request.UserCode, DbType.String, ParameterDirection.Input);
+            parameters.Add("@SidebarCount", dbType: DbType.Int32, direction: ParameterDirection.Output);
+            parameters.Add("@AssignedCount", dbType: DbType.Int32, direction: ParameterDirection.Output);
+
+            var resultsFromDb = await _context.Database.GetDbConnection()
+                .QueryAsync<object>(
+                    "dbo.Approval_GET_CountWaitApprovalAndAssignInSideBar",
+                    parameters,
+                    commandType: CommandType.StoredProcedure
+            );
+
+            return new CountWaitApprovalAndAssignedInSidebarResponse
             {
-                query = query.Where(e => e.OrgPositionId == request.OrgPositionId &&
-                    (
-                        e.RequestStatusId != (int)StatusApplicationFormEnum.COMPLETE &&
-                        e.RequestStatusId != (int)StatusApplicationFormEnum.REJECT
-                    ) ||
-                    e.RequestStatusId == (int)StatusApplicationFormEnum.WAIT_HR
-                );
-            }
-            else
-            {
-                query = query.Where(e =>
-                    e.OrgPositionId == request.OrgPositionId &&
-                    e.RequestStatusId != (int)StatusApplicationFormEnum.COMPLETE &&
-                    e.RequestStatusId != (int)StatusApplicationFormEnum.REJECT
-                );
-            }
-
-            var totalItems = await query.CountAsync();
-
-            var queryCountAssigned = await _context.ApplicationForms
-                .Where(e =>
-                    e.AssignedTasks.Any(at => at.UserCode == request.UserCode) &&
-                    e.RequestStatusId != (int)StatusApplicationFormEnum.COMPLETE &&
-                    e.RequestStatusId != (int)StatusApplicationFormEnum.REJECT
-                )
-                .CountAsync();
-
-            CountWaitApprovalAndAssignedInSidebarResponse results = new CountWaitApprovalAndAssignedInSidebarResponse();
-
-            results.TotalWaitApproval = totalItems;
-            results.TotalAssigned = queryCountAssigned;
-
-            return results;
+                TotalWaitApproval = parameters.Get<int>("@SidebarCount"),
+                TotalAssigned = parameters.Get<int>("@AssignedCount")
+            };
         }
 
-        public async Task<PagedResults<HistoryApprovalProcessResponse>> ListHistoryApprovedOrProcessed(ListHistoryApprovalProcessedRequest request)
+        public async Task<PagedResults<HistoryApprovalResponse>> ListHistoryApprovedOrProcessed(ListHistoryApprovalRequest request)
         {
-            return null;
-            //string? userCode = request.UserCode;
-            //double page = request.Page;
-            //double pageSize = request.PageSize;
-            //int? requestTypeId = request.RequestTypeId;
-            //int? departmentId = request.DepartmentId;
-            //int? status = request.Status;
+            var parameters = new DynamicParameters();
 
-            //if (string.IsNullOrWhiteSpace(userCode))
-            //{
-            //    throw new ValidationException("UserCode is required");
-            //}
+            parameters.Add("@Page", request.Page, DbType.Int32, ParameterDirection.Input);
+            parameters.Add("@PageSize", request.PageSize, DbType.Int32, ParameterDirection.Input);
+            parameters.Add("@UserCode", request.UserCode, DbType.String, ParameterDirection.Input);
+            parameters.Add("@RequestTypeId", request.RequestTypeId, DbType.Int32, ParameterDirection.Input);
+            parameters.Add("@StatusId", request.Status, DbType.Int32, ParameterDirection.Input);
+            parameters.Add("@TotalRecords", dbType: DbType.Int32, direction: ParameterDirection.Output);
 
-            //var query = _context.HistoryApplicationForms
-            //    .Where(e =>
-            //        (
-            //            e.UserCodeAction == userCode ||
-            //            (
-            //                e.ApplicationForm != null &&
-            //                (
-            //                    (
-            //                        e.ApplicationForm.RequestTypeId == (int)RequestTypeEnum.FORM_IT || e.ApplicationForm.RequestTypeId == (int)RequestTypeEnum.PURCHASE
-            //                    ) &&
-            //                    e.ApplicationForm.AssignedTasks.Any(at => at.UserCode == userCode)
-            //                )
-            //            )
-            //        )
-            //        && e.DeletedAt == null
-            //        && e.ApplicationForm != null
-            //        && e.ApplicationForm.DeletedAt == null
-            //    );
+            var results = await _context.Database.GetDbConnection()
+                .QueryAsync<HistoryApprovalResponse>(
+                    "dbo.Approval_GET_GetHistoryApproval",
+                    parameters,
+                    commandType: CommandType.StoredProcedure
+            );
 
-            ////filter by request type
-            //if (requestTypeId != null)
-            //{
-            //    query = query.Where(e => e.ApplicationForm != null && e.ApplicationForm.RequestTypeId == requestTypeId);
-            //}
+            int totalRecords = parameters.Get<int>("@TotalRecords");
+            int totalPages = (int)Math.Ceiling((double)totalRecords / request.PageSize);
 
-            ////filter by department
-            ////if (departmentId != null)
-            ////{
-            ////    query = query.Where(e =>
-            ////        (e.ApplicationForm.RequestType.Id == (int)RequestTypeEnum.LEAVE_REQUEST && e.ApplicationForm.Leave.DepartmentId == request.DepartmentId) ||
-            ////        (e.ApplicationForm.RequestType.Id == (int)RequestTypeEnum.CREATE_MEMO_NOTIFICATION && e.ApplicationForm.MemoNotification.DepartmentId == request.DepartmentId) ||
-            ////        (e.ApplicationForm.RequestType.Id == (int)RequestTypeEnum.FORM_IT && e.ApplicationForm.ITForm.DepartmentId == request.DepartmentId) ||
-            ////        (e.ApplicationForm.RequestType.Id == (int)RequestTypeEnum.PURCHASE && e.ApplicationForm.Purchase.DepartmentId == request.DepartmentId)
-            ////    );
-            ////}
-
-            ////filter by status
-            //if (status != null)
-            //{
-            //    if (status == (int)StatusApplicationFormEnum.PENDING || status == (int)StatusApplicationFormEnum.FINAL_APPROVAL)
-            //    {
-            //        query = query.Where(e => e.ApplicationForm != null &&
-            //            (e.ApplicationForm.RequestStatusId == (int)StatusApplicationFormEnum.PENDING ||
-            //             e.ApplicationForm.RequestStatusId == (int)StatusApplicationFormEnum.FINAL_APPROVAL));
-            //    }
-            //    else if (status == (int)StatusApplicationFormEnum.IN_PROCESS || status == (int)StatusApplicationFormEnum.ASSIGNED)
-            //    {
-            //        query = query.Where(e => e.ApplicationForm != null &&
-            //            (e.ApplicationForm.RequestStatusId == (int)StatusApplicationFormEnum.IN_PROCESS ||
-            //             e.ApplicationForm.RequestStatusId == (int)StatusApplicationFormEnum.ASSIGNED));
-            //    }
-            //    else
-            //    {
-            //        query = query.Where(e => e.ApplicationForm != null && e.ApplicationForm.RequestStatusId == status);
-            //    }
-            //}
-
-            //var totalItems = await query
-            //    .Select(e => e.ApplicationFormId)
-            //    .Distinct()
-            //    .CountAsync();
-
-            //var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
-
-            //var latestHistories = await query
-            //    .GroupBy(e => e.ApplicationFormId)
-            //    .Select(g => g.OrderByDescending(x => x.ActionAt).Select(x => x.Id).First())
-            //    .OrderByDescending(id => id)
-            //    .Skip((int)((page - 1) * pageSize))
-            //    .Take((int)pageSize)
-            //    .ToListAsync();
-
-            //var results = await _context.HistoryApplicationForms
-            //    .Where(e => latestHistories.Contains(e.Id))
-            //    .Select(x => new HistoryApprovalProcessResponse
-            //    {
-            //        Id = x.ApplicationForm == null ? null : x.ApplicationForm.Id,
-            //        Code = x.ApplicationForm == null ? null : x.ApplicationForm.Code,
-            //        Action = x.Action,
-            //        RequestStatus = x.ApplicationForm == null ? null : x.ApplicationForm.RequestStatus,
-            //        RequestType = x.ApplicationForm == null ? null : x.ApplicationForm.RequestType,
-            //        OrgUnit = x.ApplicationForm == null ? null : x.ApplicationForm.OrgUnit,
-            //        UserNameRequestor = x.ApplicationForm == null ? null : x.ApplicationForm.CreatedBy,
-            //        UserCodeRequestor = x.ApplicationForm == null ? null : x.ApplicationForm.UserCodeCreatedBy,
-            //        ApprovedAt = x.ActionAt
-            //    })
-            //    .OrderByDescending(x => x.ApprovedAt)
-            //    .ToListAsync();
-
-            //return new PagedResults<HistoryApprovalProcessResponse>
-            //{
-            //    Data = results,
-            //    TotalItems = totalItems,
-            //    TotalPages = totalPages,
-            //};
+            return new PagedResults<HistoryApprovalResponse>
+            {
+                Data = (List<HistoryApprovalResponse>)results,
+                TotalItems = totalRecords,
+                TotalPages = totalPages
+            };
         }
 
         public async Task<PagedResults<PendingApproval>> ListAssigned(ListAssignedTaskRequest request)
         {
-            return null;
-            //double page = request.Page;
-            //double pageSize = request.PageSize;
-            //int? departmentId = request.DepartmentId;
-            //int? requestTypeId = request.RequestTypeId;
+            var parameters = new DynamicParameters();
 
-            //var query = _context.ApplicationForms
-            //    .Where(e =>
-            //        e.AssignedTasks.Any(at => at.UserCode == request.UserCode) &&
-            //        e.RequestStatusId != (int)StatusApplicationFormEnum.COMPLETE &&
-            //        e.RequestStatusId != (int)StatusApplicationFormEnum.REJECT
-            //    )
-            //    .AsQueryable();
+            parameters.Add("@Page", request.Page, DbType.Int32, ParameterDirection.Input);
+            parameters.Add("@PageSize", request.PageSize, DbType.Int32, ParameterDirection.Input);
+            parameters.Add("@UserCode", request.UserCode, DbType.String, ParameterDirection.Input);
+            parameters.Add("@TotalRecords", dbType: DbType.Int32, direction: ParameterDirection.Output);
 
-            ////filter by request type
-            //if (requestTypeId != null)
-            //{
-            //    query = query.Where(e => e.RequestTypeId == requestTypeId);
-            //}
 
-            ////filter by department
-            //if (request.DepartmentId != null)
-            //{
-            //    query = query.Where(e => e.DepartmentId == request.DepartmentId);
-            //}
+            var results = await _context.Database.GetDbConnection()
+                .QueryAsync<PendingApproval>(
+                    "dbo.Approval_GET_GetListAssigned",
+                    parameters,
+                    commandType: CommandType.StoredProcedure
+            );
 
-            //var totalItems = await query.CountAsync();
+            int totalRecords = parameters.Get<int>("@TotalRecords");
+            int totalPages = (int)Math.Ceiling((double)totalRecords / request.PageSize);
 
-            //var totalPages = (int)Math.Ceiling(totalItems / pageSize);
-
-            //var results = await query
-            //    .OrderByDescending(r => r.CreatedAt)
-            //    .Select(r => new PendingApproval
-            //    {
-            //        Id = r.Id,
-            //        Code = r.Code,
-            //        UserCodeRequestor = r.UserCodeCreatedBy,
-            //        UserNameCreated = r.CreatedBy,
-            //        UserNameRequestor = r.CreatedBy,
-            //        OrgUnit = r.OrgUnit,
-            //        CreatedAt = r.CreatedAt,
-            //        RequestStatus = r.RequestStatus,
-            //        RequestType = r.RequestType,
-            //        HistoryApplicationForm = r.HistoryApplicationForms
-            //            .OrderByDescending(h => h.Action)
-            //            .Select(h => new HistoryApplicationForm { ActionBy = h.ActionBy })
-            //            .FirstOrDefault(),
-            //    })
-            //    .Skip((int)(page - 1) * (int)pageSize)
-            //    .Take((int)pageSize)
-            //    .ToListAsync();
-
-            //return new PagedResults<PendingApproval>
-            //{
-            //    Data = results,
-            //    TotalItems = totalItems,
-            //    TotalPages = totalPages,
-            //};
+            return new PagedResults<PendingApproval>
+            {
+                Data = (List<PendingApproval>)results,
+                TotalItems = totalRecords,
+                TotalPages = totalPages
+            };
         }
     }
 }
