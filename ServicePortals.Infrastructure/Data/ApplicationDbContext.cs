@@ -523,16 +523,25 @@ namespace ServicePortals.Infrastructure.Data
                 .IsRequired(false)
                 .OnDelete(DeleteBehavior.NoAction);
 
+            modelBuilder.Entity<ApplicationForm>()
+                .HasOne(af => af.TypeOverTime)
+                .WithMany()
+                .HasForeignKey(af => af.TypeOverTimeId)
+                .HasPrincipalKey(tot => tot.Id)
+                .OnDelete(DeleteBehavior.NoAction)
+                .IsRequired(false);
+
+            modelBuilder.Entity<ApplicationForm>()
+                .HasOne(af => af.OrgUnitCompany)
+                .WithMany()
+                .HasForeignKey(af => af.OrgUnitCompanyId)
+                .HasPrincipalKey(unit => unit.Id)
+                .OnDelete(DeleteBehavior.NoAction)
+                .IsRequired(false);
+
             #endregion
 
             #region Over Time
-
-            modelBuilder.Entity<OverTime>()
-                .HasOne(ot => ot.TypeOverTime)
-                .WithMany()
-                .HasPrincipalKey(t => t.Id)
-                .IsRequired(false)
-                .OnDelete(DeleteBehavior.NoAction);
 
             modelBuilder.Entity<OverTime>()
                 .HasOne(ot => ot.ApplicationFormItem)

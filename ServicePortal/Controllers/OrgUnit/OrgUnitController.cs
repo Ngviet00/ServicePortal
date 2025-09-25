@@ -105,5 +105,13 @@ namespace ServicePortal.Controllers.OrgUnit
 
             return Ok(new BaseResponse<object>(200, "success", result));
         }
+
+        [HttpGet("get-unit-company")]
+        public async Task<IActionResult> GetUnitCompany()
+        {
+            var results = await _orgUnitService.GetAll(e => e.UnitId == (int)UnitEnum.Company);
+
+            return Ok(new BaseResponse<List<Entities.OrgUnit>>(200, "success", results));
+        }
     }
 }

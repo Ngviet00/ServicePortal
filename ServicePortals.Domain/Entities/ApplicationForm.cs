@@ -31,12 +31,18 @@ namespace ServicePortals.Domain.Entities
         public string? Note { get; set; }
         public int Step { get; set; }
         public string? MetaData { get; set; } //type json
+
+        public int? TypeOverTimeId { get; set; }
+        public int? OrgUnitCompanyId { get; set; }
+        public DateTimeOffset? DateRegister { get; set; }
         public DateTimeOffset? CreatedAt { get; set; }
         public DateTimeOffset? UpdatedAt { get; set; }
         public DateTimeOffset? DeletedAt { get; set; }
 
         //relationship
+        public OrgUnit? OrgUnitCompany { get; set; }
         public OrgUnit? OrgUnit { get; set; }
+        public TypeOverTime? TypeOverTime { get; set; }
         public RequestType? RequestType { get; set; } //foreign key RequestTypeId
         public RequestStatus? RequestStatus { get; set; } //foreign key RequestStatusId
         public ICollection<AssignedTask> AssignedTasks { get; set; } = []; //assigned task, đơn này sếp gán cho nhân viên nào,..

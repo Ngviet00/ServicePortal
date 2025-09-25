@@ -50,6 +50,8 @@ using ServicePortals.Application.Interfaces.CostCenter;
 using ServicePortals.Application.Services.CostCenter;
 using ServicePortals.Application.Interfaces.Purchase;
 using ServicePortals.Application.Services.Purchase;
+using ServicePortals.Application.Interfaces.OverTime;
+using ServicePortals.Application.Services.OverTime;
 
 namespace ServicePortal
 {
@@ -161,6 +163,8 @@ namespace ServicePortal
             builder.Services.AddScoped<ICostCenterService, CostCenterService>();
 
             builder.Services.AddScoped<IPurchaseService, PurchaseService>();
+
+            builder.Services.AddScoped<IOverTimeService, OverTimeService>();
             #endregion
 
             builder.Services.AddHttpContextAccessor();

@@ -17,16 +17,14 @@ namespace ServicePortals.Domain.Entities
         public string? UserName { get; set;}
         [MaxLength(50)]
         public string? Position { get; set;}
-        public DateTimeOffset? FromHour { get; set; }
-        public DateTimeOffset? ToHour { get; set; }
+        public string? FromHour { get; set; }
+        public string? ToHour { get; set; }
         public int NumberHour { get; set; }
         public string? Note { get; set; }
-        public int TypeOverTimeId { get; set; }
+        public string? NoteOfHR { get; set; }
         public DateTimeOffset? CreatedAt { get; set; }
         public DateTimeOffset? UpdatedAt { get; set; }
         public DateTimeOffset? DeletedAt { get; set; }
-
-        public TypeOverTime? TypeOverTime { get; set; }
         public ApplicationFormItem? ApplicationFormItem { get; set; }
     }
 }
