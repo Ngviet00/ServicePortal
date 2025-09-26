@@ -1,5 +1,8 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Azure.Core;
+using DocumentFormat.OpenXml.InkML;
+using Microsoft.EntityFrameworkCore;
 using ServicePortals.Domain.Entities;
+using ServicePortals.Shared.Exceptions;
 
 namespace ServicePortals.Application.Extensions
 {

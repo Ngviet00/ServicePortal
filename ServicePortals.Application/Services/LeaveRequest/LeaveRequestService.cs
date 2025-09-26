@@ -476,6 +476,7 @@ namespace ServicePortals.Application.Services.LeaveRequest
                     RequestStatus = x.RequestStatus,
                     RequestType = x.RequestType
                 })
+                .Skip((int)((request.Page - 1) * request.PageSize)).Take((int)request.PageSize)
                 .ToListAsync();
 
             int totalPages = (int)Math.Ceiling((double)totalItem / request.PageSize);
@@ -566,6 +567,11 @@ namespace ServicePortals.Application.Services.LeaveRequest
         public async Task<object> Update(string applicationFormCode, List<CreateListLeaveRequest> listLeaveRequests)
         {
             var applicationForm = await _context.ApplicationForms.FirstOrDefaultAsync(e => e.Code == applicationFormCode);
+
+            if (applicationForm == null)
+            {
+                throw new NotFoundException("Application form not found, please check again");
+            }
 
             //delete
             var leaveDeletes = await _context.LeaveRequests
@@ -673,7 +679,18 @@ namespace ServicePortals.Application.Services.LeaveRequest
                 var applicationForm = await _context.ApplicationForms.FirstOrDefaultAsync(e => e.Code == request.ApplicationFormCode)
                 ?? throw new NotFoundException("Application form not found, please check again");
 
-                if (applicationForm.OrgPositionId != request.OrgPositionId)
+                var todayDate = DateTimeOffset.Now.Date;
+
+                //delegation
+                var isDelegation = await _context.Delegations
+                    .AnyAsync(e =>
+                        e.FromOrgPositionId == applicationForm.OrgPositionId &&
+                        e.IsActive == true &&
+                        e.UserCodeDelegation == request.UserCodeReject &&
+                        todayDate >= e.StartDate!.Value.Date && todayDate <= e.EndDate!.Value.Date
+                    );
+
+                if (applicationForm.OrgPositionId != request.OrgPositionId && isDelegation == false)
                 {
                     throw new ValidationException(Global.NotPermissionApproval);
                 }
