@@ -45,6 +45,7 @@ namespace ServicePortals.Infrastructure.Data
         public DbSet<Delegations> Delegations { get; set; }
         public DbSet<TypeOverTime> TypeOverTimes { get; set; }
         public DbSet<OverTime> OverTimes { get; set; }
+        public DbSet<MissTimeKeeping> MissTimeKeepings { get; set; }
 
         public IDbConnection CreateConnection() => Database.GetDbConnection();
 
@@ -551,6 +552,16 @@ namespace ServicePortals.Infrastructure.Data
                 .IsRequired(false)
                 .OnDelete(DeleteBehavior.NoAction);
 
+            #endregion
+
+            #region Miss timekeeping
+                modelBuilder.Entity<MissTimeKeeping>()
+                    .HasOne(ot => ot.ApplicationFormItem)
+                    .WithMany(afi => afi.MissTimeKeepings)
+                    .HasPrincipalKey(afi => afi.Id)
+                    .HasForeignKey(ot => ot.ApplicationFormItemId)
+                    .IsRequired(false)
+                    .OnDelete(DeleteBehavior.NoAction);
             #endregion
         }
     }

@@ -51,7 +51,9 @@ using ServicePortals.Application.Services.CostCenter;
 using ServicePortals.Application.Interfaces.Purchase;
 using ServicePortals.Application.Services.Purchase;
 using ServicePortals.Application.Interfaces.OverTime;
+using ServicePortals.Application.Services.MissTimeKeeping;
 using ServicePortals.Application.Services.OverTime;
+using ServicePortals.Application.Interfaces.MissTimeKeeping;
 
 namespace ServicePortal
 {
@@ -165,6 +167,7 @@ namespace ServicePortal
             builder.Services.AddScoped<IPurchaseService, PurchaseService>();
 
             builder.Services.AddScoped<IOverTimeService, OverTimeService>();
+            builder.Services.AddScoped <IMissTimeKeepingService, MissTimeKeepingService>();
             #endregion
 
             builder.Services.AddHttpContextAccessor();

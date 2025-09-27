@@ -4,6 +4,7 @@ using ClosedXML.Excel;
 using Dapper;
 using Hangfire;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Serilog;
@@ -184,25 +185,18 @@ namespace ServicePortals.Application.Services.OverTime
             }
             else
             {
-                if (orgPosition.UnitId == (int)UnitEnum.GM)
+                var hasStaff = await CheckHasStaff([.. applicationForm.ApplicationFormItems.Where(e => e.Status == true).Select(e => e.UserCode ?? "")]);
+
+                //nếu như người duyệt là GM hoặc manager admin hoặc là (manager k phải admin và không có nhân viên nào cần gm duyệt - cột is staff) -> gửi đến hr, ngược lại theo cấp trên duyệt
+                if (
+                    orgPosition.UnitId == (int)UnitEnum.GM ||
+                    (orgPosition.UnitId == (int)UnitEnum.Manager && orgPosition.PositionCode == "ADMIN-MGR") ||
+                    (orgPosition.UnitId == (int)UnitEnum.Manager && orgPosition.PositionCode != "ADMIN-MGR" && !hasStaff)
+                )
                 {
                     isSendHr = true;
                     statusId = (int)StatusApplicationFormEnum.WAIT_HR;
                     nextOrgPositionId = 0;
-                }
-                else if (orgPosition.UnitId == (int)UnitEnum.Manager)
-                {
-                    if (orgPosition.PositionCode == "ADMIN-MGR")
-                    {
-                        isSendHr = true;
-                        statusId = (int)StatusApplicationFormEnum.WAIT_HR;
-                        nextOrgPositionId = 0;
-                    }
-                    else
-                    {
-                        statusId = (int)StatusApplicationFormEnum.IN_PROCESS;
-                        nextOrgPositionId = orgPosition.ParentOrgPositionId ?? 9999;
-                    }
                 }
                 else
                 {
@@ -538,14 +532,25 @@ namespace ServicePortals.Application.Services.OverTime
 
         public async Task<byte[]> HrExportExcel(long applicationFormId)
         {
-            var overTimeDatas = await _context.OverTimes
-                .Where(e =>
-                    e.ApplicationFormItem != null && e.ApplicationFormItem.Status == true &&
-                    e.ApplicationFormItem.ApplicationForm != null && e.ApplicationFormItem.ApplicationForm.Id == applicationFormId
-            )
-            .ToListAsync();
+            var applicationForm = await _context.ApplicationForms
+                .Include(e => e.ApplicationFormItems)
+                    .ThenInclude(e => e.OverTimes)
+                .Include(e => e.RequestType)
+                .Include(e => e.RequestStatus)
+                .Include(e => e.OrgUnit)
+                .Include(e => e.OrgUnitCompany)
+                .Include(e => e.TypeOverTime)
+                .AsNoTracking()
+                .FirstOrDefaultAsync(e => e.Id == applicationFormId);
 
-            return _excelService.ExportOverTimeToExcel(overTimeDatas);
+            if (applicationForm == null)
+            {
+                return [];
+            }
+
+            applicationForm!.ApplicationFormItems = applicationForm.ApplicationFormItems.Where(e => e.Status == true).ToList();
+
+            return _excelService.ExportOverTimeToExcel(applicationForm);
         }
 
         public async Task<object> HrNote(HrNoteOverTimeRequest request)
@@ -824,6 +829,41 @@ namespace ServicePortals.Application.Services.OverTime
                 Log.Error($"Error can not save data by excel, ex: {ex.Message}");
                 throw new ValidationException("Dữ liệu nhập vào không hợp lệ");
             }
+        }
+
+        /// <summary>
+        /// Hàm này kiểm tra nếu như có 1 user nào đó là staff, khi tăng ca cần qua bộ phận GM (general manager) -> hr, không thì manager -> hr
+        /// </summary>
+        /// <returns></returns>
+        private async Task<bool> CheckHasStaff(List<string> userCodes)
+        {
+            if (userCodes.Count == 0)
+            {
+                return false;
+            }
+
+            var connection = (SqlConnection)_context.CreateConnection();
+
+            if (connection.State != ConnectionState.Open)
+            {
+                await connection.OpenAsync();
+            }
+
+            string sql = $@"
+                SELECT 
+                    CASE 
+                        WHEN EXISTS (
+                            SELECT 1
+                            FROM {Global.DbViClock}.dbo.tblNhanVien AS U
+                            INNER JOIN {Global.DbWeb}.dbo.org_positions AS P ON U.ViTriToChucId = P.Id
+                            WHERE U.NVMaNV IN @UserCodes AND P.IsStaff = 1 AND U.NVNgayRa > GETDATE()
+                        )
+                        THEN CAST(1 AS BIT)
+                        ELSE CAST(0 AS BIT)
+                    END AS HasStaff;
+            ";
+
+            return await connection.QuerySingleAsync<bool>(sql, new { UserCodes = userCodes});
         }
     }
 }

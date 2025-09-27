@@ -34,5 +34,6 @@ namespace ServicePortals.Domain.Entities
         public List<ITForm> ITForms { get; set; } = [];
         public List<Purchase> Purchases { get; set; } = [];
         public List<OverTime> OverTimes { get; set; } = [];
+        public List<MissTimeKeeping> MissTimeKeepings { get; set; } = [];
     }
 }

@@ -3,7 +3,6 @@ using ServicePortals.Infrastructure.Data;
 using ServicePortals.Infrastructure.Helpers;
 using ServicePortals.Domain.Entities;
 using System.Globalization;
-using DocumentFormat.OpenXml.Spreadsheet;
 
 namespace ServicePortals.Infrastructure.Excel
 {
@@ -16,68 +15,79 @@ namespace ServicePortals.Infrastructure.Excel
             _context = context;
         }
 
-        public byte[] ExportOverTimeToExcel(List<OverTime> overTimes)
+        public byte[] ExportOverTimeToExcel(ApplicationForm applicationForm)
         {
-            //using var wb = new XLWorkbook();
-            //var ws = wb.AddWorksheet("BANG DANG KY CA");
+            using var wb = new XLWorkbook();
+            var ws = wb.AddWorksheet("BANG DANG KY CA");
 
-            //ws.RowHeight = 23;
+            ws.RowHeight = 23;
 
-            //// Header title
-            //ws.Cell("A1").Value = "Danh sách nghỉ phép";
-            //ws.Cell("A1").Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
-            //ws.Cell("A1").Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+            // Header title
+            ws.Cell("A1").Value = "Danh sách tăng ca";
+            ws.Cell("A1").Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+            ws.Cell("A1").Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
 
-            //// Merge tiêu đề
-            //ws.Range("A1:H1").Merge().Style.Font.SetBold().Font.FontSize = 14;
+            // Merge tiêu đề
+            ws.Range("A1:H1").Merge().Style.Font.SetBold().Font.FontSize = 14;
 
-            //ws.Columns("A:B").Width = 13;
-            //ws.Columns("C:H").Width = 18;
+            ws.Columns("A:B").Width = 13;
+            ws.Columns("C:H").Width = 18;
+            ws.Column("B").Width = 20;
+            ws.Column("C").Width = 22;
+            ws.Column("G").Width = 30;
 
-            //// Cột tiêu đề bảng
-            //var headers = new[] { "Mã NV", "Lý do nghỉ", "Ngày bắt đầu", "Ngày kết thúc", "Kiểu Nghỉ", "Ghi Chú", "Từ ngày", "Đến ngày" };
-            //for (int i = 0; i < headers.Length; i++)
-            //{
-            //    var cell = ws.Cell(3, i + 1);
-            //    cell.Value = headers[i];
+            ws.Cell("A2").Value = "Đơn vị";
+            ws.Cell("B2").Value = applicationForm?.OrgUnitCompany?.Name;
 
-            //    cell.Style.Font.SetBold();
+            ws.Cell("A3").Value = "Loại tăng ca";
+            ws.Cell("B3").Value = applicationForm?.TypeOverTime?.Name;
 
-            //    cell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
-            //    cell.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+            ws.Cell("A4").Value = "Ngày Đký";
+            ws.Cell("B4").Value = applicationForm?.DateRegister?.ToString("yyyy-MM-dd");
 
-            //    cell.Style.Fill.BackgroundColor = (headers[i] == "Từ ngày") ? XLColor.Yellow : headers[i] == "Đến ngày" ? XLColor.LightBlue : XLColor.NoColor;
-            //    cell.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
-            //}
+            ws.Cell("A5").Value = "Bộ phận";
+            ws.Cell("B5").Value = applicationForm?.OrgUnit?.Name;
 
-            //// Dữ liệu
-            //for (int i = 0; i < leaveRequests.Count; i++)
-            //{
-            //    var item = leaveRequests[i];
-            //    int row = i + 4;
 
-            //    ws.Row(row).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
-            //    ws.Row(row).Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+            // Cột tiêu đề bảng
+            var headers = new[] { "Mã NV", "Họ tên", "Chức vụ", "Từ giờ (h)", "Đến giờ (h)", "Số giờ (h)", "Ghi chú"};
+            for (int i = 0; i < headers.Length; i++)
+            {
+                var cell = ws.Cell(7, i + 1);
+                cell.Value = headers[i];
 
-            //    ws.Cell(row, 1).Value = item?.UserCode;
-            //    ws.Cell(row, 2).Value = item?.TypeLeave?.Code;
+                cell.Style.Font.SetBold();
 
-            //    var dateFromStr = item!.FromDate?.ToString("yyyy-MM-dd HH:mm") ?? DateTimeOffset.Now.ToString("yyyy-MM-dd HH:mm");
-            //    var dateToStr = item!.ToDate?.ToString("yyyy-MM-dd HH:mm") ?? DateTimeOffset.Now.ToString("yyyy-MM-dd HH:mm");
+                cell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                cell.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
 
-            //    ws.Cell(row, 3).Value = dateFromStr;
-            //    ws.Cell(row, 4).Value = dateToStr;
+                cell.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+            }
 
-            //    ws.Cell(row, 5).Value = item?.TimeLeave?.Name;
-            //    ws.Cell(row, 6).Value = "";
-            //    ws.Cell(row, 7).Value = item!.FromDate != null ? ((DateTimeOffset)item.FromDate).DateTime : DateTimeOffset.Now.ToString("d-MMM", CultureInfo.InvariantCulture);
-            //    ws.Cell(row, 8).Value = item!.ToDate != null ? ((DateTimeOffset)item.ToDate).DateTime : DateTimeOffset.Now.ToString("d-MMM", CultureInfo.InvariantCulture);
-            //}
+            var overTimes = applicationForm!.ApplicationFormItems
+                .SelectMany(x => x.OverTimes)
+                .ToList();
 
-            //using var stream = new MemoryStream();
-            //wb.SaveAs(stream);
-            //return stream.ToArray();
-            return [];
+            // Dữ liệu
+            for (int i = 0; i < overTimes.Count; i++)
+            {
+                var item = overTimes[i];
+                int row = i + 8;
+
+                ws.Row(row).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                ws.Row(row).Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+                ws.Cell(row, 1).Value = item?.UserCode ?? "";       
+                ws.Cell(row, 2).Value = item?.UserName ?? "";  
+                ws.Cell(row, 3).Value = item?.Position ?? "";
+                ws.Cell(row, 4).Value = item?.FromHour ?? "";
+                ws.Cell(row, 5).Value = item?.ToHour ?? "";
+                ws.Cell(row, 6).Value = item?.NumberHour;
+                ws.Cell(row, 7).Value = item?.Note ?? "";
+            }
+
+            using var stream = new MemoryStream();
+            wb.SaveAs(stream);
+            return stream.ToArray();
         }
 
         public byte[] ExportLeaveRequestToExcel(List<LeaveRequest> leaveRequests)

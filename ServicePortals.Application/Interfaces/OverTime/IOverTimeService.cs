@@ -10,42 +10,42 @@ namespace ServicePortals.Application.Interfaces.OverTime
         /// <summary>
         /// Lấy tất cả loại tăng ca, tăng ca ngày thường, chủ nhật , ngày lễ
         /// </summary>
-        Task<List<TypeOverTime>> GetAllTypeOverTime(); //done
+        Task<List<TypeOverTime>> GetAllTypeOverTime();
 
         /// <summary>
         /// Tạo đơn tăng ca
         /// </summary>
-        Task<object> Create(CreateOverTimeRequest request); //done
+        Task<object> Create(CreateOverTimeRequest request);
 
         /// <summary>
         /// Update overtime
         /// </summary>
-        Task<object> Update(string applicationFormCode, CreateOverTimeRequest request); //done
+        Task<object> Update(string applicationFormCode, CreateOverTimeRequest request);
 
         /// <summary>
         /// Hiển thị tăng ca của cá nhân
         /// </summary>
-        Task<PagedResults<MyOverTimeResponse>> GetMyOverTime(MyOverTimeRequest request); //done
+        Task<PagedResults<MyOverTimeResponse>> GetMyOverTime(MyOverTimeRequest request);
 
         /// <summary>
         /// Hiển thị các đơn đã đăng ký tăng ca, đăng ký cho cá nhân - đky cho người khác
         /// </summary>
-        Task<PagedResults<MyOverTimeRegisterResponse>> GetOverTimeRegister(MyOverTimeRequest request); //done
+        Task<PagedResults<MyOverTimeRegisterResponse>> GetOverTimeRegister(MyOverTimeRequest request);
 
         /// <summary>
         /// Xóa đơn tăng ca dựa vào mã đơn
         /// </summary>
-        Task<object> Delete(string applicationFormCode);  //done
+        Task<object> Delete(string applicationFormCode);
 
         /// <summary>
         /// Từ chối 1 vài người tăng ca
         /// </summary>
-        Task<object> RejectSomeOverTimes(RejectSomeOverTimeRequest request); //done
+        Task<object> RejectSomeOverTimes(RejectSomeOverTimeRequest request);
 
         /// <summary>
         /// Hr chú thích overtime của cá nhân nào đó
         /// </summary>
-        Task<object> HrNote(HrNoteOverTimeRequest request); //done
+        Task<object> HrNote(HrNoteOverTimeRequest request);
 
         /// <summary>
         /// Chức năng duyệt
@@ -55,11 +55,11 @@ namespace ServicePortals.Application.Interfaces.OverTime
         /// <summary>
         /// Lấy chi tiết đơn tăng ca, bao gồm cả thông tin đơn, trạng thái đơn,..
         /// </summary>
-        Task<object> GetDetailOverTimeByApplicationFormCode(string applicationFormCode); //done
+        Task<object> GetDetailOverTimeByApplicationFormCode(string applicationFormCode);
 
         /// <summary>
         /// HR export excel
         /// </summary>
-        Task<byte[]> HrExportExcel(long applicationFormId); //done
+        Task<byte[]> HrExportExcel(long applicationFormId);
     }
 }

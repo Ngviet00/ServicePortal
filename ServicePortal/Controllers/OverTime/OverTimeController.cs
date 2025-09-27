@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Mvc;
 using ServicePortals.Application;
 using ServicePortals.Application.Dtos.Approval.Request;
-using ServicePortals.Application.Dtos.LeaveRequest.Requests;
 using ServicePortals.Application.Dtos.OverTime.Requests;
 using ServicePortals.Application.Dtos.OverTime.Responses;
 using ServicePortals.Application.Interfaces.OverTime;
@@ -10,7 +9,7 @@ using ServicePortals.Domain.Entities;
 
 namespace ServicePortal.Controllers.OverTime
 {
-    [Route("api/overtime")]
+    [Route("api/overtime"), Authorize]
     [ApiController]
     public class OverTimeController : ControllerBase
     {

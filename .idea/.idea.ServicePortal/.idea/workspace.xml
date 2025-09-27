@@ -5,182 +5,30 @@
     <projectFile profileName="http">ServicePortal/ServicePortal.csproj</projectFile>
     <projectFile profileName="https">ServicePortal/ServicePortal.csproj</projectFile>
     <projectFile pubXmlPath="ServicePortal/Properties/PublishProfiles/IISProfile.pubxml">ServicePortal/ServicePortal.csproj</projectFile>
+    <projectFile pubXmlPath="ServicePortal/Properties/PublishProfiles/IISProfile1.pubxml">ServicePortal/ServicePortal.csproj</projectFile>
   </component>
   <component name="AutoImportSettings">
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
     <list default="true" id="1f36a1b2-9163-4b7b-8d0e-f45a262c4021" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.config/dotnet-tools.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/.idea.ServicePortal/.idea/.gitignore" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/.idea.TakeLeaveMngSystem/.idea/.gitignore" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/.idea.TakeLeaveMngSystem/.idea/indexLayout.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Applications/Modules/Auth/Controllers/AuthController.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Applications/Modules/Auth/DTO/Requests/ChangePasswordRequestDto.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Applications/Modules/Auth/DTO/Requests/CreateUserDto.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Applications/Modules/Auth/DTO/Requests/LoginRequestDto.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Applications/Modules/Auth/DTO/Requests/LogoutRequest.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Applications/Modules/Auth/DTO/Requests/RefreshTokenRequest.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Applications/Modules/Auth/DTO/Responses/LoginResponseDto.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Applications/Modules/Auth/Services/AuthService.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Applications/Modules/Auth/Services/Interfaces/IAuthService.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Applications/Modules/Auth/Services/JwtService.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Applications/Modules/Department/Controllers/DepartmentController.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Applications/Modules/Department/DTO/Responses/GetAllDepartmentResponse.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Applications/Modules/Department/Services/DepartmentService.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Applications/Modules/Department/Services/Interfaces/IDepartmentService.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Applications/Modules/HRManagement/Controllers/HRManagementController.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Applications/Modules/HRManagement/DTO/Requests/AssignMultiplePeopleToAttendanceManagerRequest.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Applications/Modules/HRManagement/DTO/Requests/ChangeManageAttendanceRequest.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Applications/Modules/HRManagement/DTO/Requests/GetAssignableAttendanceUsersRequest.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Applications/Modules/HRManagement/DTO/Requests/GetHRManagementRequest.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Applications/Modules/HRManagement/DTO/Requests/HrAssignAttendanceManagersRequest.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Applications/Modules/HRManagement/DTO/Requests/SaveHRManagementRequest.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Applications/Modules/HRManagement/Services/HRManagementService.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Applications/Modules/HRManagement/Services/Interfaces/IHRManagementService.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Applications/Modules/LeaveRequest/Controllers/LeaveRequestController.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Applications/Modules/LeaveRequest/DTO/LeaveRequestDTO.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Applications/Modules/LeaveRequest/DTO/Requests/ApprovalDto.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Applications/Modules/LeaveRequest/DTO/Requests/GetAllLeaveRequestDto.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Applications/Modules/LeaveRequest/DTO/Requests/GetAllLeaveRequestWaitApprovalDto.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Applications/Modules/LeaveRequest/DTO/Requests/HrRegisterAllLeaveRqDto.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Applications/Modules/LeaveRequest/DTO/Responses/HistoryLeaveRequestApprovalResponse.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Applications/Modules/LeaveRequest/DTO/Responses/LeaveRequestWithApprovalResponse.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Applications/Modules/LeaveRequest/Services/Interfaces/ILeaveRequestService.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Applications/Modules/LeaveRequest/Services/LeaveRequestService.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Applications/Modules/MemoNotification/Controllers/MemoNotificationController.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Applications/Modules/MemoNotification/DTO/MemoNotificationDto.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Applications/Modules/MemoNotification/DTO/Requests/CreateMemoNotiDto.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Applications/Modules/MemoNotification/DTO/Requests/GetAllMemoNotiDto.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Applications/Modules/MemoNotification/DTO/Responses/GetAllMemoNotifyResponseDto.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Applications/Modules/MemoNotification/Services/Interfaces/IMemoNotificationService.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Applications/Modules/MemoNotification/Services/MemoNotificationService.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Applications/Modules/Position/Controllers/PositionController.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Applications/Modules/Position/DTO/Responses/GetAllPositionResponse.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Applications/Modules/Position/Services/Interfaces/IPositionService.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Applications/Modules/Position/Services/PositionService.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Applications/Modules/Role/Controllers/RoleController.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Applications/Modules/Role/DTO/Requests/CreateRoleDto.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Applications/Modules/Role/DTO/Requests/SearchRoleRequestDto.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Applications/Modules/Role/DTO/Requests/UpdateRoleDto.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Applications/Modules/Role/Services/Interfaces/IRoleService.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Applications/Modules/Role/Services/RoleService.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Applications/Modules/TimeKeeping/Controllers/TimeKeepingController.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Applications/Modules/TimeKeeping/DTO/Requests/GetManagementTimeKeepingRequest.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Applications/Modules/TimeKeeping/DTO/Requests/GetPersonalTimeKeepingDto.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Applications/Modules/TimeKeeping/DTO/Responses/ManagementTimeKeepingResponseDto.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Applications/Modules/TimeKeeping/Services/Interfaces/ITimeKeepingService.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Applications/Modules/TimeKeeping/Services/TimeKeepingService.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Applications/Modules/TypeLeave/Controllers/TypeLeaveController.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Applications/Modules/TypeLeave/DTO/Requests/GetAllTypeLeaveRequestDto.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Applications/Modules/TypeLeave/DTO/TypeLeaveDTO.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Applications/Modules/TypeLeave/Services/Interfaces/ITypeLeaveService.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Applications/Modules/TypeLeave/Services/TypeLeaveService.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Applications/Modules/User/Controllers/UserController.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Applications/Modules/User/DTO/Requests/GetAllUserRequestDto.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Applications/Modules/User/DTO/Requests/ResetPasswordDto.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Applications/Modules/User/DTO/Requests/UpdateUserRoleDto.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Applications/Modules/User/DTO/Responses/GetAllUserResponseDto.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Applications/Modules/User/DTO/Responses/GetEmailByUserCodeAndUserConfigResponse.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Applications/Modules/User/DTO/Responses/GetUserPersonalInfoResponse.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Applications/Modules/User/DTO/Responses/OrgChartResponseDto.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Applications/Modules/User/DTO/Responses/UserResponseDto.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Applications/Modules/User/Services/Interfaces/IUserService.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Applications/Modules/User/Services/OrgChartBuilder.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Applications/Modules/User/Services/UserService.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Applications/Modules/UserConfig/Controllers/UserConfigController.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Applications/Modules/UserConfig/Services/Interfaces/IUserConfigService.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Applications/Modules/UserConfig/Services/UserConfigService.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Common/BaseResponse.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Common/Filters/RoleAuthorizeAttribute.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Common/Helpers/FileHelper.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Common/Helpers/Global.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Common/Helpers/Helper.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Common/HttpException.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Common/Mappers/LeaveRequestMapper.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Common/Mappers/MemoNotifyMapper.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Common/Mappers/UserMapper.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Common/Middleware/GlobalExceptionMiddleware.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Dockerfile" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Domain/Entities/ApprovalAction.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Domain/Entities/ApprovalFlow.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Domain/Entities/ApprovalRequest.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Domain/Entities/AttachFileRelation.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Domain/Entities/AttachFiles.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Domain/Entities/HrManagements.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Domain/Entities/LeaveRequest.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Domain/Entities/MemoNotification.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Domain/Entities/MemoNotificationDepartment.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Domain/Entities/Permission.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Domain/Entities/RefreshToken.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Domain/Entities/Role.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Domain/Entities/RolePermission.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Domain/Entities/TypeLeave.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Domain/Entities/User.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Domain/Entities/UserConfig.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Domain/Entities/UserManageAttendance.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Domain/Entities/UserManageAttendanceUser.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Domain/Entities/UserRole.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Domain/Enums/RoleEnum.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Domain/Enums/SexEnum.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Domain/Enums/StatusLeaveRequestEnum.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Domain/Enums/TimeLeaveEnum.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Domain/Enums/TypeErrorEnum.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Domain/Enums/TypeLeaveEnum.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Infrastructure/BackgroundServices/LogCleanupService.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Infrastructure/Cache/CacheService.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Infrastructure/Cache/ICacheService.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Infrastructure/Data/ApplicationDbContext.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Infrastructure/Data/DbSeeder.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Infrastructure/Data/ViclockDbContext.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Infrastructure/Email/EmailService.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Infrastructure/Email/IEmailService.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Infrastructure/Excel/ExcelService.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Infrastructure/Hubs/NotificationHub.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Infrastructure/Hubs/NotificationService.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Infrastructure/Persistence/DapperQueryService.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Migrations/20250515064842_InitDb.Designer.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Migrations/20250515064842_InitDb.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Migrations/20250516021439_AddColumnTableLeaveRequest.Designer.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Migrations/20250516021439_AddColumnTableLeaveRequest.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Migrations/20250516045249_AddColumnNameLRQ.Designer.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Migrations/20250516045249_AddColumnNameLRQ.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Migrations/20250527024534_AddTableManageUserTimeKeeping.Designer.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Migrations/20250527024534_AddTableManageUserTimeKeeping.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Migrations/20250529030225_CreateTableMemoNotifications.Designer.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Migrations/20250529030225_CreateTableMemoNotifications.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Migrations/20250529033952_UpdateTableMemoNoti.Designer.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Migrations/20250529033952_UpdateTableMemoNoti.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Migrations/20250530012227_AddColumnStatusMemoNotify.Designer.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Migrations/20250530012227_AddColumnStatusMemoNotify.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Migrations/20250530034140_AddTableMemoNotifyDeptAndColumnApplyAllDept.Designer.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Migrations/20250530034140_AddTableMemoNotifyDeptAndColumnApplyAllDept.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Migrations/20250530034932_RemoveColumnInMemoNotiTableAndAddDbSet.Designer.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Migrations/20250530034932_RemoveColumnInMemoNotiTableAndAddDbSet.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Migrations/20250606015345_AddTableAttachFile.Designer.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Migrations/20250606015345_AddTableAttachFile.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Migrations/20250612080218_AddTableUserAttendance.Designer.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Migrations/20250612080218_AddTableUserAttendance.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Migrations/20250613042716_AddTableHrManagement.Designer.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Migrations/20250613042716_AddTableHrManagement.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Migrations/20250614030940_AddColumnNameInTableHrManagement.Designer.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Migrations/20250614030940_AddColumnNameInTableHrManagement.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Migrations/20250616082223_AddColumnWriteLeaveName.Designer.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Migrations/20250616082223_AddColumnWriteLeaveName.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Migrations/20250616095023_AddColumnEmailTblUser.Designer.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Migrations/20250616095023_AddColumnEmailTblUser.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Migrations/ApplicationDbContextModelSnapshot.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Program.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Properties/launchSettings.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/ServicePortal.csproj" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/ServicePortal.http" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/ServicePortal.sln" beforeDir="false" afterPath="$PROJECT_DIR$/ServicePortal.sln" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/appsettings.Development.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/appsettings.Production.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/appsettings.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/deploy.ps1" beforeDir="false" afterPath="$PROJECT_DIR$/deploy.ps1" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docker-compose.yml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/web.config" beforeDir="false" />
+      <change afterPath="$PROJECT_DIR$/ServicePortal/Controllers/MissTimeKeeping/MissTimeKeepingController.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ServicePortals.Application/Dtos/MissTimeKeeping/Requests/CreateMissTimeKeepingRequest.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ServicePortals.Application/Dtos/MissTimeKeeping/Requests/HrNoteMissTimeKeepingRequest.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ServicePortals.Application/Dtos/MissTimeKeeping/Requests/MyMissTimeKeepingRequest.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ServicePortals.Application/Dtos/MissTimeKeeping/Responses/MyMissTimeKeepingRegisterResponse.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ServicePortals.Application/Dtos/MissTimeKeeping/Responses/MyMissTimeKeepingResponse.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ServicePortals.Application/Interfaces/MissTimeKeeping/IMissTimeKeepingService.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ServicePortals.Application/Services/MissTimeKeeping/MissTimeKeepingService.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.ServicePortal/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.ServicePortal/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ServicePortal/Controllers/OverTime/OverTimeController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/ServicePortal/Controllers/OverTime/OverTimeController.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ServicePortal/Program.cs" beforeDir="false" afterPath="$PROJECT_DIR$/ServicePortal/Program.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ServicePortals.Application/Interfaces/OverTime/IOverTimeService.cs" beforeDir="false" afterPath="$PROJECT_DIR$/ServicePortals.Application/Interfaces/OverTime/IOverTimeService.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ServicePortals.Application/Services/OrgUnit/OrgPositionService.cs" beforeDir="false" afterPath="$PROJECT_DIR$/ServicePortals.Application/Services/OrgUnit/OrgPositionService.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ServicePortals.Application/Services/OverTime/OverTimeService.cs" beforeDir="false" afterPath="$PROJECT_DIR$/ServicePortals.Application/Services/OverTime/OverTimeService.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ServicePortals.Domain/Entities/ApplicationFormItem.cs" beforeDir="false" afterPath="$PROJECT_DIR$/ServicePortals.Domain/Entities/ApplicationFormItem.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ServicePortals.Infrastructure/Data/ApplicationDbContext.cs" beforeDir="false" afterPath="$PROJECT_DIR$/ServicePortals.Infrastructure/Data/ApplicationDbContext.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ServicePortals.Infrastructure/Excel/ExcelService.cs" beforeDir="false" afterPath="$PROJECT_DIR$/ServicePortals.Infrastructure/Excel/ExcelService.cs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -195,26 +43,34 @@
   &quot;associatedIndex&quot;: 4
 }</component>
   <component name="ProjectId" id="2ynksbMdXJZ3cyhV0dQ6jRj0WT2" />
+  <component name="ProjectLevelVcsManager">
+    <ConfirmationsSetting value="2" id="Add" />
+  </component>
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;feature/refactor__code&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "git-widget-placeholder": "main",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "preferences.lookFeel",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
-  <component name="RunManager" selected=".NET Launch Settings Profile.ServicePortal: IIS Express">
+}]]></component>
+  <component name="RunManager" selected=".NET Launch Settings Profile.ServicePortal: http">
     <configuration name="ServicePortal: IISProfile" type="DotNetMsBuildPublish" factoryName="Publish to IIS">
       <riderPublish configuration="Release" platform="Any CPU" publish_profile="IISProfile.pubxml" pubxml_path="$PROJECT_DIR$/ServicePortal/Properties/PublishProfiles/IISProfile.pubxml" uuid_high="-6148196472668142699" uuid_low="-8913280339748821285" />
+      <method v="2" />
+    </configuration>
+    <configuration name="ServicePortal: IISProfile1" type="DotNetMsBuildPublish" factoryName="Publish to IIS">
+      <riderPublish configuration="Release" platform="Any CPU" publish_profile="IISProfile1.pubxml" pubxml_path="$PROJECT_DIR$/ServicePortal/Properties/PublishProfiles/IISProfile1.pubxml" uuid_high="-6148196472668142699" uuid_low="-8913280339748821285" />
       <method v="2" />
     </configuration>
     <configuration name="ServicePortal: IIS Express" type="LaunchSettings" factoryName=".NET Launch Settings Profile">
@@ -273,6 +129,7 @@
       <updated>1750477936382</updated>
       <workItem from="1750477939500" duration="659000" />
       <workItem from="1750499774380" duration="221000" />
+      <workItem from="1758958231961" duration="3617000" />
     </task>
     <servers />
   </component>

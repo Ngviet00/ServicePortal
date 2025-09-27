@@ -28,7 +28,7 @@ namespace ServicePortals.Application.Services.OrgUnit
                     FROM org_positions o
                     INNER JOIN ParentPositions p ON o.Id = p.ParentOrgPositionId
                 )
-                SELECT TOP 1 * FROM ParentPositions WHERE UnitId = 6
+                SELECT TOP 1 * FROM ParentPositions WHERE UnitId = 6 OR UnitId = 5
                 ", new { OrgPositionId = orgPostionId });
 
             return result;
