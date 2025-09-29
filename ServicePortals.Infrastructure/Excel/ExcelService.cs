@@ -15,6 +15,101 @@ namespace ServicePortals.Infrastructure.Excel
             _context = context;
         }
 
+        public byte[] ExportMissTimeKeepingToExcel(ApplicationForm applicationForm)
+        {
+            using var wb = new XLWorkbook();
+            var ws = wb.AddWorksheet("BANG DANG KY CA");
+
+            ws.RowHeight = 23;
+
+            // Header title
+            ws.Cell("A1").Value = "Danh sách bù chấm công";
+            ws.Cell("A1").Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+            ws.Cell("A1").Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+
+            // Merge tiêu đề
+            ws.Range("A1:H1").Merge().Style.Font.SetBold().Font.FontSize = 14;
+
+            ws.Columns("A:B").Width = 13;
+            ws.Columns("C:J").Width = 15;
+            ws.Column("B").Width = 20;
+            ws.Column("C").Width = 22;
+            ws.Column("K").Width = 40;
+            //ws.Column("G").Width = 30;
+            //ws.Column("F").Width = 40;
+
+            ws.Cell("A2").Value = "Bộ phận";
+            ws.Cell("B2").Value = applicationForm?.OrgUnit?.Name;
+
+            ws.Cell("A4").Value = "Mã NV";
+            ws.Cell("B4").Value = "Họ tên";
+            ws.Cell("C4").Value = "Ngày";
+            ws.Cell("D4").Value = "Ca";
+            ws.Range("A4:A5").Merge();
+            ws.Range("B4:B5").Merge();
+            ws.Range("C4:C5").Merge();
+            ws.Range("D4:D5").Merge();
+
+            ws.Cell("E4").Value = "Giờ bù dữ liệu";
+            ws.Range("E4:F4").Merge();
+
+            ws.Cell("G4").Value = "Giờ nhận diện khuân mặt";
+            ws.Range("G4:H4").Merge();
+
+            ws.Cell("I4").Value = "Giờ cổng";
+            ws.Range("I4:J4").Merge();
+
+            ws.Cell("K4").Value = "Nguyên nhân";
+            ws.Range("K4:K5").Merge();
+
+            // Hàng 5 (sub headers)
+            ws.Cell("E5").Value = "Vào";
+            ws.Cell("F5").Value = "Ra";
+
+            ws.Cell("G5").Value = "Vào";
+            ws.Cell("H5").Value = "Ra";
+
+            ws.Cell("I5").Value = "Vào";
+            ws.Cell("J5").Value = "Ra";
+
+            // Style chung cho header
+            var headerRange = ws.Range("A4:K5");
+            headerRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+            headerRange.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+            headerRange.Style.Font.SetBold();
+            headerRange.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+            headerRange.Style.Border.InsideBorder = XLBorderStyleValues.Thin;
+
+            var missTimeKeepings = applicationForm!.ApplicationFormItems
+                .SelectMany(x => x.MissTimeKeepings)
+                .ToList();
+
+            // Dữ liệu
+            for (int i = 0; i < missTimeKeepings.Count; i++)
+            {
+                var item = missTimeKeepings[i];
+                int row = i + 6;
+
+                ws.Row(row).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                ws.Row(row).Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+                ws.Cell(row, 1).Value = item?.UserCode ?? "";
+                ws.Cell(row, 2).Value = item?.UserName ?? "";
+                ws.Cell(row, 3).Value = item?.DateRegister?.ToString("yyyy-MM-dd") ?? "";
+                ws.Cell(row, 4).Value = item?.Shift ?? "";
+                ws.Cell(row, 5).Value = item?.AdditionalIn?? "";
+                ws.Cell(row, 6).Value = item?.AdditionalOut ?? "";
+                ws.Cell(row, 7).Value = item?.FacialRecognitionIn ?? "";
+                ws.Cell(row, 8).Value = item?.FacialRecognitionOut ?? "";
+                ws.Cell(row, 9).Value = item?.GateIn ?? "";
+                ws.Cell(row, 10).Value = item?.GateOut?? "";
+                ws.Cell(row, 11).Value = item?.Reason?? "";
+            }
+
+            using var stream = new MemoryStream();
+            wb.SaveAs(stream);
+            return stream.ToArray();
+        }
+
         public byte[] ExportOverTimeToExcel(ApplicationForm applicationForm)
         {
             using var wb = new XLWorkbook();

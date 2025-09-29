@@ -34,10 +34,17 @@ namespace ServicePortals.Domain.Entities
         
         [MaxLength(20)]
         public string? FacialRecognitionOut { get; set; } //nhận diện khuân mặt ra
-        
+
+        [MaxLength(20)]
+        public string? GateIn { get; set; } //giờ cổng vào
+
+        [MaxLength(20)]
+        public string? GateOut { get; set; } //giờ cổng ra
+
         [MaxLength(255)]
         public string? Reason { get; set; }
-        
+        public string? NoteOfHR { get; set; }
+
         public DateTimeOffset? CreatedAt { get; set; }
         public DateTimeOffset? UpdatedAt { get; set; }
         public DateTimeOffset? DeletedAt { get; set; }

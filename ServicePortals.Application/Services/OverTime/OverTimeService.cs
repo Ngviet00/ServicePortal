@@ -232,8 +232,8 @@ namespace ServicePortals.Application.Services.OverTime
                 job.SendEmailRequestHasBeenSent(
                     nextUserApproval.Select(e => e.Email ?? "").ToList(),
                     null,
-                    "Request for overtime request approval",
-                    TemplateEmail.SendContentEmail("Request for overtime request approval", urlApproval, applicationForm.Code ?? ""),
+                    "Request for overtime approval",
+                    TemplateEmail.SendContentEmail("Request for overtime approval", urlApproval, applicationForm.Code ?? ""),
                     null,
                     true
                 )
@@ -384,6 +384,10 @@ namespace ServicePortals.Application.Services.OverTime
             {
                 var now = DateTimeOffset.Now;
 
+                await _context.OverTimes
+                    .Where(e => e.ApplicationFormItem != null && e.ApplicationFormItem.ApplicationForm != null && e.ApplicationFormItem.ApplicationForm.Id == applicationForm.Id)
+                    .ExecuteUpdateAsync(s => s.SetProperty(af => af.DeletedAt, now));
+
                 await _context.HistoryApplicationForms
                     .Where(e => e.ApplicationFormId == applicationForm.Id)
                     .ExecuteUpdateAsync(s => s.SetProperty(h => h.DeletedAt, now));
@@ -394,10 +398,6 @@ namespace ServicePortals.Application.Services.OverTime
 
                 await _context.ApplicationForms
                     .Where(af => af.Id == applicationForm.Id)
-                    .ExecuteUpdateAsync(s => s.SetProperty(af => af.DeletedAt, now));
-
-                await _context.OverTimes
-                    .Where(e => e.ApplicationFormItem != null && e.ApplicationFormItem.ApplicationForm != null && e.ApplicationFormItem.ApplicationForm.Id == applicationForm.Id)
                     .ExecuteUpdateAsync(s => s.SetProperty(af => af.DeletedAt, now));
 
                 await transaction.CommitAsync();

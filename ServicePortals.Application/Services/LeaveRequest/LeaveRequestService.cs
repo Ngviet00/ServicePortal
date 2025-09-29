@@ -500,6 +500,10 @@ namespace ServicePortals.Application.Services.LeaveRequest
             {
                 var now = DateTimeOffset.Now;
 
+                await _context.LeaveRequests
+                .Where(e => e.ApplicationFormItem != null && e.ApplicationFormItem.ApplicationForm != null && e.ApplicationFormItem.ApplicationForm.Id == applicationForm.Id)
+                .ExecuteUpdateAsync(s => s.SetProperty(af => af.DeletedAt, now));
+
                 await _context.HistoryApplicationForms
                     .Where(e => e.ApplicationFormId == applicationForm.Id)
                     .ExecuteUpdateAsync(s => s.SetProperty(h => h.DeletedAt, now));
@@ -510,10 +514,6 @@ namespace ServicePortals.Application.Services.LeaveRequest
 
                 await _context.ApplicationForms
                     .Where(af => af.Id == applicationForm.Id)
-                    .ExecuteUpdateAsync(s => s.SetProperty(af => af.DeletedAt, now));
-
-                await _context.LeaveRequests
-                    .Where(e => e.ApplicationFormItem != null && e.ApplicationFormItem.ApplicationForm != null && e.ApplicationFormItem.ApplicationForm.Id == applicationForm.Id)
                     .ExecuteUpdateAsync(s => s.SetProperty(af => af.DeletedAt, now));
 
                 await transaction.CommitAsync();

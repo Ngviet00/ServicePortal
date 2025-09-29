@@ -20,7 +20,7 @@ public class MissTimeKeepingController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> Create([FromForm] CreateMissTimeKeepingRequest request)
+    public async Task<IActionResult> Create([FromBody] CreateMissTimeKeepingRequest request)
     {
         var result = await _missTimeKeepingService.Create(request);
 
@@ -80,7 +80,7 @@ public class MissTimeKeepingController : ControllerBase
     }
 
     [HttpPut("{applicationFormCode}")]
-    public async Task<IActionResult> Update(string applicationFormCode, [FromForm] CreateMissTimeKeepingRequest request)
+    public async Task<IActionResult> Update(string applicationFormCode, [FromBody] CreateMissTimeKeepingRequest request)
     {
         var result = await _missTimeKeepingService.Update(applicationFormCode, request);
 
