@@ -7,6 +7,7 @@
         FORM_IT = 3,
         PURCHASE = 4,
         OVERTIME = 5,
-        MISS_TIMEKEEPING = 6
+        MISS_TIMEKEEPING = 6,
+        INTERNAL_MEMO_HR = 7,
     }
 }

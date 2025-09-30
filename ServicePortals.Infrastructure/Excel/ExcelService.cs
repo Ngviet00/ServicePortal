@@ -22,12 +22,10 @@ namespace ServicePortals.Infrastructure.Excel
 
             ws.RowHeight = 23;
 
-            // Header title
             ws.Cell("A1").Value = "Danh sách bù chấm công";
             ws.Cell("A1").Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
             ws.Cell("A1").Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
 
-            // Merge tiêu đề
             ws.Range("A1:H1").Merge().Style.Font.SetBold().Font.FontSize = 14;
 
             ws.Columns("A:B").Width = 13;
@@ -35,8 +33,6 @@ namespace ServicePortals.Infrastructure.Excel
             ws.Column("B").Width = 20;
             ws.Column("C").Width = 22;
             ws.Column("K").Width = 40;
-            //ws.Column("G").Width = 30;
-            //ws.Column("F").Width = 40;
 
             ws.Cell("A2").Value = "Bộ phận";
             ws.Cell("B2").Value = applicationForm?.OrgUnit?.Name;
@@ -62,7 +58,6 @@ namespace ServicePortals.Infrastructure.Excel
             ws.Cell("K4").Value = "Nguyên nhân";
             ws.Range("K4:K5").Merge();
 
-            // Hàng 5 (sub headers)
             ws.Cell("E5").Value = "Vào";
             ws.Cell("F5").Value = "Ra";
 
@@ -72,7 +67,6 @@ namespace ServicePortals.Infrastructure.Excel
             ws.Cell("I5").Value = "Vào";
             ws.Cell("J5").Value = "Ra";
 
-            // Style chung cho header
             var headerRange = ws.Range("A4:K5");
             headerRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
             headerRange.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
@@ -83,8 +77,6 @@ namespace ServicePortals.Infrastructure.Excel
             var missTimeKeepings = applicationForm!.ApplicationFormItems
                 .SelectMany(x => x.MissTimeKeepings)
                 .ToList();
-
-            // Dữ liệu
             for (int i = 0; i < missTimeKeepings.Count; i++)
             {
                 var item = missTimeKeepings[i];

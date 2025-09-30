@@ -54,6 +54,8 @@ using ServicePortals.Application.Interfaces.OverTime;
 using ServicePortals.Application.Services.MissTimeKeeping;
 using ServicePortals.Application.Services.OverTime;
 using ServicePortals.Application.Interfaces.MissTimeKeeping;
+using ServicePortals.Application.Interfaces.InternalMemoHR;
+using ServicePortals.Application.Services.InternalMemoHR;
 
 namespace ServicePortal
 {
@@ -167,7 +169,10 @@ namespace ServicePortal
             builder.Services.AddScoped<IPurchaseService, PurchaseService>();
 
             builder.Services.AddScoped<IOverTimeService, OverTimeService>();
-            builder.Services.AddScoped <IMissTimeKeepingService, MissTimeKeepingService>();
+
+            builder.Services.AddScoped<IMissTimeKeepingService, MissTimeKeepingService>();
+
+            builder.Services.AddScoped<InternalMemoHrService, InternalMemoHrServiceImpl>();
             #endregion
 
             builder.Services.AddHttpContextAccessor();

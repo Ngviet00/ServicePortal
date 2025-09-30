@@ -11,6 +11,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Dtos\InternalMemoHR\Responses\" />
     <Folder Include="Dtos\ITForm\Responses\ITCategory\" />
     <Folder Include="Dtos\OrgUnit\Responses\" />
     <Folder Include="Dtos\Position\Requests\" />
