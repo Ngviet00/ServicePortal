@@ -1,5 +1,4 @@
-﻿using System.Data;
-using ServicePortals.Application.Dtos.User.Responses;
+﻿using ServicePortals.Application.Dtos.User.Responses;
 using ServicePortals.Domain.Entities;
 
 namespace ServicePortals.Infrastructure.Mappers
@@ -24,11 +23,6 @@ namespace ServicePortals.Infrastructure.Mappers
                 DateOfBirth = entity.DateOfBirth,
                 Phone = entity.Phone
             };
-        }
-
-        public static List<UserResponse> ToDtoList(List<User> users)
-        {
-            return [.. users.Select(ToDto)];
         }
     }
 }

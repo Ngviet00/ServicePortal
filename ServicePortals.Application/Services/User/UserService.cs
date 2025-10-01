@@ -1,16 +1,19 @@
 ﻿using System.Data;
 using System.Text;
 using Dapper;
+using Hangfire;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 using ServicePortal.Infrastructure.Cache;
+using ServicePortals.Application.Common;
 using ServicePortals.Application.Dtos.User.Requests;
 using ServicePortals.Application.Dtos.User.Responses;
 using ServicePortals.Application.Interfaces.User;
 using ServicePortals.Domain.Entities;
 using ServicePortals.Domain.Enums;
 using ServicePortals.Infrastructure.Data;
+using ServicePortals.Infrastructure.Email;
 using ServicePortals.Infrastructure.Helpers;
 using ServicePortals.Infrastructure.Mappers;
 using ServicePortals.Shared.Exceptions;
@@ -173,18 +176,18 @@ namespace ServicePortals.Application.Services.User
 
             await _context.SaveChangesAsync();
 
-            //string bodyMail = TemplateEmail.EmailResetPassword(password);
+            string bodyMail = TemplateEmail.EmailResetPassword(password);
 
-            //BackgroundJob.Enqueue<IEmailService>(job =>
-            //    job.SendEmailResetPassword(
-            //        new List<string> { user.Email ?? "" },
-            //        null,
-            //        "Reset password",
-            //        bodyMail,
-            //        null,
-            //        true
-            //    )
-            //);
+            BackgroundJob.Enqueue<IEmailService>(job =>
+                job.SendEmailResetPassword(
+                    new List<string> { user.Email ?? "" },
+                    null,
+                    "Reset password",
+                    bodyMail,
+                    null,
+                    true
+                )
+            );
 
             return UserMapper.ToDto(user);
         }

@@ -139,7 +139,7 @@ namespace ServicePortals.Application.Services.InternalMemoHR
                 _context.HistoryApplicationForms.Add(historyApplicationForm);
                 await _context.SaveChangesAsync();
 
-                string urlView = $@"{_configuration["Setting:UrlFrontEnd"]}/overtime/view/{applicationForm.Code}";
+                string urlView = $@"{_configuration["Setting:UrlFrontEnd"]}/internal-memo-hr/view/{applicationForm.Code}";
 
                 var userReceiveEmail = await _userService.GetMultipleUserViclockByOrgPositionId(-1, [applicationForm.UserCodeCreatedForm]);
 
@@ -193,7 +193,7 @@ namespace ServicePortals.Application.Services.InternalMemoHR
 
             await _context.SaveChangesAsync();
 
-            string urlApproval = $@"{_configuration["Setting:UrlFrontEnd"]}/internal-memo/approval/{applicationForm.Code}";
+            string urlApproval = $@"{_configuration["Setting:UrlFrontEnd"]}/internal-memo/{applicationForm.Code}?mode=approval";
 
             List<GetMultiUserViClockByOrgPositionIdResponse> nextUserApproval = [];
             if (isSendHr)
@@ -279,7 +279,7 @@ namespace ServicePortals.Application.Services.InternalMemoHR
 
             await _context.SaveChangesAsync();
 
-            string urlApproval = $@"{_configuration["Setting:UrlFrontEnd"]}/internal-memo-hr/approval/{newApplicationForm.Code}";
+            string urlApproval = $@"{_configuration["Setting:UrlFrontEnd"]}/internal-memo-hr/{newApplicationForm.Code}?mode=approval";
             List<GetMultiUserViClockByOrgPositionIdResponse> nextUserApprovals = [];
 
             if (isSendHr)
@@ -346,9 +346,14 @@ namespace ServicePortals.Application.Services.InternalMemoHR
                 .Include(e => e.RequestStatus)
                 .Include(e => e.RequestType)
                 .Include(e => e.OrgUnit)
-                .Include(e => e.HistoryApplicationForms)
                 .FirstOrDefaultAsync(e => e.Code == applicationFormCode)
             ?? throw new NotFoundException("Application form not found, please check again");
+
+            applicationForm.HistoryApplicationForms = await _context.HistoryApplicationForms
+                    .Where(e => e.ApplicationFormId == applicationForm.Id)
+                    .OrderByDescending(e => e.ActionAt)
+                    .AsNoTracking()
+                    .ToListAsync();
 
             foreach (var itemHistory in applicationForm.HistoryApplicationForms)
             {
@@ -365,7 +370,21 @@ namespace ServicePortals.Application.Services.InternalMemoHR
 
             var query = _context.ApplicationForms.Where(e => e.UserCodeCreatedForm == request.UserCode && e.RequestTypeId == (int)RequestTypeEnum.INTERNAL_MEMO_HR).AsQueryable();
 
-            query = query.OrderBy(e => e.Code);
+            if (request.Status != null)
+            {
+                var specialStatuses = new[]
+                {
+                    (int)StatusApplicationFormEnum.PENDING,
+                    (int)StatusApplicationFormEnum.COMPLETE,
+                    (int)StatusApplicationFormEnum.REJECT
+                };
+
+                query = specialStatuses.Contains(request.Status.Value)
+                    ? query.Where(e => e.RequestStatusId == request.Status)
+                    : query.Where(e => !specialStatuses.Contains(e.RequestStatusId));
+            }
+
+            query = query.OrderByDescending(e => e.CreatedAt);
 
             var totalItems = await query.CountAsync();
 

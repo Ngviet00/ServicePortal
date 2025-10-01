@@ -63,17 +63,7 @@ namespace ServicePortals.Application.Services.SystemConfig
         public async Task<Entities.SystemConfig> UpdateConfig(string configkey, Entities.SystemConfig request)
         {
             var config = await _context.SystemConfigs.FirstOrDefaultAsync(e => e.ConfigKey == configkey) ?? throw new NotFoundException("Config not found!");
-
-            //config.Id = config.Id;
-            //config.ConfigKey = request.ConfigKey;
             config.ConfigValue = request.ConfigValue;
-            //config.ValueType = request.ValueType;
-            //config.DefaultValue = request.DefaultValue;
-            //config.MinValue = request.MinValue;
-            //config.MaxValue = request.MaxValue;
-            //config.Description = request.Description;
-            //config.IsActive = 1;
-            //config.UpdatedBy = request.UpdatedBy;
             config.UpdatedAt = DateTimeOffset.Now;
 
             _context.SystemConfigs.Update(config);

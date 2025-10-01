@@ -109,12 +109,10 @@ namespace ServicePortals.Infrastructure.Excel
 
             ws.RowHeight = 23;
 
-            // Header title
             ws.Cell("A1").Value = "Danh sách tăng ca";
             ws.Cell("A1").Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
             ws.Cell("A1").Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
 
-            // Merge tiêu đề
             ws.Range("A1:H1").Merge().Style.Font.SetBold().Font.FontSize = 14;
 
             ws.Columns("A:B").Width = 13;
@@ -135,8 +133,6 @@ namespace ServicePortals.Infrastructure.Excel
             ws.Cell("A5").Value = "Bộ phận";
             ws.Cell("B5").Value = applicationForm?.OrgUnit?.Name;
 
-
-            // Cột tiêu đề bảng
             var headers = new[] { "Mã NV", "Họ tên", "Chức vụ", "Từ giờ (h)", "Đến giờ (h)", "Số giờ (h)", "Ghi chú"};
             for (int i = 0; i < headers.Length; i++)
             {
@@ -155,7 +151,6 @@ namespace ServicePortals.Infrastructure.Excel
                 .SelectMany(x => x.OverTimes)
                 .ToList();
 
-            // Dữ liệu
             for (int i = 0; i < overTimes.Count; i++)
             {
                 var item = overTimes[i];
@@ -184,18 +179,15 @@ namespace ServicePortals.Infrastructure.Excel
 
             ws.RowHeight = 23;
 
-            // Header title
             ws.Cell("A1").Value = "Danh sách nghỉ phép";
             ws.Cell("A1").Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
             ws.Cell("A1").Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
 
-            // Merge tiêu đề
             ws.Range("A1:H1").Merge().Style.Font.SetBold().Font.FontSize = 14;
 
             ws.Columns("A:B").Width = 13;
             ws.Columns("C:H").Width = 18;
 
-            // Cột tiêu đề bảng
             var headers = new[] { "Mã NV", "Lý do nghỉ", "Ngày bắt đầu", "Ngày kết thúc", "Kiểu Nghỉ", "Ghi Chú", "Từ ngày", "Đến ngày" };
             for (int i = 0; i < headers.Length; i++)
             {
@@ -211,7 +203,6 @@ namespace ServicePortals.Infrastructure.Excel
                 cell.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
             }
 
-            // Dữ liệu
             for (int i = 0; i < leaveRequests.Count; i++)
             {
                 var item = leaveRequests[i];
