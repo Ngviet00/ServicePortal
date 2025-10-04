@@ -31,5 +31,7 @@ namespace ServicePortals.Domain.Entities
         public Priority? Priority { get; set; }
         public ApplicationFormItem? ApplicationFormItem { get; set; }
         public ICollection<ITFormCategory> ItFormCategories { get; set; } = [];
+        [NotMapped]
+        public List<File> Files { get; set; } = [];
     }
 }

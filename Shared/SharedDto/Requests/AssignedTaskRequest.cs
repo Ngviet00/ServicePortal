@@ -6,6 +6,7 @@
         public string? UserNameApproval { get; set; }
         public string? NoteManager { get; set; }
         public int? OrgPositionId { get; set; }
+        public long ApplicationFormId { get; set; }
         public Guid? ITFormId { get; set; }
         public Guid? PurchaseId { get; set; }
         public string? UrlFrontend { get; set; }

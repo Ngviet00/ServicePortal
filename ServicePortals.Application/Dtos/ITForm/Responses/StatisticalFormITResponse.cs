@@ -20,7 +20,7 @@
 
     public class GroupRecentList
     {
-        public Guid Id { get; set; }
+        public long Id { get; set; }
         public string Code { get; set; } = string.Empty;
         public string Reason { get; set; } = string.Empty;
         public string CreatedBy { get; set; } = string.Empty;

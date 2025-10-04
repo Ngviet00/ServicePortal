@@ -1,4 +1,6 @@
-﻿namespace ServicePortals.Application.Dtos.ITForm.Requests
+﻿using Microsoft.AspNetCore.Http;
+
+namespace ServicePortals.Application.Dtos.ITForm.Requests
 {
     public class CreateITFormRequest
     {
@@ -15,6 +17,6 @@
         public DateTimeOffset? RequiredCompletionDate { get; set; }
         public DateTimeOffset? TargetCompletionDate { get; set; }
         public DateTimeOffset? ActualCompletionDate { get; set; }
-        public string? UrlFrontend { get; set; }
+        public IFormFile[] Files { get; set; } = [];
     }
 }
