@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using ServicePortal.Filters;
 using ServicePortals.Application;
+using ServicePortals.Application.Dtos.Approval.Request;
 using ServicePortals.Application.Dtos.MemoNotification.Requests;
 using ServicePortals.Application.Dtos.MemoNotification.Responses;
 using ServicePortals.Application.Interfaces.MemoNotification;
@@ -88,6 +89,15 @@ namespace ServicePortal.Controllers.MemoNotification
             var file = await _memoNotificationService.GetFileDownload(id);
 
             return File(file.FileData ?? [], file.ContentType ?? "application/octet-stream", file.FileName);
+        }
+
+
+        [HttpPost("approval")]
+        public async Task<IActionResult> Approval([FromBody] ApprovalRequest request)
+        {
+            var result = await _memoNotificationService.Approval(request);
+
+            return Ok(new BaseResponse<object>(200, "success", result));
         }
     }
 }

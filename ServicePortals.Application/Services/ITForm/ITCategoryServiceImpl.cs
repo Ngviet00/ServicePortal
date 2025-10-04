@@ -45,7 +45,7 @@ namespace ServicePortals.Application.Services.ITForm
             return false;
         }
 
-        public async Task<List<ITCategory>> GetAll(GetAllITCategoryRequest request)
+        public async Task<List<ITCategory>> GetAll()
         {
             return await _context.ITCategories.ToListAsync();
         }

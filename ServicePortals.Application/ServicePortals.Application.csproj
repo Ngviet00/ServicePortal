@@ -7,21 +7,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Dtos\User\Responses\OrgChartResponse.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Dtos\InternalMemoHR\Responses\" />
     <Folder Include="Dtos\ITForm\Responses\ITCategory\" />
     <Folder Include="Dtos\Position\Requests\" />
     <Folder Include="Dtos\Priority\Responses\" />
-    <Folder Include="Dtos\RequestType\Response\" />
-    <Folder Include="Dtos\WorkFlowStep\Requests\" />
-    <Folder Include="Dtos\WorkFlowStep\Responses\" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="Dtos\User\Responses\OrgChartResponse.cs" />
   </ItemGroup>
 
   <ItemGroup>

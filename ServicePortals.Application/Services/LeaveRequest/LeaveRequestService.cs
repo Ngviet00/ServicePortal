@@ -1,18 +1,10 @@
-﻿using System;
-using System.Data;
-using System.Dynamic;
-using System.Net.Mail;
+﻿using System.Data;
 using System.Security.Claims;
-using Azure.Core;
 using ClosedXML.Excel;
 using Dapper;
-using DocumentFormat.OpenXml.Drawing.Charts;
-using DocumentFormat.OpenXml.InkML;
-using DocumentFormat.OpenXml.Office2010.Excel;
-using DocumentFormat.OpenXml.Spreadsheet;
-using DocumentFormat.OpenXml.Wordprocessing;
 using Hangfire;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using ServicePortals.Application.Common;
@@ -30,7 +22,6 @@ using ServicePortals.Infrastructure.Email;
 using ServicePortals.Infrastructure.Excel;
 using ServicePortals.Infrastructure.Helpers;
 using ServicePortals.Shared.Exceptions;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace ServicePortals.Application.Services.LeaveRequest
 {
@@ -244,12 +235,12 @@ namespace ServicePortals.Application.Services.LeaveRequest
                 AND (UC.UserCode IS NULL OR (UC.UserCode IS NOT NULL AND UC.[Key] = 'RECEIVE_MAIL_LEAVE_REQUEST' AND UC.Value = 'true'))
                 ", new { UserCodes = userCodeReceiveEmail.Distinct().ToList() });
 
-            string urlView = $@"{_configuration["Setting:UrlFrontEnd"]}/leave/view/{newApplicationForm.Code}";
-            string urlApproval = $@"{_configuration["Setting:UrlFrontEnd"]}/leave/approval/{newApplicationForm.Code}";
+            string urlView = $@"{_configuration["Setting:UrlFrontEnd"]}/view/leave-request/{newApplicationForm.Code}";
+            string urlApproval = $@"{_configuration["Setting:UrlFrontEnd"]}/view-leave-request-approval/{newApplicationForm.Code}";
 
             //gửi email cho người nộp đơn và người xin nghỉ
             BackgroundJob.Enqueue<IEmailService>(job =>
-                job.SendEmailRequestHasBeenSent(
+                job.SendEmailLeaveRequest(
                     emailSendNoti.ToList(),
                     null,
                     "Leave request has been submitted.",
@@ -276,7 +267,7 @@ namespace ServicePortals.Application.Services.LeaveRequest
             }
 
             BackgroundJob.Enqueue<IEmailService>(job =>
-                job.SendEmailRequestHasBeenSent(
+                job.SendEmailLeaveRequest(
                     nextUserApprovals.Select(e => e.Email ?? "").ToList(),
                     null,
                     "Request for leave request approval",
@@ -614,7 +605,7 @@ namespace ServicePortals.Application.Services.LeaveRequest
                 {
                     var newApplicationFormItem = new ApplicationFormItem
                     {
-                        ApplicationForm = applicationForm,
+                        ApplicationFormId = applicationForm.Id,
                         UserCode = itemUpdateLeave?.UserCode,
                         UserName = itemUpdateLeave?.UserName,
                         Status = true,
@@ -722,11 +713,11 @@ namespace ServicePortals.Application.Services.LeaveRequest
 
                 await transaction.CommitAsync();
 
-                string urlView = $@"{_configuration["Setting:UrlFrontEnd"]}/leave/view/{applicationForm.Code}";
+                string urlView = $@"{_configuration["Setting:UrlFrontEnd"]}/view/leave-request/{applicationForm.Code}";
                 var userReceivedEmail = await _userService.GetMultipleUserViclockByOrgPositionId(-1, leaves.Select(e => e.UserCode ?? "").ToList());
 
                 BackgroundJob.Enqueue<IEmailService>(job =>
-                    job.SendEmailRequestHasBeenSent(
+                    job.SendEmailLeaveRequest(
                         userReceivedEmail.Select(e => e.Email ?? "").ToList(),
                         null,
                         "Your leave request has been rejected",
@@ -817,12 +808,12 @@ namespace ServicePortals.Application.Services.LeaveRequest
                 _context.HistoryApplicationForms.Add(historyApplicationForm);
                 await _context.SaveChangesAsync();
 
-                string urlView = $@"{_configuration["Setting:UrlFrontEnd"]}/leave/view/{applicationForm.Code}";
+                string urlView = $@"{_configuration["Setting:UrlFrontEnd"]}/view/leave-request/{applicationForm.Code}";
 
                 var userReceiveEmail = await _userService.GetMultipleUserViclockByOrgPositionId(-1, UserCodeCreatedFormAndLeave);
 
                 BackgroundJob.Enqueue<IEmailService>(job =>
-                    job.SendEmailRequestHasBeenSent(
+                    job.SendEmailLeaveRequest(
                         userReceiveEmail.Select(e => e.Email ?? "").ToList(),
                         null,
                         "Your leave request has been approved",
@@ -852,12 +843,12 @@ namespace ServicePortals.Application.Services.LeaveRequest
                 _context.HistoryApplicationForms.Add(historyApplicationForm);
                 await _context.SaveChangesAsync();
 
-                string urlView = $@"{_configuration["Setting:UrlFrontEnd"]}/leave/view/{applicationForm.Code}";
+                string urlView = $@"{_configuration["Setting:UrlFrontEnd"]}/view/leave-request/{applicationForm.Code}";
 
                 var userReceiveEmail = await _userService.GetMultipleUserViclockByOrgPositionId(-1, UserCodeCreatedFormAndLeave);
 
                 BackgroundJob.Enqueue<IEmailService>(job =>
-                    job.SendEmailRequestHasBeenSent(
+                    job.SendEmailLeaveRequest(
                         userReceiveEmail.Select(e => e.Email ?? "").ToList(),
                         null,
                         "Your leave request has been rejected",
@@ -921,7 +912,7 @@ namespace ServicePortals.Application.Services.LeaveRequest
 
             await _context.SaveChangesAsync();
 
-            string urlApproval = $@"{_configuration["Setting:UrlFrontEnd"]}/leave/approval/{applicationForm.Code}";
+            string urlApproval = $@"{_configuration["Setting:UrlFrontEnd"]}/view-leave-request-approval/{applicationForm.Code}";
 
             List<GetMultiUserViClockByOrgPositionIdResponse> nextUserApproval = [];
             if (isSendHr)
@@ -935,7 +926,7 @@ namespace ServicePortals.Application.Services.LeaveRequest
             }
 
             BackgroundJob.Enqueue<IEmailService>(job =>
-                job.SendEmailRequestHasBeenSent(
+                job.SendEmailLeaveRequest(
                     nextUserApproval.Select(e => e.Email ?? "").ToList(),
                     null,
                     "Request for leave request approval",
@@ -977,14 +968,14 @@ namespace ServicePortals.Application.Services.LeaveRequest
 
             await _context.LeaveRequests.Where(e => e.Id == request.LeaveRequestId).ExecuteUpdateAsync(s => s.SetProperty(h => h.NoteOfHR, request.NoteOfHr));
 
-            string urlView = $@"{_configuration["Setting:UrlFrontEnd"]}/leave/view/{applicationForm.Code}";
+            string urlView = $@"{_configuration["Setting:UrlFrontEnd"]}/view/leave-request/{applicationForm.Code}";
 
             List<string> userCodeReceiveMail = [request.UserCode, leave.UserCode, applicationForm.UserCodeCreatedForm];
 
             var dataUserEmails = await _userService.GetMultipleUserViclockByOrgPositionId(-1, userCodeReceiveMail.Distinct().ToList());
 
             BackgroundJob.Enqueue<IEmailService>(job =>
-                job.SendEmailRequestHasBeenSent(
+                job.SendEmailLeaveRequest(
                     dataUserEmails.Where(e => e.NVMaNV != request.UserCode).Select(e => e.Email ?? "").ToList(), //to email
                     dataUserEmails.Where(e => e.NVMaNV == request.UserCode).Select(e => e.Email ?? "").ToList(), //cc email
                     "HR Note",
@@ -1063,9 +1054,9 @@ namespace ServicePortals.Application.Services.LeaveRequest
         //    return true;
         //}
 
-        ///// <summary>
-        ///// Lấy những vị trí được quản lý nghỉ phép theo người dùng, vd: ID: 1 (tổ a), ID: 2 (tổ b)
-        ///// </summary>
+        /// <summary>
+        /// Lấy những vị trí được quản lý nghỉ phép theo người dùng, vd: ID: 1 (tổ a), ID: 2 (tổ b)
+        /// </summary>
         //public async Task<object> GetOrgUnitIdAttachedByUserCode(string userCode)
         //{
         //    var results = await _context.UserMngOrgUnitId
@@ -1076,38 +1067,79 @@ namespace ServicePortals.Application.Services.LeaveRequest
         //    return results;
         //}
 
-        ///// <summary>
-        ///// Thêm quyền hr quản lý nghỉ phép
-        ///// </summary>
-        //public async Task<object> UpdateHrWithManagementLeavePermission(List<string> UserCode)
-        //{
-        //    var permissionHrMngLeaveRequest = await _context.Permissions.FirstOrDefaultAsync(e => e.Name == "leave_request.hr_management_leave_request");
+        /// <summary>
+        /// Thêm quyền hr quản lý nghỉ phép
+        /// </summary>
+        public async Task<object> UpdateHrWithManagementLeavePermission(List<string> UserCode)
+        {
+            var permissionHrMngLeaveRequest = await _context.Permissions.FirstOrDefaultAsync(e => e.Name == "leave_request.hr_management_leave_request");
 
-        //    if (permissionHrMngLeaveRequest == null)
-        //    {
-        //        throw new NotFoundException("Permission hr manage leave request not found");
-        //    }
+            if (permissionHrMngLeaveRequest == null)
+            {
+                throw new NotFoundException("Permission hr manage leave request not found");
+            }
 
-        //    var oldUserPermissionsMngTKeeping = await _context.UserPermissions.Where(e => e.PermissionId == permissionHrMngLeaveRequest.Id).ToListAsync();
+            var oldUserPermissionsMngTKeeping = await _context.UserPermissions.Where(e => e.PermissionId == permissionHrMngLeaveRequest.Id).ToListAsync();
 
-        //    _context.UserPermissions.RemoveRange(oldUserPermissionsMngTKeeping);
+            _context.UserPermissions.RemoveRange(oldUserPermissionsMngTKeeping);
 
-        //    List<UserPermission> newUserPermissions = new List<UserPermission>();
+            List<UserPermission> newUserPermissions = new List<UserPermission>();
 
-        //    foreach (var code in UserCode)
-        //    {
-        //        newUserPermissions.Add(new UserPermission
-        //        {
-        //            UserCode = code,
-        //            PermissionId = permissionHrMngLeaveRequest.Id
-        //        });
-        //    }
+            foreach (var code in UserCode)
+            {
+                newUserPermissions.Add(new UserPermission
+                {
+                    UserCode = code,
+                    PermissionId = permissionHrMngLeaveRequest.Id
+                });
+            }
 
-        //    _context.UserPermissions.AddRange(newUserPermissions);
+            _context.UserPermissions.AddRange(newUserPermissions);
 
-        //    await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync();
 
-        //    return true;
-        //}
+            return true;
+        }
+
+        public async Task<List<HrMngLeaveRequestResponse>> GetHrWithManagementLeavePermission()
+        {
+            var permissionHrMngLeaveRequest = await _context.Permissions.FirstOrDefaultAsync(e => e.Name == "leave_request.hr_management_leave_request");
+
+            if (permissionHrMngLeaveRequest == null)
+            {
+                throw new NotFoundException("Permission hr manage leave request not found");
+            }
+
+            var connection = (SqlConnection)_context.CreateConnection();
+
+            if (connection.State != ConnectionState.Open)
+            {
+                await connection.OpenAsync();
+            }
+
+            var userCodePerission = await _context.UserPermissions.Where(e => e.PermissionId == permissionHrMngLeaveRequest.Id).Select(e => e.UserCode).ToListAsync();
+
+            var sql = $@"
+                SELECT
+                     NV.NVMaNV,
+                     {Global.DbViClock}.dbo.funTCVN2Unicode(NV.NVHoTen) as NVHoTen,
+                     BP.BPMa,
+                     {Global.DbViClock}.dbo.funTCVN2Unicode(BP.BPTen) as BPTen,
+                     COALESCE(NULLIF(Email, ''), NVEmail, '') AS Email
+                FROM {Global.DbViClock}.dbo.tblNhanVien AS NV
+                LEFT JOIN {Global.DbViClock}.dbo.tblBoPhan as BP ON NV.NVMaBP = BP.BPMa
+                LEFT JOIN {Global.DbWeb}.dbo.users AS U ON NV.NVMaNV = U.UserCode
+                WHERE NV.NVMaNV IN @userCodePerission
+            ";
+
+            var param = new
+            {
+                userCodePerission = userCodePerission
+            };
+
+            var result = await connection.QueryAsync<HrMngLeaveRequestResponse>(sql, param);
+
+            return (List<HrMngLeaveRequestResponse>)result;
+        }
     }
 }

@@ -11,7 +11,6 @@ using ServicePortals.Application.Dtos.User.Requests;
 using ServicePortals.Application.Dtos.User.Responses;
 using ServicePortals.Application.Interfaces.User;
 using ServicePortals.Domain.Entities;
-using ServicePortals.Domain.Enums;
 using ServicePortals.Infrastructure.Data;
 using ServicePortals.Infrastructure.Email;
 using ServicePortals.Infrastructure.Helpers;

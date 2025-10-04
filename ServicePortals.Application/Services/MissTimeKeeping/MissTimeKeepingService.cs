@@ -139,7 +139,7 @@ namespace ServicePortals.Application.Services.MissTimeKeeping
 
             await _context.SaveChangesAsync();
 
-            string urlApproval = $@"{_configuration["Setting:UrlFrontEnd"]}/miss-timekeeping/approval/{newApplicationForm.Code}";
+            string urlApproval = $@"{_configuration["Setting:UrlFrontEnd"]}/view-miss-timekeeping-approval/{newApplicationForm.Code}";
             List<GetMultiUserViClockByOrgPositionIdResponse> nextUserApprovals = [];
 
             if (isSendHr)
@@ -156,7 +156,7 @@ namespace ServicePortals.Application.Services.MissTimeKeeping
             }
 
             BackgroundJob.Enqueue<IEmailService>(job =>
-                job.SendEmailAsync(
+                job.SendEmailMissTimeKeeping(
                     nextUserApprovals.Select(e => e.Email ?? "").ToList(),
                     null,
                     "Request for miss timekeping approval",
@@ -398,14 +398,14 @@ namespace ServicePortals.Application.Services.MissTimeKeeping
 
             await _context.MissTimeKeepings.Where(e => e.Id == request.MissTimeKeepingId).ExecuteUpdateAsync(s => s.SetProperty(h => h.NoteOfHR, request.NoteOfHr));
 
-            string urlView = $@"{_configuration["Setting:UrlFrontEnd"]}/miss-timekeeping/view/{applicationForm.Code}";
+            string urlView = $@"{_configuration["Setting:UrlFrontEnd"]}/view/miss-timekeeping/{applicationForm.Code}";
 
             List<string> userCodeReceiveMail = [request.UserCode, missTimeKeeping.UserCode, applicationForm.UserCodeCreatedForm];
 
             var dataUserEmails = await _userService.GetMultipleUserViclockByOrgPositionId(-1, userCodeReceiveMail.Distinct().ToList());
 
             BackgroundJob.Enqueue<IEmailService>(job =>
-                job.SendEmailRequestHasBeenSent(
+                job.SendEmailMissTimeKeeping(
                     dataUserEmails.Where(e => e.NVMaNV != request.UserCode).Select(e => e.Email ?? "").ToList(), //to email
                     dataUserEmails.Where(e => e.NVMaNV == request.UserCode).Select(e => e.Email ?? "").ToList(), //cc email
                     "HR Note",
@@ -487,12 +487,12 @@ namespace ServicePortals.Application.Services.MissTimeKeeping
                 _context.HistoryApplicationForms.Add(historyApplicationForm);
                 await _context.SaveChangesAsync();
 
-                string urlView = $@"{_configuration["Setting:UrlFrontEnd"]}/miss-timekeeping/view/{applicationForm.Code}";
+                string urlView = $@"{_configuration["Setting:UrlFrontEnd"]}/view/miss-timekeeping/{applicationForm.Code}";
 
                 var userReceiveEmail = await _userService.GetMultipleUserViclockByOrgPositionId(-1, UserCodeCreatedFormAndMissTimeKeeping);
 
                 BackgroundJob.Enqueue<IEmailService>(job =>
-                    job.SendEmailRequestHasBeenSent(
+                    job.SendEmailMissTimeKeeping(
                         userReceiveEmail.Select(e => e.Email ?? "").ToList(),
                         null,
                         "Your miss timekeeping request has been approved",
@@ -522,12 +522,12 @@ namespace ServicePortals.Application.Services.MissTimeKeeping
                 _context.HistoryApplicationForms.Add(historyApplicationForm);
                 await _context.SaveChangesAsync();
 
-                string urlView = $@"{_configuration["Setting:UrlFrontEnd"]}/miss-timekeeping/view/{applicationForm.Code}";
+                string urlView = $@"{_configuration["Setting:UrlFrontEnd"]}/view/miss-timekeeping/{applicationForm.Code}";
 
                 var userReceiveEmail = await _userService.GetMultipleUserViclockByOrgPositionId(-1, UserCodeCreatedFormAndMissTimeKeeping);
 
                 BackgroundJob.Enqueue<IEmailService>(job =>
-                    job.SendEmailRequestHasBeenSent(
+                    job.SendEmailMissTimeKeeping(
                         userReceiveEmail.Select(e => e.Email ?? "").ToList(),
                         null,
                         "Your miss timekeeping request has been rejected",
@@ -577,7 +577,7 @@ namespace ServicePortals.Application.Services.MissTimeKeeping
 
             await _context.SaveChangesAsync();
 
-            string urlApproval = $@"{_configuration["Setting:UrlFrontEnd"]}/miss-timekeeping/approval/{applicationForm.Code}";
+            string urlApproval = $@"{_configuration["Setting:UrlFrontEnd"]}/view-miss-timekeeping-approval/{applicationForm.Code}";
 
             List<GetMultiUserViClockByOrgPositionIdResponse> nextUserApproval = [];
             if (isSendHr)
@@ -591,7 +591,7 @@ namespace ServicePortals.Application.Services.MissTimeKeeping
             }
 
             BackgroundJob.Enqueue<IEmailService>(job =>
-                job.SendEmailRequestHasBeenSent(
+                job.SendEmailMissTimeKeeping(
                     nextUserApproval.Select(e => e.Email ?? "").ToList(),
                     null,
                     "Request for miss timekeeping approval",

@@ -1,4 +1,4 @@
-﻿namespace ServicePortals.Application.Interfaces.UserConfig
+﻿namespace ServicePortals.Application.Interfaces.User
 {
     public interface IUserConfigService
     {

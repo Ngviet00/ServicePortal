@@ -19,9 +19,9 @@ namespace ServicePortal.Controllers.ITForm
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAll([FromQuery] GetAllITCategoryRequest request)
+        public async Task<IActionResult> GetAll()
         {
-            var results = await _iTCategoryService.GetAll(request);
+            var results = await _iTCategoryService.GetAll();
 
             return Ok(new BaseResponse<List<Entity.ITCategory>>(200, "success", results));
         }

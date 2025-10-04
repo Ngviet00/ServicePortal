@@ -69,7 +69,7 @@ namespace ServicePortals.Infrastructure.Email
 
                 message.From.Add(new MailboxAddress(
                     "System",
-                    _settings.From ?? "vsit@vsvn.com.vn"));
+                    "vsit@vsvn.com.vn"));
 
                 if (to != null && to.Count > 0)
                 {
@@ -109,18 +109,31 @@ namespace ServicePortals.Infrastructure.Email
 
                 using var client = new SmtpClient();
                 await client.ConnectAsync(
-                    _settings.Host ?? "smtp.office365.com",
-                    _settings.Port ?? 587,
-                    _settings.EnableSsl ?? true
+                    "sandbox.smtp.mailtrap.io",
+                    2525,
+                    true
                         ? SecureSocketOptions.StartTls
                         : SecureSocketOptions.None);
 
-                await client.AuthenticateAsync(
-                    _settings.Username ?? "vsit@vsvn.com.vn",
-                    _settings.Password ?? "Mis789456.");
+                await client.AuthenticateAsync("b60e8f567df0f8", "18d1afa4732b84");
 
                 await client.SendAsync(message);
                 await client.DisconnectAsync(true);
+
+                //using var client = new SmtpClient();
+                //await client.ConnectAsync(
+                //    _settings.Host ?? "smtp.office365.com",
+                //    _settings.Port ?? 587,
+                //    _settings.EnableSsl ?? true
+                //        ? SecureSocketOptions.StartTls
+                //        : SecureSocketOptions.None);
+
+                //await client.AuthenticateAsync(
+                //    _settings.Username ?? "vsit@vsvn.com.vn",
+                //    _settings.Password ?? "Mis789456.");
+
+                //await client.SendAsync(message);
+                //await client.DisconnectAsync(true);
             }
             catch (Exception ex)
             {

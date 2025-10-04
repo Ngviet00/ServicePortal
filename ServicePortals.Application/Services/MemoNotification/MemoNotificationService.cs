@@ -277,10 +277,10 @@ namespace ServicePortals.Application.Services.MemoNotification
 
             var receiveUser = await _userService.GetMultipleUserViclockByOrgPositionId(nextOrgPositionId ?? 0);
 
-            string urlApproval = $@"{_configuration["Setting:UrlFrontEnd"]}/approval/approval-memo-notify/{applicationForm.Code}";
+            string urlApproval = $@"{_configuration["Setting:UrlFrontEnd"]}/view-memo-notify-approval/{applicationForm.Code}";
 
             BackgroundJob.Enqueue<IEmailService>(job =>
-                job.EmailSendMemoNotification(
+                job.SendEmailMemoNotification(
                     receiveUser.Select(e => e.Email ?? "").ToList(),
                     null,
                     "Request for memo notification approval",
@@ -571,10 +571,10 @@ namespace ServicePortals.Application.Services.MemoNotification
                 bool isApproved = request.Status == true;
                 string title = isApproved ? "approved" : "reject";
 
-                string urlView = $@"{_configuration["Setting:UrlFrontEnd"]}/approval/view-memo-notify/{applicationForm.Code}";
+                string urlView = $@"{_configuration["Setting:UrlFrontEnd"]}/view/memo-notify/{applicationForm.Code}";
 
                 BackgroundJob.Enqueue<IEmailService>(job =>
-                    job.EmailSendMemoNotification(
+                    job.SendEmailMemoNotification(
                         userRequest.Select(e => e.Email ?? "").ToList(),
                         null,
                         $"Your request memo notification has been {title}",
@@ -588,10 +588,10 @@ namespace ServicePortals.Application.Services.MemoNotification
             {
                 var receiveUser = await _userService.GetMultipleUserViclockByOrgPositionId(applicationForm.OrgPositionId);
 
-                string urlApproval = $@"{_configuration["Setting:UrlFrontEnd"]}/approval/approval-memo-notify/{applicationForm.Code}";
+                string urlApproval = $@"{_configuration["Setting:UrlFrontEnd"]}/view-memo-notify-approval/{applicationForm.Code}";
 
                 BackgroundJob.Enqueue<IEmailService>(job =>
-                    job.EmailSendMemoNotification(
+                    job.SendEmailMemoNotification(
                         receiveUser.Select(e => e.Email ?? "").ToList(),
                         null,
                         "Request for memo notification approval",

@@ -8,15 +8,15 @@ namespace ServicePortals.Application.Interfaces.ITForm
 {
     public interface ITFormService
     {
-        Task<StatisticalFormITResponse> StatisticalFormIT(int year);
-        Task<PagedResults<GetListITFormResponse>> GetAll(GetAllITFormRequest request);
-        Task<Domain.Entities.ITForm?> GetById(Guid Id);
-        Task<object> Create(CreateITFormRequest request);
-        Task<object> Update(Guid Id, UpdateITFormRequest request);
-        Task<object> Delete(Guid Id);
-        Task<object> Approval(ApprovalRequest request);
-        Task<object> AssignedTask(AssignedTaskRequest request);
-        Task<object> ResolvedTask(ResolvedTaskRequest request);
-        Task<List<InfoUserAssigned>> GetMemberITAssigned();
+        //Task<StatisticalFormITResponse> StatisticalFormIT(int year);
+        //Task<PagedResults<GetListITFormResponse>> GetAll(GetAllITFormRequest request);
+        //Task<Domain.Entities.ITForm?> GetById(Guid Id);
+        //Task<object> Create(CreateITFormRequest request);
+        //Task<object> Update(Guid Id, UpdateITFormRequest request);
+        //Task<object> Delete(Guid Id);
+        //Task<object> Approval(ApprovalRequest request);
+        //Task<object> AssignedTask(AssignedTaskRequest request);
+        //Task<object> ResolvedTask(ResolvedTaskRequest request);
+        //Task<List<InfoUserAssigned>> GetMemberITAssigned();
     }
 }

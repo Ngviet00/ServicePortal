@@ -1,14 +1,10 @@
-﻿using Azure;
-using Azure.Core;
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using ServicePortal.Applications.Modules.LeaveRequest.DTO.Requests;
 using ServicePortals.Application;
-using ServicePortals.Application.Dtos.LeaveRequest;
+using ServicePortals.Application.Dtos.Approval.Request;
 using ServicePortals.Application.Dtos.LeaveRequest.Requests;
 using ServicePortals.Application.Dtos.LeaveRequest.Responses;
 using ServicePortals.Application.Interfaces.LeaveRequest;
-using ServicePortals.Domain.Entities;
 
 namespace ServicePortal.Controllers.LeaveRequest
 {
@@ -128,6 +124,14 @@ namespace ServicePortal.Controllers.LeaveRequest
             return Ok(new BaseResponse<object>(200, "success", result));
         }
 
+        [HttpPost("approval")]
+        public async Task<IActionResult> Approval([FromBody] ApprovalRequest request)
+        {
+            var result = await _leaveRequestService.Approval(request);
+
+            return Ok(new BaseResponse<object>(200, "success", result));
+        }
+
         //[HttpPost("hr-register-all-leave-rq")]
         //public async Task<IActionResult> HrRegisterAllLeave([FromBody] HrRegisterAllLeaveRequest request)
         //{
@@ -178,21 +182,21 @@ namespace ServicePortal.Controllers.LeaveRequest
 
 
 
-        //[HttpPost("update-user-have-permission-hr-mng-leave-request")]
-        //public async Task<IActionResult> UpdateUserHavePermissionHrMngLeaveRequest([FromBody] List<string> userCodes)
-        //{
-        //    var results = await _leaveRequestService.UpdateHrWithManagementLeavePermission(userCodes);
+        [HttpPost("update-user-have-permission-hr-mng-leave-request")]
+        public async Task<IActionResult> UpdateUserHavePermissionHrMngLeaveRequest([FromBody] List<string> userCodes)
+        {
+            var results = await _leaveRequestService.UpdateHrWithManagementLeavePermission(userCodes);
 
-        //    return Ok(new BaseResponse<object>(200, "success", results));
-        //}
+            return Ok(new BaseResponse<object>(200, "success", results));
+        }
 
-        //[HttpGet("get-user-have-permission-hr-mng-leave-request")]
-        //public async Task<IActionResult> GetUserHavePermissionHrMngLeaveRequest()
-        //{
-        //    var results = await _leaveRequestService.GetHrWithManagementLeavePermission();
+        [HttpGet("get-user-have-permission-hr-mng-leave-request")]
+        public async Task<IActionResult> GetUserHavePermissionHrMngLeaveRequest()
+        {
+            var results = await _leaveRequestService.GetHrWithManagementLeavePermission();
 
-        //    return Ok(new BaseResponse<List<HrMngLeaveRequestResponse>>(200, "success", results));
-        //}
+            return Ok(new BaseResponse<List<HrMngLeaveRequestResponse>>(200, "success", results));
+        }
 
     }
 }

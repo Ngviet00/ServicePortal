@@ -15,7 +15,7 @@ namespace ServicePortals.Application.Dtos.LeaveRequest.Requests
 
     public class CreateListLeaveRequest
     {
-        public long Id { get; set; }
+        public long? Id { get; set; }
         public string? UserCode { get; set; }
         public string? UserName { get; set; }
         [Required]

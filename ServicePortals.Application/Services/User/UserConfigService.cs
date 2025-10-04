@@ -1,5 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using ServicePortals.Application.Interfaces.UserConfig;
+using ServicePortals.Application.Interfaces.User;
 using ServicePortals.Infrastructure.Data;
 
 namespace ServicePortals.Application.Services.User

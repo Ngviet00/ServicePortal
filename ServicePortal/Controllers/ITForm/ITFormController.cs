@@ -14,94 +14,94 @@ namespace ServicePortal.Controllers.ITForm
     [ApiController, Route("api/it-form")]
     public class ITFormController : ControllerBase
     {
-        private readonly ITFormService _iITFormService;
+        //private readonly ITFormService _iITFormService;
 
-        public ITFormController(ITFormService iITFormService)
-        {
-            _iITFormService = iITFormService;
-        }
+        //public ITFormController(ITFormService iITFormService)
+        //{
+        //    _iITFormService = iITFormService;
+        //}
 
-        [HttpGet("statistical-form-it")]
-        public async Task<IActionResult> StatisticalFormIT([FromQuery] int year)
-        {
-            var results = await _iITFormService.StatisticalFormIT(year);
+        //[HttpGet("statistical-form-it")]
+        //public async Task<IActionResult> StatisticalFormIT([FromQuery] int year)
+        //{
+        //    var results = await _iITFormService.StatisticalFormIT(year);
 
-            return Ok(new BaseResponse<object>(200, "success", results));
-        }
+        //    return Ok(new BaseResponse<object>(200, "success", results));
+        //}
 
-        [HttpGet]
-        public async Task<IActionResult> GetAll([FromQuery] GetAllITFormRequest request)
-        {
-            var results = await _iITFormService.GetAll(request);
+        //[HttpGet]
+        //public async Task<IActionResult> GetAll([FromQuery] GetAllITFormRequest request)
+        //{
+        //    var results = await _iITFormService.GetAll(request);
 
-            var response = new PageResponse<GetListITFormResponse>(
-                200,
-                "Success",
-                results.Data,
-                results.TotalPages,
-                request.Page,
-                request.PageSize,
-                results.TotalItems
-            );
+        //    var response = new PageResponse<GetListITFormResponse>(
+        //        200,
+        //        "Success",
+        //        results.Data,
+        //        results.TotalPages,
+        //        request.Page,
+        //        request.PageSize,
+        //        results.TotalItems
+        //    );
 
-            return Ok(response);
-        }
+        //    return Ok(response);
+        //}
 
-        [HttpGet("{Id}")]
-        public async Task<IActionResult> GetById(Guid Id)
-        {
-            var result = await _iITFormService.GetById(Id);
+        //[HttpGet("{Id}")]
+        //public async Task<IActionResult> GetById(Guid Id)
+        //{
+        //    var result = await _iITFormService.GetById(Id);
 
-            return Ok(new BaseResponse<Entity.ITForm>(200, "success", result));
-        }
+        //    return Ok(new BaseResponse<Entity.ITForm>(200, "success", result));
+        //}
 
-        [HttpPost]
-        public async Task<IActionResult> Create(CreateITFormRequest request)
-        {
-            var result = await _iITFormService.Create(request);
+        //[HttpPost]
+        //public async Task<IActionResult> Create(CreateITFormRequest request)
+        //{
+        //    var result = await _iITFormService.Create(request);
 
-            return Ok(new BaseResponse<object>(200, "success", result));
-        }
+        //    return Ok(new BaseResponse<object>(200, "success", result));
+        //}
 
-        [HttpPut("{Id}")]
-        public async Task<IActionResult> Update(Guid Id, [FromBody] UpdateITFormRequest request)
-        {
-            var result = await _iITFormService.Update(Id, request);
+        //[HttpPut("{Id}")]
+        //public async Task<IActionResult> Update(Guid Id, [FromBody] UpdateITFormRequest request)
+        //{
+        //    var result = await _iITFormService.Update(Id, request);
 
-            return Ok(new BaseResponse<object>(200, "success", result));
-        }
+        //    return Ok(new BaseResponse<object>(200, "success", result));
+        //}
 
-        [HttpDelete("{Id}")]
-        public async Task<IActionResult> Delete(Guid Id)
-        {
-            var result = await _iITFormService.Delete(Id);
+        //[HttpDelete("{Id}")]
+        //public async Task<IActionResult> Delete(Guid Id)
+        //{
+        //    var result = await _iITFormService.Delete(Id);
 
-            return Ok(new BaseResponse<object>(200, "success", result));
-        }
+        //    return Ok(new BaseResponse<object>(200, "success", result));
+        //}
 
-        [HttpPost("assigned-task")]
-        public async Task<IActionResult> AssignedTask([FromBody] AssignedTaskRequest request)
-        {
-            var result = await _iITFormService.AssignedTask(request);
+        //[HttpPost("assigned-task")]
+        //public async Task<IActionResult> AssignedTask([FromBody] AssignedTaskRequest request)
+        //{
+        //    var result = await _iITFormService.AssignedTask(request);
 
-            return Ok(new BaseResponse<object>(200, "success", result));
-        }
+        //    return Ok(new BaseResponse<object>(200, "success", result));
+        //}
 
-        [HttpPost("resolved-task")]
-        public async Task<IActionResult> ResolvedTask([FromBody] ResolvedTaskRequest request)
-        {
-            var result = await _iITFormService.ResolvedTask(request);
+        //[HttpPost("resolved-task")]
+        //public async Task<IActionResult> ResolvedTask([FromBody] ResolvedTaskRequest request)
+        //{
+        //    var result = await _iITFormService.ResolvedTask(request);
 
-            return Ok(new BaseResponse<object>(200, "success", result));
-        }
+        //    return Ok(new BaseResponse<object>(200, "success", result));
+        //}
 
 
-        [HttpGet("get-member-it-assigned")]
-        public async Task<IActionResult> GetMemberITAssigned()
-        {
-            var results = await _iITFormService.GetMemberITAssigned();
+        //[HttpGet("get-member-it-assigned")]
+        //public async Task<IActionResult> GetMemberITAssigned()
+        //{
+        //    var results = await _iITFormService.GetMemberITAssigned();
 
-            return Ok(new BaseResponse<List<InfoUserAssigned>>(200, "success", results));
-        }
+        //    return Ok(new BaseResponse<List<InfoUserAssigned>>(200, "success", results));
+        //}
     }
 }

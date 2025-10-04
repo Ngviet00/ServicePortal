@@ -4,7 +4,6 @@ namespace ServicePortals.Application.Dtos.OverTime.Requests
 {
     public class CreateOverTimeRequest
     {
-        public string? EmailCreated { get; set; }
         public int OrgPositionId { get; set; }
         public int DepartmentId { get; set; }
         public int OrgUnitCompanyId { get; set; }

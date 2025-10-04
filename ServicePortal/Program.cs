@@ -23,7 +23,6 @@ using ServicePortals.Infrastructure.Services.TimeKeeping;
 using ServicePortal.Infrastructure.Cache;
 using ServicePortals.Infrastructure.Excel;
 using ServicePortals.Application.Interfaces.TimeKeeping;
-using ServicePortals.Application.Interfaces.UserConfig;
 using ServicePortals.Application.ScheduleJob;
 using ServicePortals.Application.Interfaces.OrgUnit;
 using ServicePortals.Application.Services.OrgUnit;
@@ -39,8 +38,6 @@ using ServicePortals.Application.Services.RequestType;
 using ServicePortals.Application.Interfaces.Approval;
 using ServicePortals.Application.Services.Approval;
 using ServicePortals.Application.Services.TypeLeave;
-using ServicePortals.Application.Interfaces.ApprovalFlow;
-using ServicePortals.Application.Services.ApprovalFlow;
 using ServicePortals.Application.Services.Auth;
 using ServicePortals.Application.Interfaces.ITForm;
 using ServicePortals.Application.Services.ITForm;
@@ -145,8 +142,6 @@ namespace ServicePortal
             builder.Services.AddScoped<ExcelService>();
 
             builder.Services.AddScoped<IOrgUnitService, OrgUnitService>();
-
-            builder.Services.AddScoped<IApprovalFlowService, ApprovalFlowService>();
 
             builder.Services.AddScoped<ISystemConfigService, SystemConfigService>();
 

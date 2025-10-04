@@ -104,12 +104,12 @@ namespace ServicePortals.Application.Services.InternalMemoHR
                 _context.HistoryApplicationForms.Add(historyApplicationForm);
                 await _context.SaveChangesAsync();
 
-                string urlView = $@"{_configuration["Setting:UrlFrontEnd"]}/internal-memo-hr/view/{applicationForm.Code}";
+                string urlView = $@"{_configuration["Setting:UrlFrontEnd"]}/internal-memo-hr/{applicationForm.Code}?mode=view";
 
                 var userReceiveEmail = await _userService.GetMultipleUserViclockByOrgPositionId(-1, [applicationForm.UserCodeCreatedForm]);
 
                 BackgroundJob.Enqueue<IEmailService>(job =>
-                    job.SendEmailRequestHasBeenSent(
+                    job.SendEmailInternalMemoHr(
                         userReceiveEmail.Select(e => e.Email ?? "").ToList(),
                         null,
                         "Your internal memo hr request has been approved",
@@ -139,12 +139,12 @@ namespace ServicePortals.Application.Services.InternalMemoHR
                 _context.HistoryApplicationForms.Add(historyApplicationForm);
                 await _context.SaveChangesAsync();
 
-                string urlView = $@"{_configuration["Setting:UrlFrontEnd"]}/internal-memo-hr/view/{applicationForm.Code}";
+                string urlView = $@"{_configuration["Setting:UrlFrontEnd"]}/internal-memo-hr/{applicationForm.Code}?mode=view";
 
                 var userReceiveEmail = await _userService.GetMultipleUserViclockByOrgPositionId(-1, [applicationForm.UserCodeCreatedForm]);
 
                 BackgroundJob.Enqueue<IEmailService>(job =>
-                    job.SendEmailRequestHasBeenSent(
+                    job.SendEmailInternalMemoHr(
                         userReceiveEmail.Select(e => e.Email ?? "").ToList(),
                         null,
                         "Your internal memo request has been rejected",
@@ -193,7 +193,7 @@ namespace ServicePortals.Application.Services.InternalMemoHR
 
             await _context.SaveChangesAsync();
 
-            string urlApproval = $@"{_configuration["Setting:UrlFrontEnd"]}/internal-memo/{applicationForm.Code}?mode=approval";
+            string urlApproval = $@"{_configuration["Setting:UrlFrontEnd"]}/internal-memo-hr/{applicationForm.Code}?mode=approval";
 
             List<GetMultiUserViClockByOrgPositionIdResponse> nextUserApproval = [];
             if (isSendHr)
@@ -207,7 +207,7 @@ namespace ServicePortals.Application.Services.InternalMemoHR
             }
 
             BackgroundJob.Enqueue<IEmailService>(job =>
-                job.SendEmailRequestHasBeenSent(
+                job.SendEmailInternalMemoHr(
                     nextUserApproval.Select(e => e.Email ?? "").ToList(),
                     null,
                     "Request for internal memo HR approval",
@@ -296,7 +296,7 @@ namespace ServicePortals.Application.Services.InternalMemoHR
             }
 
             BackgroundJob.Enqueue<IEmailService>(job =>
-                job.SendEmailAsync(
+                job.SendEmailInternalMemoHr(
                     nextUserApprovals.Select(e => e.Email ?? "").ToList(),
                     null,
                     "Request for internal memo HR approval",

@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using ServicePortals.Application;
-using ServicePortals.Application.Interfaces.UserConfig;
+using ServicePortals.Application.Interfaces.User;
 
 namespace ServicePortal.Controllers.User
 {

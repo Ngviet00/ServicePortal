@@ -5,7 +5,7 @@ namespace ServicePortals.Application.Interfaces.ITForm
 {
     public interface ITCategoryService
     {
-        Task<List<ITCategory>> GetAll(GetAllITCategoryRequest request);
+        Task<List<ITCategory>> GetAll();
         Task<ITCategory?> GetById(int Id);
         Task<object> Create(CreateITCategoryRequest request);
         Task<object> Update(int Id, UpdateITCategoryRequest request);

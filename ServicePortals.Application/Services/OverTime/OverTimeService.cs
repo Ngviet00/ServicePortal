@@ -118,12 +118,12 @@ namespace ServicePortals.Application.Services.OverTime
                 _context.HistoryApplicationForms.Add(historyApplicationForm);
                 await _context.SaveChangesAsync();
 
-                string urlView = $@"{_configuration["Setting:UrlFrontEnd"]}/overtime/view/{applicationForm.Code}";
+                string urlView = $@"{_configuration["Setting:UrlFrontEnd"]}/view/overtime/{applicationForm.Code}";
 
                 var userReceiveEmail = await _userService.GetMultipleUserViclockByOrgPositionId(-1, UserCodeCreatedFormAndOverTime);
 
                 BackgroundJob.Enqueue<IEmailService>(job =>
-                    job.SendEmailRequestHasBeenSent(
+                    job.SendEmailOverTime(
                         userReceiveEmail.Select(e => e.Email ?? "").ToList(),
                         null,
                         "Your overtime request has been approved",
@@ -153,12 +153,12 @@ namespace ServicePortals.Application.Services.OverTime
                 _context.HistoryApplicationForms.Add(historyApplicationForm);
                 await _context.SaveChangesAsync();
 
-                string urlView = $@"{_configuration["Setting:UrlFrontEnd"]}/overtime/view/{applicationForm.Code}";
+                string urlView = $@"{_configuration["Setting:UrlFrontEnd"]}/view/overtime/{applicationForm.Code}";
 
                 var userReceiveEmail = await _userService.GetMultipleUserViclockByOrgPositionId(-1, UserCodeCreatedFormAndOverTime);
 
                 BackgroundJob.Enqueue<IEmailService>(job =>
-                    job.SendEmailRequestHasBeenSent(
+                    job.SendEmailOverTime(
                         userReceiveEmail.Select(e => e.Email ?? "").ToList(),
                         null,
                         "Your overtime request has been rejected",
@@ -215,7 +215,7 @@ namespace ServicePortals.Application.Services.OverTime
 
             await _context.SaveChangesAsync();
 
-            string urlApproval = $@"{_configuration["Setting:UrlFrontEnd"]}/overtime/approval/{applicationForm.Code}";
+            string urlApproval = $@"{_configuration["Setting:UrlFrontEnd"]}/view-overtime-approval/{applicationForm.Code}";
 
             List<GetMultiUserViClockByOrgPositionIdResponse> nextUserApproval = [];
             if (isSendHr)
@@ -229,7 +229,7 @@ namespace ServicePortals.Application.Services.OverTime
             }
 
             BackgroundJob.Enqueue<IEmailService>(job =>
-                job.SendEmailRequestHasBeenSent(
+                job.SendEmailOverTime(
                     nextUserApproval.Select(e => e.Email ?? "").ToList(),
                     null,
                     "Request for overtime approval",
@@ -343,7 +343,7 @@ namespace ServicePortals.Application.Services.OverTime
 
             await _context.SaveChangesAsync();
 
-            string urlApproval = $@"{_configuration["Setting:UrlFrontEnd"]}/overtime/approval/{newApplicationForm.Code}";
+            string urlApproval = $@"{_configuration["Setting:UrlFrontEnd"]}/view-overtime-approval/{newApplicationForm.Code}";
             List<GetMultiUserViClockByOrgPositionIdResponse> nextUserApprovals = [];
 
             if (isSendHr)
@@ -360,7 +360,7 @@ namespace ServicePortals.Application.Services.OverTime
             }
 
             BackgroundJob.Enqueue<IEmailService>(job =>
-                job.SendEmailAsync(
+                job.SendEmailOverTime(
                     nextUserApprovals.Select(e => e.Email ?? "").ToList(),
                     null,
                     "Request for overtime approval",
@@ -565,14 +565,14 @@ namespace ServicePortals.Application.Services.OverTime
 
             await _context.OverTimes.Where(e => e.Id == request.OverTimeId).ExecuteUpdateAsync(s => s.SetProperty(h => h.NoteOfHR, request.NoteOfHr));
 
-            string urlView = $@"{_configuration["Setting:UrlFrontEnd"]}/overtime/view/{applicationForm.Code}";
+            string urlView = $@"{_configuration["Setting:UrlFrontEnd"]}/view/overtime/{applicationForm.Code}";
 
             List<string> userCodeReceiveMail = [request.UserCode, overTime.UserCode, applicationForm.UserCodeCreatedForm];
 
             var dataUserEmails = await _userService.GetMultipleUserViclockByOrgPositionId(-1, userCodeReceiveMail.Distinct().ToList());
 
             BackgroundJob.Enqueue<IEmailService>(job =>
-                job.SendEmailRequestHasBeenSent(
+                job.SendEmailOverTime(
                     dataUserEmails.Where(e => e.NVMaNV != request.UserCode).Select(e => e.Email ?? "").ToList(), //to email
                     dataUserEmails.Where(e => e.NVMaNV == request.UserCode).Select(e => e.Email ?? "").ToList(), //cc email
                     "HR Note",
@@ -642,11 +642,11 @@ namespace ServicePortals.Application.Services.OverTime
 
                 await transaction.CommitAsync();
 
-                string urlView = $@"{_configuration["Setting:UrlFrontEnd"]}/leave/view/{applicationForm.Code}";
+                string urlView = $@"{_configuration["Setting:UrlFrontEnd"]}/view/overtime/{applicationForm.Code}";
                 var userReceivedEmail = await _userService.GetMultipleUserViclockByOrgPositionId(-1, overTimes.Select(e => e.UserCode ?? "").ToList());
 
                 BackgroundJob.Enqueue<IEmailService>(job =>
-                    job.SendEmailAsync(
+                    job.SendEmailOverTime(
                         userReceivedEmail.Select(e => e.Email ?? "").ToList(),
                         null,
                         "Your overtime request has been reject",
@@ -661,7 +661,7 @@ namespace ServicePortals.Application.Services.OverTime
             catch
             {
                 await transaction.RollbackAsync();
-                throw new Exception("Save failed, please check again");
+                throw new ValidationException(Global.NotPermissionApproval);
             }
         }
 

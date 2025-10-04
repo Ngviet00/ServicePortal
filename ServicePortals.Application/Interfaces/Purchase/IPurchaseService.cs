@@ -8,15 +8,15 @@ namespace ServicePortals.Application.Interfaces.Purchase
 {
     public interface IPurchaseService
     {
-        Task<StatisticalPurchaseResponse> StatisticalPurchase(int year);
-        Task<PagedResults<Domain.Entities.Purchase>> GetAll(GetAllPurchaseRequest request);
-        Task<Domain.Entities.Purchase> GetById(Guid id);
-        Task<object> Create(CreatePurchaseRequest request);
-        Task<object> Update(Guid id, UpdatePurchaseRequest request);
-        Task<object> Delete(Guid id);
-        Task<object> Approval(ApprovalRequest request);
-        Task<object> AssignedTask(AssignedTaskRequest request);
-        Task<object> ResolvedTask(ResolvedTaskRequest request);
-        Task<List<InfoUserAssigned>> GetMemberPurchaseAssigned();
+        //Task<StatisticalPurchaseResponse> StatisticalPurchase(int year);
+        //Task<PagedResults<Domain.Entities.Purchase>> GetAll(GetAllPurchaseRequest request);
+        //Task<Domain.Entities.Purchase> GetById(Guid id);
+        //Task<object> Create(CreatePurchaseRequest request);
+        //Task<object> Update(Guid id, UpdatePurchaseRequest request);
+        //Task<object> Delete(Guid id);
+        //Task<object> Approval(ApprovalRequest request);
+        //Task<object> AssignedTask(AssignedTaskRequest request);
+        //Task<object> ResolvedTask(ResolvedTaskRequest request);
+        //Task<List<InfoUserAssigned>> GetMemberPurchaseAssigned();
     }
 }

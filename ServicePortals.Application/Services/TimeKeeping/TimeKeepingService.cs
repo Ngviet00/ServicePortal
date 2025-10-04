@@ -8,7 +8,7 @@ using ServicePortals.Application;
 using ServicePortals.Application.Dtos.LeaveRequest.Requests;
 using ServicePortals.Application.Dtos.TimeKeeping;
 using ServicePortals.Application.Dtos.TimeKeeping.Requests;
-//using ServicePortals.Application.Interfaces.LeaveRequest;
+using ServicePortals.Application.Interfaces.LeaveRequest;
 using ServicePortals.Application.Interfaces.TimeKeeping;
 using ServicePortals.Domain.Entities;
 using ServicePortals.Infrastructure.Data;
@@ -23,19 +23,19 @@ namespace ServicePortals.Infrastructure.Services.TimeKeeping
     {
         private readonly ApplicationDbContext _context;
         private readonly IEmailService _emailService;
-        //private readonly ILeaveRequestService _leaveRequestService;
+        private readonly ILeaveRequestService _leaveRequestService;
         private readonly ExcelService _excelService;
 
         public TimeKeepingService(
             ExcelService excelService,
             IEmailService emailService,
-            ApplicationDbContext context
-            //ILeaveRequestService leaveRequestService
+            ApplicationDbContext context,
+            ILeaveRequestService leaveRequestService
         )
         {
             _emailService = emailService;
             _context = context;
-            //_leaveRequestService = leaveRequestService;
+            _leaveRequestService = leaveRequestService;
             _excelService = excelService;
         }
 
@@ -178,18 +178,18 @@ namespace ServicePortals.Infrastructure.Services.TimeKeeping
 
             //return true;
 
-            //var hrHavePermissionMngLeaveRequest = await _leaveRequestService.GetHrWithManagementLeavePermission();
-            //var emailUserSend = await _context.Users.FirstOrDefaultAsync(e => e.UserCode == request.UserCode);
-            //string bodyMail = $@"Dear HR Team, Please find attached the excel file containing the staff attendance list [{request.Month} - {request.Year}]";
+            var hrHavePermissionMngLeaveRequest = await _leaveRequestService.GetHrWithManagementLeavePermission();
+            var emailUserSend = await _context.Users.FirstOrDefaultAsync(e => e.UserCode == request.UserCode);
+            string bodyMail = $@"Dear HR Team, Please find attached the excel file containing the staff attendance list [{request.Month} - {request.Year}]";
 
-            //await _emailService.EmailSendTimeKeepingToHR(
-            //    hrHavePermissionMngLeaveRequest.Select(e => e.Email ?? "").ToList(),
-            //    new List<string> { emailUserSend != null ? emailUserSend.Email : "" },
-            //    $"{request.UserName} - Confirm Time Keeping T{request.Month}-{request.Year}",
-            //    bodyMail,
-            //    attachments,
-            //    false
-            //);
+            await _emailService.SendEmailTimeKeepingToHR(
+                hrHavePermissionMngLeaveRequest.Select(e => e.Email ?? "").ToList(),
+                new List<string> { emailUserSend != null ? emailUserSend.Email : "" },
+                $"{request.UserName} - Confirm Time Keeping T{request.Month}-{request.Year}",
+                bodyMail,
+                attachments,
+                false
+            );
 
             return true;
         }

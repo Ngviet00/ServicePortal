@@ -6,11 +6,6 @@ using Microsoft.EntityFrameworkCore;
 using ServicePortals.Application.Dtos.Approval.Request;
 using ServicePortals.Application.Dtos.Approval.Response;
 using ServicePortals.Application.Interfaces.Approval;
-using ServicePortals.Application.Interfaces.ITForm;
-using ServicePortals.Application.Interfaces.LeaveRequest;
-using ServicePortals.Application.Interfaces.MemoNotification;
-using ServicePortals.Application.Interfaces.Purchase;
-using ServicePortals.Domain.Enums;
 using ServicePortals.Infrastructure.Data;
 using ServicePortals.Infrastructure.Helpers;
 using ServicePortals.Shared.Exceptions;
@@ -21,27 +16,11 @@ namespace ServicePortals.Application.Services.Approval
     {
         private readonly ApplicationDbContext _context;
         private readonly IHttpContextAccessor _httpContextAccessor;
-        private readonly ILeaveRequestService _leaveRequestService;
-        private readonly ITFormService _IitFormService;
-        private readonly IMemoNotificationService _memoNotificationService;
-        private readonly IPurchaseService _purchaseService;
 
-        public ApprovalService
-        (
-            ApplicationDbContext context,
-            IHttpContextAccessor httpContextAccessor,
-            ILeaveRequestService leaveRequestService,
-            IMemoNotificationService memoNotificationService,
-            ITFormService IitFormService,
-            IPurchaseService purchaseService
-        )
+        public ApprovalService(ApplicationDbContext context, IHttpContextAccessor httpContextAccessor)
         {
             _context = context;
             _httpContextAccessor = httpContextAccessor;
-            _leaveRequestService = leaveRequestService;
-            _memoNotificationService = memoNotificationService;
-            _IitFormService = IitFormService;
-            _purchaseService = purchaseService;
         }
 
         public async Task<PagedResults<PendingApproval>> ListWaitApprovals(ListWaitApprovalRequest request)
@@ -83,33 +62,6 @@ namespace ServicePortals.Application.Services.Approval
                 TotalItems = totalRecords,
                 TotalPages = totalPages
             };
-        }
-
-        public async Task<object> Approval(ApprovalRequest request)
-        {
-            if (request.RequestTypeId <= 0)
-            {
-                throw new ValidationException("Request type is invalid");
-            }
-
-            if (request.RequestTypeId == (int)RequestTypeEnum.CREATE_MEMO_NOTIFICATION)
-            {
-                await _memoNotificationService.Approval(request);
-            }
-            else if (request.RequestTypeId == (int)RequestTypeEnum.LEAVE_REQUEST)
-            {
-                await _leaveRequestService.Approval(request);
-            }
-            else if (request.RequestTypeId == (int)RequestTypeEnum.FORM_IT)
-            {
-                await _IitFormService.Approval(request);
-            }
-            else if (request.RequestTypeId == (int)RequestTypeEnum.PURCHASE)
-            {
-                await _purchaseService.Approval(request);
-            }
-
-            return true;
         }
 
         public async Task<CountWaitApprovalAndAssignedInSidebarResponse> CountWaitAprrovalAndAssignedInSidebar(CountWaitAprrovalAndAssignedInSidebarRequest request)
